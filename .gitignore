@@ -36,3 +36,20 @@
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
+# Rails / Ruby
+/log/*
+/tmp/*
+/storage/*
+/vendor/bundle
+/.bundle
+*.swp
+.byebug_history
+
+# Node / JS
+node_modules/
+yarn.lock
+
+# Credentials & env
+.env
+.env.*
+config/master.key
