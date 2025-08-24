@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= @opportunity.title %> — Déclic</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-gray-50">
+  <header class="bg-white border-b">
+    <div class="max-w-5xl mx-auto h-16 px-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
+          <span class="text-white font-bold text-xs">D</span>
+        </div>
+        <span class="font-semibold">Déclic</span>
+      </a>
+      <a href="/" class="text-sm text-gray-600 hover:text-gray-900">Retour</a>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-2xl shadow border border-gray-100 p-6">
+      <% badge =
+        case @opportunity.category
+        when 'benevolat' then 'bg-rose-100 text-rose-700'
+        when 'formation' then 'bg-blue-100 text-blue-700'
+        when 'rencontres' then 'bg-green-100 text-green-700'
+        else 'bg-orange-100 text-orange-700'
+        end %>
+
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <span class="text-xs font-semibold px-2 py-1 rounded-full <%= badge %>"><%= @opportunity.category.capitalize %></span>
+          <h1 class="mt-3 text-3xl font-extrabold text-gray-900"><%= @opportunity.title %></h1>
+          <p class="text-gray-600 mt-1"><%= @opportunity.organization %> — <%= @opportunity.location %></p>
+        </div>
+      </div>
+
+      <p class="mt-6 text-gray-800 leading-relaxed"><%= @opportunity.description %></p>
+
+      <div class="mt-6 grid sm:grid-cols-3 gap-4 text-sm">
+        <% if @opportunity.time_commitment.present? %>
+          <div class="bg-gray-50 rounded-lg p-3">⏱ <span class="text-gray-700 font-medium"><%= @opportunity.time_commitment %></span></div>
+        <% end %>
+        <% if @opportunity.tags.present? %>
+          <div class="bg-gray-50 rounded-lg p-3">🏷️ <span class="text-gray-700 font-medium"><%= @opportunity.tags %></span></div>
+        <% end %>
+        <div class="bg-gray-50 rounded-lg p-3">📌 <span class="text-gray-700 font-medium"><%= @opportunity.location %></span></div>
+      </div>
+
+      <div class="mt-8 flex flex-col sm:flex-row gap-3">
+        <% if @opportunity.contact_email.present? %>
+          <a href="mailto:<%= @opportunity.contact_email %>?subject=<%= ERB::Util.url_encode("Candidature — #{@opportunity.title}") %>"
+             class="inline-flex items-center justify-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">
+            Postuler maintenant
+          </a>
+        <% end %>
+        <a href="/" class="inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50">
+          Retour à l’accueil
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-gray-950 text-white py-10 mt-10">
+    <div class="max-w-5xl mx-auto px-4">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
+          <span class="text-white font-bold text-[10px]">D</span>
+        </div>
+        <span class="font-semibold">Déclic</span>
+      </div>
+      <p class="text-gray-400 text-sm">Trouvez votre voie vers l’engagement et donnez du sens à votre vie.</p>
+      <p class="text-gray-500 text-xs mt-2">© <%= Time.current.year %> Déclic. Tous droits réservés.</p>
+    </div>
+  </footer>
+</body>
+</html>

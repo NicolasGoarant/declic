@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Déclic — Trouvez votre prochaine opportunité de changement</title>
+  <meta name="description" content="Bénévolat, formations, rencontres, reconversion… Découvrez des opportunités près de chez vous pour donner du sens à votre vie.">
+
+  <!-- Tailwind (CDN pour page autonome) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] },
+          colors: {
+            brand: {
+              50:'#eef2ff', 100:'#e0e7ff', 200:'#c7d2fe',
+              500:'#6366f1', 600:'#4f46e5', 700:'#4338ca'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    #map { height: 420px; }
+    /* neutralise tout mode multi-colonnes qui casse la mise en page */
+    html, body { columns: auto !important; column-count: 1 !important; column-width: auto !important; }
+    body > * { break-inside: avoid; }
+  </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900">
+  <div id="app" class="flex flex-col min-h-screen">
+
+    <!-- ====== Header ====== -->
+    <header class="bg-white/95 backdrop-blur border-b border-gray-100">
+      <div class="max-w-7xl mx-auto h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <a href="/" class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
+            <span class="text-white font-bold text-xs">D</span>
+          </div>
+          <span class="font-semibold">Déclic</span>
+        </a>
+        <nav class="hidden md:flex items-center gap-6 text-sm">
+          <a href="#explorer" class="hover:text-gray-950">Explorer</a>
+          <a href="#parcours" class="hover:text-gray-950">Parcours</a>
+          <a href="#temoignages" class="hover:text-gray-950">Témoignages</a>
+          <a href="#communaute" class="hover:text-gray-950">Communauté</a>
+          <a href="#explorer" class="ml-2 inline-flex items-center px-3 py-2 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700">
+            Connexion
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- ====== Hero ====== -->
+<section class="relative">
+  <!-- image de fond (plus parlante pour Déclic) -->
+  <div class="absolute inset-0">
+    <img
+      src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1920&auto=format&fit=crop"
+      alt="Bénévoles en action"
+      class="w-full h-full object-cover">
+  </div>
+  <!-- overlay dégradé -->
+  <div class="absolute inset-0 bg-gradient-to-r from-fuchsia-800/70 via-purple-700/65 to-emerald-600/60 mix-blend-multiply"></div>
+
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+    <div class="max-w-3xl">
+      <h1 class="text-white text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">
+        Trouvez votre prochaine<br/>
+        <span class="text-yellow-300">opportunité de changement</span>
+      </h1>
+      <p class="mt-6 text-lg sm:text-xl text-white/90 max-w-2xl">
+        Bénévolat, formations, rencontres, reconversion… Découvrez des milliers d’opportunités près de chez vous pour donner du sens à votre vie et créer un impact positif.
+      </p>
+
+      <!-- CTA + recherche -->
+      <div class="mt-8 flex flex-col sm:flex-row gap-3">
+        <a href="#explorer" class="inline-flex items-center justify-center px-5 py-3 rounded-lg bg-white text-gray-900 font-semibold hover:bg-gray-50">
+          <span class="mr-2">🗺️</span> Explorer la carte
+        </a>
+        <form action="#explorer" class="flex-1">
+          <div class="flex items-center bg-white/95 rounded-lg overflow-hidden shadow-sm">
+            <span class="pl-3">
+              <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"/></svg>
+            </span>
+            <input type="text" placeholder="Ville, thème, organisation…" class="w-full px-3 py-3 bg-transparent focus:outline-none">
+            <button class="px-4 py-3 bg-brand-600 text-white font-medium hover:bg-brand-700">Rechercher</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- bandeau avantages : tracking normal -->
+      <div class="mt-8">
+        <ul class="flex flex-col sm:flex-row gap-3 sm:gap-6 text-white/95 text-sm tracking-normal">
+          <li class="flex items-center"><span class="mr-2">✅</span><span><strong>15 000+</strong> opportunités <span class="tracking-normal">référencées</span></span></li>
+          <li class="flex items-center"><span class="mr-2">🗺️</span><span><strong>Toute la France</strong> <span class="tracking-normal">couverte</span></span></li>
+          <li class="flex items-center"><span class="mr-2">💜</span><span><strong>Gratuit</strong> et <span class="tracking-normal">accessible à tous</span></span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+    <!-- ====== Grille de contenu ====== -->
+    <main class="flex-1">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <!-- Colonne Parcours -->
+          <aside class="lg:col-span-4">
+            <h2 class="text-3xl font-extrabold">Choisissez votre parcours</h2>
+            <p class="text-gray-600 mt-2">Quatre chemins pour transformer votre vie et celle des autres</p>
+
+            <div class="mt-6 space-y-5">
+              <% (@journey_cards || []).each do |j| %>
+                <button
+                  onclick="selectJourney('<%= j[:category] %>')"
+                  class="w-full text-left rounded-2xl p-6 text-white shadow hover:shadow-lg transition
+                         <%= j[:color] %>">
+                  <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-full bg-white/20 grid place-content-center">
+                      <!-- petite icône symbolique -->
+                      <span class="text-xl">❤︎</span>
+                    </div>
+                    <div>
+                      <h3 class="text-xl font-bold"><%= j[:title] %></h3>
+                      <p class="text-white/90 text-sm mt-1"><%= j[:description] %></p>
+                    </div>
+                  </div>
+                </button>
+              <% end %>
+            </div>
+          </aside>
+
+          <!-- Colonne Carte -->
+          <section id="explorer" class="lg:col-span-4">
+            <h2 class="text-3xl font-extrabold">Explorez les opportunités</h2>
+            <p class="text-gray-600 mt-2">Découvrez sur la carte toutes les possibilités d’engagement près de chez vous</p>
+
+            <!-- Filtres (look Replit) -->
+            <div class="mt-5 flex flex-wrap gap-2">
+              <span class="px-3 py-1 rounded-full bg-gray-200 text-gray-800 text-sm">Toutes</span>
+              <span class="px-3 py-1 rounded-full bg-rose-100 text-rose-700 text-sm">Bénévolat</span>
+              <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm">Formation</span>
+              <span class="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm">Rencontres</span>
+              <span class="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-sm">Entreprendre</span>
+            </div>
+
+            <div class="mt-5 bg-white rounded-2xl shadow overflow-hidden">
+              <div id="map"></div>
+            </div>
+          </section>
+
+          <!-- Colonne Cartes d’opportunités -->
+          <section class="lg:col-span-4">
+            <h2 class="text-3xl font-extrabold">Opportunités disponibles</h2>
+            <p class="text-gray-600 mt-2">Découvrez les dernières missions et événements près de chez vous</p>
+
+            <div class="mt-6 space-y-4">
+              <% Array(@opportunities).first(6).each do |o| %>
+                <article class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition">
+                  <div class="flex items-center gap-2 mb-2">
+                    <% badge =
+                      case o.category
+                      when 'benevolat' then 'bg-rose-100 text-rose-700'
+                      when 'formation' then 'bg-blue-100 text-blue-700'
+                      when 'rencontres' then 'bg-green-100 text-green-700'
+                      else 'bg-orange-100 text-orange-700'
+                      end %>
+                    <span class="text-xs font-semibold px-2 py-1 rounded-full <%= badge %>">
+                      <%= o.category.to_s.capitalize %>
+                    </span>
+                  </div>
+                  <h3 class="font-semibold text-gray-900"><%= o.title %></h3>
+                  <p class="text-sm text-gray-600"><%= o.organization %></p>
+                  <p class="text-sm text-gray-700 mt-2"><%= o.description.to_s.truncate(110) %></p>
+                  <div class="mt-3 flex items-center justify-between">
+                    <div class="flex items-center gap-3 text-xs text-gray-500">
+                      <span>📍 <%= o.location %></span>
+                      <% if o.time_commitment.present? %>
+                        <span>⏱ <%= o.time_commitment %></span>
+                      <% end %>
+                    </div>
+                    <a href="/opportunities/<%= o.id %>" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-brand-600 text-white text-xs font-medium hover:bg-brand-700">
+                      En savoir plus
+                    </a>
+                  </div>
+                </article>
+              <% end %>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <!-- ====== Témoignages ====== -->
+<section id="temoignages" class="bg-gray-50 py-16">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-10">
+      <h2 class="text-3xl font-extrabold">Ils ont changé leur vie</h2>
+      <p class="text-gray-600 mt-2">Histoires vraies de personnes qui ont trouvé leur Déclic</p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% Array(@testimonials).first(6).each_with_index do |t, idx| %>
+        <article class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <img src="<%= t.image_url %>" alt="<%= t.name %>" class="w-12 h-12 rounded-full object-cover">
+            <div>
+              <h3 class="font-semibold"><%= t.name %></h3>
+              <p class="text-xs text-gray-500"><%= t.role %> — <%= t.age %> ans</p>
+              <div class="flex gap-0.5 mt-1 text-yellow-400">
+                <span>★</span><span>★</span><span>★</span><span>★</span><span class="text-gray-300">★</span>
+              </div>
+            </div>
+          </div>
+
+          <% short = t.story.to_s.truncate(140) %>
+          <% full  = t.story.to_s %>
+
+          <p class="text-gray-700 text-sm leading-relaxed">
+            <span id="t-short-<%= idx %>"><%= short %></span>
+            <% if full.length > short.length %>
+              <span id="t-full-<%= idx %>" class="hidden"><%= full %></span>
+            <% end %>
+          </p>
+
+          <% if full.length > short.length %>
+            <button
+              data-toggle="<%= idx %>"
+              class="mt-3 text-indigo-600 text-sm font-medium hover:underline">
+              Lire plus
+            </button>
+          <% end %>
+        </article>
+      <% end %>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Petit toggle "Lire plus / Lire moins"
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('button[data-toggle]');
+    if(!btn) return;
+    const id = btn.getAttribute('data-toggle');
+    const s  = document.getElementById('t-short-'+id);
+    const f  = document.getElementById('t-full-'+id);
+    if (!s || !f) return;
+    const expanded = !f.classList.contains('hidden');
+    if (expanded) {
+      f.classList.add('hidden'); s.classList.remove('hidden'); btn.textContent = 'Lire plus';
+    } else {
+      f.classList.remove('hidden'); s.classList.add('hidden'); btn.textContent = 'Lire moins';
+    }
+  });
+</script>
+
+
+    <!-- ====== Footer ====== -->
+    <footer class="bg-gray-950 text-white py-10 mt-6">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
+            <span class="text-white font-bold text-[10px]">D</span>
+          </div>
+          <span class="font-semibold">Déclic</span>
+        </div>
+        <p class="text-gray-300 max-w-md">
+          Trouvez votre voie vers l’engagement et donnez du sens à votre vie.
+        </p>
+        <p class="text-gray-400 mt-3 text-sm">© <%= Time.current.year %> Déclic. Tous droits réservés.</p>
+      </div>
+    </footer>
+  </div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+(function () {
+  // Fabrique une icône "pin" SVG encodée en data URI
+  function pinIcon(hex) {
+    const svg =
+`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">
+  <path d="M16 41s-9-12.2-9-19A9 9 0 1 1 25 22c0 6.8-9 19-9 19z"
+        fill="${hex}" stroke="white" stroke-width="2"/>
+  <circle cx="16" cy="16" r="5" fill="white"/>
+</svg>`;
+    return L.icon({
+      iconUrl: "data:image/svg+xml;utf8," + encodeURIComponent(svg),
+      iconSize:  [28, 42],
+      iconAnchor:[14, 41],
+      popupAnchor:[0, -36]
+    });
+  }
+
+  function init() {
+    const mapEl = document.getElementById('map');
+    if (!mapEl || !window.L) return;
+
+    const map = L.map('map', { zoomControl: true }).setView([46.6, 2.2], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    fetch('/api/v1/opportunities')
+      .then(r => r.json())
+      .then(items => {
+        const group = L.layerGroup().addTo(map);
+        const bounds = [];
+
+        const palette = {
+          benevolat:   '#ef4444', // rouge
+          formation:   '#3b82f6', // bleu
+          rencontres:  '#10b981', // vert
+          entreprendre:'#f59e0b'  // orange
+        };
+
+        items.forEach(o => {
+          const lat = parseFloat(o.latitude), lng = parseFloat(o.longitude);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+          const color = palette[o.category] || '#6366f1';
+          const marker = L.marker([lat, lng], { icon: pinIcon(color) }).addTo(group);
+
+          marker.bindPopup(
+            `<div style="min-width:230px">
+               <div style="margin-bottom:6px">
+                 <span style="font-size:11px;padding:2px 6px;border-radius:9999px;background:#f1f5f9;color:#111;">
+                   ${String(o.category||'').replace(/^./, c => c.toUpperCase())}
+                 </span>
+               </div>
+               <strong>${o.title||''}</strong><br/>
+               <small>${o.organization||''}</small>
+               <p style="margin:.5rem 0">${(o.description||'').slice(0,110)}...</p>
+               <a href="/opportunities/${o.id}" class="text-indigo-600 underline text-sm">Voir la fiche</a>
+             </div>`
+          );
+
+          bounds.push([lat, lng]);
+        });
+
+        if (bounds.length) map.fitBounds(bounds, { padding: [30,30] });
+      })
+      .catch(e => console.error('Erreur chargement opportunités:', e));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+
+
+</body>
+</html>
