@@ -6,6 +6,12 @@
   <title>Déclic — Trouvez votre prochaine opportunité de changement</title>
   <meta name="description" content="Bénévolat, formations, rencontres, reconversion… Découvrez des opportunités près de chez vous pour donner du sens à votre vie.">
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<script defer src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+
+
   <!-- Tailwind (CDN pour page autonome) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -123,7 +129,10 @@
             <p class="text-gray-600 mt-2">Quatre chemins pour transformer votre vie et celle des autres</p>
 
             <div class="mt-6 space-y-5">
-              <% (@journey_cards || []).each do |j| %>
+              <% order = %w[entreprendre rencontres formation benevolat] %>
+              <% (@journey_cards || [])
+                  .sort_by { |j| order.index(j[:category]) || 99 }
+                  .each do |j| %>
                 <button
                   onclick="selectJourney('<%= j[:category] %>')"
                   class="w-full text-left rounded-2xl p-6 text-white shadow hover:shadow-lg transition
@@ -144,23 +153,45 @@
           </aside>
 
           <!-- Colonne Carte -->
-          <section id="explorer" class="lg:col-span-4">
-            <h2 class="text-3xl font-extrabold">Explorez les opportunités</h2>
-            <p class="text-gray-600 mt-2">Découvrez sur la carte toutes les possibilités d’engagement près de chez vous</p>
+            <section id="explorer" class="lg:col-span-4">
+              <h2 class="text-3xl font-extrabold">Explorez les opportunités</h2>
+              <p class="text-gray-600 mt-2">Découvrez sur la carte toutes les possibilités d’engagement près de chez vous</p>
 
-            <!-- Filtres (look Replit) -->
-            <div class="mt-5 flex flex-wrap gap-2">
-              <span class="px-3 py-1 rounded-full bg-gray-200 text-gray-800 text-sm">Toutes</span>
-              <span class="px-3 py-1 rounded-full bg-rose-100 text-rose-700 text-sm">Bénévolat</span>
-              <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm">Formation</span>
-              <span class="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm">Rencontres</span>
-              <span class="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-sm">Entreprendre</span>
-            </div>
+              <% current_cat = params[:category].to_s %>
+              <% qp = request.query_parameters.symbolize_keys %>
 
-            <div class="mt-5 bg-white rounded-2xl shadow overflow-hidden">
-              <div id="map"></div>
-            </div>
-          </section>
+              <!-- Filtres -->
+              <div class="mt-5 flex flex-wrap gap-2" role="listbox" aria-label="Filtrer par catégorie">
+                <%# bouton "Toutes" %>
+                <%= link_to "Toutes",
+                    url_for(qp.merge(category: nil, anchor: 'explorer')),
+                    class: "px-3 py-1 rounded-full text-sm #{current_cat.blank? ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-800'}",
+                    role: "option",
+                    'aria-selected': (current_cat.blank?).to_s %>
+
+                <% categories = [
+                  ['benevolat',    'Bénévolat',    'bg-rose-100 text-rose-700',      'bg-rose-600 text-white'],
+                  ['formation',    'Formation',    'bg-blue-100 text-blue-700',      'bg-blue-600 text-white'],
+                  ['rencontres',   'Rencontres',   'bg-green-100 text-green-700',    'bg-green-600 text-white'],
+                  ['entreprendre', 'Entreprendre', 'bg-orange-100 text-orange-700',  'bg-orange-600 text-white']
+                ] %>
+
+                <% categories.each do |slug, label, normal_cls, active_cls| %>
+                  <% active = (current_cat == slug) %>
+                  <%= link_to label,
+                      url_for(qp.merge(category: slug, anchor: 'explorer')),
+                      class: "px-3 py-1 rounded-full text-sm #{active ? active_cls : normal_cls}",
+                      role: "option",
+                      'aria-selected': active.to_s %>
+                <% end %>
+              </div>
+
+              <!-- Carte -->
+              <div class="mt-5 bg-white rounded-2xl shadow overflow-hidden">
+                <div id="map" class="h-80 w-full"></div>
+              </div>
+            </section>
+
 
           <!-- Colonne Cartes d’opportunités -->
           <section class="lg:col-span-4">
@@ -289,81 +320,90 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-(function () {
-  // Fabrique une icône "pin" SVG encodée en data URI
-  function pinIcon(hex) {
-    const svg =
-`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">
-  <path d="M16 41s-9-12.2-9-19A9 9 0 1 1 25 22c0 6.8-9 19-9 19z"
-        fill="${hex}" stroke="white" stroke-width="2"/>
-  <circle cx="16" cy="16" r="5" fill="white"/>
-</svg>`;
-    return L.icon({
-      iconUrl: "data:image/svg+xml;utf8," + encodeURIComponent(svg),
-      iconSize:  [28, 42],
-      iconAnchor:[14, 41],
-      popupAnchor:[0, -36]
+document.addEventListener('DOMContentLoaded', function () {
+  if (!window.L) return;
+
+  const map = L.map('map').setView([46.6, 2.2], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  // --- Icones SVG par catégorie ---
+  const ICONS = {
+    benevolat:    { bg:'#ef4444', emoji:'❤️' },
+    formation:    { bg:'#3b82f6', emoji:'📘' },
+    rencontres:   { bg:'#10b981', emoji:'👥' },
+    entreprendre: { bg:'#f59e0b', emoji:'💼' }
+  };
+
+  function pinIcon(cat='formation') {
+    const {bg, emoji} = ICONS[cat] || {bg:'#6366f1', emoji:'📍'};
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="36" height="48" viewBox="0 0 36 48">
+        <defs>
+          <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,.25)"/>
+          </filter>
+        </defs>
+        <g filter="url(#s)">
+          <path d="M18 46s14-14 14-26A14 14 0 1 0 4 20c0 12 14 26 14 26z" fill="${bg}"/>
+          <circle cx="18" cy="18" r="10" fill="white" />
+          <text x="18" y="22" font-size="12" text-anchor="middle"> ${emoji} </text>
+        </g>
+      </svg>`;
+    return L.divIcon({
+      html: svg,
+      iconSize: [36, 48],
+      iconAnchor: [18, 46],
+      className: 'declic-pin'
     });
   }
 
-  function init() {
-    const mapEl = document.getElementById('map');
-    if (!mapEl || !window.L) return;
+  // --- Cluster group ---
+  const clusters = L.markerClusterGroup({
+    maxClusterRadius: 45,
+    showCoverageOnHover: false
+  }).addTo(map);
 
-    const map = L.map('map', { zoomControl: true }).setView([46.6, 2.2], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+  // Position Paris par défaut, sinon localStorage
+  const params = new URLSearchParams(location.search);
+  const lat  = params.get('lat')  || null;
+  const lng  = params.get('lng')  || null;
+  const q    = params.get('q')    || '';
+  const cat  = params.get('category') || '';
+  const radius = params.get('radius') || 25;
 
-    fetch('/api/v1/opportunities')
-      .then(r => r.json())
-      .then(items => {
-        const group = L.layerGroup().addTo(map);
-        const bounds = [];
+  const url = new URL('/api/v1/opportunities', location.origin);
+  if (lat && lng) { url.searchParams.set('lat', lat); url.searchParams.set('lng', lng); }
+  if (q)   url.searchParams.set('q', q);
+  if (cat) url.searchParams.set('category', cat);
+  url.searchParams.set('radius', radius);
 
-        const palette = {
-          benevolat:   '#ef4444', // rouge
-          formation:   '#3b82f6', // bleu
-          rencontres:  '#10b981', // vert
-          entreprendre:'#f59e0b'  // orange
-        };
-
-        items.forEach(o => {
-          const lat = parseFloat(o.latitude), lng = parseFloat(o.longitude);
-          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-
-          const color = palette[o.category] || '#6366f1';
-          const marker = L.marker([lat, lng], { icon: pinIcon(color) }).addTo(group);
-
-          marker.bindPopup(
-            `<div style="min-width:230px">
-               <div style="margin-bottom:6px">
-                 <span style="font-size:11px;padding:2px 6px;border-radius:9999px;background:#f1f5f9;color:#111;">
-                   ${String(o.category||'').replace(/^./, c => c.toUpperCase())}
-                 </span>
-               </div>
-               <strong>${o.title||''}</strong><br/>
-               <small>${o.organization||''}</small>
-               <p style="margin:.5rem 0">${(o.description||'').slice(0,110)}...</p>
-               <a href="/opportunities/${o.id}" class="text-indigo-600 underline text-sm">Voir la fiche</a>
-             </div>`
-          );
-
-          bounds.push([lat, lng]);
-        });
-
-        if (bounds.length) map.fitBounds(bounds, { padding: [30,30] });
-      })
-      .catch(e => console.error('Erreur chargement opportunités:', e));
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-})();
+  fetch(url)
+    .then(r => r.json())
+    .then(({data}) => {
+      const bounds = [];
+      data.forEach(o => {
+        if (!o.latitude || !o.longitude) return;
+        const m = L.marker([o.latitude, o.longitude], { icon: pinIcon(o.category) })
+          .bindPopup(`
+            <div class="p-1" style="min-width:220px">
+              <div class="mb-1"><span class="text-[11px] px-2 py-0.5 rounded-full bg-gray-100">${(o.category||'').charAt(0).toUpperCase()+o.category.slice(1)}</span></div>
+              <strong>${o.title}</strong><br/>
+              <small>${o.organization||''} — ${o.location||''}</small>
+              <p style="margin:6px 0">${(o.description||'').slice(0,110)}...</p>
+              <a class="text-indigo-600 underline text-sm" href="/opportunities/${o.id}">Voir la fiche</a>
+            </div>
+          `);
+        clusters.addLayer(m);
+        bounds.push([o.latitude, o.longitude]);
+      });
+      if (bounds.length) map.fitBounds(bounds, { padding: [30,30] });
+    })
+    .catch(e => console.error(e));
+});
 </script>
+
 
 
 

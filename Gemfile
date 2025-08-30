@@ -57,3 +57,9 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+gem "friendly_id", "~> 5.5"
+
+gem "geocoder", "~> 1.8"
+
+gem "pagy", "~> 9.4"

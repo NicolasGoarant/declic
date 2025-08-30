@@ -1,83 +1,210 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= @opportunity.title %> — Déclic</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style> body { font-family: 'Inter', sans-serif; } </style>
-</head>
-<body class="bg-gray-50">
-  <header class="bg-white border-b">
-    <div class="max-w-5xl mx-auto h-16 px-4 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
-          <span class="text-white font-bold text-xs">D</span>
-        </div>
-        <span class="font-semibold">Déclic</span>
-      </a>
-      <a href="/" class="text-sm text-gray-600 hover:text-gray-900">Retour</a>
-    </div>
-  </header>
+<header class="bg-white border-b">
+  <div class="max-w-6xl mx-auto h-14 px-6 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
+        <span class="text-white font-bold text-xs">D</span>
+      </div>
+      <span class="font-semibold">Déclic</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-6 text-sm">
+      <a href="/" class="hover:text-gray-900">Explorer</a>
+      <a href="/#parcours" class="hover:text-gray-900">Parcours</a>
+      <a href="/#temoignages" class="hover:text-gray-900">Témoignages</a>
+      <a href="#" class="ml-1 inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Connexion</a>
+    </nav>
+  </div>
+</header>
 
-  <main class="max-w-5xl mx-auto px-4 py-8">
-    <div class="bg-white rounded-2xl shadow border border-gray-100 p-6">
-      <% badge =
+<% content_for :head do %>
+  <meta property="og:title" content="<%= @opportunity.title %> - Déclic">
+  <meta property="og:description" content="<%= @opportunity.description.to_s.truncate(140) %>">
+  <meta property="og:type" content="website">
+<% end %>
+
+
+<main class="max-w-6xl mx-auto px-6 py-6">
+  <div class="mb-4">
+    <a href="/" class="text-sm text-gray-500 hover:text-gray-700">← Retour aux opportunités</a>
+  </div>
+
+  <div class="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+    <!-- Colonne principale -->
+    <section class="min-w-0">
+      <% img =
         case @opportunity.category
-        when 'benevolat' then 'bg-rose-100 text-rose-700'
-        when 'formation' then 'bg-blue-100 text-blue-700'
-        when 'rencontres' then 'bg-green-100 text-green-700'
-        else 'bg-orange-100 text-orange-700'
+        when 'benevolat'    then 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1600&auto=format&fit=crop'
+        when 'formation'    then 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=1600&auto=format&fit=crop'
+        when 'rencontres'   then 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=1600&auto=format&fit=crop'
+        when 'entreprendre' then 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1600&auto=format&fit=crop'
+        else 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1600&auto=format&fit=crop'
         end %>
 
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <span class="text-xs font-semibold px-2 py-1 rounded-full <%= badge %>"><%= @opportunity.category.capitalize %></span>
-          <h1 class="mt-3 text-3xl font-extrabold text-gray-900"><%= @opportunity.title %></h1>
-          <p class="text-gray-600 mt-1"><%= @opportunity.organization %> — <%= @opportunity.location %></p>
+      <div class="rounded-2xl overflow-hidden shadow">
+        <img src="<%= img %>" class="w-full h-64 sm:h-72 object-cover" alt="">
+      </div>
+
+      <div class="mt-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div class="min-w-0">
+          <% badge =
+            case @opportunity.category
+            when 'benevolat'    then 'bg-rose-100 text-rose-700'
+            when 'formation'    then 'bg-blue-100 text-blue-700'
+            when 'rencontres'   then 'bg-green-100 text-green-700'
+            else 'bg-orange-100 text-orange-700'
+            end %>
+          <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full <%= badge %>">
+            <%= @opportunity.category.to_s.capitalize.presence || "Opportunité" %>
+          </span>
+
+          <h1 class="mt-2 text-3xl sm:text-4xl font-extrabold leading-tight"><%= @opportunity.title %></h1>
+          <% if @opportunity.organization.present? %>
+            <p class="mt-1 text-gray-600"><%= @opportunity.organization %></p>
+          <% end %>
+        </div>
+
+        <% rating = (4.2 + ((@opportunity.id || 1) % 6) / 10.0).round(1) rescue 4.6 %>
+        <div class="flex items-center gap-1 text-amber-500 shrink-0">
+          <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.293z"/></svg>
+          <span class="font-semibold"><%= rating %></span>
         </div>
       </div>
 
-      <p class="mt-6 text-gray-800 leading-relaxed"><%= @opportunity.description %></p>
+      <div class="mt-4 bg-white rounded-2xl border border-gray-100 shadow p-6">
+        <p class="text-gray-800 leading-relaxed"><%= @opportunity.description %></p>
 
-      <div class="mt-6 grid sm:grid-cols-3 gap-4 text-sm">
-        <% if @opportunity.time_commitment.present? %>
-          <div class="bg-gray-50 rounded-lg p-3">⏱ <span class="text-gray-700 font-medium"><%= @opportunity.time_commitment %></span></div>
-        <% end %>
         <% if @opportunity.tags.present? %>
-          <div class="bg-gray-50 rounded-lg p-3">🏷️ <span class="text-gray-700 font-medium"><%= @opportunity.tags %></span></div>
+          <div class="mt-6">
+            <h3 class="font-semibold mb-2">Tags</h3>
+            <div class="flex flex-wrap gap-2">
+              <% @opportunity.tags.to_s.split(/[;,]/).map(&:strip).reject(&:blank?).each do |tag| %>
+                <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800"><%= tag %></span>
+              <% end %>
+            </div>
+          </div>
         <% end %>
-        <div class="bg-gray-50 rounded-lg p-3">📌 <span class="text-gray-700 font-medium"><%= @opportunity.location %></span></div>
       </div>
+    </section>
 
-      <div class="mt-8 flex flex-col sm:flex-row gap-3">
-        <% if @opportunity.contact_email.present? %>
-          <a href="mailto:<%= @opportunity.contact_email %>?subject=<%= ERB::Util.url_encode("Candidature — #{@opportunity.title}") %>"
-             class="inline-flex items-center justify-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">
-            Postuler maintenant
-          </a>
+    <!-- Aside -->
+    <aside class="min-w-0 lg:sticky lg:top-24">
+      <div class="bg-white rounded-2xl border border-gray-100 shadow p-5">
+        <h3 class="font-semibold mb-3">Informations pratiques</h3>
+        <ul class="space-y-3 text-sm text-gray-700">
+          <% if @opportunity.location.present? %>
+            <li class="flex items-start gap-2"><span>📍</span><span><%= @opportunity.location %></span></li>
+          <% end %>
+          <% if @opportunity.time_commitment.present? %>
+            <li class="flex items-start gap-2"><span>⏱</span><span><%= @opportunity.time_commitment %></span></li>
+          <% end %>
+          <% if @opportunity.effort_level.present? %>
+            <li class="flex items-start gap-2"><span>🔥</span><span>Engagement : <%= @opportunity.effort_level %></span></li>
+          <% end %>
+          <% if @opportunity.latitude && @opportunity.longitude %>
+            <li class="flex items-start gap-2"><span>🗺️</span><span>Carte ci-dessous</span></li>
+          <% end %>
+        </ul>
+
+        <% if @opportunity.contact_email.present? || @opportunity.contact_phone.present? %>
+          <h4 class="mt-5 font-semibold">Contact</h4>
+          <div class="mt-2 space-y-2 text-sm" style="overflow-wrap:anywhere">
+            <% if @opportunity.contact_email.present? %>
+              <div class="flex items-center gap-2">
+                <span>📧</span>
+                <a class="text-indigo-600 hover:underline" href="mailto:<%= @opportunity.contact_email %>"><%= @opportunity.contact_email %></a>
+              </div>
+            <% end %>
+            <% if @opportunity.contact_phone.present? %>
+              <div class="flex items-center gap-2">
+                <span>📞</span>
+                <a class="text-indigo-600 hover:underline" href="tel:<%= @opportunity.contact_phone %>"><%= @opportunity.contact_phone %></a>
+              </div>
+            <% end %>
+          </div>
         <% end %>
-        <a href="/" class="inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50">
-          Retour à l’accueil
+
+        <% mailto = @opportunity.contact_email.present? ? "mailto:#{@opportunity.contact_email}?subject=#{ERB::Util.url_encode("Candidature — #{@opportunity.title}")}" : nil %>
+        <% telto  = @opportunity.contact_phone.present? ? "tel:#{@opportunity.contact_phone}" : nil %>
+        <a href="<%= mailto || telto || '/' %>"
+           class="mt-5 inline-flex w-full items-center justify-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">
+          Participer
         </a>
-      </div>
-    </div>
-  </main>
 
-  <footer class="bg-gray-950 text-white py-10 mt-10">
-    <div class="max-w-5xl mx-auto px-4">
-      <div class="flex items-center gap-2 mb-2">
-        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
-          <span class="text-white font-bold text-[10px]">D</span>
-        </div>
-        <span class="font-semibold">Déclic</span>
+        <% if @opportunity.latitude && @opportunity.longitude %>
+          <div class="mt-5 rounded-lg overflow-hidden border">
+            <div id="mini-map" class="h-48 w-full"></div>
+          </div>
+        <% end %>
       </div>
-      <p class="text-gray-400 text-sm">Trouvez votre voie vers l’engagement et donnez du sens à votre vie.</p>
-      <p class="text-gray-500 text-xs mt-2">© <%= Time.current.year %> Déclic. Tous droits réservés.</p>
+    </aside>
+  </div>
+</main>
+
+<footer class="bg-gray-900 text-white py-10 mt-10">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="flex items-center gap-2 mb-2">
+      <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
+        <span class="text-white font-bold text-[10px]">D</span>
+      </div>
+      <span class="font-semibold">Déclic</span>
     </div>
-  </footer>
-</body>
-</html>
+    <p class="text-gray-400 text-sm">Trouvez votre voie vers l’engagement et donnez du sens à votre vie.</p>
+    <p class="text-gray-500 text-xs mt-2">© <%= Time.current.year %> Déclic. Tous droits réservés.</p>
+  </div>
+</footer>
+
+<% content_for :scripts do %>
+<script>
+(function () {
+  var LAT = <%= @opportunity.latitude ? @opportunity.latitude.to_f : 'null' %>;
+  var LNG = <%= @opportunity.longitude ? @opportunity.longitude.to_f : 'null' %>;
+
+  function ready(fn){
+    if (document.readyState === 'complete' || document.readyState === 'interactive') fn();
+    else document.addEventListener('DOMContentLoaded', fn);
+  }
+  function ensureLeafletThen(fn){
+    if (window.L) return fn();
+    window.addEventListener('load', fn, { once:true });
+  }
+  function waitForVisibleHeight(el, min = 80, tries = 30){
+    return new Promise(function(resolve){
+      (function tick(left){
+        var h = el ? el.getBoundingClientRect().height : 0;
+        if (h >= min || left <= 0) return resolve(h);
+        setTimeout(function(){ tick(left-1); }, 50);
+      })(tries);
+    });
+  }
+
+  async function initMap(){
+    if (!LAT || !LNG) return;
+    var el = document.getElementById('mini-map');
+    if (!el || el.dataset.mapReady) return;
+
+    await waitForVisibleHeight(el);
+    if (!window.L) return;
+
+    var map = L.map(el, { zoomControl:true, dragging:true, scrollWheelZoom:false })
+               .setView([LAT, LNG], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    L.marker([LAT, LNG]).addTo(map);
+    setTimeout(function(){ map.invalidateSize(); }, 100);
+    el.dataset.mapReady = '1';
+  }
+
+  function boot(){ ensureLeafletThen(initMap); }
+  document.addEventListener('turbo:load', boot);
+  document.addEventListener('turbo:render', boot);
+  ready(boot);
+  window.addEventListener('load', boot);
+})();
+</script>
+<% end %>
+
+
+
+
+
+
