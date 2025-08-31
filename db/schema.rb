@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_28_192621) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_31_063343) do
   create_table "friendly_id_slugs", force: :cascade do |t|
     t.string "slug", null: false
     t.integer "sluggable_id", null: false
@@ -39,7 +39,20 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_28_192621) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "slug"
+    t.string "source"
+    t.string "source_url"
+    t.string "external_id"
+    t.string "address"
+    t.string "city"
+    t.string "postcode"
+    t.string "website"
+    t.datetime "starts_at"
+    t.datetime "ends_at"
+    t.datetime "published_at"
+    t.datetime "expires_at"
+    t.text "raw_payload"
     t.index ["slug"], name: "index_opportunities_on_slug", unique: true
+    t.index ["source", "external_id"], name: "index_opportunities_on_source_and_external_id", unique: true
   end
 
   create_table "testimonials", force: :cascade do |t|

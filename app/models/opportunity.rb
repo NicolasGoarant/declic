@@ -1,58 +1,64 @@
 # app/models/opportunity.rb
 class Opportunity < ApplicationRecord
-  # -------- FriendlyId (URLs lisibles) --------
+  # Stockage JSON (SQLite/Postgres) – optionnel
+   serialize :raw_payload, coder: JSON
+
   extend FriendlyId
   friendly_id :title, use: %i[slugged finders]
-
   def should_generate_new_friendly_id?
     slug.blank? || will_save_change_to_title?
   end
-
-  # -------- Geocoder (requêtes par rayon) --------
-  # Déclare les colonnes lat/lng et active les helpers Geocoder
-  include Geocoder::Model::ActiveRecord
-  reverse_geocoded_by :latitude, :longitude
-  # (Si tu veux calculer l’adresse à partir lat/lng : ajoute un after_validation :reverse_geocode)
-
-  # -------- Constantes / validations --------
-  CATEGORIES = %w[benevolat formation rencontres entreprendre].freeze
-
-  validates :title, presence: true, length: { maximum: 180 }
-  validates :category, inclusion: { in: CATEGORIES }, allow_blank: true
-  validates :latitude, numericality: true, allow_nil: true
-  validates :longitude, numericality: true, allow_nil: true
-
-  # -------- Scopes de filtre --------
+  
+    # Filtre pratique pour les enregistrements publiés
   scope :active, -> { where(is_active: true) }
 
-  scope :with_category, ->(cat) {
-    cat.present? ? where(category: cat) : all
-  }
+  # ---- Catégories ----
+  CATEGORIES = %w[benevolat formation rencontres entreprendre].freeze
 
-  # Recherche simple et DB-agnostique (SQLite / PG)
-  scope :search_text, ->(q) {
-    next all unless q.present?
-    term = "%#{sanitize_sql_like(q.to_s.downcase)}%"
-    where(
-      "LOWER(title) LIKE :t OR LOWER(description) LIKE :t OR LOWER(organization) LIKE :t OR LOWER(location) LIKE :t",
-      t: term
-    )
-  }
+  # ---- Géocodage (adresse -> lat/lng) ----
+  reverse_geocoded_by :latitude, :longitude
+  before_validation :geocode_if_needed
 
-  # Requête par rayon (km) autour d’un point (lat, lng)
-  scope :near_ll, ->(lat, lng, radius_km = 25) {
-    if lat.present? && lng.present?
-      near([lat.to_f, lng.to_f], radius_km.to_f, units: :km)
-    else
-      all
+  # ---- Anti-spam (honeypot) ----
+  attr_accessor :honeypot_url
+  validate :honeypot_must_be_blank
+
+  # ---- Validations ----
+  validates :title,       presence: true, length: { maximum: 160 }
+  validates :description, presence: true
+  validates :category,    presence: true, inclusion: { in: CATEGORIES }
+  validates :website,        allow_blank: true, format: URI::DEFAULT_PARSER.make_regexp(%w[http https])
+  validates :contact_email,  allow_blank: true, format: URI::MailTo::EMAIL_REGEXP
+
+  # ---- Défauts ----
+  before_validation :apply_defaults
+
+  private
+
+  def apply_defaults
+    self.source    ||= 'user'
+    self.is_active = false if is_active.nil?
+  end
+
+  def geocode_if_needed
+    return unless latitude.blank? || longitude.blank?
+    q = [address, postcode, city].compact.join(', ').strip
+    return if q.blank?
+
+    if (res = Geocoder.search(q).first)
+      self.latitude  ||= res.latitude
+      self.longitude ||= res.longitude
+      self.location  ||= res.city.presence || city
     end
-  }
+  end
 
-  # -------- Helpers --------
-  # Retourne un tableau de tags à partir d'une chaîne "a, b; c"
-  def tag_list
-    tags.to_s.split(/[;,]/).map { _1.strip }.reject(&:blank?)
+  def honeypot_must_be_blank
+    errors.add(:base, 'Spam détecté') if honeypot_url.present?
   end
 end
+
+
+
+
 
 

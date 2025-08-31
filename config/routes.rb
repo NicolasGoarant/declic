@@ -1,11 +1,14 @@
-# config/routes.rb
 Rails.application.routes.draw do
+  # Page d’accueil
   root "pages#home"
-  resources :opportunities, only: [:show, :index]
 
+  # Opportunités (pages HTML)
+  resources :opportunities, only: %i[index show new create]
+
+  # API JSON (utilisée par la carte et les marqueurs)
   namespace :api do
     namespace :v1 do
-      resources :opportunities, only: [:index, :show]
+      resources :opportunities, only: %i[index show]
     end
   end
 end

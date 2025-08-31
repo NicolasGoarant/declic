@@ -2,101 +2,62 @@
 class Api::V1::OpportunitiesController < ApplicationController
   protect_from_forgery with: :null_session
 
-  rescue_from ActiveRecord::RecordNotFound do
-    render json: { error: "Not found" }, status: :not_found
-  end
-
-  # GET /api/v1/opportunities
-  # Params acceptés :
-  #   q=texte
-  #   category=benevolat|formation|rencontres|entreprendre
-  #   lat=..&lng=..&radius=25   (km)
-  #   page=1&per=24
-  #   order=recent|near        (near priorise lat/lng si fournis)
   def index
-    lat    = params[:lat]
-    lng    = params[:lng]
-    radius = (params[:radius].presence || 25).to_f
-    q      = params[:q].to_s.strip.presence
-    cat    = params[:category].to_s.strip.presence
+    scope = Opportunity.where(is_active: true)
 
-    page = params[:page].to_i
-    page = 1 if page < 1
-    per  = params[:per].to_i
-    per  = 24 if per <= 0
-    per  = 100 if per > 100 # garde une limite raisonnable
-
-    scope = Opportunity.active
-                       .with_category(cat)
-                       .search_text(q)
-                       .near_ll(lat, lng, radius)
-
-    # Tri : par défaut les plus “récents”
-    if params[:order] == 'near' && lat.present? && lng.present?
-      # Geocoder::Model::ActiveRecord::near renvoie déjà par distance
-      # donc on ne touche pas à l'ordre.
-    else
-      scope = scope.order(updated_at: :desc)
+    # Filtre catégorie (ex: ?category=benevolat ou ?category=benevolat,formation)
+    if params[:category].present?
+      cats = Array(params[:category])
+               .flat_map { |c| c.to_s.split(',') }
+               .map(&:strip).reject(&:blank?)
+      scope = scope.where(category: cats) if cats.any?
     end
 
-    total  = scope.count
-    offset = (page - 1) * per
-    records = scope.limit(per).offset(offset)
-
-    # Bounds (pour fitBounds côté Leaflet)
-    lats = records.map(&:latitude).compact
-    lngs = records.map(&:longitude).compact
-    bounds = if lats.any? && lngs.any?
-      { min_lat: lats.min.to_f, max_lat: lats.max.to_f, min_lng: lngs.min.to_f, max_lng: lngs.max.to_f }
-    else
-      nil
-    end
-
-    render json: {
-      data: records.map { |o| serialize_opportunity(o) },
-      meta: {
-        page: page,
-        per: per,
-        total: total,
-        total_pages: (total.to_f / per).ceil,
-        q: q, category: cat,
-        lat: lat&.to_f, lng: lng&.to_f, radius_km: radius,
-        bounds: bounds
-      }
-    }
-  end
-
-  # GET /api/v1/opportunities/:id
-  # Compatible FriendlyId si activé
-  def show
-    record =
-      if Opportunity.respond_to?(:friendly)
-        Opportunity.friendly.find(params[:id])
-      else
-        Opportunity.find(params[:id])
+    # Filtre géo : bbox=minLat,minLng,maxLat,maxLng
+    if params[:bbox].present?
+      a = params[:bbox].split(',').map(&:to_f)
+      if a.size == 4
+        min_lat, min_lng, max_lat, max_lng = a
+        scope = scope.where(latitude:  min_lat..max_lat,
+                            longitude: min_lng..max_lng)
       end
 
-    render json: { data: serialize_opportunity(record) }
-  end
+    # OU rayon simple (approx) : lat,lng,radius (km)
+    elsif params[:lat].present? && params[:lng].present? && params[:radius].present?
+      lat  = params[:lat].to_f
+      lng  = params[:lng].to_f
+      r_km = params[:radius].to_f
+      dlat = r_km / 111.0
+      dlng = r_km / (Math.cos(lat * Math::PI / 180.0) * 111.0)
+      scope = scope.where(latitude:  (lat - dlat)..(lat + dlat),
+                          longitude: (lng - dlng)..(lng + dlng))
+    end
 
-  private
+    limit = (params[:limit].presence || 1000).to_i.clamp(1, 2000)
 
-  def serialize_opportunity(o)
-    {
-      id:           o.id,
-      title:        o.title,
-      description:  o.description,
-      category:     o.category,
-      organization: o.organization,
-      location:     o.location,
-      time_commitment: o.time_commitment,
-      effort_level:    o.effort_level,
-      tags:            o.respond_to?(:tag_list) ? o.tag_list : o.tags,
-      latitude:     o.latitude&.to_f,
-      longitude:    o.longitude&.to_f,
-      updated_at:   o.updated_at
+    rows = scope.limit(limit).select(
+      :id, :title, :description, :category, :organization,
+      :location, :time_commitment, :latitude, :longitude
+    ).map { |o|
+      {
+        id: o.id,
+        title: o.title,
+        description: o.description,
+        category: o.category,
+        organization: o.organization,
+        location: o.location,
+        time_commitment: o.time_commitment,
+        latitude:  o.latitude&.to_f,
+        longitude: o.longitude&.to_f
+      }
     }
+
+    render json: rows
+  rescue => e
+    Rails.logger.error("[/api/v1/opportunities] #{e.class}: #{e.message}")
+    render json: { error: e.message }, status: :internal_server_error
   end
 end
+
 
 

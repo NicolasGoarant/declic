@@ -1,0 +1,89 @@
+<!-- Liste des opportunités -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <a href="<%= root_path %>" class="text-sm text-gray-500 hover:text-gray-700">← Retour à l’accueil</a>
+      <h1 class="mt-1 text-3xl font-extrabold">Toutes les opportunités</h1>
+      <% if @q.present? || @category.present? %>
+        <p class="text-sm text-gray-600 mt-1">
+          Filtre :
+          <% if @category.present? %>
+            <span class="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-800 mr-2"><%= @category.capitalize %></span>
+          <% end %>
+          <% if @q.present? %>
+            « <%= @q %> »
+          <% end %>
+          <%= link_to "Effacer", opportunities_path, class: "text-indigo-600 underline ml-2" %>
+        </p>
+      <% end %>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <%= form_with url: opportunities_path, method: :get, local: true, class: "hidden sm:block" do |f| %>
+        <div class="flex bg-white rounded-lg border overflow-hidden">
+          <%= f.text_field :q, value: params[:q], placeholder: "Rechercher…", class: "px-3 py-2 w-56 focus:outline-none" %>
+          <button class="px-3 py-2 bg-gray-100 hover:bg-gray-200">Rechercher</button>
+        </div>
+      <% end %>
+      <%= link_to "Proposer une opportunité", new_opportunity_path,
+            class: "inline-flex items-center gap-2 rounded-lg bg-indigo-600 text-white px-4 py-2 font-semibold hover:bg-indigo-700" %>
+    </div>
+  </div>
+
+  <!-- Filtres catégories -->
+  <div class="mt-6 flex flex-wrap gap-2">
+    <% cats = [
+      ["Toutes", nil, "bg-gray-200 text-gray-800"],
+      ["Bénévolat", "benevolat", "bg-rose-100 text-rose-700"],
+      ["Formation", "formation", "bg-blue-100 text-blue-700"],
+      ["Rencontres", "rencontres", "bg-green-100 text-green-700"],
+      ["Entreprendre", "entreprendre", "bg-orange-100 text-orange-700"]
+    ] %>
+
+    <% cats.each do |label, value, klass| %>
+      <% active = (params[:category].presence == value) || (value.nil? && params[:category].blank?) %>
+      <%= link_to label,
+                  opportunities_path(request.query_parameters.merge(category: value, page: nil)),
+                  class: "text-sm font-semibold px-3 py-1 rounded-full #{klass} #{'ring-2 ring-offset-2 ring-indigo-500' if active}" %>
+    <% end %>
+  </div>
+
+  <!-- Résultats -->
+  <% if @opportunities.blank? %>
+    <div class="mt-8 rounded-lg border border-gray-200 p-6 text-gray-600">
+      Aucune opportunité ne correspond à votre recherche.
+      <%= link_to "Proposer une opportunité", new_opportunity_path, class: "text-indigo-600 underline ml-1" %>.
+    </div>
+  <% else %>
+    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <% @opportunities.each do |o| %>
+        <article class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md transition">
+          <% badge = case o.category
+            when 'benevolat'   then 'bg-rose-100 text-rose-700'
+            when 'formation'   then 'bg-blue-100 text-blue-700'
+            when 'rencontres'  then 'bg-green-100 text-green-700'
+            else 'bg-orange-100 text-orange-700'
+          end %>
+
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold px-2 py-1 rounded-full <%= badge %>">
+              <%= o.category.to_s.capitalize %>
+            </span>
+          </div>
+
+          <h2 class="mt-2 font-semibold text-gray-900 line-clamp-2"><%= o.title %></h2>
+          <% if o.organization.present? %>
+            <p class="text-sm text-gray-600"><%= o.organization %></p>
+          <% end %>
+          <p class="text-sm text-gray-700 mt-2 line-clamp-3"><%= o.description.to_s %></p>
+
+          <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
+            <span>📍 <%= o.location.presence || [o.city, o.postcode].compact.join(' ') %></span>
+            <%= link_to "Voir", opportunity_path(o),
+                  class: "inline-flex items-center px-2 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700" %>
+          </div>
+        </article>
+      <% end %>
+    </div>
+  <% end %>
+</div>

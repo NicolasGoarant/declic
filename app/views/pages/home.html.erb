@@ -6,25 +6,14 @@
   <title>Déclic — Trouvez votre prochaine opportunité de changement</title>
   <meta name="description" content="Bénévolat, formations, rencontres, reconversion… Découvrez des opportunités près de chez vous pour donner du sens à votre vie.">
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
-<script defer src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-
-
-
-  <!-- Tailwind (CDN pour page autonome) -->
+  <!-- Tailwind (CDN pour maquette) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] },
-          colors: {
-            brand: {
-              50:'#eef2ff', 100:'#e0e7ff', 200:'#c7d2fe',
-              500:'#6366f1', 600:'#4f46e5', 700:'#4338ca'
-            }
-          }
+          fontFamily: { sans: ['Inter','ui-sans-serif','system-ui'] },
+          colors: { brand: { 500:'#6366f1', 600:'#4f46e5', 700:'#4338ca' } }
         }
       }
     }
@@ -38,374 +27,432 @@
 
   <style>
     body { font-family: 'Inter', sans-serif; }
-    #map { height: 420px; }
-    /* neutralise tout mode multi-colonnes qui casse la mise en page */
-    html, body { columns: auto !important; column-count: 1 !important; column-width: auto !important; }
-    body > * { break-inside: avoid; }
+    #map { height: 340px; } @media (min-width:1024px){ #map{ height:420px; } }
+
+    /* Sécurité mobile / drawer */
+    html, body { overflow-x: hidden; }
+    :root { --safe-top: env(safe-area-inset-top, 0px); }
+    .hero-pad { padding-top: calc(64px + var(--safe-top)); }
+
+    /* Mini pins HTML/emoji */
+    .picon{
+      width:26px;height:26px;border-radius:9999px;border:2px solid #fff;
+      display:grid;place-items:center;color:#fff;font-size:14px;
+      box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:var(--c, #6366f1);
+    }
+    .picon::after{
+      content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+      border:6px solid transparent;border-top-color:var(--c, #6366f1);
+    }
+
+    /* Chips sélectionnées */
+    .chip{ transition: .15s; }
+    .chip.is-active{ background:#111827; color:#fff; }
+
+    /* Drawer mobile : aligné à droite, hauteur auto */
+    #mobile-menu[aria-hidden="true"] { display:none!important; }
   </style>
 </head>
 
 <body class="bg-gray-50 text-gray-900">
-  <div id="app" class="flex flex-col min-h-screen">
+<div class="flex flex-col min-h-screen">
 
-    <!-- ====== Header ====== -->
-    <header class="bg-white/95 backdrop-blur border-b border-gray-100">
-      <div class="max-w-7xl mx-auto h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        <a href="/" class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
-            <span class="text-white font-bold text-xs">D</span>
-          </div>
-          <span class="font-semibold">Déclic</span>
-        </a>
-        <nav class="hidden md:flex items-center gap-6 text-sm">
-          <a href="#explorer" class="hover:text-gray-950">Explorer</a>
-          <a href="#parcours" class="hover:text-gray-950">Parcours</a>
-          <a href="#temoignages" class="hover:text-gray-950">Témoignages</a>
-          <a href="#communaute" class="hover:text-gray-950">Communauté</a>
-          <a href="#explorer" class="ml-2 inline-flex items-center px-3 py-2 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700">
-            Connexion
-          </a>
-        </nav>
-      </div>
-    </header>
+  <!-- ================= Header ================= -->
+  <header class="fixed top-0 inset-x-0 z-[70] bg-white/90 backdrop-blur border-b border-gray-100">
+    <div class="mx-auto max-w-7xl h-14 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2">
+        <span class="inline-grid place-items-center w-7 h-7 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 text-white text-[11px] font-bold">D</span>
+        <span class="font-semibold text-gray-900">Déclic</span>
+      </a>
 
-    <!-- ====== Hero ====== -->
-<section class="relative">
-  <!-- image de fond (plus parlante pour Déclic) -->
-  <div class="absolute inset-0">
-    <img
-      src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1920&auto=format&fit=crop"
-      alt="Bénévoles en action"
-      class="w-full h-full object-cover">
-  </div>
-  <!-- overlay dégradé -->
-  <div class="absolute inset-0 bg-gradient-to-r from-fuchsia-800/70 via-purple-700/65 to-emerald-600/60 mix-blend-multiply"></div>
+      <nav class="hidden md:flex items-center gap-6 text-sm">
+        <a href="#explorer" class="hover:text-gray-900">Explorer</a>
+        <a href="#parcours" class="hover:text-gray-900">Parcours</a>
+        <a href="#temoignages" class="hover:text-gray-900">Témoignages</a>
+        <a href="/opportunities/new" class="ml-2 inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700">Proposer</a>
+      </nav>
 
-  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
-    <div class="max-w-3xl">
-      <h1 class="text-white text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">
-        Trouvez votre prochaine<br/>
-        <span class="text-yellow-300">opportunité de changement</span>
-      </h1>
-      <p class="mt-6 text-lg sm:text-xl text-white/90 max-w-2xl">
-        Bénévolat, formations, rencontres, reconversion… Découvrez des milliers d’opportunités près de chez vous pour donner du sens à votre vie et créer un impact positif.
-      </p>
-
-      <!-- CTA + recherche -->
-      <div class="mt-8 flex flex-col sm:flex-row gap-3">
-        <a href="#explorer" class="inline-flex items-center justify-center px-5 py-3 rounded-lg bg-white text-gray-900 font-semibold hover:bg-gray-50">
-          <span class="mr-2">🗺️</span> Explorer la carte
-        </a>
-        <form action="#explorer" class="flex-1">
-          <div class="flex items-center bg-white/95 rounded-lg overflow-hidden shadow-sm">
-            <span class="pl-3">
-              <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"/></svg>
-            </span>
-            <input type="text" placeholder="Ville, thème, organisation…" class="w-full px-3 py-3 bg-transparent focus:outline-none">
-            <button class="px-4 py-3 bg-brand-600 text-white font-medium hover:bg-brand-700">Rechercher</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- bandeau avantages : tracking normal -->
-      <div class="mt-8">
-        <ul class="flex flex-col sm:flex-row gap-3 sm:gap-6 text-white/95 text-sm tracking-normal">
-          <li class="flex items-center"><span class="mr-2">✅</span><span><strong>15 000+</strong> opportunités <span class="tracking-normal">référencées</span></span></li>
-          <li class="flex items-center"><span class="mr-2">🗺️</span><span><strong>Toute la France</strong> <span class="tracking-normal">couverte</span></span></li>
-          <li class="flex items-center"><span class="mr-2">💜</span><span><strong>Gratuit</strong> et <span class="tracking-normal">accessible à tous</span></span></li>
-        </ul>
-      </div>
+      <button id="btn-open-menu"
+              class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+              aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-menu">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
     </div>
-  </div>
-</section>
+  </header>
 
-    <!-- ====== Grille de contenu ====== -->
-    <main class="flex-1">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <!-- Colonne Parcours -->
-          <aside class="lg:col-span-4">
-            <h2 class="text-3xl font-extrabold">Choisissez votre parcours</h2>
-            <p class="text-gray-600 mt-2">Quatre chemins pour transformer votre vie et celle des autres</p>
+  <!-- ================= Drawer mobile (compact, aligné à droite) ================= -->
+  <div id="mobile-menu" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true" aria-hidden="true">
+    <div id="mobile-overlay" data-close class="absolute inset-0 bg-black/40 opacity-0 transition-opacity duration-200"></div>
 
-            <div class="mt-6 space-y-5">
-              <% order = %w[entreprendre rencontres formation benevolat] %>
-              <% (@journey_cards || [])
-                  .sort_by { |j| order.index(j[:category]) || 99 }
-                  .each do |j| %>
-                <button
-                  onclick="selectJourney('<%= j[:category] %>')"
-                  class="w-full text-left rounded-2xl p-6 text-white shadow hover:shadow-lg transition
-                         <%= j[:color] %>">
-                  <div class="flex items-start gap-4">
-                    <div class="w-10 h-10 rounded-full bg-white/20 grid place-content-center">
-                      <!-- petite icône symbolique -->
-                      <span class="text-xl">❤︎</span>
-                    </div>
-                    <div>
-                      <h3 class="text-xl font-bold"><%= j[:title] %></h3>
-                      <p class="text-white/90 text-sm mt-1"><%= j[:description] %></p>
-                    </div>
-                  </div>
-                </button>
-              <% end %>
-            </div>
-          </aside>
-
-          <!-- Colonne Carte -->
-            <section id="explorer" class="lg:col-span-4">
-              <h2 class="text-3xl font-extrabold">Explorez les opportunités</h2>
-              <p class="text-gray-600 mt-2">Découvrez sur la carte toutes les possibilités d’engagement près de chez vous</p>
-
-              <% current_cat = params[:category].to_s %>
-              <% qp = request.query_parameters.symbolize_keys %>
-
-              <!-- Filtres -->
-              <div class="mt-5 flex flex-wrap gap-2" role="listbox" aria-label="Filtrer par catégorie">
-                <%# bouton "Toutes" %>
-                <%= link_to "Toutes",
-                    url_for(qp.merge(category: nil, anchor: 'explorer')),
-                    class: "px-3 py-1 rounded-full text-sm #{current_cat.blank? ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-800'}",
-                    role: "option",
-                    'aria-selected': (current_cat.blank?).to_s %>
-
-                <% categories = [
-                  ['benevolat',    'Bénévolat',    'bg-rose-100 text-rose-700',      'bg-rose-600 text-white'],
-                  ['formation',    'Formation',    'bg-blue-100 text-blue-700',      'bg-blue-600 text-white'],
-                  ['rencontres',   'Rencontres',   'bg-green-100 text-green-700',    'bg-green-600 text-white'],
-                  ['entreprendre', 'Entreprendre', 'bg-orange-100 text-orange-700',  'bg-orange-600 text-white']
-                ] %>
-
-                <% categories.each do |slug, label, normal_cls, active_cls| %>
-                  <% active = (current_cat == slug) %>
-                  <%= link_to label,
-                      url_for(qp.merge(category: slug, anchor: 'explorer')),
-                      class: "px-3 py-1 rounded-full text-sm #{active ? active_cls : normal_cls}",
-                      role: "option",
-                      'aria-selected': active.to_s %>
-                <% end %>
-              </div>
-
-              <!-- Carte -->
-              <div class="mt-5 bg-white rounded-2xl shadow overflow-hidden">
-                <div id="map" class="h-80 w-full"></div>
-              </div>
-            </section>
-
-
-          <!-- Colonne Cartes d’opportunités -->
-          <section class="lg:col-span-4">
-            <h2 class="text-3xl font-extrabold">Opportunités disponibles</h2>
-            <p class="text-gray-600 mt-2">Découvrez les dernières missions et événements près de chez vous</p>
-
-            <div class="mt-6 space-y-4">
-              <% Array(@opportunities).first(6).each do |o| %>
-                <article class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition">
-                  <div class="flex items-center gap-2 mb-2">
-                    <% badge =
-                      case o.category
-                      when 'benevolat' then 'bg-rose-100 text-rose-700'
-                      when 'formation' then 'bg-blue-100 text-blue-700'
-                      when 'rencontres' then 'bg-green-100 text-green-700'
-                      else 'bg-orange-100 text-orange-700'
-                      end %>
-                    <span class="text-xs font-semibold px-2 py-1 rounded-full <%= badge %>">
-                      <%= o.category.to_s.capitalize %>
-                    </span>
-                  </div>
-                  <h3 class="font-semibold text-gray-900"><%= o.title %></h3>
-                  <p class="text-sm text-gray-600"><%= o.organization %></p>
-                  <p class="text-sm text-gray-700 mt-2"><%= o.description.to_s.truncate(110) %></p>
-                  <div class="mt-3 flex items-center justify-between">
-                    <div class="flex items-center gap-3 text-xs text-gray-500">
-                      <span>📍 <%= o.location %></span>
-                      <% if o.time_commitment.present? %>
-                        <span>⏱ <%= o.time_commitment %></span>
-                      <% end %>
-                    </div>
-                    <a href="/opportunities/<%= o.id %>" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-brand-600 text-white text-xs font-medium hover:bg-brand-700">
-                      En savoir plus
-                    </a>
-                  </div>
-                </article>
-              <% end %>
-            </div>
-          </section>
+    <aside id="mobile-panel"
+           class="absolute right-0 top-14 w-72 sm:w-80 max-w-[80%] h-auto max-h-[calc(100vh-56px)] overflow-auto
+                  bg-white shadow-xl border-l border-gray-100 rounded-bl-2xl
+                  transform translate-x-full transition-transform duration-200">
+      <div class="px-4 py-3 flex items-center justify-between border-b border-gray-100">
+        <div class="flex items-center gap-2">
+          <span class="inline-grid place-items-center w-7 h-7 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 text-white text-[11px] font-bold">D</span>
+          <span class="font-semibold text-gray-900">Déclic</span>
         </div>
+        <button id="btn-close-menu"
+                class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+                aria-label="Fermer le menu">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
       </div>
-    </main>
-
-    <!-- ====== Témoignages ====== -->
-<section id="temoignages" class="bg-gray-50 py-16">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-10">
-      <h2 class="text-3xl font-extrabold">Ils ont changé leur vie</h2>
-      <p class="text-gray-600 mt-2">Histoires vraies de personnes qui ont trouvé leur Déclic</p>
-    </div>
-
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <% Array(@testimonials).first(6).each_with_index do |t, idx| %>
-        <article class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <img src="<%= t.image_url %>" alt="<%= t.name %>" class="w-12 h-12 rounded-full object-cover">
-            <div>
-              <h3 class="font-semibold"><%= t.name %></h3>
-              <p class="text-xs text-gray-500"><%= t.role %> — <%= t.age %> ans</p>
-              <div class="flex gap-0.5 mt-1 text-yellow-400">
-                <span>★</span><span>★</span><span>★</span><span>★</span><span class="text-gray-300">★</span>
-              </div>
-            </div>
-          </div>
-
-          <% short = t.story.to_s.truncate(140) %>
-          <% full  = t.story.to_s %>
-
-          <p class="text-gray-700 text-sm leading-relaxed">
-            <span id="t-short-<%= idx %>"><%= short %></span>
-            <% if full.length > short.length %>
-              <span id="t-full-<%= idx %>" class="hidden"><%= full %></span>
-            <% end %>
-          </p>
-
-          <% if full.length > short.length %>
-            <button
-              data-toggle="<%= idx %>"
-              class="mt-3 text-indigo-600 text-sm font-medium hover:underline">
-              Lire plus
-            </button>
-          <% end %>
-        </article>
-      <% end %>
-    </div>
+      <nav class="p-4 space-y-1 text-sm">
+        <a href="#explorer"    data-close class="block px-3 py-2 rounded-lg hover:bg-gray-50">Explorer</a>
+        <a href="#parcours"    data-close class="block px-3 py-2 rounded-lg hover:bg-gray-50">Parcours</a>
+        <a href="#temoignages" data-close class="block px-3 py-2 rounded-lg hover:bg-gray-50">Témoignages</a>
+        <a href="/opportunities/new"
+           class="mt-2 block px-3 py-2 rounded-lg bg-indigo-600 text-white font-medium text-center hover:bg-indigo-700">
+          Proposer une opportunité
+        </a>
+      </nav>
+    </aside>
   </div>
-</section>
 
-<script>
-  // Petit toggle "Lire plus / Lire moins"
-  document.addEventListener('click', function(e){
-    const btn = e.target.closest('button[data-toggle]');
-    if(!btn) return;
-    const id = btn.getAttribute('data-toggle');
-    const s  = document.getElementById('t-short-'+id);
-    const f  = document.getElementById('t-full-'+id);
-    if (!s || !f) return;
-    const expanded = !f.classList.contains('hidden');
-    if (expanded) {
-      f.classList.add('hidden'); s.classList.remove('hidden'); btn.textContent = 'Lire plus';
-    } else {
-      f.classList.remove('hidden'); s.classList.add('hidden'); btn.textContent = 'Lire moins';
-    }
-  });
-</script>
+  <!-- ================= Hero ================= -->
+  <section class="relative hero-pad">
+    <div class="absolute inset-0">
+      <img
+        src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1920&auto=format&fit=crop"
+        alt="Enfants souriants, esprit solidaire"
+        class="w-full h-full object-cover">
+    </div>
+    <div class="absolute inset-0 bg-gradient-to-r from-fuchsia-800/70 via-purple-700/65 to-emerald-600/60 mix-blend-multiply"></div>
 
-
-    <!-- ====== Footer ====== -->
-    <footer class="bg-gray-950 text-white py-10 mt-6">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center gap-2 mb-3">
-          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
-            <span class="text-white font-bold text-[10px]">D</span>
-          </div>
-          <span class="font-semibold">Déclic</span>
-        </div>
-        <p class="text-gray-300 max-w-md">
-          Trouvez votre voie vers l’engagement et donnez du sens à votre vie.
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <div class="max-w-3xl">
+        <h1 class="text-white text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">
+          Trouvez votre prochaine<br/><span class="text-yellow-300">opportunité de changement</span>
+        </h1>
+        <p class="mt-4 text-base sm:text-lg text-white/90 max-w-2xl">
+          Bénévolat, formations, rencontres, reconversion… Découvrez des milliers d’opportunités près de chez vous pour donner du sens à votre vie et créer un impact positif.
         </p>
-        <p class="text-gray-400 mt-3 text-sm">© <%= Time.current.year %> Déclic. Tous droits réservés.</p>
+
+        <div class="mt-6 flex flex-col sm:flex-row gap-3">
+          <a href="#explorer" class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-white text-gray-900 font-semibold hover:bg-gray-50">
+            <span class="mr-2">🗺️</span> Explorer la carte
+          </a>
+          <form action="#explorer" class="flex-1">
+            <div class="flex items-center bg-white/95 rounded-lg overflow-hidden shadow-sm">
+              <span class="pl-3">
+                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"/></svg>
+              </span>
+              <input type="text" placeholder="Ville, thème, organisation…" class="w-full px-3 py-2.5 bg-transparent focus:outline-none">
+              <button class="px-4 py-2.5 bg-brand-600 text-white font-medium hover:bg-brand-700">Rechercher</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="mt-4">
+          <ul class="flex flex-col sm:flex-row gap-3 sm:gap-6 text-white/95 text-sm tracking-normal">
+            <li class="flex items-center"><span class="mr-2">✅</span><span><strong>15 000+</strong> opportunités <span class="tracking-normal">référencées</span></span></li>
+            <li class="flex items-center"><span class="mr-2">🗺️</span><span><strong>Toute la France</strong> <span class="tracking-normal">couverte</span></span></li>
+            <li class="flex items-center"><span class="mr-2">💜</span><span><strong>Gratuit</strong> et <span class="tracking-normal">accessible à tous</span></span></li>
+          </ul>
+        </div>
       </div>
-    </footer>
-  </div>
+    </div>
+  </section>
+
+  <!-- ================= Contenu ================= -->
+  <main class="flex-1">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Parcours -->
+        <aside id="parcours" class="lg:col-span-4">
+          <h2 class="text-2xl sm:text-3xl font-extrabold">Choisissez votre parcours</h2>
+          <p class="text-gray-600 mt-2">Quatre chemins pour transformer votre vie et celle des autres</p>
+
+          <div class="mt-6 space-y-5">
+            <a href="#explorer" class="block rounded-2xl p-6 text-white shadow hover:shadow-lg transition bg-gradient-to-br from-amber-500 to-orange-600">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-full bg-white/20 grid place-content-center">💼</div>
+                <div>
+                  <h3 class="text-xl font-bold">Je veux entreprendre</h3>
+                  <p class="text-white/90 text-sm mt-1">Lancez votre projet avec le soutien d’entrepreneurs expérimentés</p>
+                </div>
+              </div>
+            </a>
+
+            <a href="#explorer" class="block rounded-2xl p-6 text-white shadow hover:shadow-lg transition bg-gradient-to-br from-emerald-500 to-teal-600">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-full bg-white/20 grid place-content-center">👥</div>
+                <div>
+                  <h3 class="text-xl font-bold">Je veux rencontrer</h3>
+                  <p class="text-white/90 text-sm mt-1">Rejoignez des communautés et créez des liens authentiques</p>
+                </div>
+              </div>
+            </a>
+
+            <a href="#explorer" class="block rounded-2xl p-6 text-white shadow hover:shadow-lg transition bg-gradient-to-br from-indigo-500 to-sky-600">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-full bg-white/20 grid place-content-center">📘</div>
+                <div>
+                  <h3 class="text-xl font-bold">Je veux apprendre</h3>
+                  <p class="text-white/90 text-sm mt-1">Découvrez des formations pour développer vos compétences</p>
+                </div>
+              </div>
+            </a>
+
+            <a href="#explorer" class="block rounded-2xl p-6 text-white shadow hover:shadow-lg transition bg-gradient-to-br from-rose-500 to-fuchsia-600">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-full bg-white/20 grid place-content-center">❤️</div>
+                <div>
+                  <h3 class="text-xl font-bold">Je veux aider</h3>
+                  <p class="text-white/90 text-sm mt-1">Trouvez des missions de bénévolat qui vous ressemblent</p>
+                </div>
+              </div>
+            </a>
+          </div>
+        </aside>
+
+        <!-- Carte -->
+        <section id="explorer" class="lg:col-span-4">
+          <h2 class="text-2xl sm:text-3xl font-extrabold">Explorez les opportunités</h2>
+          <p class="text-gray-600 mt-2">Découvrez sur la carte toutes les possibilités d’engagement près de chez vous</p>
+
+          <div class="mt-4 flex flex-wrap gap-2 text-sm">
+            <button data-cat="toutes"       class="chip px-3 py-1 rounded-full bg-gray-200 text-gray-800 is-active">Toutes</button>
+            <button data-cat="benevolat"    class="chip px-3 py-1 rounded-full bg-rose-100 text-rose-700">Bénévolat</button>
+            <button data-cat="formation"    class="chip px-3 py-1 rounded-full bg-blue-100 text-blue-700">Formation</button>
+            <button data-cat="rencontres"   class="chip px-3 py-1 rounded-full bg-green-100 text-green-700">Rencontres</button>
+            <button data-cat="entreprendre" class="chip px-3 py-1 rounded-full bg-orange-100 text-orange-700">Entreprendre</button>
+          </div>
+
+          <div class="mt-4 bg-white rounded-2xl shadow overflow-hidden">
+            <div id="map"></div>
+          </div>
+        </section>
+
+        <!-- Liste -->
+        <section class="lg:col-span-4">
+          <h2 class="text-2xl sm:text-3xl font-extrabold">Opportunités disponibles</h2>
+          <p class="text-gray-600 mt-2">Découvrez les dernières missions et événements près de chez vous</p>
+
+          <div class="mt-6 space-y-4">
+            <% Array(@opportunities).first(6).to_a.each do |o| %>
+              <article class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition">
+                <div class="flex items-center gap-2 mb-2">
+                  <% badge = case o.category
+                    when 'benevolat' then 'bg-rose-100 text-rose-700'
+                    when 'formation' then 'bg-blue-100 text-blue-700'
+                    when 'rencontres' then 'bg-green-100 text-green-700'
+                    else 'bg-orange-100 text-orange-700'
+                  end %>
+                  <span class="text-xs font-semibold px-2 py-1 rounded-full <%= badge %>"><%= o.category.to_s.capitalize %></span>
+                </div>
+                <h3 class="font-semibold text-gray-900"><%= o.title %></h3>
+                <p class="text-sm text-gray-600"><%= o.organization %></p>
+                <p class="text-sm text-gray-700 mt-2"><%= o.description.to_s.truncate(110) %></p>
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="flex items-center gap-3 text-xs text-gray-500">
+                    <% if o.location.present? %><span>📍 <%= o.location %></span><% end %>
+                    <% if o.time_commitment.present? %><span>⏱ <%= o.time_commitment %></span><% end %>
+                  </div>
+                  <a href="/opportunities/<%= o.respond_to?(:slug) && o.slug.present? ? o.slug : o.id %>"
+                     class="inline-flex items-center px-3 py-1.5 rounded-lg bg-brand-600 text-white text-xs font-medium hover:bg-brand-700">
+                    En savoir plus
+                  </a>
+                </div>
+              </article>
+            <% end %>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Témoignages -->
+    <section id="temoignages" class="bg-white py-14">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10">
+          <h2 class="text-2xl sm:text-3xl font-extrabold">Ils ont changé leur vie</h2>
+          <p class="text-gray-600 mt-2">Histoires vraies de personnes qui ont trouvé leur Déclic</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <% Array(@testimonials).first(4).to_a.each do |t| %>
+            <article class="bg-gray-50 rounded-xl border border-gray-100 shadow-sm p-6">
+              <div class="flex items-center gap-3 mb-4">
+                <img src="<%= t.image_url %>" alt="<%= t.name %>" class="w-12 h-12 rounded-full object-cover">
+                <div>
+                  <h3 class="font-semibold"><%= t.name %></h3>
+                  <p class="text-xs text-gray-500"><%= t.role %> — <%= t.age %> ans</p>
+                </div>
+              </div>
+              <p class="text-gray-700 text-sm leading-relaxed"><%= t.story %></p>
+            </article>
+          <% end %>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= Footer ================= -->
+  <footer class="bg-gray-950 text-white py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
+          <span class="text-white font-bold text-[10px]">D</span>
+        </div>
+        <span class="font-semibold">Déclic</span>
+      </div>
+      <p class="text-gray-300 max-w-md">Trouvez votre voie vers l’engagement et donnez du sens à votre vie.</p>
+      <p class="text-gray-400 mt-3 text-sm">© <%= Time.current.year %> Déclic. Tous droits réservés.</p>
+    </div>
+  </footer>
+</div>
 
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  if (!window.L) return;
+/* ===== Mobile drawer ===== */
+(function () {
+  const root = document.documentElement, body = document.body;
+  const menu = document.getElementById('mobile-menu');
+  const panel = document.getElementById('mobile-panel');
+  const overlay = document.getElementById('mobile-overlay');
+  const btnOpen = document.getElementById('btn-open-menu');
+  const btnClose = document.getElementById('btn-close-menu');
+  if (!menu || !panel || !overlay || !btnOpen || !btnClose) return;
 
-  const map = L.map('map').setView([46.6, 2.2], 6);
+  const lock = () => { root.classList.add('overflow-hidden'); body.classList.add('overflow-hidden'); };
+  const unlock = () => { root.classList.remove('overflow-hidden'); body.classList.remove('overflow-hidden'); };
+
+  function open(){ menu.removeAttribute('aria-hidden'); menu.classList.remove('hidden'); btnOpen.setAttribute('aria-expanded','true'); lock();
+    requestAnimationFrame(()=>{ overlay.classList.add('opacity-100'); panel.classList.remove('translate-x-full'); });
+  }
+  function close(){ overlay.classList.remove('opacity-100'); panel.classList.add('translate-x-full');
+    const onEnd = () => { menu.setAttribute('aria-hidden','true'); menu.classList.add('hidden'); unlock(); panel.removeEventListener('transitionend', onEnd); };
+    panel.addEventListener('transitionend', onEnd); btnOpen.setAttribute('aria-expanded','false');
+  }
+  btnOpen.addEventListener('click', open); btnClose.addEventListener('click', close);
+  menu.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', close));
+  window.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.classList.contains('hidden')) close(); });
+})();
+
+/* ===== Carte Leaflet + pins emoji ===== */
+(function () {
+  if (!document.getElementById('map') || !window.L) return;
+
+  const map = L.map('map', { zoomControl: true, scrollWheelZoom: true }).setView([46.6, 2.2], 6);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
-  // --- Icones SVG par catégorie ---
-  const ICONS = {
-    benevolat:    { bg:'#ef4444', emoji:'❤️' },
-    formation:    { bg:'#3b82f6', emoji:'📘' },
-    rencontres:   { bg:'#10b981', emoji:'👥' },
-    entreprendre: { bg:'#f59e0b', emoji:'💼' }
+  const colors = {
+    benevolat:   '#ef4444', // rose
+    formation:   '#3b82f6', // bleu
+    rencontres:  '#10b981', // vert
+    entreprendre:'#f59e0b', // orange
+    default:     '#6366f1'
   };
-
-  function pinIcon(cat='formation') {
-    const {bg, emoji} = ICONS[cat] || {bg:'#6366f1', emoji:'📍'};
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="36" height="48" viewBox="0 0 36 48">
-        <defs>
-          <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,.25)"/>
-          </filter>
-        </defs>
-        <g filter="url(#s)">
-          <path d="M18 46s14-14 14-26A14 14 0 1 0 4 20c0 12 14 26 14 26z" fill="${bg}"/>
-          <circle cx="18" cy="18" r="10" fill="white" />
-          <text x="18" y="22" font-size="12" text-anchor="middle"> ${emoji} </text>
-        </g>
-      </svg>`;
+  const emojis = {
+    benevolat: '❤️', formation: '📘', rencontres: '👥', entreprendre: '💼', default: '⭐'
+  };
+  function iconFor(cat){
+    const c = (colors[cat] || colors.default);
+    const e = (emojis[cat] || emojis.default);
     return L.divIcon({
-      html: svg,
-      iconSize: [36, 48],
-      iconAnchor: [18, 46],
-      className: 'declic-pin'
+      className: '',
+      html: `<div class="picon" style="--c:${c}"><span>${e}</span></div>`,
+      iconSize: [26, 32],
+      iconAnchor: [13, 28],
+      popupAnchor: [0, -26]
     });
   }
 
-  // --- Cluster group ---
-  const clusters = L.markerClusterGroup({
-    maxClusterRadius: 45,
-    showCoverageOnHover: false
-  }).addTo(map);
+  const layerGroup = L.layerGroup().addTo(map);
+  let lastPopup = null;
+  function addMarker(o){
+    if (!o || !o.latitude || !o.longitude) return;
+    const m = L.marker([o.latitude, o.longitude], { icon: iconFor((o.category||'').toLowerCase()) }).addTo(layerGroup);
+    const url = `/opportunities/${o.slug || o.id}`;
+    const badgeColor = {
+      benevolat:'#fee2e2', formation:'#dbeafe', rencontres:'#d1fae5', entreprendre:'#ffedd5'
+    }[(o.category||'').toLowerCase()] || '#eef2ff';
 
-  // Position Paris par défaut, sinon localStorage
-  const params = new URLSearchParams(location.search);
-  const lat  = params.get('lat')  || null;
-  const lng  = params.get('lng')  || null;
-  const q    = params.get('q')    || '';
-  const cat  = params.get('category') || '';
-  const radius = params.get('radius') || 25;
+    m.bindPopup(`
+      <div style="min-width:220px">
+        <div style="margin-bottom:6px">
+          <span style="font-size:11px;padding:2px 6px;border-radius:9999px;background:${badgeColor};color:#111;">
+            ${(o.category||'').charAt(0).toUpperCase() + (o.category||'').slice(1)}
+          </span>
+        </div>
+        <strong>${o.title || ''}</strong><br/>
+        <small>${o.organization || ''}</small>
+        <p style="margin:.5rem 0">${(o.description || '').slice(0,110)}${(o.description||'').length>110?'…':''}</p>
+        <a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a>
+      </div>
+    `);
 
-  const url = new URL('/api/v1/opportunities', location.origin);
-  if (lat && lng) { url.searchParams.set('lat', lat); url.searchParams.set('lng', lng); }
-  if (q)   url.searchParams.set('q', q);
-  if (cat) url.searchParams.set('category', cat);
-  url.searchParams.set('radius', radius);
+    m.on('popupopen', (e) => {
+      if (lastPopup && lastPopup !== e.popup) { lastPopup.close(); }
+      lastPopup = e.popup;
+    });
+    return m;
+  }
 
-  fetch(url)
-    .then(r => r.json())
-    .then(({data}) => {
-      const bounds = [];
-      data.forEach(o => {
-        if (!o.latitude || !o.longitude) return;
-        const m = L.marker([o.latitude, o.longitude], { icon: pinIcon(o.category) })
-          .bindPopup(`
-            <div class="p-1" style="min-width:220px">
-              <div class="mb-1"><span class="text-[11px] px-2 py-0.5 rounded-full bg-gray-100">${(o.category||'').charAt(0).toUpperCase()+o.category.slice(1)}</span></div>
-              <strong>${o.title}</strong><br/>
-              <small>${o.organization||''} — ${o.location||''}</small>
-              <p style="margin:6px 0">${(o.description||'').slice(0,110)}...</p>
-              <a class="text-indigo-600 underline text-sm" href="/opportunities/${o.id}">Voir la fiche</a>
-            </div>
-          `);
-        clusters.addLayer(m);
-        bounds.push([o.latitude, o.longitude]);
-      });
-      if (bounds.length) map.fitBounds(bounds, { padding: [30,30] });
-    })
-    .catch(e => console.error(e));
-});
+  // -- charge les données (API puis fallback si échec) --
+  const fallback = <%= raw(Array(@opportunities).map { |o|
+    {
+      id: o.id,
+      slug: (o.respond_to?(:slug) ? o.slug : nil),
+      title: o.title,
+      description: o.description,
+      category: o.category,
+      organization: o.organization,
+      location: o.location,
+      latitude: (o.latitude ? o.latitude.to_f : nil),
+      longitude: (o.longitude ? o.longitude.to_f : nil)
+    }
+  }.to_json) %>;
+
+  function plot(items){
+    layerGroup.clearLayers();
+    const bounds = [];
+    items.forEach(o => {
+      const m = addMarker(o);
+      if (m) bounds.push([o.latitude, o.longitude]);
+    });
+    if (bounds.length){ map.fitBounds(bounds, { padding:[30,30] }); }
+  }
+
+  fetch('/api/v1/opportunities')
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => { plot(Array.isArray(data) ? data : []); })
+    .catch(() => { plot(fallback || []); });
+
+  // -- filtres par catégorie --
+  const chips = Array.from(document.querySelectorAll('.chip'));
+  chips.forEach(chip => chip.addEventListener('click', () => {
+    chips.forEach(c => c.classList.remove('is-active'));
+    chip.classList.add('is-active');
+    const cat = chip.dataset.cat;
+    const all = (cat === 'toutes');
+    const source = layerGroup.getLayers().length ? null : null; // (on garde markers posés)
+    layerGroup.clearLayers();
+    const dataset = (window.__lastData || fallback || []);
+    const filtered = all ? dataset : dataset.filter(o => (o.category||'').toLowerCase() === cat);
+    plot(filtered);
+  }));
+
+  // Conserve le dernier dataset pour les filtres
+  const remember = (data) => { window.__lastData = data; };
+  fetch('/api/v1/opportunities')
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => remember(Array.isArray(data)?data:[]))
+    .catch(() => remember(fallback||[]));
+})();
 </script>
-
-
-
-
 </body>
 </html>
+
+
+
