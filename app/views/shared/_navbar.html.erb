@@ -1,0 +1,51 @@
+<header class="fixed inset-x-0 top-0 z-40 bg-white/80 backdrop-blur border-b border-gray-200">
+  <div class="max-w-6xl mx-auto h-14 px-4 flex items-center justify-between">
+    <!-- Logo -->
+    <%= link_to root_path, class: "flex items-center gap-2" do %>
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
+        <span class="text-white font-bold text-xs">D</span>
+      </div>
+      <span class="font-semibold">Déclic</span>
+    <% end %>
+
+    <!-- Liens desktop -->
+    <nav class="hidden md:flex items-center gap-6 text-sm">
+      <%= link_to "Explorer",   root_path(anchor: "explorer"),     class: "hover:text-gray-900" %>
+      <%= link_to "Parcours",   root_path(anchor: "parcours"),     class: "hover:text-gray-900" %>
+      <%= link_to "Témoignages",root_path(anchor: "temoignages"),  class: "hover:text-gray-900" %>
+    </nav>
+
+    <!-- Actions -->
+    <div class="hidden md:flex items-center gap-3">
+      <%= link_to "Proposer", new_opportunity_path,
+            class: "inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700" %>
+    </div>
+
+    <!-- Burger -->
+    <button id="nav-burger"
+            class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-md border border-gray-300">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Menu mobile -->
+  <div id="mobileMenu" class="hidden md:hidden px-4 pb-4">
+    <div class="flex flex-col gap-1 text-sm">
+      <%= link_to "Explorer",    root_path(anchor: "explorer"),    class: "py-2 hover:text-gray-900" %>
+      <%= link_to "Parcours",    root_path(anchor: "parcours"),    class: "py-2 hover:text-gray-900" %>
+      <%= link_to "Témoignages", root_path(anchor: "temoignages"), class: "py-2 hover:text-gray-900" %>
+      <%= link_to "Proposer une opportunité", new_opportunity_path,
+            class: "mt-2 inline-flex items-center justify-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700" %>
+    </div>
+  </div>
+</header>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var b = document.getElementById('nav-burger');
+  var m = document.getElementById('mobileMenu');
+  if (b && m) b.addEventListener('click', function () { m.classList.toggle('hidden'); });
+});
+</script>
