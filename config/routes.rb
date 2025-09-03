@@ -1,7 +1,7 @@
 # config/routes.rb
 Rails.application.routes.draw do
   root "pages#home"
-  resources :opportunities, only: [:show]
+  resources :opportunities, only: [:show, :new, :create]
 
   namespace :api do
     namespace :v1 do

@@ -1,6 +1,5 @@
 class PagesController < ApplicationController
   # désactive le layout pour home (sinon DOCTYPE s’affiche dans la page)
-  layout false, only: :home
 
   def home
     @journey_cards = [

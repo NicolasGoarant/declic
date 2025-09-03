@@ -1,0 +1,197 @@
+<%# app/views/opportunities/new.html.erb %>
+
+<div class="bg-white border-b">
+  <div class="max-w-5xl mx-auto px-6 py-3 flex items-center gap-3 text-sm">
+    <%= link_to "← Retour", (request.referer.presence || root_path), class: "text-gray-600 hover:text-gray-900" %>
+    <span class="text-gray-300">/</span>
+    <span class="font-medium text-gray-900">Proposer une opportunité</span>
+  </div>
+</div>
+
+<div class="max-w-5xl mx-auto px-6 py-8 lg:py-10">
+  <div class="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-8">
+
+    <!-- Colonne formulaire -->
+    <section class="min-w-0 space-y-6">
+
+      <header>
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Proposer une opportunité</h1>
+        <p class="mt-2 text-gray-600">
+          Vous connaissez une mission, une formation, une rencontre ou un projet à valoriser ? Partagez-la ici.
+          Chaque proposition est vérifiée avant publication.
+        </p>
+      </header>
+
+      <% if @opportunity.errors.any? %>
+        <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-900">
+          <p class="font-semibold mb-2"><%= pluralize(@opportunity.errors.count, "erreur") %> à corriger :</p>
+          <ul class="list-disc pl-5 space-y-1">
+            <% @opportunity.errors.full_messages.each do |m| %>
+              <li><%= m %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <%= form_with model: @opportunity, local: true, html: { class: "space-y-6" } do |f| %>
+
+        <!-- 1) Infos de base -->
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div class="grid sm:grid-cols-2 gap-6">
+            <div>
+              <%= f.label :title, "Titre", class: "block text-sm font-medium text-gray-800" %>
+              <%= f.text_field :title,
+                    placeholder: "Un titre clair et concis — ex. “Distribution de repas – 18e”",
+                    class: "mt-2 w-full h-11 rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+            </div>
+            <div class="sm:row-span-2">
+              <%= f.label :description, "Description", class: "block text-sm font-medium text-gray-800" %>
+              <%= f.text_area :description, rows: 6,
+                    placeholder: "Décrivez l’opportunité, les missions, le public visé, les prérequis, le lieu…",
+                    class: "mt-2 w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+              <p class="mt-2 text-xs text-gray-500">Astuce : précisez les modalités (jours/horaires) et l’impact attendu.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2) Catégorie -->
+        <fieldset class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <legend class="block text-sm font-medium text-gray-800 mb-3">Catégorie</legend>
+          <div class="flex flex-wrap gap-2">
+            <% [["benevolat","🤝 Bénévolat","bg-rose-50 text-rose-700 border-rose-200"],
+                ["formation","🎓 Formation","bg-blue-50 text-blue-700 border-blue-200"],
+                ["rencontres","💬 Rencontres","bg-green-50 text-green-700 border-green-200"],
+                ["entreprendre","🚀 Entreprendre","bg-orange-50 text-orange-700 border-orange-200"]].each do |value,label,classes| %>
+              <label class="inline-flex">
+                <%= f.radio_button :category, value, class: "peer sr-only" %>
+                <div class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-medium
+                            border-gray-200 text-gray-700
+                            peer-checked:<%= classes %> peer-checked:border-current transition">
+                  <span aria-hidden="true"><%= label.split.first %></span>
+                  <span><%= label.split.drop(1).join(' ') %></span>
+                </div>
+              </label>
+            <% end %>
+          </div>
+        </fieldset>
+
+        <!-- 3) Organisation & site -->
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div class="grid sm:grid-cols-2 gap-6">
+            <div>
+              <%= f.label :organization, "Organisation porteuse", class: "block text-sm font-medium text-gray-800" %>
+              <%= f.text_field :organization, placeholder: "Nom de l’association, de l’école, etc.",
+                    class: "mt-2 w-full h-11 rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+            </div>
+            <div>
+              <%= f.label :website, "Site web (facultatif)", class: "block text-sm font-medium text-gray-800" %>
+              <%= f.url_field :website, placeholder: "https://…",
+                    class: "mt-2 w-full h-11 rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4) Localisation -->
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div class="grid md:grid-cols-3 gap-6">
+            <div class="md:col-span-2">
+              <%= f.label :address, "Adresse ou Ville", class: "block text-sm font-medium text-gray-800" %>
+              <%= f.text_field :address, placeholder: "ex. 12 rue de l’Exemple, Paris",
+                    class: "mt-2 w-full h-11 rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+            </div>
+            <div>
+              <%= f.label :postcode, "Code postal", class: "block text-sm font-medium text-gray-800" %>
+              <%= f.text_field :postcode, placeholder: "75012",
+                    class: "mt-2 w-full h-11 rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-3 gap-6 mt-6">
+            <div class="md:col-span-1">
+              <%= f.label :city, "Ville", class: "block text-sm font-medium text-gray-800" %>
+              <%= f.text_field :city, placeholder: "Paris",
+                    class: "mt-2 w-full h-11 rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5) Temps & engagement -->
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div class="grid md:grid-cols-2 gap-6">
+            <div>
+              <%= f.label :time_commitment, "Temps à prévoir", class: "block text-sm font-medium text-gray-800" %>
+              <%= f.text_field :time_commitment, placeholder: "ex. 2h/semaine, ponctuel, 1j",
+                    class: "mt-2 w-full h-11 rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+            </div>
+            <div>
+              <%= f.label :effort_level, "Niveau d’engagement", class: "block text-sm font-medium text-gray-800" %>
+              <%= f.select :effort_level, [["Léger","léger"],["Modéré","modéré"],["Intensif","intensif"]],
+                    { include_blank: "— Choisir —" },
+                    class: "mt-2 w-full h-11 rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6) Tags -->
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <%= f.label :tags, "Tags (séparés par des virgules)", class: "block text-sm font-medium text-gray-800" %>
+          <%= f.text_field :tags, placeholder: "solidarité, jeunesse…",
+                class: "mt-2 w-full h-11 rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+        </div>
+
+        <!-- 7) Avancé -->
+        <details class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <summary class="cursor-pointer font-medium text-gray-800">Options avancées (latitude/longitude)</summary>
+          <div class="mt-5 grid sm:grid-cols-2 gap-6">
+            <div>
+              <%= f.label :latitude, "Latitude", class: "block text-sm font-medium text-gray-800" %>
+              <%= f.number_field :latitude, step: "any",
+                    class: "mt-2 w-full h-11 rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+            </div>
+            <div>
+              <%= f.label :longitude, "Longitude", class: "block text-sm font-medium text-gray-800" %>
+              <%= f.number_field :longitude, step: "any",
+                    class: "mt-2 w-full h-11 rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+            </div>
+          </div>
+        </details>
+
+        <!-- 8) Actions -->
+        <div class="flex items-center gap-3">
+          <%= f.submit "Envoyer ma proposition",
+                class: "inline-flex items-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700" %>
+          <%= link_to "Annuler", root_path,
+                class: "inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50" %>
+        </div>
+
+        <p class="text-xs text-gray-500">
+          En envoyant, vous acceptez que votre proposition soit modérée avant publication.
+        </p>
+      <% end %>
+    </section>
+
+    <!-- Colonne aide -->
+    <aside class="space-y-6 lg:sticky lg:top-20 self-start">
+      <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h3 class="font-semibold">Conseils pour une fiche efficace</h3>
+        <ul class="mt-3 text-sm text-gray-700 space-y-2 list-disc pl-4">
+          <li>Soyez précis sur le lieu, les horaires et les prérequis.</li>
+          <li>Ajoutez un site ou un moyen de contact fiable.</li>
+          <li>Choisissez la catégorie pertinente (bénévolat, formation…).</li>
+          <li>Utilisez <em>des tags</em> pour faciliter la recherche.</li>
+        </ul>
+      </div>
+
+      <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h3 class="font-semibold">Modération</h3>
+        <p class="mt-2 text-sm text-gray-700">
+          Les contenus à caractère politique, commercial non lié à l’intérêt général, ou contraires à la loi ne seront pas publiés.
+          Nous pouvons adapter légèrement les textes pour cohérence éditoriale.
+        </p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+
+
+
