@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_31_063343) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_03_173810) do
   create_table "friendly_id_slugs", force: :cascade do |t|
     t.string "slug", null: false
     t.integer "sluggable_id", null: false
@@ -51,8 +51,51 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_31_063343) do
     t.datetime "published_at"
     t.datetime "expires_at"
     t.text "raw_payload"
+    t.string "audience_level"
+    t.string "career_outcome"
+    t.text "skills"
+    t.string "credential"
+    t.boolean "mentorship", default: false, null: false
+    t.boolean "alumni_network", default: false, null: false
+    t.boolean "hiring_partners", default: false, null: false
+    t.string "format"
+    t.string "schedule"
+    t.integer "duration_weeks"
+    t.datetime "application_deadline"
+    t.string "selectivity_level"
+    t.text "prerequisites"
+    t.decimal "cost_eur", precision: 10, scale: 2
+    t.boolean "is_free", default: false, null: false
+    t.boolean "scholarship_available", default: false, null: false
+    t.text "funding_options"
+    t.text "accessibility"
+    t.text "impact_domains"
+    t.text "impact_metric_hint"
     t.index ["slug"], name: "index_opportunities_on_slug", unique: true
     t.index ["source", "external_id"], name: "index_opportunities_on_source_and_external_id", unique: true
+  end
+
+  create_table "raw_ingestions", force: :cascade do |t|
+    t.integer "source_id", null: false
+    t.string "external_id"
+    t.json "payload"
+    t.datetime "ingested_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["source_id", "external_id"], name: "index_raw_ingestions_on_source_id_and_external_id", unique: true
+    t.index ["source_id"], name: "index_raw_ingestions_on_source_id"
+  end
+
+  create_table "sources", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "kind", null: false
+    t.text "url", null: false
+    t.boolean "enabled", default: true, null: false
+    t.datetime "last_run_at"
+    t.text "last_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["kind", "enabled"], name: "index_sources_on_kind_and_enabled"
   end
 
   create_table "testimonials", force: :cascade do |t|
@@ -64,4 +107,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_31_063343) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
+
+  add_foreign_key "raw_ingestions", "sources"
 end
