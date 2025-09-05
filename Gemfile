@@ -38,6 +38,7 @@ group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
 
+  gem "sqlite3", "~> 1.4"
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false
 
@@ -69,5 +70,12 @@ gem 'httparty'
 
 # --- Production ---
 group :production do
-  gem 'pg', '>= 1.4'
+  gem "pg", "~> 1.5"
 end
+
+
+
+ruby "3.3.9"
+
+# ...
+
