@@ -1,7 +1,8 @@
 # app/models/opportunity.rb
 class Opportunity < ApplicationRecord
   # --- Stockage JSON (SQLite/Postgres) ---
-  serialize :raw_payload, coder: JSON
+  attribute :raw_payload, :json
+
 
   # --- Slug ---
   extend FriendlyId
