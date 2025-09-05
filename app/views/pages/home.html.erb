@@ -128,49 +128,73 @@
       <!-- IMPORTANT: min-w-0 partout + ordres mobiles -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
 
-        <!-- Parcours — col plus large sur desktop, 1er en mobile -->
-        <div id="parcours" class="order-1 lg:order-none col-span-12 lg:col-span-4 min-w-0 space-y-4">
-          <%# Gros boutons %>
-          <a href="#aider" class="block rounded-2xl p-5 text-white shadow-md hover:shadow-lg" style="background:linear-gradient(135deg,#f43f5e 0%,#ec4899 100%);">
-            <div class="flex items-start gap-4">
-              <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-lg">❤️</span>
-              <div class="min-w-0">
-                <p class="font-semibold text-base">Je veux aider</p>
-                <p class="text-white/90 text-[15px] leading-snug">Trouve des missions de bénévolat qui correspondent à tes valeurs</p>
-              </div>
-            </div>
-          </a>
+<!-- Colonne “Choisissez votre parcours” (cachée sur mobile, ++ grande sur desktop) -->
+<div id="parcours"
+     class="hidden md:block order-1 lg:order-none col-span-12 lg:col-span-4 min-w-0 space-y-6">
 
-          <a href="#apprendre" class="block rounded-2xl p-5 text-white shadow-md hover:shadow-lg" style="background:linear-gradient(135deg,#6366f1 0%,#38bdf8 100%);">
-            <div class="flex items-start gap-4">
-              <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-lg">📘</span>
-              <div class="min-w-0">
-                <p class="font-semibold text-base">Je veux apprendre</p>
-                <p class="text-white/90 text-[15px] leading-snug">Découvre des formations pour développer tes compétences</p>
-              </div>
-            </div>
-          </a>
+  <!-- Je veux aider (bénévolat) -->
+  <%= link_to parcours_path(category: "benevolat"),
+      class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
+      style: "background:linear-gradient(135deg,#f43f5e 0%,#ec4899 100%);" do %>
+    <div class="flex items-start gap-4 lg:gap-5">
+      <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">❤️</span>
+      <div class="min-w-0">
+        <p class="font-semibold text-lg lg:text-xl">Je veux aider</p>
+        <p class="text-white/90 text-[15px] lg:text-base leading-snug">
+          Trouve des missions de bénévolat qui correspondent à tes valeurs
+        </p>
+      </div>
+    </div>
+  <% end %>
 
-          <a href="#rencontrer" class="block rounded-2xl p-5 text-white shadow-md hover:shadow-lg" style="background:linear-gradient(135deg,#10b981 0%,#06b6d4 100%);">
-            <div class="flex items-start gap-4">
-              <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-lg">🤝</span>
-              <div class="min-w-0">
-                <p class="font-semibold text-base">Je veux rencontrer</p>
-                <p class="text-white/90 text-[15px] leading-snug">Rejoins des communautés et crée des liens authentiques</p>
-              </div>
-            </div>
-          </a>
+  <!-- Je veux apprendre (formation) -->
+  <%= link_to parcours_path(category: "formation"),
+      class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
+      style: "background:linear-gradient(135deg,#6366f1 0%,#38bdf8 100%);" do %>
+    <div class="flex items-start gap-4 lg:gap-5">
+      <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">📘</span>
+      <div class="min-w-0">
+        <p class="font-semibold text-lg lg:text-xl">Je veux apprendre</p>
+        <p class="text-white/90 text-[15px] lg:text-base leading-snug">
+          Découvre des formations pour développer tes compétences
+        </p>
+      </div>
+    </div>
+  <% end %>
 
-          <a href="#entreprendre" class="block rounded-2xl p-5 text-white shadow-md hover:shadow-lg" style="background:linear-gradient(135deg,#f59e0b 0%,#ef4444 50%,#fb7185 100%);">
-            <div class="flex items-start gap-4">
-              <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-lg">🚀</span>
-              <div class="min-w-0">
-                <p class="font-semibold text-base">Je veux entreprendre</p>
-                <p class="text-white/90 text-[15px] leading-snug">Lance ton projet avec le soutien d’entrepreneurs expérimentés</p>
-              </div>
-            </div>
-          </a>
-        </div>
+  <!-- Je veux rencontrer (rencontres) -->
+  <%= link_to parcours_path(category: "rencontres"),
+      class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
+      style: "background:linear-gradient(135deg,#10b981 0%,#06b6d4 100%);" do %>
+    <div class="flex items-start gap-4 lg:gap-5">
+      <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">🤝</span>
+      <div class="min-w-0">
+        <p class="font-semibold text-lg lg:text-xl">Je veux rencontrer</p>
+        <p class="text-white/90 text-[15px] lg:text-base leading-snug">
+          Rejoins des communautés et crée des liens authentiques
+        </p>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Je veux entreprendre (entreprendre) -->
+  <%= link_to parcours_path(category: "entreprendre"),
+      class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
+      style: "background:linear-gradient(135deg,#f59e0b 0%,#ef4444 50%,#fb7185 100%);" do %>
+    <div class="flex items-start gap-4 lg:gap-5">
+      <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">🚀</span>
+      <div class="min-w-0">
+        <p class="font-semibold text-lg lg:text-xl">Je veux entreprendre</p>
+        <p class="text-white/90 text-[15px] lg:text-base leading-snug">
+          Lance ton projet avec le soutien d’entrepreneurs expérimentés
+        </p>
+      </div>
+    </div>
+  <% end %>
+
+</div>
+
+
 
         <!-- Carte — 2e en mobile -->
         <section id="explorer" class="order-2 lg:order-none col-span-12 lg:col-span-4 min-w-0">

@@ -15,10 +15,18 @@ class OpportunitiesController < ApplicationController
     end
   end
 
+  def index
+    @category = params[:category].presence
+    scope = Opportunity.active.order(created_at: :desc)
+    scope = scope.where(category: @category) if @category.in?(Opportunity::CATEGORIES)
+    @opportunities = scope.limit(60)
+  end
+
   def show
     @opportunity = Opportunity.find(params[:id])
   end
 
+  
   private
 
   def opportunity_params

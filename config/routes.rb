@@ -3,7 +3,8 @@ Rails.application.routes.draw do
   root "pages#home"
 
   # Opportunités (pages HTML)
-  resources :opportunities, only: %i[index show new create]
+  resources :opportunities, only: [:index, :show, :new, :create]
+get "/parcours/:category", to: "opportunities#index", as: :parcours
 
   # API JSON (utilisée par la carte et les marqueurs)
   namespace :api do
@@ -12,4 +13,5 @@ Rails.application.routes.draw do
     end
   end
 end
+
 
