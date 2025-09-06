@@ -1,9 +1,9 @@
-# app/helpers/application_helper.rb
 module ApplicationHelper
-  def safe_image_path(path, fallback: 'avatars/fallback.jpg')
-    return asset_path(fallback) if path.blank?
-    asset_path(path)
-  rescue Sprockets::Rails::Helper::AssetNotFound
-    asset_path(fallback)
+  def asset_exists?(logical_path)
+    if Rails.application.config.assets.compile
+      !!Rails.application.assets&.find_asset(logical_path)
+    else
+      Rails.application.assets_manifest.assets.key?(logical_path)
+    end
   end
 end
