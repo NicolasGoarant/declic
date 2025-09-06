@@ -110,7 +110,7 @@ GEM
       logger
     faraday-net_http (3.4.1)
       net-http (>= 0.5.0)
-    feedjira (3.2.6)
+    feedjira (4.0.1)
       logger (>= 1.0, < 2)
       loofah (>= 2.3.1, < 3)
       sax-machine (>= 1.0, < 2)
@@ -371,7 +371,7 @@ DEPENDENCIES
   capybara
   debug
   faraday
-  feedjira (~> 3.2)
+  feedjira (~> 4.0)
   friendly_id (~> 5.5)
   geocoder (~> 1.8)
   httparty
