@@ -109,4 +109,21 @@ records.each do |h|
   found.save!
 end
 
+# db/seeds.rb  (ajoute en bas si absent)
+if Testimonial.count.zero?
+  Testimonial.create!(
+    [
+      { name: "Marie",  role: "Bénévole — 34 ans — 1h/sem",
+        content: "Grâce à Déclic, j’ai trouvé une mission de distribution de repas..." },
+      { name: "Thomas", role: "Développeur reconverti — 28 ans — 2h/sem",
+        content: "Je voulais changer de voie sans retourner à l’école..." },
+      { name: "Emma",   role: "Entrepreneuse sociale — 26 ans — 2h/sem",
+        content: "J’avais une idée de café associatif mais ne savais pas par où commencer..." },
+      { name: "Julien", role: "Organisateur d’événements — 31 ans — 3h/sem",
+        content: "Je me sentais isolé après un déménagement..." }
+    ]
+  )
+end
+
+
 puts "Seeds -> opportunities: +#{created} (total: #{Opportunity.count})"

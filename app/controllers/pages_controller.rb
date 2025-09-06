@@ -9,6 +9,7 @@ class PagesController < ApplicationController
       { id: 4, category: 'entreprendre',title: 'Je veux entreprendre', description: "Lancez votre projet avec le soutien d'entrepreneurs expérimentés", icon: 'briefcase', color: 'bg-gradient-to-br from-orange-500 to-red-600' }
     ]
     @opportunities = Opportunity.where(is_active: true)
-    @testimonials  = Testimonial.all
+    @testimonials = Testimonial.order(created_at: :desc).limit(4)
+    @latest = Opportunity.active.order(published_at: :desc).limit(3) # si tu l’utilises
   end
 end
