@@ -130,28 +130,28 @@ testimonials = [
     age: 31,
     role: "Organisateur d’événements",
     story: "La communauté m’a permis de créer des rencontres régulières dans mon quartier.",
-    image_url: asset_url("avatars/julien.jpg")
+    image_url: asset_url("avatars/julien.png")
   },
   {
     name: "Emma",
     age: 26,
     role: "Entrepreneuse sociale",
     story: "L’accompagnement m’a aidée à lancer mon projet de solidarité.",
-    image_url: asset_url("avatars/emma.jpg")
+    image_url: asset_url("avatars/emma.png")
   },
   {
     name: "Thomas",
     age: 28,
     role: "Développeur reconverti",
     story: "J’ai découvert une formation puis un job qui ont changé ma trajectoire.",
-    image_url: asset_url("avatars/thomas.jpg")
+    image_url: asset_url("avatars/thomas.png")
   },
   {
     name: "Marie",
     age: 34,
     role: "Bénévole — Restos du Cœur",
     story: "Grâce à Déclic, j’ai trouvé une mission où je me sens utile chaque semaine.",
-    image_url: asset_url("avatars/marie.jpg")
+    image_url: asset_url("avatars/marie.png")
   }
 ]
 

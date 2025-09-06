@@ -262,11 +262,15 @@
           <% Array(@testimonials).first(4).to_a.each do |t| %>
             <article class="bg-gray-50 rounded-xl border border-gray-100 shadow-sm p-6">
               <div class="flex items-center gap-3 mb-4">
-<%= image_tag(
-      (t.image_url.to_s.sub(%r{\A/assets/}, '').presence || 'avatars/placeholder.jpg'),
-      alt: t.name,
-      class: "w-12 h-12 rounded-full object-cover"
-    ) %>
+
+    <% logical = t.image_url.to_s.sub(%r{\A/assets/}, '') %>
+<% begin %>
+  <%= image_tag(logical.presence || 'avatars/default-avatar.png',
+                alt: t.name, class: "w-12 h-12 rounded-full object-cover") %>
+<% rescue Sprockets::Rails::Helper::AssetNotFound %>
+  <%= image_tag('avatars/default-avatar.png',
+                alt: t.name, class: "w-12 h-12 rounded-full object-cover") %>
+<% end %>
 
                 <div class="min-w-0">
                   <h3 class="font-semibold truncate"><%= t.name %></h3>
