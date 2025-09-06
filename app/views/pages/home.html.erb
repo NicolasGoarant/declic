@@ -262,7 +262,11 @@
           <% Array(@testimonials).first(4).to_a.each do |t| %>
             <article class="bg-gray-50 rounded-xl border border-gray-100 shadow-sm p-6">
               <div class="flex items-center gap-3 mb-4">
-                <img src="<%= t.image_url %>" alt="<%= t.name %>" class="w-12 h-12 rounded-full object-cover">
+                <%= image_tag(
+      asset_path(t.image_url.to_s.sub(%r{\A/assets/}, '')),
+      alt: t.name,
+      class: "w-12 h-12 rounded-full object-cover"
+    ) %>
                 <div class="min-w-0">
                   <h3 class="font-semibold truncate"><%= t.name %></h3>
                   <p class="text-xs text-gray-500"><%= t.role %> — <%= t.age %> ans</p>
