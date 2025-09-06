@@ -1,5 +1,6 @@
 # app/controllers/opportunities_controller.rb
 class OpportunitiesController < ApplicationController
+  layout "application"   # <— force l’usage du layout avec la navbar
   def new
     @opportunity = Opportunity.new
   end

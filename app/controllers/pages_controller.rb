@@ -10,6 +10,6 @@ class PagesController < ApplicationController
     ]
     @opportunities = Opportunity.where(is_active: true)
     @testimonials = Testimonial.order(created_at: :desc).limit(4)
-    @latest = Opportunity.active.order(published_at: :desc).limit(3) # si tu l’utilises
+    @latest = Opportunity.active.order(published_at: :desc).limit(3)
   end
 end
