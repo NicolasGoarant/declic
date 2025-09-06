@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_06_054836) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_06_081119) do
   create_table "friendly_id_slugs", force: :cascade do |t|
     t.string "slug", null: false
     t.integer "sluggable_id", null: false
@@ -106,7 +106,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_06_054836) do
     t.string "image_url"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.text "content"
   end
 
   add_foreign_key "raw_ingestions", "sources"
