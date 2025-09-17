@@ -1,15 +1,18 @@
+# config/routes.rb
 Rails.application.routes.draw do
-  # Page d’accueil
   root "pages#home"
 
-  # Opportunités (pages HTML)
   resources :opportunities, only: [:index, :show, :new, :create]
-get "/parcours/:category", to: "opportunities#index", as: :parcours
+  get "/parcours/:category", to: "opportunities#index", as: :parcours
 
-  # API JSON (utilisée par la carte et les marqueurs)
+  # NEW
+  resources :stories, only: [:index, :show]
+
   namespace :api do
     namespace :v1 do
       resources :opportunities, only: %i[index show]
+      # NEW (pins « belles histoires » sur la carte)
+      resources :stories, only: %i[index]
     end
   end
 end

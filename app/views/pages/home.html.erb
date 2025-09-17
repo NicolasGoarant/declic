@@ -150,14 +150,14 @@
   <% end %>
 
 
-  <!-- Je veux apprendre (formation) -->
+  <!-- Je veux me former(formation) -->
   <%= link_to parcours_path(category: "formation"),
       class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
       style: "background:linear-gradient(135deg,#6366f1 0%,#38bdf8 100%);" do %>
     <div class="flex items-start gap-4 lg:gap-5">
       <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">📘</span>
       <div class="min-w-0">
-        <p class="font-semibold text-lg lg:text-xl">Je veux apprendre</p>
+        <p class="font-semibold text-lg lg:text-xl">Je veux me former</p>
         <p class="text-white/90 text-[15px] lg:text-base leading-snug">
           Découvre des formations pour développer tes compétences
         </p>
@@ -194,6 +194,23 @@
       </div>
     </div>
   <% end %>
+
+<!-- Belles histoires -->
+<%= link_to stories_path(category: "belles_histoires"),
+    class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
+    style: "background:linear-gradient(135deg,#6d28d9 0%,#a855f7 50%,#d946ef 100%);" do %>
+  <div class="flex items-start gap-4 lg:gap-5">
+    <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">📖</span>
+    <div class="min-w-0">
+      <p class="font-semibold text-lg lg:text-xl">Belles histoires</p>
+      <p class="text-white/90 text-[15px] lg:text-base leading-snug">
+        Découvrez des reconversions et des déclics inspirants
+      </p>
+    </div>
+  </div>
+<% end %>
+
+
 
 </div>
 
@@ -324,29 +341,34 @@
   window.addEventListener('keydown',e=>{ if(e.key==='Escape' && !menu.classList.contains('hidden')) close(); });
 })();
 
-/* Carte + filtres */
+/* Carte + filtres (opportunités + belles histoires) */
 (function(){
   if(!document.getElementById('map') || !window.L) return;
 
   const map=L.map('map',{zoomControl:true,scrollWheelZoom:true}).setView([46.6,2.2],6);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
 
-  const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',default:'#6366f1'};
-  const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',default:'⭐'};
-  function iconFor(cat){const c=colors[cat]||colors.default, e=emojis[cat]||emojis.default;
-    return L.divIcon({className:'',html:`<div class="picon" style="--c:${c}"><span>${e}</span></div>`,iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});}
+  // Ajout de la catégorie "histoires"
+  const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#a855f7',default:'#6366f1'};
+  const emojis={benevolat:'❤️',    formation:'📘',     rencontres:'👥',       entreprendre:'💼',        histoires:'📖',        default:'⭐'};
+
+  function iconFor(cat){
+    const c=colors[cat]||colors.default, e=emojis[cat]||emojis.default;
+    return L.divIcon({className:'',html:`<div class="picon" style="--c:${c}"><span>${e}</span></div>`,iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
+  }
 
   const layerGroup=L.layerGroup().addTo(map);
   let lastPopup=null;
 
   function addMarker(o){
     if(!o||!o.latitude||!o.longitude) return;
-    const m=L.marker([o.latitude,o.longitude],{icon:iconFor((o.category||'').toLowerCase())}).addTo(layerGroup);
-    const url=`/opportunities/${o.slug||o.id}`;
-    const badge={benevolat:'#fee2e2',formation:'#dbeafe',rencontres:'#d1fae5',entreprendre:'#ffedd5'}[(o.category||'').toLowerCase()]||'#eef2ff';
+    const cat=(o.category||'').toLowerCase();
+    const m=L.marker([o.latitude,o.longitude],{icon:iconFor(cat)}).addTo(layerGroup);
+    const url= cat==='histoires' ? `/stories/${o.slug||o.id}` : `/opportunities/${o.slug||o.id}`;
+    const badgeBg = {benevolat:'#fee2e2',formation:'#dbeafe',rencontres:'#d1fae5',entreprendre:'#ffedd5',histoires:'#ede9fe'}[cat]||'#eef2ff';
+    const label = cat==='histoires' ? 'Belle histoire' : (o.category||'').charAt(0).toUpperCase()+(o.category||'').slice(1);
     m.bindPopup(`<div style="min-width:220px">
-      <div style="margin-bottom:6px"><span style="font-size:11px;padding:2px 6px;border-radius:9999px;background:${badge};color:#111;">
-      ${(o.category||'').charAt(0).toUpperCase()+(o.category||'').slice(1)}</span></div>
+      <div style="margin-bottom:6px"><span style="font-size:11px;padding:2px 6px;border-radius:9999px;background:${badgeBg};color:#111;">${label}</span></div>
       <strong>${o.title||''}</strong><br/><small>${o.organization||''}</small>
       <p style="margin:.5rem 0">${(o.description||'').slice(0,110)}${(o.description||'').length>110?'…':''}</p>
       <a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a></div>`);
@@ -354,33 +376,55 @@
     return m;
   }
 
-  const fallback=<%= raw(Array(@opportunities).map{|o|{
-    id: o.id, slug: (o.respond_to?(:slug) ? o.slug : nil),
-    title: o.title, description: o.description, category: o.category,
-    organization: o.organization, location: o.location,
-    latitude: (o.latitude ? o.latitude.to_f : nil),
-    longitude: (o.longitude ? o.longitude.to_f : nil)
+  // Fallbacks fournis par le contrôleur (si l’API ne répond pas)
+  const oppFallback=<%= raw(Array(@opportunities).map{|o|{
+    id:o.id,slug:(o.respond_to?(:slug) ? o.slug : nil),title:o.title,description:o.description,category:o.category,
+    organization:o.organization,location:o.location,latitude:(o.latitude ? o.latitude.to_f : nil),longitude:(o.longitude ? o.longitude.to_f : nil)
   }}.to_json) %>;
 
+  const storiesFallback=<%= raw(defined?(@stories) ? Array(@stories).map{|s|{
+    id:s.id,slug:(s.respond_to?(:slug) ? s.slug : nil),title:(s.respond_to?(:title) ? s.title : ''),description:(s.try(:chapo)||s.try(:description)||''),
+    category:'histoires',organization:(s.try(:source_name)||s.try(:organization)||''),location:s.try(:location)||'',
+    latitude:(s.try(:latitude) ? s.latitude.to_f : nil),longitude:(s.try(:longitude) ? s.longitude.to_f : nil)
+  }}.to_json : '[]') %>;
+
+  let opportunities=[], stories=[];
+  let currentCat='toutes';
+
   function plot(items){
-    layerGroup.clearLayers(); const bounds=[];
+    layerGroup.clearLayers();
+    const bounds=[];
     items.forEach(o=>{ const m=addMarker(o); if(m) bounds.push([o.latitude,o.longitude]); });
     if(bounds.length) map.fitBounds(bounds,{padding:[30,30]});
   }
 
+  function dataset(cat){
+    const opps = opportunities||[], hist = stories||[];
+    if(cat==='toutes') return [...opps, ...hist];
+    if(cat==='histoires') return hist;
+    return opps.filter(o=>(o.category||'').toLowerCase()===cat);
+  }
+
+  // Chargement API → fallback
   fetch('/api/v1/opportunities')
     .then(r=>r.ok?r.json():Promise.reject())
-    .then(data=>{ const list=Array.isArray(data)?data:[]; window.__lastData=list; plot(list); })
-    .catch(()=>{ window.__lastData=(fallback||[]); plot(fallback||[]); });
+    .then(data=>{ opportunities = Array.isArray(data)?data:[]; window.__opps=opportunities; plot(dataset(currentCat)); })
+    .catch(()=>{ opportunities = oppFallback||[]; window.__opps=opportunities; plot(dataset(currentCat)); });
 
+  fetch('/api/v1/stories')
+    .then(r=>r.ok?r.json():Promise.reject())
+    .then(data=>{ stories = Array.isArray(data)?data.map(s=>({...s, category:'histoires'})):[]; window.__stories=stories; plot(dataset(currentCat)); })
+    .catch(()=>{ stories = storiesFallback||[]; window.__stories=stories; plot(dataset(currentCat)); });
+
+  // Filtres (nécessite un bouton .chip[data-cat="histoires"] si tu veux filtrer)
   const chips=[...document.querySelectorAll('.chip')];
   chips.forEach(chip=>chip.addEventListener('click',()=>{
     chips.forEach(c=>c.classList.remove('is-active')); chip.classList.add('is-active');
-    const cat=chip.dataset.cat, all=(cat==='toutes'), dataset=(window.__lastData||fallback||[]);
-    const filtered=all?dataset:dataset.filter(o=>(o.category||'').toLowerCase()===cat);
-    plot(filtered);
+    currentCat=chip.dataset.cat;
+    plot(dataset(currentCat));
   }));
 })();
+
 </script>
 </body>
 </html>
