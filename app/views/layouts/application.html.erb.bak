@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Déclic</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <!-- IMPORTANT : Tailwind + application.css -->
+    <%= stylesheet_link_tag "tailwind", "application", "data-turbo-track": "reload" %>
+    <!-- JS (importmap / turbo) -->
+    <%= javascript_importmap_tags %>
+  </head>
+  <body id="declic-app" class="bg-gray-50 text-gray-900">
+    <%= render 'shared/navbar' %>
+    <%= yield %>
+    <%= yield :scripts %>
+  </body>
+</html>
