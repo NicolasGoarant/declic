@@ -1,41 +1,19 @@
 <!DOCTYPE html>
 <html>
   <head>
-  <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
-    <title><%= content_for(:title) || "Déclic" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Déclic</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <!-- Inter (police) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-
-    <!-- Tailwind (OK en DEV) -->
-    <script>
-      tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','ui-sans-serif','system-ui'] }}}}
-    </script>
-
-    <!-- Leaflet global -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <!-- (facultatif) pipeline Rails si présent -->
-    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload", media: "all" %>
+    <!-- IMPORTANT : Tailwind + application.css -->
+    <%= stylesheet_link_tag "tailwind", "application", "data-turbo-track": "reload" %>
+    <!-- JS (importmap / turbo) -->
     <%= javascript_importmap_tags %>
-
-    <style>
-      body { font-family: 'Inter', sans-serif; }
-    </style>
-
-    <%= yield :head %>
   </head>
-
   <body id="declic-app" class="bg-gray-50 text-gray-900">
+    <%= render 'shared/navbar' %>
     <%= yield %>
     <%= yield :scripts %>
   </body>
 </html>
-

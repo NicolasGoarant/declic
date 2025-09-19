@@ -1,8 +1,8 @@
-<header class="fixed inset-x-0 top-0 z-40 bg-white/80 backdrop-blur border-b border-gray-200">
+<header class="fixed inset-x-0 top-0 z-40 bg-white/70 backdrop-blur border-b border-gray-200">
   <div class="max-w-6xl mx-auto h-14 px-4 flex items-center justify-between">
     <!-- Logo -->
     <%= link_to root_path, class: "flex items-center gap-2" do %>
-      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center shadow-sm">
         <span class="text-white font-bold text-xs">D</span>
       </div>
       <span class="font-semibold">Déclic</span>
@@ -10,42 +10,112 @@
 
     <!-- Liens desktop -->
     <nav class="hidden md:flex items-center gap-6 text-sm">
-      <%= link_to "Explorer",   root_path(anchor: "explorer"),     class: "hover:text-gray-900" %>
-      <%= link_to "Parcours",   root_path(anchor: "parcours"),     class: "hover:text-gray-900" %>
-      <%= link_to "Témoignages",root_path(anchor: "temoignages"),  class: "hover:text-gray-900" %>
+      <%= link_to "Explorer",    root_path(anchor: "explorer"),    class: "hover:text-gray-900" %>
+      <%= link_to "Parcours",    root_path(anchor: "parcours"),    class: "hover:text-gray-900" %>
+      <%= link_to "Témoignages", root_path(anchor: "temoignages"), class: "hover:text-gray-900" %>
     </nav>
 
-    <!-- Actions -->
+    <!-- CTA desktop -->
     <div class="hidden md:flex items-center gap-3">
       <%= link_to "Proposer", new_opportunity_path,
-            class: "inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700" %>
+            class: "inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm" %>
     </div>
 
     <!-- Burger -->
-    <button id="nav-burger"
-            class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-md border border-gray-300">
-      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+    <button id="btn-open-menu"
+            class="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white/90 shadow
+                   ring-1 ring-violet-200 hover:ring-violet-300 hover:shadow-md transition"
+            aria-controls="mobile-menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke-width="2">
+        <defs>
+          <linearGradient id="burgGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0"  stop-color="#a855f7"/><stop offset="1" stop-color="#6366f1"/>
+          </linearGradient>
+        </defs>
+        <path stroke="url(#burgGrad)" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/>
       </svg>
     </button>
   </div>
-
-  <!-- Menu mobile -->
-  <div id="mobileMenu" class="hidden md:hidden px-4 pb-4">
-    <div class="flex flex-col gap-1 text-sm">
-      <%= link_to "Explorer",    root_path(anchor: "explorer"),    class: "py-2 hover:text-gray-900" %>
-      <%= link_to "Parcours",    root_path(anchor: "parcours"),    class: "py-2 hover:text-gray-900" %>
-      <%= link_to "Témoignages", root_path(anchor: "temoignages"), class: "py-2 hover:text-gray-900" %>
-      <%= link_to "Proposer une opportunité", new_opportunity_path,
-            class: "mt-2 inline-flex items-center justify-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700" %>
-    </div>
-  </div>
 </header>
 
+<!-- Popover mobile (compact, OPAQUE) -->
+<div id="mobile-menu" class="fixed top-14 right-3 z-50 md:hidden hidden" aria-hidden="true">
+  <div id="mobile-panel"
+       class="origin-top-right w-[320px] sm:w-[360px] rounded-2xl shadow-2xl ring-1 ring-black/10
+              bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-700 p-4
+              text-white opacity-0 scale-95 -translate-y-2 transition">
+    <div class="flex items-center justify-between pb-2">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-white/15 grid place-content-center">
+          <span class="text-white font-bold text-xs">D</span>
+        </div>
+        <span class="font-semibold">Déclic</span>
+      </div>
+      <button id="btn-close-menu"
+              class="inline-flex items-center justify-center w-9 h-9 rounded-md bg-white/10 hover:bg-white/15"
+              aria-label="Fermer le menu">✕</button>
+    </div>
+
+    <nav class="space-y-2 text-[15px]">
+      <!-- Liens opaques (plus de transparence) -->
+      <%= link_to root_path(anchor: "explorer"),
+          class: "flex items-center gap-3 px-4 py-3 rounded-xl bg-white text-slate-900 hover:bg-violet-50" do %>
+        <span>🗺️</span><span>Explorer</span>
+      <% end %>
+
+      <%= link_to root_path(anchor: "parcours"),
+          class: "flex items-center gap-3 px-4 py-3 rounded-xl bg-white text-slate-900 hover:bg-violet-50" do %>
+        <span>🧭</span><span>Parcours</span>
+      <% end %>
+
+      <%= link_to root_path(anchor: "temoignages"),
+          class: "flex items-center gap-3 px-4 py-3 rounded-xl bg-white text-slate-900 hover:bg-violet-50" do %>
+        <span>💬</span><span>Témoignages</span>
+      <% end %>
+
+      <div class="pt-2">
+        <%= link_to new_opportunity_path,
+            class: "w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl
+                    bg-white text-indigo-700 font-semibold shadow hover:bg-violet-50" do %>
+          <span>✨</span><span>Proposer une opportunité</span>
+        <% end %>
+      </div>
+    </nav>
+
+    <div class="mt-3 text-white/80 text-xs">
+      © <%= Time.current.year %> Déclic — donnez du sens à votre vie.
+    </div>
+  </div>
+</div>
+
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  var b = document.getElementById('nav-burger');
-  var m = document.getElementById('mobileMenu');
-  if (b && m) b.addEventListener('click', function () { m.classList.toggle('hidden'); });
-});
+(function(){
+  const menu=document.getElementById('mobile-menu');
+  const panel=document.getElementById('mobile-panel');
+  const openBtn=document.getElementById('btn-open-menu');
+  const closeBtn=document.getElementById('btn-close-menu');
+  if(!menu||!panel||!openBtn||!closeBtn) return;
+
+  function open(){
+    menu.classList.remove('hidden'); menu.removeAttribute('aria-hidden');
+    requestAnimationFrame(()=>{ panel.classList.remove('opacity-0','scale-95','-translate-y-2'); });
+    openBtn.setAttribute('aria-expanded','true');
+    document.addEventListener('click', onClickOutside, { capture:true });
+    document.addEventListener('keydown', onKey);
+  }
+  function close(){
+    panel.classList.add('opacity-0','scale-95','-translate-y-2');
+    const onEnd=()=>{ menu.classList.add('hidden'); menu.setAttribute('aria-hidden','true'); panel.removeEventListener('transitionend',onEnd); };
+    panel.addEventListener('transitionend', onEnd, { once:true });
+    openBtn.setAttribute('aria-expanded','false');
+    document.removeEventListener('click', onClickOutside, { capture:true });
+    document.removeEventListener('keydown', onKey);
+  }
+  function onClickOutside(e){ if(!panel.contains(e.target) && e.target!==openBtn){ close(); } }
+  function onKey(e){ if(e.key==='Escape') close(); }
+
+  openBtn.addEventListener('click', open);
+  closeBtn.addEventListener('click', close);
+  document.addEventListener('turbo:before-cache', close);
+})();
 </script>
