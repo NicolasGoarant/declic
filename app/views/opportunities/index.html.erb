@@ -1,67 +1,135 @@
 <div class="pt-16 md:pt-20">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <!-- ton header, onglets, filtres, etc. -->
+    <!-- en-tête / filtres -->
   </div>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  <div class="flex items-center justify-between gap-4 mb-6">
-    <div>
-      <h1 class="text-2xl font-extrabold">
-        Opportunités <%= @category ? "— #{ @category.capitalize }" : "" %>
-      </h1>
-      <p class="text-gray-600">Trouvez une action concrète près de chez vous.</p>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-extrabold">
+          Opportunités <%= @category ? "— #{ @category.capitalize }" : "" %>
+        </h1>
+        <p class="text-gray-600">Trouvez une action concrète près de chez vous.</p>
+      </div>
+      <%= link_to "Proposer une opportunité", new_opportunity_path, class: "hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700" %>
     </div>
-    <%= link_to "Proposer une opportunité", new_opportunity_path, class: "hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700" %>
-  </div>
 
-  <div class="mb-5 flex flex-wrap gap-2">
-    <% chips = {
-      "Toutes" => nil,
-      "Bénévolat" => "benevolat",
-      "Formation" => "formation",
-      "Rencontres" => "rencontres",
-      "Entreprendre" => "entreprendre"
-    } %>
-    <% chips.each do |label, cat| %>
-      <% active = (@category == cat) || (cat.nil? && @category.blank?) %>
-      <%= link_to(label, cat ? parcours_path(category: cat) : opportunities_path,
-        class: "px-3 py-1.5 rounded-full text-sm #{active ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}") %>
-    <% end %>
-  </div>
-
-  <% if @opportunities.blank? %>
-    <div class="rounded-xl border border-gray-200 bg-white p-6 text-gray-700">
-      Aucune opportunité pour le moment.
-    </div>
-  <% else %>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      <% @opportunities.each do |o| %>
-        <% badge =
-          case o.category
-          when 'benevolat' then 'bg-rose-100 text-rose-700'
-          when 'formation' then 'bg-blue-100 text-blue-700'
-          when 'rencontres' then 'bg-green-100 text-green-700'
-          else 'bg-orange-100 text-orange-700'
-          end %>
-        <article class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-xs font-semibold px-2 py-1 rounded-full <%= badge %>">
-              <%= o.category.capitalize %>
-            </span>
-          </div>
-          <h3 class="font-semibold text-gray-900 line-clamp-1"><%= o.title %></h3>
-          <p class="text-sm text-gray-600 line-clamp-1"><%= o.organization %></p>
-          <p class="text-sm text-gray-700 mt-2 line-clamp-3"><%= o.description %></p>
-          <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
-            <span>📍 <%= o.location %></span>
-            <% if o.time_commitment.present? %><span>⏱ <%= o.time_commitment %></span><% end %>
-          </div>
-          <div class="mt-4">
-            <%= link_to "Voir la fiche", opportunity_path(o), class: "inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700" %>
-          </div>
-        </article>
+    <!-- chips -->
+    <div class="mb-5 flex flex-wrap gap-2">
+      <% chips = {
+        "Toutes" => nil,
+        "Bénévolat" => "benevolat",
+        "Formation" => "formation",
+        "Rencontres" => "rencontres",
+        "Entreprendre" => "entreprendre"
+      } %>
+      <% chips.each do |label, cat| %>
+        <% active = (@category == cat) || (cat.nil? && @category.blank?) %>
+        <%= link_to(label, cat ? parcours_path(category: cat) : opportunities_path,
+          class: "px-3 py-1.5 rounded-full text-sm #{active ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}") %>
       <% end %>
     </div>
-  <% end %>
+
+    <!-- CARTE -->
+    <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden mb-6">
+      <div id="map-index" class="h-64 md:h-80 w-full"></div>
+    </div>
+    <style>
+      /* style pin */
+      .picon{width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;
+        color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:var(--c,#6366f1)}
+      .picon::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+        border:6px solid transparent;border-top-color:var(--c,#6366f1)}
+    </style>
+
+    <% if @opportunities.blank? %>
+      <div class="rounded-xl border border-gray-200 bg-white p-6 text-gray-700">
+        Aucune opportunité pour le moment.
+      </div>
+    <% else %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <% @opportunities.each do |o| %>
+          <% badge =
+            case o.category
+            when 'benevolat' then 'bg-rose-100 text-rose-700'
+            when 'formation' then 'bg-blue-100 text-blue-700'
+            when 'rencontres' then 'bg-green-100 text-green-700'
+            else 'bg-orange-100 text-orange-700'
+            end %>
+          <article class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xs font-semibold px-2 py-1 rounded-full <%= badge %>">
+                <%= o.category.capitalize %>
+              </span>
+            </div>
+            <h3 class="font-semibold text-gray-900 line-clamp-1"><%= o.title %></h3>
+            <p class="text-sm text-gray-600 line-clamp-1"><%= o.organization %></p>
+            <p class="text-sm text-gray-700 mt-2 line-clamp-3"><%= o.description %></p>
+            <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
+              <span>📍 <%= o.location %></span>
+              <% if o.time_commitment.present? %><span>⏱ <%= o.time_commitment %></span><% end %>
+            </div>
+            <div class="mt-4">
+              <%= link_to "Voir la fiche", opportunity_path(o), class: "inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700" %>
+            </div>
+          </article>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
 </div>
-</div>
+
+<%= content_for :scripts do %>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    (async function(){
+      const el = document.getElementById('map-index');
+      if(!el || !window.L) return;
+
+      const map=L.map(el,{zoomControl:true,scrollWheelZoom:true}).setView([46.6,2.2],6);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+
+      const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b'};
+      const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼'};
+
+      function iconFor(cat){
+        const c=colors[cat]||'#6366f1', e=emojis[cat]||'⭐';
+        return L.divIcon({className:'',html:`<div class="picon" style="--c:${c}"><span>${e}</span></div>`,
+                          iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
+      }
+
+      const layer=L.layerGroup().addTo(map);
+      let lastPopup=null;
+
+      function addMarker(o){
+        if(!o||!o.latitude||!o.longitude) return;
+        const cat=(o.category||'').toLowerCase();
+        const m=L.marker([o.latitude,o.longitude],{icon:iconFor(cat)}).addTo(layer);
+        const url=`/opportunities/${o.slug||o.id}`;
+        m.bindPopup(`<div style="min-width:220px">
+          <div style="margin-bottom:6px"><span style="font-size:11px;padding:2px 6px;border-radius:9999px;background:#eef2ff;color:#111;">
+          ${(o.category||'').charAt(0).toUpperCase()+(o.category||'').slice(1)}</span></div>
+          <strong>${o.title||''}</strong><br/><small>${o.organization||''}</small>
+          <p style="margin:.5rem 0">${(o.description||'').slice(0,110)}${(o.description||'').length>110?'…':''}</p>
+          <a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a></div>`);
+        m.on('popupopen',e=>{ if(lastPopup && lastPopup!==e.popup) lastPopup.close(); lastPopup=e.popup; });
+        return m;
+      }
+
+      const currentCat = "<%= (@category || '').to_s.downcase %>";
+      let data = [];
+      try{
+        const r = await fetch('/api/v1/opportunities');
+        data = await r.json();
+      }catch(e){ data = []; }
+
+      if(currentCat){ data = data.filter(o => (o.category||'').toLowerCase()===currentCat); }
+
+      const bounds=[];
+      data.forEach(o=>{ const m=addMarker(o); if(m) bounds.push([o.latitude,o.longitude]); });
+      if(bounds.length) map.fitBounds(bounds,{padding:[24,24]});
+    })();
+  </script>
+<% end %>
+

@@ -1,7 +1,17 @@
-
 <main class="max-w-6xl mx-auto px-6 py-8 pt-20 md:pt-24">
   <h1 class="text-3xl sm:text-4xl font-extrabold">Belles histoires</h1>
   <p class="text-gray-600 mt-2">Des parcours inspirants de reconversion et de prise de risque.</p>
+
+  <!-- CARTE -->
+  <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden mt-4 mb-6">
+    <div id="map-stories" class="h-64 md:h-80 w-full"></div>
+  </div>
+  <style>
+    .picon{width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;
+      color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:var(--c,#a855f7)}
+    .picon::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+      border:6px solid transparent;border-top-color:var(--c,#a855f7)}
+  </style>
 
   <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
     <% @stories.each do |s| %>
@@ -21,3 +31,48 @@
     <% end %>
   </div>
 </main>
+
+<%= content_for :scripts do %>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    (async function(){
+      const el = document.getElementById('map-stories');
+      if(!el || !window.L) return;
+
+      const map=L.map(el,{zoomControl:true,scrollWheelZoom:true}).setView([46.6,2.2],6);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+
+      const VIOLET='#a855f7';
+      function icon(){ return L.divIcon({
+        className:'', html:`<div class="picon" style="--c:${VIOLET}"><span>📖</span></div>`,
+        iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]
+      }); }
+
+      const layer=L.layerGroup().addTo(map);
+      let lastPopup=null;
+
+      function addMarker(s){
+        if(!s||!s.latitude||!s.longitude) return;
+        const m=L.marker([s.latitude,s.longitude],{icon:icon()}).addTo(layer);
+        const url=`/stories/${s.slug||s.id}`;
+        m.bindPopup(`<div style="min-width:220px">
+          <div style="margin-bottom:6px"><span style="font-size:11px;padding:2px 6px;border-radius:9999px;background:#f3e8ff;color:#6b21a8;">Belle histoire</span></div>
+          <strong>${s.title||''}</strong>
+          <p style="margin:.5rem 0">${(s.description||s.chapo||'').slice(0,110)}${((s.description||s.chapo||'').length>110)?'…':''}</p>
+          <a href="${url}" class="text-indigo-600 underline text-sm">Lire l’histoire</a></div>`);
+        m.on('popupopen',e=>{ if(lastPopup && lastPopup!==e.popup) lastPopup.close(); lastPopup=e.popup; });
+        return m;
+      }
+
+      let data=[];
+      try{
+        const r = await fetch('/api/v1/stories'); data = await r.json();
+      }catch(e){ data=[]; }
+
+      const bounds=[];
+      data.forEach(s=>{ const m=addMarker(s); if(m) bounds.push([s.latitude,s.longitude]); });
+      if(bounds.length) map.fitBounds(bounds,{padding:[24,24]});
+    })();
+  </script>
+<% end %>
