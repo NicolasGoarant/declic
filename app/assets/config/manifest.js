@@ -7,3 +7,6 @@
 
 //= link_tree ../images
 // (garde aussi éventuellement)
+
+// Stories PDFs
+//= link_tree ../stories .pdf

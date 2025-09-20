@@ -1,279 +1,331 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Déclic — Trouvez votre prochaine opportunité de changement</title>
-  <meta name="description" content="Bénévolat, formations, rencontres, reconversion… Découvrez des opportunités près de chez vous.">
+<!-- Hero -->
+<section class="relative">
+  <div class="absolute inset-0">
+    <img src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1920&auto=format&fit=crop"
+         alt="" class="w-full h-full object-cover" />
+  </div>
+  <div class="absolute inset-0 bg-gradient-to-r from-fuchsia-800/70 via-purple-700/65 to-emerald-600/60 mix-blend-multiply"></div>
 
-  <!-- Tailwind (CDN pour la maquette) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter','ui-sans-serif','system-ui'] },
-          colors: { brand: { 600:'#4f46e5', 700:'#4338ca' } }
-        }
-      }
-    }
-  </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-    /* Hauteur de carte responsive */
-    #map { height: 360px; } @media (min-width:1024px){ #map{ height:420px; } }
-    /* Espace sous header fixe */
-    :root { --safe-top: env(safe-area-inset-top, 0px); }
-    .hero-pad { padding-top: calc(64px + var(--safe-top)); }
-    /* Pins emoji */
-    .picon{ width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;
-      color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:var(--c,#6366f1);}
-    .picon::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
-      border:6px solid transparent;border-top-color:var(--c,#6366f1);}
-    /* Chips */
-    .chip{ transition:.15s; } .chip.is-active{ background:#111827;color:#fff; }
-    /* Drawer: caché par défaut (évite chevauchements) */
-    #mobile-menu[aria-hidden="true"]{ display:none!important; }
-  </style>
-</head>
-
-<body class="bg-gray-50 text-gray-900">
-<div class="flex min-h-screen flex-col">
-
-  <!-- ===== Header fixe ===== -->
-
-  <section class="relative hero-pad">
-    <div class="absolute inset-0">
-      <img src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1920&auto=format&fit=crop" alt="" class="w-full h-full object-cover"/>
-    </div>
-    <div class="absolute inset-0 bg-gradient-to-r from-fuchsia-800/70 via-purple-700/65 to-emerald-600/60 mix-blend-multiply"></div>
-
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-      <div class="max-w-3xl">
-        <h1 class="text-white text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">
-          Trouvez votre prochaine<br/><span class="text-yellow-300">opportunité de changement</span>
-        </h1>
-        <p class="mt-4 text-base sm:text-lg text-white/90 max-w-2xl">Bénévolat, formations, rencontres, reconversion… Découvrez des milliers d’opportunités près de chez vous.</p>
-
-        <div class="mt-6 flex flex-col sm:flex-row gap-3">
-          <a href="#explorer" class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-white text-gray-900 font-semibold hover:bg-gray-50"><span class="mr-2">🗺️</span> Explorer la carte</a>
-          <form action="#explorer" class="flex-1 min-w-0">
-            <div class="flex items-center bg-white/95 rounded-lg overflow-hidden shadow-sm">
-              <span class="pl-3"><svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"/></svg></span>
-              <input type="text" placeholder="Ville, thème, organisation…" class="w-full px-3 py-2.5 bg-transparent focus:outline-none"/>
-              <button class="px-4 py-2.5 bg-brand-600 text-white font-medium hover:bg-brand-700">Rechercher</button>
-            </div>
-          </form>
-        </div>
-
-        <ul class="mt-4 flex flex-col sm:flex-row gap-3 sm:gap-6 text-white/95 text-sm">
-          <li class="flex items-center"><span class="mr-2">✅</span><span><strong>15 000+</strong> opportunités référencées</span></li>
-          <li class="flex items-center"><span class="mr-2">🗺️</span><span><strong>Toute la France</strong> couverte</span></li>
-          <li class="flex items-center"><span class="mr-2">💜</span><span><strong>Gratuit</strong> et accessible à tous</span></li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== Contenu ===== -->
-  <main class="flex-1">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <!-- IMPORTANT: min-w-0 partout + ordres mobiles -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-
-<!-- Colonne “Choisissez votre parcours” (cachée sur mobile, ++ grande sur desktop) -->
-<div id="parcours"
-     class="block order-1 lg:order-none col-span-12 lg:col-span-4 min-w-0 space-y-6">
-
-
-
-  <!-- Je veux entreprendre (entreprendre) -->
-  <%= link_to parcours_path(category: "entreprendre"),
-      class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
-      style: "background:linear-gradient(135deg,#f59e0b 0%,#ef4444 50%,#fb7185 100%);" do %>
-    <div class="flex items-start gap-4 lg:gap-5">
-      <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">🚀</span>
-      <div class="min-w-0">
-        <p class="font-semibold text-lg lg:text-xl">Je veux entreprendre</p>
-        <p class="text-white/90 text-[15px] lg:text-base leading-snug">
-          Lance ton projet avec le soutien d’entrepreneurs expérimentés
-        </p>
-      </div>
-    </div>
-  <% end %>
-
-
-  <!-- Je veux me former(formation) -->
-  <%= link_to parcours_path(category: "formation"),
-      class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
-      style: "background:linear-gradient(135deg,#6366f1 0%,#38bdf8 100%);" do %>
-    <div class="flex items-start gap-4 lg:gap-5">
-      <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">📘</span>
-      <div class="min-w-0">
-        <p class="font-semibold text-lg lg:text-xl">Je veux me former</p>
-        <p class="text-white/90 text-[15px] lg:text-base leading-snug">
-          Découvre des formations pour développer tes compétences
-        </p>
-      </div>
-    </div>
-  <% end %>
-
-    <!-- Je veux aider (bénévolat) -->
-  <%= link_to parcours_path(category: "benevolat"),
-      class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
-      style: "background:linear-gradient(135deg,#f43f5e 0%,#ec4899 100%);" do %>
-    <div class="flex items-start gap-4 lg:gap-5">
-      <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">❤️</span>
-      <div class="min-w-0">
-        <p class="font-semibold text-lg lg:text-xl">Je veux aider</p>
-        <p class="text-white/90 text-[15px] lg:text-base leading-snug">
-          Trouve des missions de bénévolat qui correspondent à tes valeurs
-        </p>
-      </div>
-    </div>
-  <% end %>
-
-  <!-- Je veux rencontrer (rencontres) -->
-  <%= link_to parcours_path(category: "rencontres"),
-      class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
-      style: "background:linear-gradient(135deg,#10b981 0%,#06b6d4 100%);" do %>
-    <div class="flex items-start gap-4 lg:gap-5">
-      <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">🤝</span>
-      <div class="min-w-0">
-        <p class="font-semibold text-lg lg:text-xl">Je veux rencontrer</p>
-        <p class="text-white/90 text-[15px] lg:text-base leading-snug">
-          Rejoins des communautés et crée des liens authentiques
-        </p>
-      </div>
-    </div>
-  <% end %>
-
-<!-- Belles histoires -->
-<%= link_to stories_path(category: "belles_histoires"),
-    class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
-    style: "background:linear-gradient(135deg,#6d28d9 0%,#a855f7 50%,#d946ef 100%);" do %>
-  <div class="flex items-start gap-4 lg:gap-5">
-    <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">📖</span>
-    <div class="min-w-0">
-      <p class="font-semibold text-lg lg:text-xl">Belles histoires</p>
-      <p class="text-white/90 text-[15px] lg:text-base leading-snug">
-        Découvrez des reconversions et des "déclics" inspirants
+  <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-20 md:pt-24">
+    <div class="max-w-3xl">
+      <h1 class="text-white text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">
+        Trouvez votre prochaine<br/>
+        <span class="text-yellow-300">opportunité de changement</span>
+      </h1>
+      <p class="mt-4 text-base sm:text-lg text-white/90 max-w-2xl">
+        Bénévolat, formations, rencontres, reconversion… Découvrez des milliers d’opportunités près de chez vous.
       </p>
+
+      <div class="mt-6 flex flex-col sm:flex-row gap-3">
+        <a href="#explorer" class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-white text-gray-900 font-semibold hover:bg-gray-50">
+          <span class="mr-2">🗺️</span> Explorer la carte
+        </a>
+        <form action="#explorer" class="flex-1 min-w-0">
+          <div class="flex items-center bg-white/95 rounded-lg overflow-hidden shadow-sm">
+            <span class="pl-3">
+              <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"/>
+              </svg>
+            </span>
+            <input type="text" placeholder="Ville, thème, organisation…" class="w-full px-3 py-2.5 bg-transparent focus:outline-none" />
+            <button class="px-4 py-2.5 bg-indigo-600 text-white font-medium hover:bg-indigo-700">Rechercher</button>
+          </div>
+        </form>
+      </div>
+
+      <ul class="mt-4 flex flex-col sm:flex-row gap-3 sm:gap-6 text-white/95 text-sm">
+        <li class="flex items-center"><span class="mr-2">✅</span><span><strong>15 000+</strong> opportunités référencées</span></li>
+        <li class="flex items-center"><span class="mr-2">🗺️</span><span><strong>Toute la France</strong> couverte</span></li>
+        <li class="flex items-center"><span class="mr-2">💜</span><span><strong>Gratuit</strong> et accessible à tous</span></li>
+      </ul>
     </div>
   </div>
-<% end %>
+</section>
 
+<!-- Contenu -->
+<main class="flex-1">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
 
+      <!-- Colonne parcours -->
+      <div id="parcours" class="col-span-12 lg:col-span-4 space-y-6">
 
-</div>
-
-
-
-        <!-- Carte — 2e en mobile -->
-        <section id="explorer" class="order-2 lg:order-none col-span-12 lg:col-span-4 min-w-0">
-          <h2 class="text-2xl sm:text-3xl font-extrabold">Explorez les opportunités</h2>
-          <p class="text-gray-600 mt-2">Découvrez sur la carte toutes les possibilités d’engagement près de chez vous</p>
-
-          <div class="mt-4 flex flex-wrap gap-2 text-sm">
-            <button data-cat="toutes"       class="chip px-3 py-1 rounded-full bg-gray-200 text-gray-800 is-active">Toutes</button>
-            <button data-cat="benevolat"    class="chip px-3 py-1 rounded-full bg-rose-100 text-rose-700">Bénévolat</button>
-            <button data-cat="formation"    class="chip px-3 py-1 rounded-full bg-blue-100 text-blue-700">Formation</button>
-            <button data-cat="rencontres"   class="chip px-3 py-1 rounded-full bg-green-100 text-green-700">Rencontres</button>
-            <button data-cat="entreprendre" class="chip px-3 py-1 rounded-full bg-orange-100 text-orange-700">Entreprendre</button>
+        <%= link_to parcours_path(category: "entreprendre"),
+            class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
+            style: "background:linear-gradient(135deg,#f59e0b 0%,#ef4444 50%,#fb7185 100%);" do %>
+          <div class="flex items-start gap-4 lg:gap-5">
+            <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">🚀</span>
+            <div class="min-w-0">
+              <p class="font-semibold text-lg lg:text-xl">Je veux entreprendre</p>
+              <p class="text-white/90 text-[15px] lg:text-base leading-snug">
+                Lance ton projet avec le soutien d’entrepreneurs expérimentés
+              </p>
+            </div>
           </div>
+        <% end %>
 
-          <div class="mt-4 bg-white rounded-2xl shadow overflow-hidden">
-            <div id="map"></div>
+        <%= link_to parcours_path(category: "formation"),
+            class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
+            style: "background:linear-gradient(135deg,#6366f1 0%,#38bdf8 100%);" do %>
+          <div class="flex items-start gap-4 lg:gap-5">
+            <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">📘</span>
+            <div class="min-w-0">
+              <p class="font-semibold text-lg lg:text-xl">Je veux me former</p>
+              <p class="text-white/90 text-[15px] lg:text-base leading-snug">
+                Découvre des formations pour développer tes compétences
+              </p>
+            </div>
           </div>
-        </section>
+        <% end %>
 
-        <!-- Liste — 3e en mobile, LIMITÉE À 3 -->
-        <section class="order-3 lg:order-none col-span-12 lg:col-span-4 min-w-0">
-          <h2 class="text-2xl sm:text-3xl font-extrabold">Quelques opportunités</h2>
-          <p class="text-gray-600 mt-2">Les dernières missions et événements près de chez vous</p>
-
-          <div class="mt-6 space-y-4">
-            <% Array(@opportunities).first(3).to_a.each do |o| %>
-              <article class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition">
-                <div class="flex items-center gap-2 mb-2">
-                  <% badge = case o.category
-                    when 'benevolat' then 'bg-rose-100 text-rose-700'
-                    when 'formation' then 'bg-blue-100 text-blue-700'
-                    when 'rencontres' then 'bg-green-100 text-green-700'
-                    else 'bg-orange-100 text-orange-700'
-                  end %>
-                  <span class="text-xs font-semibold px-2 py-1 rounded-full <%= badge %>"><%= o.category.to_s.capitalize %></span>
-                </div>
-                <h3 class="font-semibold text-gray-900 truncate"><%= o.title %></h3>
-                <p class="text-sm text-gray-600"><%= o.organization %></p>
-                <p class="text-sm text-gray-700 mt-2"><%= o.description.to_s.truncate(110) %></p>
-                <div class="mt-3 flex items-center justify-between">
-                  <div class="flex items-center gap-3 text-xs text-gray-500">
-                    <% if o.location.present? %><span>📍 <%= o.location %></span><% end %>
-                    <% if o.time_commitment.present? %><span>⏱ <%= o.time_commitment %></span><% end %>
-                  </div>
-                  <a href="/opportunities/<%= o.respond_to?(:slug) && o.slug.present? ? o.slug : o.id %>" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-brand-600 text-white text-xs font-medium hover:bg-brand-700">En savoir plus</a>
-                </div>
-              </article>
-            <% end %>
+        <%= link_to parcours_path(category: "benevolat"),
+            class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
+            style: "background:linear-gradient(135deg,#f43f5e 0%,#ec4899 100%);" do %>
+          <div class="flex items-start gap-4 lg:gap-5">
+            <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">❤️</span>
+            <div class="min-w-0">
+              <p class="font-semibold text-lg lg:text-xl">Je veux aider</p>
+              <p class="text-white/90 text-[15px] lg:text-base leading-snug">
+                Trouve des missions de bénévolat qui correspondent à tes valeurs
+              </p>
+            </div>
           </div>
-        </section>
+        <% end %>
 
+        <%= link_to parcours_path(category: "rencontres"),
+            class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
+            style: "background:linear-gradient(135deg,#10b981 0%,#06b6d4 100%);" do %>
+          <div class="flex items-start gap-4 lg:gap-5">
+            <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">🤝</span>
+            <div class="min-w-0">
+              <p class="font-semibold text-lg lg:text-xl">Je veux rencontrer</p>
+              <p class="text-white/90 text-[15px] lg:text-base leading-snug">
+                Rejoins des communautés et crée des liens authentiques
+              </p>
+            </div>
+          </div>
+        <% end %>
+
+        <%= link_to stories_path,
+            class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
+            style: "background:linear-gradient(135deg,#6d28d9 0%,#a855f7 50%,#d946ef 100%);" do %>
+          <div class="flex items-start gap-4 lg:gap-5">
+            <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">📖</span>
+            <div class="min-w-0">
+              <p class="font-semibold text-lg lg:text-xl">Belles histoires</p>
+              <p class="text-white/90 text-[15px] lg:text-base leading-snug">
+                Découvrez des reconversions et des “déclics” inspirants
+              </p>
+            </div>
+          </div>
+        <% end %>
       </div>
-    </div>
 
-    <!-- Témoignages -->
-    <section id="temoignages" class="bg-white py-14">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-10">
-          <h2 class="text-2xl sm:text-3xl font-extrabold">Ils ont changé leur vie</h2>
-          <p class="text-gray-600 mt-2">Histoires vraies de personnes qui ont trouvé leur Déclic</p>
+      <!-- Carte -->
+      <section id="explorer" class="col-span-12 lg:col-span-4">
+        <h2 class="text-2xl sm:text-3xl font-extrabold">Explorez les opportunités</h2>
+        <p class="text-gray-600 mt-2">Découvrez sur la carte toutes les possibilités d’engagement près de chez vous</p>
+
+        <div class="mt-4 flex flex-wrap gap-2 text-sm">
+          <button data-cat="toutes"       class="chip px-3 py-1 rounded-full bg-gray-200 text-gray-800 is-active">Toutes</button>
+          <button data-cat="benevolat"    class="chip px-3 py-1 rounded-full bg-rose-100 text-rose-700">Bénévolat</button>
+          <button data-cat="formation"    class="chip px-3 py-1 rounded-full bg-blue-100 text-blue-700">Formation</button>
+          <button data-cat="rencontres"   class="chip px-3 py-1 rounded-full bg-green-100 text-green-700">Rencontres</button>
+          <button data-cat="entreprendre" class="chip px-3 py-1 rounded-full bg-orange-100 text-orange-700">Entreprendre</button>
         </div>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <% Array(@testimonials).first(4).to_a.each do |t| %>
-            <article class="bg-gray-50 rounded-xl border border-gray-100 shadow-sm p-6">
-              <div class="flex items-center gap-3 mb-4">
 
-<% logical = t.image_url.to_s.sub(%r{\A/assets/}, '') %>
-<% logical = 'avatars/default-avatar.png' unless asset_exists?(logical) %>
-<%= image_tag logical, alt: t.name, class: "w-12 h-12 rounded-full object-cover" %>
+        <div class="mt-4 bg-white rounded-2xl shadow overflow-hidden">
+          <div id="home-map" class="w-full h-[340px] sm:h-[380px] lg:h-[420px]"></div>
+        </div>
+      </section>
 
+      <!-- Liste courte -->
+      <section class="col-span-12 lg:col-span-4">
+        <h2 class="text-2xl sm:text-3xl font-extrabold">Quelques opportunités</h2>
+        <p class="text-gray-600 mt-2">Les dernières missions et événements près de chez vous</p>
 
-                <div class="min-w-0">
-                  <h3 class="font-semibold truncate"><%= t.name %></h3>
-                  <p class="text-xs text-gray-500"><%= t.role %> — <%= t.age %> ans</p>
-                </div>
+        <div class="mt-6 space-y-4">
+          <% Array(@opportunities).first(3).to_a.each do |o| %>
+            <article class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition">
+              <div class="flex items-center gap-2 mb-2">
+                <% badge = case o.category
+                  when 'benevolat' then 'bg-rose-100 text-rose-700'
+                  when 'formation' then 'bg-blue-100 text-blue-700'
+                  when 'rencontres' then 'bg-green-100 text-green-700'
+                  else 'bg-orange-100 text-orange-700'
+                end %>
+                <span class="text-xs font-semibold px-2 py-1 rounded-full <%= badge %>">
+                  <%= o.category.to_s.capitalize %>
+                </span>
               </div>
-              <p class="text-gray-700 text-sm leading-relaxed"><%= t.story %></p>
+              <h3 class="font-semibold text-gray-900 truncate"><%= o.title %></h3>
+              <p class="text-sm text-gray-600"><%= o.organization %></p>
+              <p class="text-sm text-gray-700 mt-2"><%= o.description.to_s.truncate(110) %></p>
+              <div class="mt-3 flex items-center justify-between">
+                <div class="flex items-center gap-3 text-xs text-gray-500">
+                  <% if o.location.present? %><span>📍 <%= o.location %></span><% end %>
+                  <% if o.time_commitment.present? %><span>⏱ <%= o.time_commitment %></span><% end %>
+                </div>
+                <a href="/opportunities/<%= o.respond_to?(:slug) && o.slug.present? ? o.slug : o.id %>"
+                   class="inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700">
+                  En savoir plus
+                </a>
+              </div>
             </article>
           <% end %>
         </div>
-      </div>
-    </section>
-  </main>
+      </section>
 
-  <!-- ===== Footer ===== -->
-  <footer class="bg-gray-950 text-white py-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center gap-2 mb-2">
-        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
-          <span class="text-white font-bold text-[10px]">D</span>
-        </div>
-        <span class="font-semibold">Déclic</span>
-      </div>
-      <p class="text-gray-300 max-w-md">Trouvez votre voie vers l’engagement et donnez du sens à votre vie.</p>
-      <p class="text-gray-400 mt-3 text-sm">© <%= Time.current.year %> Déclic. Tous droits réservés.</p>
     </div>
-  </footer>
-</div>
+  </div>
 
-<!-- Leaflet -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
+  <!-- Témoignages -->
+  <section id="temoignages" class="bg-white py-14">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-10">
+        <h2 class="text-2xl sm:text-3xl font-extrabold">Ils ont changé leur vie</h2>
+        <p class="text-gray-600 mt-2">Histoires vraies de personnes qui ont trouvé leur Déclic</p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <% Array(@testimonials).first(4).to_a.each do |t| %>
+          <article class="bg-gray-50 rounded-xl border border-gray-100 shadow-sm p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <% if t.image_url.present? %>
+                <%= image_tag t.image_url, alt: t.name, class: "w-12 h-12 rounded-full object-cover" %>
+              <% else %>
+                <div class="w-12 h-12 rounded-full bg-gray-200 grid place-content-center">
+                  <span class="font-semibold text-gray-700"><%= t.name.to_s.first %></span>
+                </div>
+              <% end %>
+              <div class="min-w-0">
+                <h3 class="font-semibold truncate"><%= t.name %></h3>
+                <p class="text-xs text-gray-500"><%= t.role %> — <%= t.age %> ans</p>
+              </div>
+            </div>
+            <p class="text-gray-700 text-sm leading-relaxed"><%= t.story %></p>
+          </article>
+        <% end %>
+      </div>
+    </div>
+  </section>
+</main>
+
+<% content_for :scripts do %>
+  <style>
+    .chip{transition:.15s}
+    .chip.is-active{background:#111827;color:#fff}
+    .picon{width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:var(--c,#6366f1)}
+    .picon::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--c,#6366f1)}
+  </style>
+  <script>
+    (function(){
+      function ready(fn){
+        document.addEventListener('turbo:load',fn);
+        document.addEventListener('DOMContentLoaded',fn);
+      }
+      ready(function(){
+        var el=document.getElementById('home-map');
+        if(!el || !window.L || el.dataset._init) return;
+        el.dataset._init='1';
+
+        // 1) Map
+        var map=L.map(el,{zoomControl:true,scrollWheelZoom:true}).setView([46.6,2.2],6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+
+        // 2) Markers (couleurs + emojis, y compris histoires)
+        var colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#8b5cf6',default:'#6366f1'};
+        var emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',histoires:'📖',default:'⭐'};
+        function iconFor(cat){
+          var c=colors[cat]||colors.default, e=emojis[cat]||emojis.default;
+          return L.divIcon({className:'',html:'<div class="picon" style="--c:'+c+'"><span>'+e+'</span></div>',iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
+        }
+
+        var layer=L.layerGroup().addTo(map), lastPopup=null;
+        function addMarker(o){
+          if(!o||!o.latitude||!o.longitude) return;
+          var m=L.marker([o.latitude,o.longitude],{icon:iconFor((o.category||'').toLowerCase())}).addTo(layer);
+          var url = o.kind==='story' ? ('/stories/'+(o.slug||o.id)) : ('/opportunities/'+(o.slug||o.id));
+          var badge={'benevolat':'#fee2e2','formation':'#dbeafe','rencontres':'#d1fae5','entreprendre':'#ffedd5','histoires':'#ede9fe'}[(o.category||'').toLowerCase()]||'#eef2ff';
+          var catLabel=(o.category||'').charAt(0).toUpperCase()+(o.category||'').slice(1);
+          m.bindPopup(
+            '<div style="min-width:220px">'
+            +'<div style="margin-bottom:6px"><span style="font-size:11px;padding:2px 6px;border-radius:9999px;background:'+badge+';color:#111;">'+catLabel+'</span></div>'
+            +'<strong>'+(o.title||'')+'</strong>'+(o.organization?'<br/><small>'+o.organization+'</small>':'')
+            +'<p style="margin:.5rem 0">'+((o.description||'').slice(0,110))+(((o.description||'').length>110)?'…':'')+'</p>'
+            +'<a class="text-indigo-600 underline text-sm" data-turbo="false" href="'+url+'">Voir la fiche</a>'
+            +'</div>'
+          );
+          m.on('popupopen',function(e){ if(lastPopup && lastPopup!==e.popup) lastPopup.close(); lastPopup=e.popup; });
+          return m;
+        }
+
+        // 3) Fallback côté serveur
+        var fallbackOpps=<%= raw(Array(@opportunities).map{|o|{
+          id:o.id, slug:(o.respond_to?(:slug) ? o.slug : nil),
+          title:o.title, description:o.description, category:o.category,
+          organization:o.organization, location:o.location,
+          latitude:(o.latitude ? o.latitude.to_f : nil),
+          longitude:(o.longitude ? o.longitude.to_f : nil),
+          kind:'opp'
+        }}.to_json) %>;
+
+        var fallbackStories=<%=
+          begin
+            raw(Story.select(:id,:slug,:title,:chapo,:description,:latitude,:longitude,:location)
+                 .map{|s|{
+                   id:s.id, slug:s.slug,
+                   title:s.title, description:(s.chapo.presence || s.description),
+                   category:'histoires', organization:nil, location:s.location,
+                   latitude:(s.latitude ? s.latitude.to_f : nil),
+                   longitude:(s.longitude ? s.longitude.to_f : nil),
+                   kind:'story'
+                 }}.to_json)
+          rescue
+            '[]'.html_safe
+          end
+        %>;
+
+        function plot(items){
+          layer.clearLayers();
+          var bounds=[];
+          (items||[]).forEach(function(o){ var mk=addMarker(o); if(mk) bounds.push([o.latitude,o.longitude]); });
+          if(bounds.length) map.fitBounds(bounds,{padding:[24,24]});
+        }
+
+        // 4) Charge API opportunities + stories, puis fallback
+        var dataset=[];
+        Promise.all([
+          fetch('/api/v1/opportunities').then(function(r){return r.ok?r.json():Promise.reject();}).catch(function(){return fallbackOpps;}),
+          fetch('/api/v1/stories').then(function(r){return r.ok?r.json():Promise.reject();}).catch(function(){return fallbackStories;})
+        ]).then(function(results){
+          var opps = Array.isArray(results[0]) ? results[0].map(function(o){
+            return { id:o.id, slug:o.slug, title:o.title, description:o.description, category:o.category,
+                     organization:o.organization, location:o.location,
+                     latitude:parseFloat(o.latitude), longitude:parseFloat(o.longitude), kind:'opp' };
+          }) : [];
+
+          var stories = Array.isArray(results[1]) ? results[1].map(function(s){
+            return { id:s.id, slug:s.slug, title:s.title,
+                     description:(s.chapo||s.description||''), category:'histoires',
+                     organization:null, location:s.location,
+                     latitude:parseFloat(s.latitude), longitude:parseFloat(s.longitude), kind:'story' };
+          }) : [];
+
+          dataset = opps.concat(stories);
+          plot(dataset);
+        });
+
+        // 5) Filtres chips
+        Array.from(document.querySelectorAll('.chip')).forEach(function(chip){
+          chip.addEventListener('click',function(){
+            Array.from(document.querySelectorAll('.chip')).forEach(function(c){ c.classList.remove('is-active'); });
+            chip.classList.add('is-active');
+            var cat=chip.dataset.cat, all=(cat==='toutes');
+            var filtered = all ? dataset : (dataset||[]).filter(function(o){ return (o.category||'').toLowerCase()===cat; });
+            plot(filtered);
+          });
+        });
+      });
+    })();
+  </script>
+<% end %>

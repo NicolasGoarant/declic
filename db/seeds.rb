@@ -303,32 +303,36 @@ stories = [
     MD
     quote: "Ce que je vends ? La fiabilité."
   },
-  {
-    slug: "lecrin-damelevieres",
-    title: "L’Écrin Bar & Lounge (Damelevières)",
-    chapo: "Ancienne salariée d’Ehpad, elle reprend un bar-lounge en centre-bourg.",
-    description: "Reprise d’établissement, animations et nouvelle dynamique locale.",
-    location: "19 Rue de la Libération, 54360 Damelevières",
-    latitude: 48.573, longitude: 6.346,
-    source_name: "",
-    source_url:  "",
-    image_url:   "",
-    body: <<~MD,
-      ### Le déclic
-      Après un poste en Ehpad, elle veut créer un lieu vivant, sûr et chaleureux. Elle reprend un bar, le rénove et peaufine une identité plus “lounge”.
+ 
+      {
+  slug: "lecrin-damelevieres",
+  title: "L’Écrin Bar & Lounge (Damelevières)",
+  chapo: "Ancienne salariée d’Ehpad, elle reprend un bar-lounge en centre-bourg.",
+  description: "Reprise d’établissement, animations et nouvelle dynamique locale.",
+  location: "19 Rue de la Libération, 54360 Damelevières",
+  latitude: 48.573, longitude: 6.346,
+  source_name: "L'Est Républicain (12/09/2025)",
+  source_url:  "/stories/articles/lecrin-damelevieres.pdf",
+  image_url:   "",
+  body: <<~MD,
+    ### Le déclic
+    Après un poste en Ehpad, elle veut créer un lieu vivant, sûr et chaleureux. Elle reprend un bar, le rénove et peaufine une identité plus “lounge”.
 
-      ### La proposition
-      Carte courte, produits simples mais soignés, soirées à thème, scènes ouvertes, partenariats associatifs. Le lieu devient repère de quartier.
+    ### La proposition
+    Carte courte, produits simples mais soignés, soirées à thème, scènes ouvertes, partenariats associatifs. Le lieu devient repère de quartier.
 
-      ### Les coulisses
-      Licence, voisinage, sécurité : anticipation et dialogue. Une communication sobre et régulière sur les réseaux fait la différence.
+    ### Les coulisses
+    Licence, voisinage, sécurité : anticipation et dialogue. Une communication sobre et régulière sur les réseaux fait la différence.
 
-      **À retenir**
-      - La programmation vaut autant que la déco  
-      - Une charte de convivialité claire évite 90 % des soucis
-    MD
-    quote: "Un endroit où l’on se sent bien, tout simplement."
-  },
+    **À retenir**
+    - La programmation vaut autant que la déco  
+    - Une charte de convivialité claire évite 90 % des soucis
+  MD
+  quote: "Un endroit où l’on se sent bien, tout simplement."
+},
+
+
+
   {
     slug: "madame-bergamote-nancy",
     title: "Madame Bergamote — Salon de thé (Nancy)",

@@ -277,3 +277,15 @@
 <!-- Leaflet -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+<%# --- Map init minimal --- %>
+<script>
+document.addEventListener("turbo:load", initHomeMap);
+document.addEventListener("DOMContentLoaded", initHomeMap);
+function initHomeMap(){
+  var el = document.getElementById('map');
+  if(!el || !window.L || el.dataset._init) return;
+  el.dataset._init = '1';
+  var map = L.map(el,{zoomControl:true,scrollWheelZoom:true}).setView([46.6,2.2],6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+}
+</script>

@@ -1,5 +1,5 @@
 <%# app/views/shared/_navbar.html.erb %>
-<header class="fixed inset-x-0 top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+<header class="fixed inset-x-0 top-0 z-[1000] bg-white border-b border-gray-200 shadow-sm">
   <div class="mx-auto max-w-6xl h-14 px-4 flex items-center justify-between">
     <!-- Logo -->
     <%= link_to root_path, class: "flex items-center gap-2" do %>
@@ -24,7 +24,7 @@
 
     <!-- Burger mobile -->
     <button id="btn-open-menu"
-            class="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white/90 shadow ring-1 ring-violet-200 hover:ring-violet-300 hover:shadow-md transition"
+            class="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white shadow ring-1 ring-violet-200 hover:ring-violet-300 hover:shadow-md transition"
             aria-controls="mobile-menu" aria-expanded="false" aria-label="Ouvrir le menu">
       <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke-width="2" aria-hidden="true">
         <defs>
@@ -38,21 +38,24 @@
   </div>
 </header>
 
-<!-- Popover mobile (compact & OPAQUE) -->
-<div id="mobile-menu" class="fixed top-16 right-3 z-50 md:hidden hidden" aria-hidden="true">
-<div id="mobile-panel"
-     class="origin-top-right w-[320px] sm:w-[360px] rounded-2xl shadow-2xl ring-1 ring-black/10
-            bg-indigo-700 bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-700
-            p-4 pt-10 text-white opacity-0 scale-95 -translate-y-2 transition">
+<!-- Menu mobile (compact, OPAQUE, au-dessus de Leaflet) -->
+<div id="mobile-menu" class="md:hidden hidden" aria-hidden="true">
+  <!-- Overlay -->
+  <div id="mobile-overlay" class="fixed inset-0 bg-neutral-900/70 z-[2000]"></div>
 
+  <!-- Panneau -->
+  <div id="mobile-panel"
+       class="fixed top-16 right-3 z-[2001] w-[320px] sm:w-[360px] rounded-2xl shadow-2xl ring-1 ring-black/10
+              bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-700 text-white
+              p-4 pt-10 opacity-0 scale-95 -translate-y-2 transition">
 
-    <!-- Bouton fermer, plus de logo/brand ici -->
-<button id="btn-close-menu"
-        class="absolute right-2 top-2 inline-flex items-center justify-center w-10 h-10 rounded-full
-               bg-white/15 hover:bg-white/20 ring-1 ring-white/30"
-        aria-label="Fermer le menu">✕</button>
+    <!-- Fermer -->
+    <button id="btn-close-menu"
+            class="absolute right-2 top-2 inline-flex items-center justify-center w-10 h-10 rounded-full
+                   bg-white/15 hover:bg-white/20 ring-1 ring-white/30"
+            aria-label="Fermer le menu">✕</button>
 
-
+    <!-- Liens -->
     <nav class="space-y-2 text-[15px] pt-6">
       <%= link_to root_path(anchor: "explorer"),
           class: "flex items-center gap-3 px-4 py-3 rounded-xl bg-white text-slate-900 hover:bg-violet-50" do %>
@@ -84,39 +87,45 @@
   </div>
 </div>
 
-
 <script>
-/* Popover mobile – unique, compact, opaque */
+/* Menu mobile : compact, opaque, z-index > Leaflet */
 (function(){
-  const menu  = document.getElementById('mobile-menu');
-  const panel = document.getElementById('mobile-panel');
-  const openB = document.getElementById('btn-open-menu');
-  const closeB= document.getElementById('btn-close-menu');
-  if(!menu || !panel || !openB || !closeB) return;
+  const menu   = document.getElementById('mobile-menu');
+  const panel  = document.getElementById('mobile-panel');
+  const overlay= document.getElementById('mobile-overlay');
+  const openB  = document.getElementById('btn-open-menu');
+  const closeB = document.getElementById('btn-close-menu');
+  if(!menu || !panel || !overlay || !openB || !closeB) return;
+
+  const lock = () => document.documentElement.classList.add('overflow-hidden');
+  const unlock = () => document.documentElement.classList.remove('overflow-hidden');
 
   function open(){
     if(!menu.classList.contains('hidden')) return;
     menu.classList.remove('hidden'); menu.removeAttribute('aria-hidden');
-    requestAnimationFrame(()=>{ panel.classList.remove('opacity-0','scale-95','-translate-y-2'); });
     openB.setAttribute('aria-expanded','true');
-    document.addEventListener('click', onClickOutside, { capture:true });
+    requestAnimationFrame(()=>{ panel.classList.remove('opacity-0','scale-95','-translate-y-2'); });
     document.addEventListener('keydown', onKey);
+    overlay.addEventListener('click', close, { once:false });
+    lock();
   }
   function close(){
     if(menu.classList.contains('hidden')) return;
     panel.classList.add('opacity-0','scale-95','-translate-y-2');
-    const onEnd=()=>{ menu.classList.add('hidden'); menu.setAttribute('aria-hidden','true'); panel.removeEventListener('transitionend',onEnd); };
+    const onEnd = () => {
+      menu.classList.add('hidden'); menu.setAttribute('aria-hidden','true');
+      panel.removeEventListener('transitionend', onEnd);
+    };
     panel.addEventListener('transitionend', onEnd, { once:true });
     openB.setAttribute('aria-expanded','false');
-    document.removeEventListener('click', onClickOutside, { capture:true });
     document.removeEventListener('keydown', onKey);
+    overlay.removeEventListener('click', close);
+    unlock();
   }
-  function onClickOutside(e){ if(!panel.contains(e.target) && e.target!==openB){ close(); } }
-  function onKey(e){ if(e.key==='Escape') close(); }
+  function onKey(e){ if(e.key === 'Escape') close(); }
 
   openB.addEventListener('click', open);
   closeB.addEventListener('click', close);
   document.addEventListener('turbo:before-cache', close);
 })();
 </script>
-
