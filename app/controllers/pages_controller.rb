@@ -12,4 +12,10 @@ class PagesController < ApplicationController
     @testimonials = Testimonial.order(created_at: :desc).limit(4)
     @latest = Opportunity.active.order(published_at: :desc).limit(3)
   end
+
+    def legal; end
+  def confidentialite; end
+  def presse; end
+  def faq; end
+  
 end

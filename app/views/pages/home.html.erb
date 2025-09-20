@@ -1,4 +1,4 @@
-<!-- Hero -->
+<!-- ========================= HERO ========================= -->
 <section class="relative">
   <div class="absolute inset-0">
     <img src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1920&auto=format&fit=crop"
@@ -6,13 +6,15 @@
   </div>
   <div class="absolute inset-0 bg-gradient-to-r from-fuchsia-800/70 via-purple-700/65 to-emerald-600/60 mix-blend-multiply"></div>
 
-  <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-20 md:pt-24">
+  <div class="relative z-10 mx-auto px-2 sm:px-4 pt-28 md:pt-32 lg:pt-36 pb-12 md:pb-16"
+       style="max-width: min(96vw, 1840px);">
     <div class="max-w-3xl">
       <h1 class="text-white text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">
         Trouvez votre prochaine<br/>
         <span class="text-yellow-300">opportunité de changement</span>
       </h1>
-      <p class="mt-4 text-base sm:text-lg text-white/90 max-w-2xl">
+
+      <p class="mt-4 text-[15px] sm:text-lg text-white/95 max-w-2xl">
         Bénévolat, formations, rencontres, reconversion… Découvrez des milliers d’opportunités près de chez vous.
       </p>
 
@@ -33,7 +35,8 @@
         </form>
       </div>
 
-      <ul class="mt-4 flex flex-col sm:flex-row gap-3 sm:gap-6 text-white/95 text-sm">
+      <!-- Puces un peu plus grandes -->
+      <ul class="mt-9 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-6 text-white/95 text-[17px] sm:text-xl md:text-[22px]">
         <li class="flex items-center"><span class="mr-2">✅</span><span><strong>15 000+</strong> opportunités référencées</span></li>
         <li class="flex items-center"><span class="mr-2">🗺️</span><span><strong>Toute la France</strong> couverte</span></li>
         <li class="flex items-center"><span class="mr-2">💜</span><span><strong>Gratuit</strong> et accessible à tous</span></li>
@@ -42,110 +45,113 @@
   </div>
 </section>
 
-<!-- Contenu -->
+<!-- ========================= CONTENU ========================= -->
 <main class="flex-1">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+  <div class="mx-auto px-2 sm:px-3 py-10" style="max-width: min(96vw, 1840px);">
+    <!-- Grille 3 colonnes : (gros boutons) — (carte) — (quelques opps) -->
+    <div class="grid grid-cols-1 lg:[grid-template-columns:minmax(360px,420px)_minmax(980px,1fr)_minmax(320px,380px)] gap-8 xl:gap-12 items-start">
 
-      <!-- Colonne parcours -->
-      <div id="parcours" class="col-span-12 lg:col-span-4 space-y-6">
+      <!-- === Colonne gauche — Gros boutons (uniformes + responsive) === -->
+      <div class="lg:pr-6 xl:pr-10">
+        <!-- mobile: 1 col ; md: 2 cols ; lg: pile verticale avec gap -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4 md:gap-5 lg:gap-5">
+          <%# Helpers réutilisables %>
+          <% card_base = "group block w-full rounded-2xl text-white shadow-md transition hover:shadow-lg overflow-hidden" %>
+          <% inner = "h-full flex items-start md:items-center gap-4 px-6 md:px-6 lg:px-8 py-4" %>
+          <% icon  = "shrink-0 w-12 h-12 rounded-xl bg-white/15 grid place-content-center text-2xl" %>
+          <% ttl   = "font-bold leading-snug text-[20px] md:text-[21px] lg:text-[24px]" %>
+          <% txt   = "mt-1.5 text-[15px] md:text-[16px] leading-snug text-white/90 md:line-clamp-2" %>
 
-        <%= link_to parcours_path(category: "entreprendre"),
-            class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
-            style: "background:linear-gradient(135deg,#f59e0b 0%,#ef4444 50%,#fb7185 100%);" do %>
-          <div class="flex items-start gap-4 lg:gap-5">
-            <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">🚀</span>
-            <div class="min-w-0">
-              <p class="font-semibold text-lg lg:text-xl">Je veux entreprendre</p>
-              <p class="text-white/90 text-[15px] lg:text-base leading-snug">
-                Lance ton projet avec le soutien d’entrepreneurs expérimentés
-              </p>
+          <%= link_to parcours_path(category: :entreprendre),
+              class: "#{card_base} min-h-[142px] md:min-h-[148px] lg:h-[160px]",
+              style: "background:linear-gradient(135deg,#f97316,#ef4444);" do %>
+            <div class="<%= inner %>">
+              <div class="<%= icon %>">✨</div>
+              <div class="min-w-0">
+                <div class="<%= ttl %>">Je veux entreprendre</div>
+                <div class="<%= txt %>">Lance ton projet avec le soutien d’entrepreneur·e·s expérimentés</div>
+              </div>
             </div>
-          </div>
-        <% end %>
+          <% end %>
 
-        <%= link_to parcours_path(category: "formation"),
-            class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
-            style: "background:linear-gradient(135deg,#6366f1 0%,#38bdf8 100%);" do %>
-          <div class="flex items-start gap-4 lg:gap-5">
-            <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">📘</span>
-            <div class="min-w-0">
-              <p class="font-semibold text-lg lg:text-xl">Je veux me former</p>
-              <p class="text-white/90 text-[15px] lg:text-base leading-snug">
-                Découvre des formations pour développer tes compétences
-              </p>
+          <%= link_to parcours_path(category: :formation),
+              class: "#{card_base} min-h-[142px] md:min-h-[148px] lg:h-[160px]",
+              style: "background:linear-gradient(135deg,#3b82f6,#6366f1);" do %>
+            <div class="<%= inner %>">
+              <div class="<%= icon %>">📘</div>
+              <div class="min-w-0">
+                <div class="<%= ttl %>">Je veux me former</div>
+                <div class="<%= txt %>">Découvre des formations pour développer tes compétences</div>
+              </div>
             </div>
-          </div>
-        <% end %>
+          <% end %>
 
-        <%= link_to parcours_path(category: "benevolat"),
-            class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
-            style: "background:linear-gradient(135deg,#f43f5e 0%,#ec4899 100%);" do %>
-          <div class="flex items-start gap-4 lg:gap-5">
-            <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">❤️</span>
-            <div class="min-w-0">
-              <p class="font-semibold text-lg lg:text-xl">Je veux aider</p>
-              <p class="text-white/90 text-[15px] lg:text-base leading-snug">
-                Trouve des missions de bénévolat qui correspondent à tes valeurs
-              </p>
+          <%= link_to parcours_path(category: :benevolat),
+              class: "#{card_base} min-h-[142px] md:min-h-[148px] lg:h-[160px]",
+              style: "background:linear-gradient(135deg,#ef4444,#ec4899);" do %>
+            <div class="<%= inner %>">
+              <div class="<%= icon %>">❤️</div>
+              <div class="min-w-0">
+                <div class="<%= ttl %>">Je veux aider</div>
+                <div class="<%= txt %>">Trouve des missions de bénévolat qui correspondent à tes valeurs</div>
+              </div>
             </div>
-          </div>
-        <% end %>
+          <% end %>
 
-        <%= link_to parcours_path(category: "rencontres"),
-            class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
-            style: "background:linear-gradient(135deg,#10b981 0%,#06b6d4 100%);" do %>
-          <div class="flex items-start gap-4 lg:gap-5">
-            <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">🤝</span>
-            <div class="min-w-0">
-              <p class="font-semibold text-lg lg:text-xl">Je veux rencontrer</p>
-              <p class="text-white/90 text-[15px] lg:text-base leading-snug">
-                Rejoins des communautés et crée des liens authentiques
-              </p>
+          <%= link_to parcours_path(category: :rencontres),
+              class: "#{card_base} min-h-[142px] md:min-h-[148px] lg:h-[160px]",
+              style: "background:linear-gradient(135deg,#10b981,#06b6d4);" do %>
+            <div class="<%= inner %>">
+              <div class="<%= icon %>">🤝</div>
+              <div class="min-w-0">
+                <div class="<%= ttl %>">Je veux rencontrer</div>
+                <div class="<%= txt %>">Rejoins des communautés et crée des liens authentiques</div>
+              </div>
             </div>
-          </div>
-        <% end %>
+          <% end %>
 
-        <%= link_to stories_path,
-            class: "block rounded-2xl p-6 lg:p-8 text-white shadow-md transition hover:shadow-lg",
-            style: "background:linear-gradient(135deg,#6d28d9 0%,#a855f7 50%,#d946ef 100%);" do %>
-          <div class="flex items-start gap-4 lg:gap-5">
-            <span class="inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl">📖</span>
-            <div class="min-w-0">
-              <p class="font-semibold text-lg lg:text-xl">Belles histoires</p>
-              <p class="text-white/90 text-[15px] lg:text-base leading-snug">
-                Découvrez des reconversions et des “déclics” inspirants
-              </p>
+          <%= link_to stories_path,
+              class: "#{card_base} min-h-[142px] md:min-h-[148px] lg:h-[160px]",
+              style: "background:linear-gradient(135deg,#8b5cf6,#ec4899);" do %>
+            <div class="<%= inner %>">
+              <div class="<%= icon %>">📖</div>
+              <div class="min-w-0">
+                <div class="<%= ttl %>">"Belles histoires !"</div>
+                <div class="<%= txt %>">Découvrez des reconversions et des “déclics” inspirants</div>
+              </div>
             </div>
-          </div>
-        <% end %>
+          <% end %>
+        </div>
       </div>
 
-      <!-- Carte -->
-      <section id="explorer" class="col-span-12 lg:col-span-4">
-        <h2 class="text-2xl sm:text-3xl font-extrabold">Explorez les opportunités</h2>
-        <p class="text-gray-600 mt-2">Découvrez sur la carte toutes les possibilités d’engagement près de chez vous</p>
+      <!-- === Carte (colonne centrale) === -->
+      <section id="explorer" class="lg:mx-2 xl:mx-4">
+        <div class="text-center mb-3">
+          <h2 class="text-2xl sm:text-3xl font-extrabold">Explorez les opportunités</h2>
+          <p class="text-gray-600 mt-1">Découvrez sur la carte toutes les possibilités d’engagement près de chez vous</p>
+        </div>
 
-        <div class="mt-4 flex flex-wrap gap-2 text-sm">
+        <div class="mt-4 flex flex-wrap justify-center gap-2 text-sm">
           <button data-cat="toutes"       class="chip px-3 py-1 rounded-full bg-gray-200 text-gray-800 is-active">Toutes</button>
           <button data-cat="benevolat"    class="chip px-3 py-1 rounded-full bg-rose-100 text-rose-700">Bénévolat</button>
           <button data-cat="formation"    class="chip px-3 py-1 rounded-full bg-blue-100 text-blue-700">Formation</button>
           <button data-cat="rencontres"   class="chip px-3 py-1 rounded-full bg-green-100 text-green-700">Rencontres</button>
           <button data-cat="entreprendre" class="chip px-3 py-1 rounded-full bg-orange-100 text-orange-700">Entreprendre</button>
+          <button data-cat="histoires"    class="chip px-3 py-1 rounded-full bg-violet-100 text-violet-700">Belles histoires</button>
         </div>
 
-        <div class="mt-4 bg-white rounded-2xl shadow overflow-hidden">
-          <div id="home-map" class="w-full h-[340px] sm:h-[380px] lg:h-[420px]"></div>
+        <div class="mt-5 bg-white rounded-2xl shadow overflow-hidden">
+          <div id="home-map" class="w-full h-[680px] lg:h-[720px] xl:h-[740px]"></div>
         </div>
       </section>
 
-      <!-- Liste courte -->
-      <section class="col-span-12 lg:col-span-4">
+      <!-- === Quelques opportunités (colonne droite) === -->
+      <section class="lg:pl-6 xl:pl-10">
         <h2 class="text-2xl sm:text-3xl font-extrabold">Quelques opportunités</h2>
         <p class="text-gray-600 mt-2">Les dernières missions et événements près de chez vous</p>
 
-        <div class="mt-6 space-y-4">
-          <% Array(@opportunities).first(3).to_a.each do |o| %>
+        <div class="mt-5 space-y-3">
+          <% Array(@opportunities).first(4).to_a.each do |o| %>
             <article class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition">
               <div class="flex items-center gap-2 mb-2">
                 <% badge = case o.category
@@ -175,13 +181,12 @@
           <% end %>
         </div>
       </section>
-
     </div>
   </div>
 
-  <!-- Témoignages -->
+  <!-- ========================= TÉMOIGNAGES ========================= -->
   <section id="temoignages" class="bg-white py-14">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto px-2 sm:px-4" style="max-width: min(96vw, 1840px);">
       <div class="text-center mb-10">
         <h2 class="text-2xl sm:text-3xl font-extrabold">Ils ont changé leur vie</h2>
         <p class="text-gray-600 mt-2">Histoires vraies de personnes qui ont trouvé leur Déclic</p>
@@ -208,124 +213,175 @@
       </div>
     </div>
   </section>
+
+  <!-- ========================= À PROPOS (DARK) ========================= -->
+  <section id="a-propos" class="bg-gradient-to-r from-slate-900 via-indigo-950 to-fuchsia-950 py-14">
+    <div class="mx-auto px-2 sm:px-4" style="max-width: min(96vw, 1840px);">
+      <div class="grid lg:grid-cols-12 gap-8 text-slate-100">
+        <div class="lg:col-span-5">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white">À propos de Déclic</h2>
+          <p class="mt-3 text-slate-200/90 leading-relaxed">
+            Déclic facilite l’engagement près de chez vous : bénévolat, formations, rencontres, reconversion ou création d’activité à impact.
+            Notre mission : rendre l’action locale simple, concrète et accessible à tous.
+          </p>
+          <p class="mt-3 text-slate-200/90 leading-relaxed">
+            Les opportunités sont proposées par des associations, des écoles, des collectifs citoyens et des entrepreneurs engagés.
+          </p>
+        </div>
+
+        <div class="lg:col-span-7 grid sm:grid-cols-2 gap-6">
+          <div class="rounded-xl border border-white/10 bg-white/5 backdrop-blur p-6">
+            <h3 class="font-semibold text-white">Informations</h3>
+            <ul class="mt-3 space-y-2 text-slate-200 text-sm">
+              <li>📍 France entière</li>
+              <li>📞 <a class="text-indigo-300 hover:underline" href="tel:+33667063179">+33 6 67 06 31 79</a></li>
+              <li>💬 Courriel : <a class="text-indigo-300 hover:underline" href="mailto:nicolas.goarant@hotmail.fr">nicolas.goarant@hotmail.fr</a></li>
+              <li>🔎 Données & cookies : anonymisées, pas de revente, conformité RGPD</li>
+            </ul>
+          </div>
+
+          <div class="rounded-xl border border-white/10 bg-white/5 backdrop-blur p-6">
+            <h3 class="font-semibold text-white">Ressources</h3>
+            <ul class="mt-3 space-y-2 text-slate-200 text-sm">
+              <li><%= link_to "Mentions légales", mentions_legales_path, class: "text-indigo-300 hover:underline" %></li>
+              <li><%= link_to "Confidentialité / CGU", confidentialite_path, class: "text-indigo-300 hover:underline" %></li>
+              <li><%= link_to "Presse & kit média", presse_path, class: "text-indigo-300 hover:underline" %></li>
+              <li><%= link_to "FAQ", faq_path, class: "text-indigo-300 hover:underline" %></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <% content_for :scripts do %>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <style>
     .chip{transition:.15s}
     .chip.is-active{background:#111827;color:#fff}
     .picon{width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:var(--c,#6366f1)}
     .picon::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--c,#6366f1)}
   </style>
+
   <script>
     (function(){
-      function ready(fn){
-        document.addEventListener('turbo:load',fn);
-        document.addEventListener('DOMContentLoaded',fn);
-      }
-      ready(function(){
-        var el=document.getElementById('home-map');
-        if(!el || !window.L || el.dataset._init) return;
-        el.dataset._init='1';
+      function onReady(fn){ document.addEventListener('turbo:load',fn); document.addEventListener('DOMContentLoaded',fn); }
 
-        // 1) Map
-        var map=L.map(el,{zoomControl:true,scrollWheelZoom:true}).setView([46.6,2.2],6);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+      onReady(function(){
+        var el = document.getElementById('home-map');
+        if(!el || el.dataset._init) return;
 
-        // 2) Markers (couleurs + emojis, y compris histoires)
-        var colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#8b5cf6',default:'#6366f1'};
-        var emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',histoires:'📖',default:'⭐'};
-        function iconFor(cat){
-          var c=colors[cat]||colors.default, e=emojis[cat]||emojis.default;
-          return L.divIcon({className:'',html:'<div class="picon" style="--c:'+c+'"><span>'+e+'</span></div>',iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
+        function waitForLeaflet(tries){
+          if (window.L) return init();
+          if ((tries||0) > 30) return;
+          setTimeout(function(){ waitForLeaflet((tries||0)+1); }, 100);
         }
 
-        var layer=L.layerGroup().addTo(map), lastPopup=null;
-        function addMarker(o){
-          if(!o||!o.latitude||!o.longitude) return;
-          var m=L.marker([o.latitude,o.longitude],{icon:iconFor((o.category||'').toLowerCase())}).addTo(layer);
-          var url = o.kind==='story' ? ('/stories/'+(o.slug||o.id)) : ('/opportunities/'+(o.slug||o.id));
-          var badge={'benevolat':'#fee2e2','formation':'#dbeafe','rencontres':'#d1fae5','entreprendre':'#ffedd5','histoires':'#ede9fe'}[(o.category||'').toLowerCase()]||'#eef2ff';
-          var catLabel=(o.category||'').charAt(0).toUpperCase()+(o.category||'').slice(1);
-          m.bindPopup(
-            '<div style="min-width:220px">'
-            +'<div style="margin-bottom:6px"><span style="font-size:11px;padding:2px 6px;border-radius:9999px;background:'+badge+';color:#111;">'+catLabel+'</span></div>'
-            +'<strong>'+(o.title||'')+'</strong>'+(o.organization?'<br/><small>'+o.organization+'</small>':'')
-            +'<p style="margin:.5rem 0">'+((o.description||'').slice(0,110))+(((o.description||'').length>110)?'…':'')+'</p>'
-            +'<a class="text-indigo-600 underline text-sm" data-turbo="false" href="'+url+'">Voir la fiche</a>'
-            +'</div>'
-          );
-          m.on('popupopen',function(e){ if(lastPopup && lastPopup!==e.popup) lastPopup.close(); lastPopup=e.popup; });
-          return m;
-        }
+        function init(){
+          el.dataset._init = '1';
+          var map = L.map(el,{zoomControl:true,scrollWheelZoom:true}).setView([46.6,2.2],6);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
 
-        // 3) Fallback côté serveur
-        var fallbackOpps=<%= raw(Array(@opportunities).map{|o|{
-          id:o.id, slug:(o.respond_to?(:slug) ? o.slug : nil),
-          title:o.title, description:o.description, category:o.category,
-          organization:o.organization, location:o.location,
-          latitude:(o.latitude ? o.latitude.to_f : nil),
-          longitude:(o.longitude ? o.longitude.to_f : nil),
-          kind:'opp'
-        }}.to_json) %>;
+          var colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#8b5cf6',default:'#6366f1'};
+          var emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',histoires:'📖',default:'⭐'};
+          function iconFor(cat){ var c=colors[cat]||colors.default, e=emojis[cat]||emojis.default;
+            return L.divIcon({className:'', html:'<div class="picon" style="--c:'+c+'"><span>'+e+'</span></div>', iconSize:[26,32], iconAnchor:[13,28], popupAnchor:[0,-26]});
+          }
 
-        var fallbackStories=<%=
-          begin
-            raw(Story.select(:id,:slug,:title,:chapo,:description,:latitude,:longitude,:location)
-                 .map{|s|{
-                   id:s.id, slug:s.slug,
-                   title:s.title, description:(s.chapo.presence || s.description),
-                   category:'histoires', organization:nil, location:s.location,
-                   latitude:(s.latitude ? s.latitude.to_f : nil),
-                   longitude:(s.longitude ? s.longitude.to_f : nil),
-                   kind:'story'
-                 }}.to_json)
-          rescue
-            '[]'.html_safe
-          end
-        %>;
+          var layer=L.layerGroup().addTo(map), lastPopup=null;
+          function addMarker(o){
+            if(!o||!o.latitude||!o.longitude) return;
+            var m=L.marker([o.latitude,o.longitude],{icon:iconFor((o.category||'').toLowerCase())}).addTo(layer);
+            var url = o.kind==='story' ? ('/stories/'+(o.slug||o.id)) : ('/opportunities/'+(o.slug||o.id));
+            var badge={'benevolat':'#fee2e2','formation':'#dbeafe','rencontres':'#d1fae5','entreprendre':'#ffedd5','histoires':'#ede9fe'}[(o.category||'').toLowerCase()]||'#eef2ff';
+            var catLabel=(o.category||'').charAt(0).toUpperCase()+(o.category||'').slice(1);
+            m.bindPopup(
+              '<div style="min-width:240px">'
+              +'<div style="margin-bottom:6px"><span style="font-size:11px;padding:2px 6px;border-radius:9999px;background:'+badge+';color:#111;">'+catLabel+'</span></div>'
+              +'<strong>'+(o.title||'')+'</strong>'+(o.organization?'<br/><small>'+o.organization+'</small>':'')
+              +'<p style="margin:.5rem 0">'+((o.description||'').slice(0,110))+(((o.description||'').length>110)?'…':'')+'</p>'
+              +'<a class="text-indigo-600 underline text-sm" data-turbo="false" href="'+url+'">Voir la fiche</a>'
+              +'</div>'
+            );
+            m.on('popupopen',function(e){ if(lastPopup && lastPopup!==e.popup) lastPopup.close(); lastPopup=e.popup; });
+            return m;
+          }
 
-        function plot(items){
-          layer.clearLayers();
-          var bounds=[];
-          (items||[]).forEach(function(o){ var mk=addMarker(o); if(mk) bounds.push([o.latitude,o.longitude]); });
-          if(bounds.length) map.fitBounds(bounds,{padding:[24,24]});
-        }
+          var fallbackOpps=<%= raw(Array(@opportunities).map{|o|{
+            id:o.id, slug:(o.respond_to?(:slug) ? o.slug : nil),
+            title:o.title, description:o.description, category:o.category,
+            organization:o.organization, location:o.location,
+            latitude:(o.latitude ? o.latitude.to_f : nil),
+            longitude:(o.longitude ? o.longitude.to_f : nil),
+            kind:'opp'
+          }}.to_json) %>;
 
-        // 4) Charge API opportunities + stories, puis fallback
-        var dataset=[];
-        Promise.all([
-          fetch('/api/v1/opportunities').then(function(r){return r.ok?r.json():Promise.reject();}).catch(function(){return fallbackOpps;}),
-          fetch('/api/v1/stories').then(function(r){return r.ok?r.json():Promise.reject();}).catch(function(){return fallbackStories;})
-        ]).then(function(results){
-          var opps = Array.isArray(results[0]) ? results[0].map(function(o){
-            return { id:o.id, slug:o.slug, title:o.title, description:o.description, category:o.category,
-                     organization:o.organization, location:o.location,
-                     latitude:parseFloat(o.latitude), longitude:parseFloat(o.longitude), kind:'opp' };
-          }) : [];
+          var fallbackStories=<%=
+            begin
+              raw(Story.select(:id,:slug,:title,:chapo,:description,:latitude,:longitude,:location)
+                   .map{|s|{
+                     id:s.id, slug:s.slug,
+                     title:s.title, description:(s.chapo.presence || s.description),
+                     category:'histoires', organization:nil, location:s.location,
+                     latitude:(s.latitude ? s.latitude.to_f : nil),
+                     longitude:(s.longitude ? s.longitude.to_f : nil),
+                     kind:'story'
+                   }}.to_json)
+            rescue
+              '[]'.html_safe
+            end
+          %>;
 
-          var stories = Array.isArray(results[1]) ? results[1].map(function(s){
-            return { id:s.id, slug:s.slug, title:s.title,
-                     description:(s.chapo||s.description||''), category:'histoires',
-                     organization:null, location:s.location,
-                     latitude:parseFloat(s.latitude), longitude:parseFloat(s.longitude), kind:'story' };
-          }) : [];
+          function plot(items){
+            layer.clearLayers();
+            var bounds=[];
+            (items||[]).forEach(function(o){ var mk=addMarker(o); if(mk) bounds.push([o.latitude,o.longitude]); });
+            if(bounds.length) map.fitBounds(bounds,{padding:[22,22]});
+          }
 
-          dataset = opps.concat(stories);
-          plot(dataset);
-        });
-
-        // 5) Filtres chips
-        Array.from(document.querySelectorAll('.chip')).forEach(function(chip){
-          chip.addEventListener('click',function(){
-            Array.from(document.querySelectorAll('.chip')).forEach(function(c){ c.classList.remove('is-active'); });
-            chip.classList.add('is-active');
-            var cat=chip.dataset.cat, all=(cat==='toutes');
-            var filtered = all ? dataset : (dataset||[]).filter(function(o){ return (o.category||'').toLowerCase()===cat; });
-            plot(filtered);
+          var dataset=[];
+          Promise.all([
+            fetch('/api/v1/opportunities').then(r=>r.ok?r.json():Promise.reject()).catch(()=>fallbackOpps),
+            fetch('/api/v1/stories').then(r=>r.ok?r.json():Promise.reject()).catch(()=>fallbackStories)
+          ]).then(function(results){
+            var opps = Array.isArray(results[0]) ? results[0].map(function(o){
+              return { id:o.id, slug:o.slug, title:o.title, description:o.description, category:o.category,
+                       organization:o.organization, location:o.location,
+                       latitude:parseFloat(o.latitude), longitude:parseFloat(o.longitude), kind:'opp' };
+            }) : [];
+            var stories = Array.isArray(results[1]) ? results[1].map(function(s){
+              return { id:s.id, slug:s.slug, title:s.title, description:(s.chapo||s.description||''), category:'histoires',
+                       organization:null, location:s.location,
+                       latitude:parseFloat(s.latitude), longitude:parseFloat(s.longitude), kind:'story' };
+            }) : [];
+            dataset = opps.concat(stories);
+            plot(dataset);
           });
-        });
+
+          Array.from(document.querySelectorAll('.chip')).forEach(function(chip){
+            chip.addEventListener('click',function(){
+              Array.from(document.querySelectorAll('.chip')).forEach(c=>c.classList.remove('is-active'));
+              chip.classList.add('is-active');
+              var cat=chip.dataset.cat, all=(cat==='toutes');
+              var filtered = all ? dataset : (dataset||[]).filter(o => (o.category||'').toLowerCase()===cat);
+              plot(filtered);
+            });
+          });
+        }
+
+        waitForLeaflet();
       });
     })();
   </script>
 <% end %>
+
+
+
+
+
+
+
+

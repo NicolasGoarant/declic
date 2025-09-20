@@ -15,6 +15,13 @@ Rails.application.routes.draw do
       resources :stories, only: %i[index]
     end
   end
+
+  # Pages statiques (ressources)
+get "/mentions-legales", to: "pages#legal",          as: :mentions_legales
+get "/confidentialite",  to: "pages#confidentialite", as: :confidentialite
+get "/presse",           to: "pages#presse",         as: :presse
+get "/faq",              to: "pages#faq",            as: :faq
+
 end
 
 
