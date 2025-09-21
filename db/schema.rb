@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_17_163954) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_21_064134) do
   create_table "friendly_id_slugs", force: :cascade do |t|
     t.string "slug", null: false
     t.integer "sluggable_id", null: false
@@ -71,8 +71,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_17_163954) do
     t.text "accessibility"
     t.text "impact_domains"
     t.text "impact_metric_hint"
+    t.string "schedule_text"
+    t.string "external_url"
+    t.index ["ends_at"], name: "index_opportunities_on_ends_at"
     t.index ["slug"], name: "index_opportunities_on_slug", unique: true
     t.index ["source", "external_id"], name: "index_opportunities_on_source_and_external_id", unique: true
+    t.index ["starts_at"], name: "index_opportunities_on_starts_at"
   end
 
   create_table "raw_ingestions", force: :cascade do |t|

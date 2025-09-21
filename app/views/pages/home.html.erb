@@ -33,18 +33,17 @@
           </dl>
         </div>
 
-        <!-- visuel : image locale si dispo, sinon placeholder -->
-        <% hero_src = (begin asset_path('hero.jpg') rescue nil end) %>
-        <% if hero_src.present? %>
-          <img src="<%= hero_src %>" alt="Déclic"
-               class="w-full h-64 sm:h-80 lg:h-[22rem] object-cover rounded-2xl shadow ring-1 ring-black/5">
-        <% else %>
-          <div class="w-full h-64 sm:h-80 lg:h-[22rem] rounded-2xl shadow ring-1 ring-black/5
-                      bg-gradient-to-br from-indigo-600 via-fuchsia-500 to-rose-500 relative overflow-hidden">
-            <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,white_2px,transparent_2px)] [background-size:18px_18px]"></div>
-            <div class="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-t from-black/30 to-transparent"></div>
-          </div>
-        <% end %>
+        <%# visuel : image locale si dispo, sinon photo par défaut %>
+        <%
+          hero_src = begin
+            asset_path('hero.jpg')
+          rescue
+            nil
+          end
+          hero_src ||= "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=1600&auto=format&fit=crop"
+        %>
+        <img src="<%= hero_src %>" alt="Déclic — projets près de chez vous"
+             class="w-full h-64 sm:h-80 lg:h-[22rem] object-cover rounded-2xl shadow ring-1 ring-black/5">
       </div>
     </div>
   </section>
@@ -233,6 +232,11 @@
     border:6px solid transparent;border-top-color:var(--c,#6366f1); }
   .leaflet-container{ font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans","Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"; }
   .myloc-btn{ width:34px;height:34px;background:#fff;border:none;cursor:pointer; }
+  /* petite carte produit pour les popups */
+  .popcard{display:grid;grid-template-columns:72px 1fr;gap:10px;min-width:260px;align-items:start}
+  .popcard img{width:72px;height:72px;border-radius:10px;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+  .popcard h4{margin:0;font-weight:700;font-size:14px;line-height:1.2}
+  .popcard .muted{color:#475569;font-size:12px}
 </style>
 
 <!-- Modal consentement géoloc -->
@@ -271,11 +275,11 @@
   const layer = L.layerGroup().addTo(map);
   const userLayer = L.layerGroup().addTo(map);
   let dataset = [];
-  let userCentred = false; // ne recentre plus sur les bornes des markers après la géoloc
-  let clickToSet = false;  // mode "définir ma position"
+  let userCentred = false;
+  let clickToSet = false;
   let watchId = null;
 
-  // -----> (1) Charger une position enregistrée au chargement
+  // Charger position sauvegardée (si l’utilisateur a corrigé/accepté)
   try {
     const saved = localStorage.getItem('declic_user_pos');
     if (saved) {
@@ -287,19 +291,47 @@
     }
   } catch {}
 
+  // --- helpers dates/images pour popup
+  function parseDate(x){
+    if(!x) return null;
+    const d = new Date(x);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function frLongDate(d){
+    if(!d) return '';
+    return d.toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  }
+  function frHM(d){ return d ? d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : ''; }
+  function thumbFor(o){
+    if(o.image_url){ return o.image_url; }
+    const cat=(o.category||'').toLowerCase();
+    if(cat==='benevolat')    return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=300&auto=format&fit=crop';
+    if(cat==='formation')    return 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=300&auto=format&fit=crop';
+    if(cat==='rencontres')   return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=300&auto=format&fit=crop';
+    if(cat==='entreprendre') return 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=300&auto=format&fit=crop';
+    if(cat==='histoires')    return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
+    return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
+  }
   function popupHtml(o){
-    const badgeBg={benevolat:'#fee2e2',formation:'#dbeafe',rencontres:'#d1fae5',entreprendre:'#ffedd5',histoires:'#f3e8ff'}[(o.category||'').toLowerCase()]||'#eef2ff';
-    const cat=(o.category||'').charAt(0).toUpperCase()+(o.category||'').slice(1);
-    const base=(o.category||'').toLowerCase()==='histoires'?'/stories':'/opportunities';
+    const cat=(o.category||'');
+    const base=(cat.toLowerCase()==='histoires')?'/stories':'/opportunities';
     const url=`${base}/${o.slug||o.id}`;
-    const org=o.organization || '';
-    const desc=(o.description||'').slice(0,120)+(((o.description||'').length>120)?'…':'');
-    return `<div style="min-width:230px">
-      <div style="margin-bottom:6px"><span style="font-size:11px;padding:2px 6px;border-radius:9999px;background:${badgeBg};color:#111">${cat}</span></div>
-      <strong>${o.title||''}</strong>${org?`<br/><small>${org}</small>`:''}
-      <p style="margin:.5rem 0">${desc}</p>
-      <a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a>
-    </div>`;
+    const st=parseDate(o.starts_at||o.start_at||o.start_time||o.date||o.scheduled_on);
+    const en=parseDate(o.ends_at||o.end_at||o.end_time);
+    const when = st ? `📅 ${frLongDate(st)}${en?` — ${frHM(st)}–${frHM(en)}`: (o.schedule_text?``:` — ${frHM(st)}`)}` : (o.schedule_text||'');
+    const loc = o.location ? `📍 ${o.location}` : '';
+    const img = thumbFor(o);
+    return `
+      <div class="popcard">
+        <img src="${img}" alt="">
+        <div>
+          <h4>${o.title||''}</h4>
+          ${o.organization?`<div class="muted">${o.organization}</div>`:''}
+          ${when?`<div class="muted">${when}</div>`:''}
+          ${loc?`<div class="muted">${loc}</div>`:''}
+          <div style="margin-top:6px"><a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a></div>
+        </div>
+      </div>`;
   }
 
   function plot(items){
@@ -335,12 +367,9 @@
     plot((dataset||[]).filter(o=> (o.category||'').toLowerCase()===cat));
   }));
 
-  // --------------------- GÉOLOCALISATION ROBUSTE ----------------------
-  const GOOD_ACC = 500;   // 500 m : très bien
-  const OK_ACC   = 5000;  // 5 km  : acceptable
-  const IMP_ACC  = 20000; // 20 km : trop imprécis → on tente d'améliorer
+  // --------------------- GÉOLOCALISATION ----------------------
+  const OK_ACC = 5000;
 
-  // -----> (2) centerUser enregistre la position quand fiable / manuelle
   function centerUser(lat, lon, accuracy, source='auto'){
     userCentred = true;
     userLayer.clearLayers();
@@ -351,7 +380,6 @@
       L.circle([lat, lon], { radius: accuracy, color:'#2563eb', fillColor:'#3b82f6', fillOpacity:.12, weight:1 }).addTo(userLayer);
     }
     map.flyTo([lat, lon], Math.max(map.getZoom(), 13), { duration:.8 });
-
     if ((accuracy && accuracy <= 5000) || String(source).startsWith('manual')) {
       try { localStorage.setItem('declic_user_pos', JSON.stringify({ lat, lng: lon })); } catch {}
     }
@@ -367,8 +395,7 @@
           onBetter(c);
           stopWatch();
         }else if(Date.now() - started > 30000){
-          onEnd?.();
-          stopWatch();
+          onEnd?.(); stopWatch();
         }
       },
       ()=>{ onEnd?.(); stopWatch(); },
@@ -400,7 +427,6 @@
     );
   }
 
-  // Petit toast simple
   function toast(msg){
     try{
       const t=document.createElement('div');
@@ -411,10 +437,9 @@
     }catch{ alert(msg); }
   }
 
-  // Boutons flottants
   document.getElementById('btn-locate')?.addEventListener('click', doLocate);
 
-  // Ajout bouton “Définir ma position”
+  // Ajouter « Définir ma position »
   (function addFixBtn(){
     const btn=document.createElement('button');
     btn.id='btn-fixloc';
@@ -428,7 +453,6 @@
     });
   })();
 
-  // -----> (3) Clic carte = position manuelle + sauvegarde
   map.on('click', (e)=>{
     if(!clickToSet) return;
     const {lat, lng} = e.latlng;

@@ -1,45 +1,111 @@
-<header class="bg-white border-b">
-  <div class="max-w-6xl mx-auto h-14 px-6 flex items-center justify-between">
-    <a href="/" class="flex items-center gap-2">
-      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
-        <span class="text-white font-bold text-xs">D</span>
-      </div>
-      <span class="font-semibold">Déclic</span>
-    </a>
-    <nav class="hidden md:flex items-center gap-6 text-sm">
-      <a href="/" class="hover:text-gray-900">Explorer</a>
-      <a href="/#parcours" class="hover:text-gray-900">Parcours</a>
-      <a href="/#temoignages" class="hover:text-gray-900">Témoignages</a>
-      <a href="#" class="ml-1 inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Connexion</a>
-    </nav>
-  </div>
-</header>
+<%# app/views/opportunities/show.html.erb %>
 
+<%# ---------- META (OG) ---------- %>
 <% content_for :head do %>
   <meta property="og:title" content="<%= @opportunity.title %> - Déclic">
   <meta property="og:description" content="<%= @opportunity.description.to_s.truncate(140) %>">
   <meta property="og:type" content="website">
 <% end %>
 
+<%# ---------- Helpers locaux (vue) ---------- %>
+<%
+  # --- 1) Lien externe "officiel" ---
+  # On prend en charge plusieurs noms de colonnes possibles
+  candidates = %i[
+    external_url url link_url website website_url
+    registration_url signup_url source_url info_url more_info_url details_url
+  ]
+
+  def normalize_http(u)
+    return nil if u.blank?
+    s = u.to_s.strip
+    s = "https://#{s}" if s =~ /\Awww\./i
+    s if s =~ /\Ahttps?:\/\//i
+  end
+
+  ext_url = candidates.map { |m| @opportunity.respond_to?(m) && normalize_http(@opportunity.public_send(m)) }
+                     .compact_blank.first
+
+  # Essaie d'extraire une URL depuis les textes si aucune colonne ne donne un lien
+  def extract_first_url(*texts)
+    texts.compact.map(&:to_s).join(" ").scan(%r{https?://[^\s"')<]+}i).first
+  end
+  extracted_url = normalize_http(extract_first_url(
+    @opportunity.try(:description),
+    @opportunity.try(:body),
+    @opportunity.try(:notes),
+    @opportunity.try(:tags)
+  ))
+
+  # Lien final (sans fallback Google)
+  final_url = ext_url.presence || extracted_url.presence
+
+  # --- 2) Dates lisibles ---
+  def parse_dt(x)
+    return nil if x.blank?
+    return x if x.is_a?(Time) || x.is_a?(Date) ||
+                (defined?(ActiveSupport::TimeWithZone) && x.is_a?(ActiveSupport::TimeWithZone))
+    Time.zone.parse(x.to_s) rescue (Date.parse(x.to_s) rescue nil)
+  end
+
+  start_raw = [
+    (@opportunity.respond_to?(:starts_at)  && @opportunity.starts_at),
+    (@opportunity.respond_to?(:start_at)   && @opportunity.start_at),
+    (@opportunity.respond_to?(:start_time) && @opportunity.start_time),
+    (@opportunity.respond_to?(:date)       && @opportunity.date),
+    (@opportunity.respond_to?(:scheduled_on) && @opportunity.scheduled_on)
+  ].compact_blank.first
+
+  stop_raw = [
+    (@opportunity.respond_to?(:ends_at)    && @opportunity.ends_at),
+    (@opportunity.respond_to?(:end_at)     && @opportunity.end_at),
+    (@opportunity.respond_to?(:end_time)   && @opportunity.end_time)
+  ].compact_blank.first
+
+  start_dt = parse_dt(start_raw)
+  stop_dt  = parse_dt(stop_raw)
+
+  def fr_long_date(dt)
+    return nil unless dt
+    (I18n.l(dt.to_date, format: "%A %d %B %Y", locale: :fr) rescue dt.strftime("%A %d %B %Y"))
+  end
+
+  def fr_hm(dt)
+    return nil unless dt.respond_to?(:strftime)
+    dt.strftime("%Hh%M")
+  end
+
+  date_str  = fr_long_date(start_dt)
+  hours_str = start_dt && stop_dt ? "#{fr_hm(start_dt)}–#{fr_hm(stop_dt)}" : (start_dt ? fr_hm(start_dt) : nil)
+
+  # --- 3) Image ---
+  img =
+    if @opportunity.respond_to?(:image_url) && @opportunity.image_url.present?
+      @opportunity.image_url
+    else
+      case @opportunity.category.to_s
+      when 'benevolat'    then 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1600&auto=format&fit=crop'
+      when 'formation'    then 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=1600&auto=format&fit=crop'
+      when 'rencontres'   then 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=1600&auto=format&fit=crop'
+      when 'entreprendre' then 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1600&auto=format&fit=crop'
+      else                     'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1600&auto=format&fit=crop'
+      end
+    end
+
+  # --- 4) Contacts secondaires ---
+  email = @opportunity.respond_to?(:contact_email) && @opportunity.contact_email.presence
+  phone = @opportunity.respond_to?(:contact_phone) && @opportunity.contact_phone.presence
+%>
 
 <main class="max-w-6xl mx-auto px-6 py-6">
   <div class="mb-4">
-    <a href="/" class="text-sm text-gray-500 hover:text-gray-700">← Retour aux opportunités</a>
+    <%= link_to "← Retour aux opportunités", opportunities_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
   </div>
 
   <div class="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
     <!-- Colonne principale -->
     <section class="min-w-0">
-      <% img =
-        case @opportunity.category
-        when 'benevolat'    then 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1600&auto=format&fit=crop'
-        when 'formation'    then 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=1600&auto=format&fit=crop'
-        when 'rencontres'   then 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=1600&auto=format&fit=crop'
-        when 'entreprendre' then 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1600&auto=format&fit=crop'
-        else 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1600&auto=format&fit=crop'
-        end %>
-
-      <div class="rounded-2xl overflow-hidden shadow">
+      <div class="rounded-2xl overflow-hidden shadow ring-1 ring-black/5">
         <img src="<%= img %>" class="w-full h-64 sm:h-72 object-cover" alt="">
       </div>
 
@@ -90,6 +156,9 @@
       <div class="bg-white rounded-2xl border border-gray-100 shadow p-5">
         <h3 class="font-semibold mb-3">Informations pratiques</h3>
         <ul class="space-y-3 text-sm text-gray-700">
+          <% if date_str.present? %>
+            <li class="flex items-start gap-2"><span>📅</span><span><%= date_str %><%== hours_str.present? ? " — <strong>#{hours_str}</strong>".html_safe : "" %></span></li>
+          <% end %>
           <% if @opportunity.location.present? %>
             <li class="flex items-start gap-2"><span>📍</span><span><%= @opportunity.location %></span></li>
           <% end %>
@@ -99,35 +168,38 @@
           <% if @opportunity.effort_level.present? %>
             <li class="flex items-start gap-2"><span>🔥</span><span>Engagement : <%= @opportunity.effort_level %></span></li>
           <% end %>
+          <% if final_url.present? %>
+            <li class="flex items-start gap-2"><span>🔗</span>
+              <%= link_to "Lien officiel / informations", final_url, class: "text-indigo-600 hover:underline", target: "_blank", rel: "noopener" %>
+            </li>
+          <% end %>
           <% if @opportunity.latitude && @opportunity.longitude %>
             <li class="flex items-start gap-2"><span>🗺️</span><span>Carte ci-dessous</span></li>
           <% end %>
         </ul>
 
-        <% if @opportunity.contact_email.present? || @opportunity.contact_phone.present? %>
+        <% if email || phone %>
           <h4 class="mt-5 font-semibold">Contact</h4>
-          <div class="mt-2 space-y-2 text-sm" style="overflow-wrap:anywhere">
-            <% if @opportunity.contact_email.present? %>
-              <div class="flex items-center gap-2">
-                <span>📧</span>
-                <a class="text-indigo-600 hover:underline" href="mailto:<%= @opportunity.contact_email %>"><%= @opportunity.contact_email %></a>
-              </div>
+          <div class="mt-2 flex flex-wrap gap-2 text-sm" style="overflow-wrap:anywhere">
+            <% if email %>
+              <a class="inline-flex items-center gap-2 px-3 py-2 rounded-md ring-1 ring-gray-200 hover:bg-gray-50" href="mailto:<%= email %>">📧 Envoyer un email</a>
             <% end %>
-            <% if @opportunity.contact_phone.present? %>
-              <div class="flex items-center gap-2">
-                <span>📞</span>
-                <a class="text-indigo-600 hover:underline" href="tel:<%= @opportunity.contact_phone %>"><%= @opportunity.contact_phone %></a>
-              </div>
+            <% if phone %>
+              <a class="inline-flex items-center gap-2 px-3 py-2 rounded-md ring-1 ring-gray-200 hover:bg-gray-50" href="tel:<%= phone %>">📞 Appeler</a>
             <% end %>
           </div>
         <% end %>
 
-        <% mailto = @opportunity.contact_email.present? ? "mailto:#{@opportunity.contact_email}?subject=#{ERB::Util.url_encode("Candidature — #{@opportunity.title}")}" : nil %>
-        <% telto  = @opportunity.contact_phone.present? ? "tel:#{@opportunity.contact_phone}" : nil %>
-        <a href="<%= mailto || telto || '/' %>"
-           class="mt-5 inline-flex w-full items-center justify-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">
-          Participer
+        <%# CTA principal — toujours affiché %>
+        <a href="<%= final_url || '#' %>"
+           class="mt-5 inline-flex w-full items-center justify-center px-5 py-3 rounded-lg font-semibold
+                  <%= final_url ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-200 text-gray-500 cursor-not-allowed' %>"
+           <%= 'target="_blank" rel="noopener"' if final_url %>>
+          Se renseigner
         </a>
+        <% unless final_url %>
+          <p class="mt-2 text-xs text-gray-500">Lien externe indisponible pour l’instant.</p>
+        <% end %>
 
         <% if @opportunity.latitude && @opportunity.longitude %>
           <div class="mt-5 rounded-lg overflow-hidden border">
@@ -139,24 +211,50 @@
   </div>
 </main>
 
-<footer class="bg-gray-900 text-white py-10 mt-10">
-  <div class="max-w-6xl mx-auto px-6">
-    <div class="flex items-center gap-2 mb-2">
-      <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
-        <span class="text-white font-bold text-[10px]">D</span>
+<%# ============================== À PROPOS (identique à pages/home) ============================ %>
+<section class="mt-14">
+  <div class="mx-auto max-w-[90rem] px-5 sm:px-6 lg:px-8">
+    <div class="rounded-2xl bg-slate-900 text-slate-100 p-6 ring-1 ring-black/10">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <h3 class="text-lg font-semibold">À propos de Déclic</h3>
+          <p class="mt-2 text-slate-300">
+            Un projet citoyen pour connecter les personnes à des actions concrètes, des formations, des communautés locales
+            et des histoires inspirantes. Les données proviennent d’acteurs de terrain et de sources publiques.
+          </p>
+        </div>
+        <div>
+          <h4 class="text-sm font-semibold text-slate-200">Contact</h4>
+          <ul class="mt-2 space-y-1 text-slate-300 text-sm">
+            <li>📞 +33&nbsp;6&nbsp;67&nbsp;06&nbsp;31&nbsp;79</li>
+            <li>✉️ <a href="mailto:nicolas.goarant@hotmail.fr" class="underline">nicolas.goarant@hotmail.fr</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-semibold text-slate-200">Ressources</h4>
+          <ul class="mt-2 space-y-1 text-slate-300 text-sm">
+            <li><a class="underline" href="/mentions-legales">Mentions légales</a></li>
+            <li><a class="underline" href="/confidentialite">Politique de confidentialité</a></li>
+            <li><a class="underline" href="/presse">Presse & média</a></li>
+            <li><a class="underline" href="/faq">FAQ</a></li>
+          </ul>
+        </div>
       </div>
-      <span class="font-semibold">Déclic</span>
     </div>
-    <p class="text-gray-400 text-sm">Trouvez votre voie vers l’engagement et donnez du sens à votre vie.</p>
-    <p class="text-gray-500 text-xs mt-2">© <%= Time.current.year %> Déclic. Tous droits réservés.</p>
   </div>
-</footer>
+</section>
 
+<%# ---------- Leaflet (mini-map + popup enrichi) ---------- %>
 <% content_for :scripts do %>
 <script>
 (function () {
   var LAT = <%= @opportunity.latitude ? @opportunity.latitude.to_f : 'null' %>;
   var LNG = <%= @opportunity.longitude ? @opportunity.longitude.to_f : 'null' %>;
+  var TITLE = <%= raw(@opportunity.title.to_json) %>;
+  var LOC   = <%= raw(@opportunity.location.to_s.to_json) %>;
+  var DATE  = <%= raw((date_str || "").to_json) %>;
+  var HOURS = <%= raw((hours_str || "").to_json) %>;
+  var EXT   = <%= raw((final_url || "").to_json) %>;
 
   function ready(fn){
     if (document.readyState === 'complete' || document.readyState === 'interactive') fn();
@@ -189,7 +287,16 @@
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
-    L.marker([LAT, LNG]).addTo(map);
+
+    var popup = '<div style="min-width:230px">'
+              + '<strong>'+TITLE+'</strong>'
+              + (DATE ? '<br><small>📅 '+DATE+(HOURS ? ' — '+HOURS : '')+'</small>' : '')
+              + (LOC  ? '<br><small>📍 '+LOC+'</small>' : '')
+              + (EXT  ? '<br><a class="text-indigo-600 underline text-sm" target="_blank" rel="noopener" href="'+EXT+'">Plus d’infos</a>' : '')
+              + '</div>';
+
+    L.marker([LAT, LNG]).addTo(map).bindPopup(popup).openPopup();
+
     setTimeout(function(){ map.invalidateSize(); }, 100);
     el.dataset.mapReady = '1';
   }
@@ -202,6 +309,13 @@
 })();
 </script>
 <% end %>
+
+
+
+
+
+
+
 
 
 

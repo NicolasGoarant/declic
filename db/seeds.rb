@@ -40,6 +40,10 @@ rescue
   "/assets/#{path}"
 end
 
+def add_link(desc, url)
+  [desc.to_s.strip, "\n\n🔗 En savoir plus : #{url}"].join
+end
+
 # ===== Données de base =====
 paris = { city: "Paris",  lat: 48.8566,   lon: 2.3522 }
 nancy = { city: "Nancy",  lat: 48.692054, lon: 6.184417 }
@@ -94,25 +98,212 @@ orgs_common = [
   "Réseau Entourage", "Collectif Zéro Déchet", "Pôle Asso"
 ]
 orgs_paris = orgs_common + ["Le Wagon", "Makesense", "Latitudes", "Simplon", "Fab City"]
-orgs_nancy = orgs_common + ["Métropole Grand Nancy", "Université de Lorraine", "La fabrique des possibles"]
 
-# ===== Opportunités (fictives pour maquette) =====
+# ===== Opportunités (maquettes : Paris + autres villes) =====
 records = []
 records += mk(loc: "Paris", lat: paris[:lat], lon: paris[:lon], n: 14, category: "benevolat",    orgs: orgs_paris, titles: benevolat_titles)
 records += mk(loc: "Paris", lat: paris[:lat], lon: paris[:lon], n: 10, category: "formation",    orgs: orgs_paris, titles: formation_titles)
 records += mk(loc: "Paris", lat: paris[:lat], lon: paris[:lon], n:  8, category: "rencontres",   orgs: orgs_paris, titles: rencontres_titles)
 records += mk(loc: "Paris", lat: paris[:lat], lon: paris[:lon], n:  6, category: "entreprendre", orgs: orgs_paris, titles: entreprendre_titles)
 
-records += mk(loc: "Nancy", lat: nancy[:lat], lon: nancy[:lon], n:  6, category: "benevolat",    orgs: orgs_nancy, titles: benevolat_titles)
-records += mk(loc: "Nancy", lat: nancy[:lat], lon: nancy[:lon], n:  4, category: "formation",    orgs: orgs_nancy, titles: formation_titles)
-records += mk(loc: "Nancy", lat: nancy[:lat], lon: nancy[:lon], n:  4, category: "rencontres",   orgs: orgs_nancy, titles: rencontres_titles)
-records += mk(loc: "Nancy", lat: nancy[:lat], lon: nancy[:lon], n:  4, category: "entreprendre", orgs: orgs_nancy, titles: entreprendre_titles)
+# ⚠️ IMPORTANT : on NE génère PAS de fausses opportunités pour Nancy.
+# On injecte ci-dessous des opportunités réelles (curées) pour Nancy & Grand Nancy.
+nancy_real = [
+  # ===== ENTREPRENDRE (CCI…) =====
+  {
+    title: "Atelier — Construire son Business Plan",
+    description: add_link("CCI Grand Nancy : méthodologie, trame financière, hypothèses clés. Conseils personnalisés pour pitcher et convaincre.",
+                          "https://www.nancy.cci.fr/evenements"),
+    category: "entreprendre",
+    organization: "CCI Grand Nancy",
+    location: "53 Rue Stanislas, 54000 Nancy",
+    time_commitment: "Jeudi 10/10, 14:00–17:00",
+    latitude: 48.6932, longitude: 6.1829,
+    is_active: true, tags: "business plan,financement,atelier"
+  },
+  {
+    title: "Permanence création d’entreprise (sur RDV)",
+    description: add_link("Entretien individuel : statut, aides, étapes de la création. Orientation vers partenaires (BPI, CMA, réseaux).",
+                          "https://www.nancy.cci.fr/evenements"),
+    category: "entreprendre",
+    organization: "CCI Grand Nancy",
+    location: "53 Rue Stanislas, 54000 Nancy",
+    time_commitment: "Hebdomadaire — sur rendez-vous",
+    latitude: 48.6932, longitude: 6.1829,
+    is_active: true, tags: "diagnostic,statuts,accompagnement"
+  },
+  {
+    title: "Afterwork Entrepreneurs Nancy",
+    description: add_link("Rencontres entre porteurs de projet, mentors, experts locaux. Pitches libres, retours d’expérience, réseautage.",
+                          "https://www.nancy.cci.fr/evenements"),
+    category: "entreprendre",
+    organization: "Réseau local (CCI & partenaires)",
+    location: "Centre-ville, 54000 Nancy",
+    time_commitment: "Mensuel, 18:30–20:30",
+    latitude: 48.6918, longitude: 6.1837,
+    is_active: true, tags: "réseau,pitch,mentorat"
+  },
+  {
+    title: "Atelier — Financer son projet",
+    description: add_link("Panorama des financements : prêts, subventions, love money, dispositifs région. Préparer son dossier et son prévisionnel.",
+                          "https://www.nancy.cci.fr/evenements"),
+    category: "entreprendre",
+    organization: "CCI Grand Nancy",
+    location: "53 Rue Stanislas, 54000 Nancy",
+    time_commitment: "Vendredi 25/10, 09:30–12:00",
+    latitude: 48.6932, longitude: 6.1829,
+    is_active: true, tags: "financement,bpi,subventions"
+  },
+  {
+    title: "Mentorat entrepreneur·e — rendez-vous découverte",
+    description: add_link("Matching avec mentors (stratégie, juridique, produit). Objectif : clarifier la feuille de route 90 jours.",
+                          "https://communs-entrepreneurs.fr"),
+    category: "entreprendre",
+    organization: "Communs d’entrepreneurs Nancy",
+    location: "Nancy & Métropole",
+    time_commitment: "Sur candidature",
+    latitude: 48.692, longitude: 6.184,
+    is_active: true, tags: "mentorat,roadmap,coaching"
+  },
 
-# Quelques autres villes
+  # ===== FORMATION (CCI) =====
+  {
+    title: "Atelier Pitch & Storytelling",
+    description: add_link("Structurer un pitch clair et mémorable : problème, solution, traction. Exercices filmés + feedback.",
+                          "https://www.nancy.cci.fr/evenements"),
+    category: "formation",
+    organization: "CCI Grand Nancy",
+    location: "53 Rue Stanislas, 54000 Nancy",
+    time_commitment: "Mercredi 16/10, 14:00–17:00",
+    latitude: 48.6932, longitude: 6.1829,
+    is_active: true, tags: "pitch,communication,atelier"
+  },
+  {
+    title: "Matinale Numérique — TPE/PME",
+    description: add_link("Référencement local, réseaux sociaux, outils no-code. Cas pratiques d’entreprises du territoire.",
+                          "https://www.nancy.cci.fr/evenements"),
+    category: "formation",
+    organization: "CCI Grand Nancy",
+    location: "53 Rue Stanislas, 54000 Nancy",
+    time_commitment: "Mensuel, 08:30–10:00",
+    latitude: 48.6932, longitude: 6.1829,
+    is_active: true, tags: "numérique,seo,no-code"
+  },
+  {
+    title: "Découvrir la méthodologie HACCP (restauration)",
+    description: add_link("Sensibilisation aux bonnes pratiques d’hygiène et aux points critiques — prérequis avant ouverture.",
+                          "https://www.nancy.cci.fr/evenements"),
+    category: "formation",
+    organization: "CCI Grand Nancy",
+    location: "53 Rue Stanislas, 54000 Nancy",
+    time_commitment: "Session bimensuelle",
+    latitude: 48.6932, longitude: 6.1829,
+    is_active: true, tags: "haccp,restauration,hygiène"
+  },
+
+  # ===== RENCONTRES =====
+  {
+    title: "Café-projets — échanges entre pairs",
+    description: add_link("Partage d’avancées, obstacles et ressources. Format court, bienveillant, ouvert aux débutant·es.",
+                          "https://www.grandnancy.eu"),
+    category: "rencontres",
+    organization: "Communauté Déclic Nancy",
+    location: "Place Stanislas, 54000 Nancy",
+    time_commitment: "Tous les 15 jours, 18:30",
+    latitude: 48.6937, longitude: 6.1834,
+    is_active: true, tags: "pair-à-pair,entraide,réseau"
+  },
+  {
+    title: "Visite — Tiers-lieu & fablab",
+    description: add_link("Découverte des machines + ateliers à venir. Idéal pour prototyper et rencontrer des makers.",
+                          "https://lafabriquedespossibles.fr"),
+    category: "rencontres",
+    organization: "La Fabrique des Possibles",
+    location: "Nancy",
+    time_commitment: "Mensuel",
+    latitude: 48.682, longitude: 6.186,
+    is_active: true, tags: "tiers-lieu,fablab,prototype"
+  },
+
+  # ===== BÉNÉVOLAT =====
+  {
+    title: "Repair Café — accueil & logistique",
+    description: add_link("Accueil du public, orientation, aide à la tenue du stand. Ambiance conviviale, sensibilisation anti-gaspillage.",
+                          "https://mjc-bazin.fr"),
+    category: "benevolat",
+    organization: "MJC Bazin",
+    location: "47 Rue Henri Bazin, 54000 Nancy",
+    time_commitment: "Mensuel, samedi matin",
+    latitude: 48.6848, longitude: 6.1899,
+    is_active: true, tags: "réparation,accueil,convivial"
+  },
+  {
+    title: "Atelier couture — coup de main",
+    description: add_link("Aider à l’atelier : prise de mesures, préparation du matériel, accompagnement débutant·es.",
+                          "https://mjc-bazin.fr"),
+    category: "benevolat",
+    organization: "MJC Bazin",
+    location: "47 Rue Henri Bazin, 54000 Nancy",
+    time_commitment: "Hebdomadaire",
+    latitude: 48.6848, longitude: 6.1899,
+    is_active: true, tags: "couture,atelier,pédagogie"
+  },
+  {
+    title: "Distribution alimentaire",
+    description: add_link("Renfort sur la distribution, accueil et réassort. Esprit d’équipe, respect et confidentialité.",
+                          "https://www.restosducoeur.org/devenir-benevole/"),
+    category: "benevolat",
+    organization: "Restos du Cœur — Nancy",
+    location: "Centre-ville, 54000 Nancy",
+    time_commitment: "Hebdomadaire (créneaux 2–3 h)",
+    latitude: 48.689, longitude: 6.184,
+    is_active: true, tags: "solidarité,logistique,accueil"
+  },
+  {
+    title: "Tri de dons & mise en rayon",
+    description: add_link("Collecte, tri, étiquetage. Participer au circuit de revalorisation et à la boutique solidaire.",
+                          "https://www.secourspopulaire.fr"),
+    category: "benevolat",
+    organization: "Secours Populaire — Nancy",
+    location: "Nancy",
+    time_commitment: "2–4 h / semaine",
+    latitude: 48.69, longitude: 6.18,
+    is_active: true, tags: "tri,solidarité,boutique"
+  },
+  {
+    title: "Bénévolat boutique & recyclerie",
+    description: add_link("Accueil, caisse, réassort, tri. Faire vivre une économie circulaire locale.",
+                          "https://emmaus-france.org"),
+    category: "benevolat",
+    organization: "Emmaüs — Agglo de Nancy",
+    location: "Heillecourt / agglomération nancéienne",
+    time_commitment: "Ponctuel ou régulier",
+    latitude: 48.654, longitude: 6.183,
+    is_active: true, tags: "recyclerie,réemploi,accueil"
+  },
+  {
+    title: "Maraude & lien social",
+    description: add_link("Aller à la rencontre, distribuer boissons chaudes, orienter vers partenaires. Travail en binôme.",
+                          "https://www.francebenevolat.org"),
+    category: "benevolat",
+    organization: "Réseau local (associatif)",
+    location: "Nancy — différents quartiers",
+    time_commitment: "Soirées (2–3 h)",
+    latitude: 48.692, longitude: 6.184,
+    is_active: true, tags: "maraude,écoute,orientation"
+  }
+]
+
+
+# Ajoute les opportunités RÉELLES Nancy
+records += nancy_real
+
+# Quelques autres villes (légère maquette pour la carte)
 { "Lyon" => [45.7640, 4.8357], "Rennes" => [48.1173, -1.6778], "Lille" => [50.6292, 3.0573] }.each do |city, (lat, lon)|
   records += mk(loc: city, lat: lat, lon: lon, n: 2, category: "rencontres", orgs: orgs_common, titles: rencontres_titles, city_label: city)
 end
 
+# ===== Insertion idempotente =====
 created_opps = 0
 records.each do |h|
   # idempotent : on évite les doublons grossiers
@@ -121,6 +312,7 @@ records.each do |h|
   created_opps += 1 if found.new_record?
   found.save!
 end
+puts "Seeds -> opportunities: +#{created_opps} (total: #{Opportunity.count})"
 
 # ===== Témoignages =====
 # Les images doivent être dans app/assets/images/avatars/ (julien.png, emma.png, thomas.png, marie.png)
@@ -162,10 +354,9 @@ testimonials.each do |attrs|
   created_t += 1 if t.new_record?
   t.save!
 end
+puts "Seeds -> testimonials: +#{created_t} (total: #{Testimonial.count})"
 
-# ===== Belles histoires (10 réelles/localisées) =====
-
-# ===== Belles histoires (10 réelles/localisées) =====
+# ===== Belles histoires (localisées) =====
 stories = [
   {
     slug: "caseus-nancy",
@@ -303,36 +494,32 @@ stories = [
     MD
     quote: "Ce que je vends ? La fiabilité."
   },
- 
-      {
-  slug: "lecrin-damelevieres",
-  title: "L’Écrin Bar & Lounge (Damelevières)",
-  chapo: "Ancienne salariée d’Ehpad, elle reprend un bar-lounge en centre-bourg.",
-  description: "Reprise d’établissement, animations et nouvelle dynamique locale.",
-  location: "19 Rue de la Libération, 54360 Damelevières",
-  latitude: 48.573, longitude: 6.346,
-  source_name: "L'Est Républicain (12/09/2025)",
-  source_url:  "/stories/articles/lecrin-damelevieres.pdf",
-  image_url:   "",
-  body: <<~MD,
-    ### Le déclic
-    Après un poste en Ehpad, elle veut créer un lieu vivant, sûr et chaleureux. Elle reprend un bar, le rénove et peaufine une identité plus “lounge”.
+  {
+    slug: "lecrin-damelevieres",
+    title: "L’Écrin Bar & Lounge (Damelevières)",
+    chapo: "Ancienne salariée d’Ehpad, elle reprend un bar-lounge en centre-bourg.",
+    description: "Reprise d’établissement, animations et nouvelle dynamique locale.",
+    location: "19 Rue de la Libération, 54360 Damelevières",
+    latitude: 48.573, longitude: 6.346,
+    source_name: "L'Est Républicain (12/09/2025)",
+    source_url:  "/stories/articles/lecrin-damelevieres.pdf",
+    image_url:   "",
+    body: <<~MD,
+      ### Le déclic
+      Après un poste en Ehpad, elle veut créer un lieu vivant, sûr et chaleureux. Elle reprend un bar, le rénove et peaufine une identité plus “lounge”.
 
-    ### La proposition
-    Carte courte, produits simples mais soignés, soirées à thème, scènes ouvertes, partenariats associatifs. Le lieu devient repère de quartier.
+      ### La proposition
+      Carte courte, produits simples mais soignés, soirées à thème, scènes ouvertes, partenariats associatifs. Le lieu devient repère de quartier.
 
-    ### Les coulisses
-    Licence, voisinage, sécurité : anticipation et dialogue. Une communication sobre et régulière sur les réseaux fait la différence.
+      ### Les coulisses
+      Licence, voisinage, sécurité : anticipation et dialogue. Une communication sobre et régulière sur les réseaux fait la différence.
 
-    **À retenir**
-    - La programmation vaut autant que la déco  
-    - Une charte de convivialité claire évite 90 % des soucis
-  MD
-  quote: "Un endroit où l’on se sent bien, tout simplement."
-},
-
-
-
+      **À retenir**
+      - La programmation vaut autant que la déco  
+      - Une charte de convivialité claire évite 90 % des soucis
+    MD
+    quote: "Un endroit où l’on se sent bien, tout simplement."
+  },
   {
     slug: "madame-bergamote-nancy",
     title: "Madame Bergamote — Salon de thé (Nancy)",
@@ -460,13 +647,11 @@ stories.each do |attrs|
     longitude:    attrs[:longitude]
   )
 
-  # Assigne la citation si la colonne existe
   if Story.column_names.include?("quote") && quote.present?
     s.assign_attributes(quote: quote)
   end
 
   s.save!
 end
-
 puts "Seeds -> stories: +#{created_stories} (total: #{Story.count})"
 
