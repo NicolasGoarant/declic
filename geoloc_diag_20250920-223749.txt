@@ -1,0 +1,687 @@
+== Versions ==
+ruby 3.3.0 (2023-12-25 revision 5124f9ac75) [x86_64-linux]
+Rails 7.2.2.2
+v22.19.0
+1.22.22
+
+== Importmap vs bundler ==
+importmap.rb: present
+package.json:  missing
+
+== Routes (début) ==
+# config/routes.rb
+Rails.application.routes.draw do
+  root "pages#home"
+
+  resources :opportunities, only: [:index, :show, :new, :create]
+  get "/parcours/:category", to: "opportunities#index", as: :parcours
+
+  # NEW
+  resources :stories, only: [:index, :show]
+
+  namespace :api do
+    namespace :v1 do
+      resources :opportunities, only: %i[index show]
+      # NEW (pins « belles histoires » sur la carte)
+      resources :stories, only: %i[index]
+    end
+  end
+
+  # Pages statiques (ressources)
+get "/mentions-legales", to: "pages#legal",          as: :mentions_legales
+get "/confidentialite",  to: "pages#confidentialite", as: :confidentialite
+get "/presse",           to: "pages#presse",         as: :presse
+get "/faq",              to: "pages#faq",            as: :faq
+
+end
+
+
+
+== setView/fitBounds (où la carte est recentrée) ==
+
+== Occurrences de 'Maubeuge' ==
+
+== Fichiers qui parlent de Leaflet ou geolocation ==
+
+== home.html.erb (en-tête) ==
+     1	<%# app/views/pages/home.html.erb %>
+     2	
+     3	<div class="relative isolate">
+     4	  <!-- décor -->
+     5	  <div class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-violet-50 via-white to-indigo-50"></div>
+     6	  <div class="pointer-events-none absolute inset-0 -z-10 opacity-[.35] bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,.08)_1px,transparent_1px)] [background-size:18px_18px]"></div>
+     7	
+     8	  <%# ================================ HERO ================================ %>
+     9	  <section class="pt-24 lg:pt-28">
+    10	    <div class="mx-auto max-w-[90rem] px-5 sm:px-6 lg:px-8">
+    11	      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] gap-8 items-center">
+    12	        <div>
+    13	          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900">
+    14	            Donne du sens à tes projets, <span class="bg-gradient-to-r from-fuchsia-600 to-indigo-600 bg-clip-text text-transparent">proche de chez toi</span>
+    15	          </h1>
+    16	          <p class="mt-4 text-lg text-slate-700 max-w-2xl">
+    17	            Déclic agrège les opportunités locales : entreprendre, se former, rencontrer, aider — et découvrir des <em>belles histoires</em> qui inspirent.
+    18	          </p>
+    19	
+    20	          <dl class="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
+    21	            <div class="rounded-xl bg-white/90 backdrop-blur border border-gray-100 p-4 shadow">
+    22	              <dt class="text-xs text-gray-500">Opportunités</dt>
+    23	              <dd class="text-2xl font-bold">15&nbsp;000+</dd>
+    24	            </div>
+    25	            <div class="rounded-xl bg-white/90 backdrop-blur border border-gray-100 p-4 shadow">
+    26	              <dt class="text-xs text-gray-500">Villes</dt>
+    27	              <dd class="text-2xl font-bold">300+</dd>
+    28	            </div>
+    29	            <div class="rounded-xl bg-white/90 backdrop-blur border border-gray-100 p-4 shadow">
+    30	              <dt class="text-xs text-gray-500">Communauté</dt>
+    31	              <dd class="text-2xl font-bold">10k</dd>
+    32	            </div>
+    33	          </dl>
+    34	        </div>
+    35	
+    36	        <!-- visuel : image locale si dispo, sinon placeholder -->
+    37	        <% hero_src = (begin asset_path('hero.jpg') rescue nil end) %>
+    38	        <% if hero_src.present? %>
+    39	          <img src="<%= hero_src %>" alt="Déclic"
+    40	               class="w-full h-64 sm:h-80 lg:h-[22rem] object-cover rounded-2xl shadow ring-1 ring-black/5">
+    41	        <% else %>
+    42	          <div class="w-full h-64 sm:h-80 lg:h-[22rem] rounded-2xl shadow ring-1 ring-black/5
+    43	                      bg-gradient-to-br from-indigo-600 via-fuchsia-500 to-rose-500 relative overflow-hidden">
+    44	            <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,white_2px,transparent_2px)] [background-size:18px_18px]"></div>
+    45	            <div class="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-t from-black/30 to-transparent"></div>
+    46	          </div>
+    47	        <% end %>
+    48	      </div>
+    49	    </div>
+    50	  </section>
+    51	
+    52	  <%# ======================== PARCOURS (GROS BOUTONS) ===================== %>
+    53	  <section id="parcours" class="mt-10">
+    54	    <div class="mx-auto max-w-[90rem] px-5 sm:px-6 lg:px-8">
+    55	      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+    56	        <% btn_base = "group block rounded-2xl p-6 lg:p-7 text-white shadow-md transition hover:shadow-lg grid content-start min-h-[148px] sm:min-h-[160px] xl:min-h-[180px]" %>
+    57	        <% icon_wrap = "inline-flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl bg-white/20 text-2xl lg:text-3xl" %>
+    58	        <% title_txt = "font-semibold text-lg lg:text-xl" %>
+    59	        <% desc_txt  = "text-white/90 text-[15px] lg:text-base leading-snug mt-1" %>
+    60	
+    61	        <%= link_to parcours_path(category: "entreprendre"), class: btn_base, style: "background:linear-gradient(135deg,#f59e0b 0%,#ef4444 50%,#fb7185 100%);" do %>
+    62	          <div class="flex items-start gap-4 lg:gap-5">
+    63	            <span class="<%= icon_wrap %>">🚀</span>
+    64	            <div class="min-w-0">
+    65	              <p class="<%= title_txt %>">Je veux entreprendre</p>
+    66	              <p class="<%= desc_txt %>">Lance ton projet avec des mentors</p>
+    67	            </div>
+    68	          </div>
+    69	        <% end %>
+    70	
+    71	        <%= link_to parcours_path(category: "formation"), class: btn_base, style: "background:linear-gradient(135deg,#6366f1 0%,#38bdf8 100%);" do %>
+    72	          <div class="flex items-start gap-4 lg:gap-5">
+    73	            <span class="<%= icon_wrap %>">📘</span>
+    74	            <div class="min-w-0">
+    75	              <p class="<%= title_txt %>">Je veux me former</p>
+    76	              <p class="<%= desc_txt %>">Des formations pour progresser</p>
+    77	            </div>
+    78	          </div>
+    79	        <% end %>
+    80	
+    81	        <%= link_to parcours_path(category: "benevolat"), class: btn_base, style: "background:linear-gradient(135deg,#f43f5e 0%,#ec4899 100%);" do %>
+    82	          <div class="flex items-start gap-4 lg:gap-5">
+    83	            <span class="<%= icon_wrap %>">❤️</span>
+    84	            <div class="min-w-0">
+    85	              <p class="<%= title_txt %>">Je veux aider</p>
+    86	              <p class="<%= desc_txt %>">Des missions utiles et humaines</p>
+    87	            </div>
+    88	          </div>
+    89	        <% end %>
+    90	
+    91	        <%= link_to parcours_path(category: "rencontres"), class: btn_base, style: "background:linear-gradient(135deg,#10b981 0%,#06b6d4 100%);" do %>
+    92	          <div class="flex items-start gap-4 lg:gap-5">
+    93	            <span class="<%= icon_wrap %>">🤝</span>
+    94	            <div class="min-w-0">
+    95	              <p class="<%= title_txt %>">Je veux rencontrer</p>
+    96	              <p class="<%= desc_txt %>">Des communautés près de chez toi</p>
+    97	            </div>
+    98	          </div>
+    99	        <% end %>
+   100	
+   101	        <%= link_to stories_path, class: btn_base, style: "background:linear-gradient(135deg,#6d28d9 0%,#a855f7 50%,#d946ef 100%);" do %>
+   102	          <div class="flex items-start gap-4 lg:gap-5">
+   103	            <span class="<%= icon_wrap %>">📖</span>
+   104	            <div class="min-w-0">
+   105	              <p class="<%= title_txt %>">Belles histoires</p>
+   106	              <p class="<%= desc_txt %>">Déclics, reconversions, prises de risque</p>
+   107	            </div>
+   108	          </div>
+   109	        <% end %>
+   110	      </div>
+   111	    </div>
+   112	  </section>
+   113	
+   114	  <%# ============================== CARTE ================================ %>
+   115	  <section id="explorer" class="mt-12">
+   116	    <div class="mx-auto max-w-[90rem] px-5 sm:px-6 lg:px-8">
+   117	      <div class="text-center">
+   118	        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">Explorez les opportunités</h2>
+   119	        <p class="mt-2 text-[17px] sm:text-lg text-slate-600">
+   120	          Découvrez sur la carte toutes les possibilités d’engagement près de chez vous.
+   121	        </p>
+   122	      </div>
+   123	
+   124	      <div class="mt-6 grid grid-cols-12 gap-6">
+   125	        <div class="hidden xl:block xl:col-span-1"></div>
+   126	
+   127	        <div class="col-span-12 xl:col-span-10">
+   128	          <div class="mb-3 flex flex-wrap gap-2 justify-center">
+   129	            <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
+   130	            <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
+   131	            <button class="chip" data-cat="formation">📘 Formation</button>
+   132	            <button class="chip" data-cat="rencontres">👥 Rencontres</button>
+   133	            <button class="chip" data-cat="entreprendre">💼 Entreprendre</button>
+   134	            <button class="chip" data-cat="histoires">📖 Belles histoires</button>
+   135	          </div>
+   136	
+   137	          <div class="relative">
+   138	            <div id="map" class="h-[480px] lg:h-[520px] w-full rounded-2xl overflow-hidden border border-gray-200 shadow"></div>
+   139	
+   140	            <!-- Bouton flottant : me localiser -->
+
+== home.html.erb (autour de la carte + scripts) ==
+-- autour de id="map" (lignes 98-318)
+    98	          </div>
+    99	        <% end %>
+   100	
+   101	        <%= link_to stories_path, class: btn_base, style: "background:linear-gradient(135deg,#6d28d9 0%,#a855f7 50%,#d946ef 100%);" do %>
+   102	          <div class="flex items-start gap-4 lg:gap-5">
+   103	            <span class="<%= icon_wrap %>">📖</span>
+   104	            <div class="min-w-0">
+   105	              <p class="<%= title_txt %>">Belles histoires</p>
+   106	              <p class="<%= desc_txt %>">Déclics, reconversions, prises de risque</p>
+   107	            </div>
+   108	          </div>
+   109	        <% end %>
+   110	      </div>
+   111	    </div>
+   112	  </section>
+   113	
+   114	  <%# ============================== CARTE ================================ %>
+   115	  <section id="explorer" class="mt-12">
+   116	    <div class="mx-auto max-w-[90rem] px-5 sm:px-6 lg:px-8">
+   117	      <div class="text-center">
+   118	        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">Explorez les opportunités</h2>
+   119	        <p class="mt-2 text-[17px] sm:text-lg text-slate-600">
+   120	          Découvrez sur la carte toutes les possibilités d’engagement près de chez vous.
+   121	        </p>
+   122	      </div>
+   123	
+   124	      <div class="mt-6 grid grid-cols-12 gap-6">
+   125	        <div class="hidden xl:block xl:col-span-1"></div>
+   126	
+   127	        <div class="col-span-12 xl:col-span-10">
+   128	          <div class="mb-3 flex flex-wrap gap-2 justify-center">
+   129	            <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
+   130	            <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
+   131	            <button class="chip" data-cat="formation">📘 Formation</button>
+   132	            <button class="chip" data-cat="rencontres">👥 Rencontres</button>
+   133	            <button class="chip" data-cat="entreprendre">💼 Entreprendre</button>
+   134	            <button class="chip" data-cat="histoires">📖 Belles histoires</button>
+   135	          </div>
+   136	
+   137	          <div class="relative">
+   138	            <div id="map" class="h-[480px] lg:h-[520px] w-full rounded-2xl overflow-hidden border border-gray-200 shadow"></div>
+   139	
+   140	            <!-- Bouton flottant : me localiser -->
+   141	            <button id="btn-locate"
+   142	                    class="absolute right-3 top-3 z-20 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/95 ring-1 ring-gray-200 shadow hover:bg-white">
+   143	              <span>📍</span><span class="text-sm font-medium">Me localiser</span>
+   144	            </button>
+   145	          </div>
+   146	        </div>
+   147	
+   148	        <div class="hidden xl:block xl:col-span-1"></div>
+   149	      </div>
+   150	    </div>
+   151	  </section>
+   152	
+   153	  <%# ========================== QUELQUES OPPS =========================== %>
+   154	  <section class="mt-10">
+   155	    <div class="mx-auto max-w-[90rem] px-5 sm:px-6 lg:px-8">
+   156	      <h3 class="text-xl font-semibold text-slate-900">Quelques opportunités</h3>
+   157	      <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+   158	        <% (@opportunities || []).first(6).each do |o| %>
+   159	          <%= link_to opportunity_path(o), class: "block rounded-xl bg-white p-4 ring-1 ring-gray-200 hover:shadow" do %>
+   160	            <p class="text-xs text-gray-500 mb-1"><%= o.category.to_s.capitalize %></p>
+   161	            <p class="font-semibold"><%= o.title %></p>
+   162	            <p class="text-sm text-gray-600 line-clamp-2 mt-1"><%= o.description %></p>
+   163	            <p class="text-sm text-gray-700 mt-2">📍 <%= o.location %></p>
+   164	          <% end %>
+   165	        <% end %>
+   166	      </div>
+   167	    </div>
+   168	  </section>
+   169	
+   170	  <%# ============================ TÉMOIGNAGES =========================== %>
+   171	  <section id="temoignages" class="mt-14">
+   172	    <div class="mx-auto max-w-[90rem] px-5 sm:px-6 lg:px-8">
+   173	      <h3 class="text-xl font-semibold text-slate-900">Ils/elles ont trouvé leur déclic</h3>
+   174	      <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   175	        <% (@testimonials || []).each do |t| %>
+   176	          <div class="rounded-xl bg-white p-5 ring-1 ring-gray-200">
+   177	            <div class="flex items-center gap-3">
+   178	              <img src="<%= t.image_url %>" class="w-12 h-12 rounded-full object-cover" alt="">
+   179	              <div>
+   180	                <p class="font-semibold"><%= t.name %></p>
+   181	                <p class="text-xs text-gray-500"><%= t.role %></p>
+   182	              </div>
+   183	            </div>
+   184	            <p class="text-[15px] text-gray-700 mt-3"><%= t.story %></p>
+   185	          </div>
+   186	        <% end %>
+   187	      </div>
+   188	    </div>
+   189	  </section>
+   190	
+   191	  <%# ============================== À PROPOS ============================ %>
+   192	  <section class="mt-14">
+   193	    <div class="mx-auto max-w-[90rem] px-5 sm:px-6 lg:px-8">
+   194	      <div class="rounded-2xl bg-slate-900 text-slate-100 p-6 ring-1 ring-black/10">
+   195	        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+   196	          <div>
+   197	            <h3 class="text-lg font-semibold">À propos de Déclic</h3>
+   198	            <p class="mt-2 text-slate-300">
+   199	              Un projet citoyen pour connecter les personnes à des actions concrètes, des formations, des communautés locales
+   200	              et des histoires inspirantes. Les données proviennent d’acteurs de terrain et de sources publiques.
+   201	            </p>
+   202	          </div>
+   203	          <div>
+   204	            <h4 class="text-sm font-semibold text-slate-200">Contact</h4>
+   205	            <ul class="mt-2 space-y-1 text-slate-300 text-sm">
+   206	              <li>📞 +33&nbsp;6&nbsp;67&nbsp;06&nbsp;31&nbsp;79</li>
+   207	              <li>✉️ <a href="mailto:nicolas.goarant@hotmail.fr" class="underline">nicolas.goarant@hotmail.fr</a></li>
+   208	            </ul>
+   209	          </div>
+   210	          <div>
+   211	            <h4 class="text-sm font-semibold text-slate-200">Ressources</h4>
+   212	            <ul class="mt-2 space-y-1 text-slate-300 text-sm">
+   213	              <li><a class="underline" href="/mentions-legales">Mentions légales</a></li>
+   214	              <li><a class="underline" href="/politique-de-confidentialite">Politique de confidentialité</a></li>
+   215	              <li><a class="underline" href="/conditions-d-utilisation">Conditions d’utilisation</a></li>
+   216	            </ul>
+   217	          </div>
+   218	        </div>
+   219	      </div>
+   220	    </div>
+   221	  </section>
+   222	</div>
+   223	
+   224	<style>
+   225	  .chip{ @apply inline-flex items-center rounded-full px-3 py-1.5 text-sm bg-white ring-1 ring-gray-200 hover:bg-gray-50; }
+   226	  .chip.is-active{ @apply bg-indigo-600 text-white ring-0; }
+   227	  .picon{
+   228	    width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;
+   229	    color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:var(--c,#6366f1);
+   230	  }
+   231	  .picon::after{ content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+   232	    border:6px solid transparent;border-top-color:var(--c,#6366f1); }
+   233	  .leaflet-container{ font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans","Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"; }
+   234	  .myloc-btn{ width:34px;height:34px;background:#fff;border:none;cursor:pointer; }
+   235	</style>
+   236	
+   237	<!-- Modal consentement géoloc -->
+   238	<div id="geo-consent" class="fixed inset-0 z-[500] hidden">
+   239	  <div class="absolute inset-0 bg-black/40"></div>
+   240	  <div class="absolute inset-0 grid place-items-center p-4">
+   241	    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl ring-1 ring-black/10 p-6">
+   242	      <h3 class="text-lg font-semibold">Activer la géolocalisation&nbsp;?</h3>
+   243	      <p class="mt-1 text-sm text-gray-600">Nous l’utilisons uniquement pour centrer la carte autour de votre position. Aucune donnée n’est stockée côté serveur.</p>
+   244	      <div class="mt-4 flex gap-3">
+   245	        <button id="geo-accept" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Oui, me localiser</button>
+   246	        <button id="geo-decline" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">Plus tard</button>
+   247	      </div>
+   248	    </div>
+   249	  </div>
+   250	</div>
+   251	
+   252	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+   253	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+   254	
+   255	<% content_for :scripts do %>
+   256	<script>
+   257	(function(){
+   258	  const mapEl = document.getElementById('map');
+   259	  if(!mapEl || !window.L) return;
+   260	
+   261	  // --- Carte
+   262	  const map = L.map('map',{ zoomControl:true, scrollWheelZoom:true }).setView([46.6, 2.2], 6);
+   263	  mapEl._leaflet_map = map;
+   264	  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap' }).addTo(map);
+   265	
+   266	  const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#a855f7',default:'#6366f1'};
+   267	  const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',histoires:'📖',default:'⭐'};
+   268	  const iconFor = (cat)=> L.divIcon({className:'',html:`<div class="picon" style="--c:${colors[cat]||colors.default}"><span>${emojis[cat]||emojis.default}</span></div>`,iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
+   269	
+   270	  const layer = L.layerGroup().addTo(map);
+   271	  const userLayer = L.layerGroup().addTo(map);
+   272	  let dataset = [];
+   273	  let userCentred = false; // ne recentre plus sur les bornes des markers après la géoloc
+   274	  let clickToSet = false;  // mode "définir ma position"
+   275	  let watchId = null;
+   276	
+   277	  function popupHtml(o){
+   278	    const badgeBg={benevolat:'#fee2e2',formation:'#dbeafe',rencontres:'#d1fae5',entreprendre:'#ffedd5',histoires:'#f3e8ff'}[(o.category||'').toLowerCase()]||'#eef2ff';
+   279	    const cat=(o.category||'').charAt(0).toUpperCase()+(o.category||'').slice(1);
+   280	    const base=(o.category||'').toLowerCase()==='histoires'?'/stories':'/opportunities';
+   281	    const url=`${base}/${o.slug||o.id}`;
+   282	    const org=o.organization || '';
+   283	    const desc=(o.description||'').slice(0,120)+(((o.description||'').length>120)?'…':'');
+   284	    return `<div style="min-width:230px">
+   285	      <div style="margin-bottom:6px"><span style="font-size:11px;padding:2px 6px;border-radius:9999px;background:${badgeBg};color:#111">${cat}</span></div>
+   286	      <strong>${o.title||''}</strong>${org?`<br/><small>${org}</small>`:''}
+   287	      <p style="margin:.5rem 0">${desc}</p>
+   288	      <a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a>
+   289	    </div>`;
+   290	  }
+   291	
+   292	  function plot(items){
+   293	    layer.clearLayers();
+   294	    const bounds=[];
+   295	    (items||[]).forEach(o=>{
+   296	      if(!o.latitude || !o.longitude) return;
+   297	      L.marker([o.latitude,o.longitude],{icon:iconFor((o.category||'').toLowerCase())})
+   298	        .addTo(layer).bindPopup(popupHtml(o));
+   299	      bounds.push([o.latitude,o.longitude]);
+   300	    });
+   301	    if(bounds.length && !userCentred){
+   302	      map.fitBounds(bounds,{padding:[30,30]});
+   303	    }
+   304	  }
+   305	
+   306	  Promise.all([
+   307	    fetch('/api/v1/opportunities').then(r=>r.ok?r.json():[]).catch(()=>[]),
+   308	    fetch('/api/v1/stories').then(r=>r.ok?r.json():[]).catch(()=>[])
+   309	  ]).then(([opps, stories])=>{
+   310	    (stories||[]).forEach(s=> s.category='histoires');
+   311	    dataset = ([]).concat(opps||[], stories||[]);
+   312	    window.__DATASET = dataset;
+   313	    plot(dataset);
+   314	  });
+   315	
+   316	  // Filtres
+   317	  const chips=[...document.querySelectorAll('.chip')];
+   318	  chips.forEach(chip=>chip.addEventListener('click',()=>{
+
+== home.html.erb (tous les <script> inline) ==
+253:<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+256:<script>
+257:(function(){
+258:  const mapEl = document.getElementById('map');
+259:  if(!mapEl || !window.L) return;
+260:
+261:  // --- Carte
+262:  const map = L.map('map',{ zoomControl:true, scrollWheelZoom:true }).setView([46.6, 2.2], 6);
+263:  mapEl._leaflet_map = map;
+264:  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap' }).addTo(map);
+265:
+266:  const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#a855f7',default:'#6366f1'};
+267:  const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',histoires:'📖',default:'⭐'};
+268:  const iconFor = (cat)=> L.divIcon({className:'',html:`<div class="picon" style="--c:${colors[cat]||colors.default}"><span>${emojis[cat]||emojis.default}</span></div>`,iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
+269:
+270:  const layer = L.layerGroup().addTo(map);
+271:  const userLayer = L.layerGroup().addTo(map);
+272:  let dataset = [];
+273:  let userCentred = false; // ne recentre plus sur les bornes des markers après la géoloc
+274:  let clickToSet = false;  // mode "définir ma position"
+275:  let watchId = null;
+276:
+277:  function popupHtml(o){
+278:    const badgeBg={benevolat:'#fee2e2',formation:'#dbeafe',rencontres:'#d1fae5',entreprendre:'#ffedd5',histoires:'#f3e8ff'}[(o.category||'').toLowerCase()]||'#eef2ff';
+279:    const cat=(o.category||'').charAt(0).toUpperCase()+(o.category||'').slice(1);
+280:    const base=(o.category||'').toLowerCase()==='histoires'?'/stories':'/opportunities';
+281:    const url=`${base}/${o.slug||o.id}`;
+282:    const org=o.organization || '';
+283:    const desc=(o.description||'').slice(0,120)+(((o.description||'').length>120)?'…':'');
+284:    return `<div style="min-width:230px">
+285:      <div style="margin-bottom:6px"><span style="font-size:11px;padding:2px 6px;border-radius:9999px;background:${badgeBg};color:#111">${cat}</span></div>
+286:      <strong>${o.title||''}</strong>${org?`<br/><small>${org}</small>`:''}
+287:      <p style="margin:.5rem 0">${desc}</p>
+288:      <a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a>
+289:    </div>`;
+290:  }
+291:
+292:  function plot(items){
+293:    layer.clearLayers();
+294:    const bounds=[];
+295:    (items||[]).forEach(o=>{
+296:      if(!o.latitude || !o.longitude) return;
+297:      L.marker([o.latitude,o.longitude],{icon:iconFor((o.category||'').toLowerCase())})
+298:        .addTo(layer).bindPopup(popupHtml(o));
+299:      bounds.push([o.latitude,o.longitude]);
+300:    });
+301:    if(bounds.length && !userCentred){
+302:      map.fitBounds(bounds,{padding:[30,30]});
+303:    }
+304:  }
+305:
+306:  Promise.all([
+307:    fetch('/api/v1/opportunities').then(r=>r.ok?r.json():[]).catch(()=>[]),
+308:    fetch('/api/v1/stories').then(r=>r.ok?r.json():[]).catch(()=>[])
+309:  ]).then(([opps, stories])=>{
+310:    (stories||[]).forEach(s=> s.category='histoires');
+311:    dataset = ([]).concat(opps||[], stories||[]);
+312:    window.__DATASET = dataset;
+313:    plot(dataset);
+314:  });
+315:
+316:  // Filtres
+317:  const chips=[...document.querySelectorAll('.chip')];
+318:  chips.forEach(chip=>chip.addEventListener('click',()=>{
+319:    chips.forEach(c=>c.classList.remove('is-active')); chip.classList.add('is-active');
+320:    const cat=chip.dataset.cat;
+321:    if(cat==='toutes'){ plot(dataset); return; }
+322:    plot((dataset||[]).filter(o=> (o.category||'').toLowerCase()===cat));
+323:  }));
+324:
+325:  // --------------------- GÉOLOCALISATION ROBUSTE ----------------------
+326:  const GOOD_ACC = 500;   // 500 m : très bien
+327:  const OK_ACC   = 5000;  // 5 km  : acceptable
+328:  const IMP_ACC  = 20000; // 20 km : trop imprécis → on tente d'améliorer
+329:
+330:  function centerUser(lat, lon, accuracy){
+331:    userCentred = true;
+332:    userLayer.clearLayers();
+333:    const icon=L.divIcon({className:'',html:`<div class="picon" style="--c:#2563eb"><span>📍</span></div>`,iconSize:[26,32],iconAnchor:[13,28]});
+334:    L.marker([lat, lon], {icon}).addTo(userLayer)
+335:      .bindPopup(`<strong>Vous êtes ici</strong>${accuracy?`<br><small>Précision ~${Math.round(accuracy)} m</small>`:''}`);
+336:    if(accuracy && accuracy<2000){
+337:      L.circle([lat, lon], { radius: accuracy, color:'#2563eb', fillColor:'#3b82f6', fillOpacity:.12, weight:1 }).addTo(userLayer);
+338:    }
+339:    map.flyTo([lat, lon], Math.max(map.getZoom(), 13), { duration:.8 });
+340:  }
+341:
+342:  function tryImproveFix(onBetter, onEnd){
+343:    // Surveille des mises à jour plus précises pendant 15 s
+344:    if(!('geolocation' in navigator)) return onEnd?.();
+345:    const started = Date.now();
+346:    watchId = navigator.geolocation.watchPosition(
+347:      (pos)=>{
+348:        const c = pos.coords;
+349:        if(c.accuracy <= OK_ACC){
+350:          onBetter(c);
+351:          stopWatch();
+352:        }else if(Date.now() - started > 15000){
+353:          onEnd?.();
+354:          stopWatch();
+355:        }
+356:      },
+357:      ()=>{ onEnd?.(); stopWatch(); },
+358:      { enableHighAccuracy:true, maximumAge:0, timeout:15000 }
+359:    );
+360:    function stopWatch(){ if(watchId!=null){ navigator.geolocation.clearWatch(watchId); watchId=null; } }
+361:  }
+362:
+363:  function doLocate(){
+364:    if(!('geolocation' in navigator)) return;
+365:    navigator.geolocation.getCurrentPosition(
+366:      (pos)=>{
+367:        const c = pos.coords;
+368:        if(c.accuracy <= OK_ACC){
+369:          centerUser(c.latitude, c.longitude, c.accuracy);
+370:          localStorage.setItem('declic_geo_pref','granted');
+371:        }else{
+372:          // Fix très approximatif (souvent via IP). On tente d'améliorer :
+373:          tryImproveFix(
+374:            (better)=>{ centerUser(better.latitude, better.longitude, better.accuracy); localStorage.setItem('declic_geo_pref','granted'); },
+375:            ()=>{ // pas mieux : on centre quand même mais on propose la correction manuelle
+376:              centerUser(c.latitude, c.longitude, c.accuracy);
+377:              toast("Localisation approximative. Cliquez « Définir ma position » puis un point sur la carte pour corriger.");
+378:            }
+379:          );
+380:        }
+381:      },
+382:      ()=>{
+383:        localStorage.setItem('declic_geo_pref','denied');
+384:        toast("Géolocalisation refusée. Vous pouvez la réactiver via le bouton « Me localiser ».");
+385:      },
+386:      { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
+387:    );
+388:  }
+389:
+390:  // Petit toast simple
+391:  function toast(msg){
+392:    try{
+393:      const t=document.createElement('div');
+394:      t.textContent=msg;
+395:      t.className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[600] px-4 py-2 rounded-lg bg-slate-900 text-white shadow";
+396:      document.body.appendChild(t);
+397:      setTimeout(()=>t.remove(), 4500);
+398:    }catch{ alert(msg); }
+399:  }
+400:
+401:  // Boutons flottants
+402:  document.getElementById('btn-locate')?.addEventListener('click', doLocate);
+403:
+404:  // Ajoute le bouton “Définir ma position”
+405:  (function addFixBtn(){
+406:    const btn=document.createElement('button');
+407:    btn.id='btn-fixloc';
+408:    btn.className='absolute right-3 top-14 z-20 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/95 ring-1 ring-gray-200 shadow hover:bg-white';
+409:    btn.innerHTML='<span>🗺️</span><span class="text-sm font-medium">Définir ma position</span>';
+410:    mapEl.parentElement.appendChild(btn);
+411:    btn.addEventListener('click',()=>{
+412:      clickToSet = !clickToSet;
+413:      btn.style.background = clickToSet ? '#eef2ff' : 'rgba(255,255,255,.95)';
+414:      toast(clickToSet ? "Cliquez sur la carte pour définir votre position." : "Mode désactivé.");
+415:    });
+416:  })();
+417:
+418:  // Clic carte → définit la position
+419:  map.on('click', (e)=>{
+420:    if(!clickToSet) return;
+421:    const {lat, lng} = e.latlng;
+422:    centerUser(lat, lng, 20);
+423:    localStorage.setItem('declic_geo_pref','granted');
+424:    clickToSet = false;
+425:  });
+426:
+427:  // Contrôle Leaflet “📍”
+428:  const LocateCtl = L.Control.extend({
+429:    options:{ position:'topleft' },
+430:    onAdd(){ const wrap=L.DomUtil.create('div','leaflet-bar'); const b=L.DomUtil.create('button','myloc-btn',wrap);
+431:      b.type='button'; b.title='Me localiser'; b.innerHTML='📍'; L.DomEvent.disableClickPropagation(b); b.addEventListener('click',doLocate); return wrap; }
+432:  });
+433:  map.addControl(new LocateCtl());
+434:
+435:  // Consentement (modal déjà présent dans ta page)
+436:  const modal=document.getElementById('geo-consent'), accept=document.getElementById('geo-accept'), decline=document.getElementById('geo-decline');
+437:  const openModal=()=>modal?.classList.remove('hidden'); const closeModal=()=>modal?.classList.add('hidden');
+438:
+439:  accept?.addEventListener('click', ()=>{ closeModal(); doLocate(); });
+440:  decline?.addEventListener('click', ()=>{ closeModal(); localStorage.setItem('declic_geo_pref','denied'); });
+441:
+442:  async function askConsentIfNeeded(){
+443:    const pref=localStorage.getItem('declic_geo_pref');
+444:    if(pref==='granted'){ doLocate(); return; }
+445:    if(pref==='denied'){ return; }
+446:    try{
+447:      if(navigator.permissions?.query){
+448:        const st=await navigator.permissions.query({ name:'geolocation' });
+449:        if(st.state==='granted'){ localStorage.setItem('declic_geo_pref','granted'); doLocate(); return; }
+450:        if(st.state==='denied'){  localStorage.setItem('declic_geo_pref','denied'); return; }
+451:        openModal();
+452:      }else{ openModal(); }
+453:    }catch{ openModal(); }
+454:  }
+455:  document.addEventListener('turbo:load', askConsentIfNeeded, { once:true });
+456:  document.addEventListener('DOMContentLoaded', askConsentIfNeeded, { once:true });
+457:})();
+458:</script>
+
+== Layout application (début + fin) ==
+-- head (début du fichier)
+     1	<!DOCTYPE html>
+     2	<html>
+     3	  <head>
+     4	    <title>Déclic</title>
+     5	    <meta name="viewport" content="width=device-width, initial-scale=1" />
+     6	    <%= csrf_meta_tags %>
+     7	    <%= csp_meta_tag %>
+     8	
+     9	    <!-- IMPORTANT : Tailwind + application.css -->
+    10	    <%= stylesheet_link_tag "tailwind", "application", "data-turbo-track": "reload" %>
+    11	    <!-- JS (importmap / turbo) -->
+    12	    <%= javascript_importmap_tags %>
+    13	  <!-- Leaflet (CDN) -->
+    14	  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    15	  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+    16	  </head>
+    17	  <body id="declic-app" class="bg-gray-50 text-gray-900">
+    18	    <%= render 'shared/navbar' %>
+    19	    <%= yield %>
+    20	    <%= yield :scripts %>
+    21	  </body>
+    22	</html>
+-- fin du fichier
+     1	<!DOCTYPE html>
+     2	<html>
+     3	  <head>
+     4	    <title>Déclic</title>
+     5	    <meta name="viewport" content="width=device-width, initial-scale=1" />
+     6	    <%= csrf_meta_tags %>
+     7	    <%= csp_meta_tag %>
+     8	
+     9	    <!-- IMPORTANT : Tailwind + application.css -->
+    10	    <%= stylesheet_link_tag "tailwind", "application", "data-turbo-track": "reload" %>
+    11	    <!-- JS (importmap / turbo) -->
+    12	    <%= javascript_importmap_tags %>
+    13	  <!-- Leaflet (CDN) -->
+    14	  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    15	  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+    16	  </head>
+    17	  <body id="declic-app" class="bg-gray-50 text-gray-900">
+    18	    <%= render 'shared/navbar' %>
+    19	    <%= yield %>
+    20	    <%= yield :scripts %>
+    21	  </body>
+    22	</html>
+
+== arbo app/javascript ==
+app/javascript/application.js
+app/javascript/controllers/application.js
+app/javascript/controllers/hello_controller.js
+app/javascript/controllers/index.js
+app/javascript/map.js
+
+== app/javascript/application.js (début) ==
+     1	// Configure your import map in config/importmap.rb. Read more: https://github.com/rails/importmap-rails
+     2	import "@hotwired/turbo-rails"
+     3	import "controllers"
+     4	import "map"
+     5	
+
+== Stimulus controllers/index.js ==
+     1	// Import and register all your controllers from the importmap via controllers/**/*_controller
+     2	import { application } from "controllers/application"
+     3	import { eagerLoadControllersFrom } from "@hotwired/stimulus-loading"
+     4	eagerLoadControllersFrom("controllers", application)
+
+== Controllers Stimulus reliés à carte/geoloc (si présents) ==
+
