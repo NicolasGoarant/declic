@@ -13,6 +13,21 @@
   <!-- Leaflet (CDN) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+
+<%# Defaults %>
+<meta name="description" content="Déclic — opportunités locales pour entreprendre, se former, rencontrer, aider.">
+<link rel="canonical" href="<%= request.original_url %>">
+
+<%# Open Graph / Twitter %>
+<meta property="og:site_name" content="Déclic">
+<meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : 'Déclic — Proche de chez toi' %>">
+<meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : 'Explorez les opportunités près de chez vous.' %>">
+<meta property="og:type" content="website">
+<meta property="og:url" content="<%= request.original_url %>">
+<meta property="og:image" content="<%= asset_path('og_default.jpg') rescue '' %>">
+<meta name="twitter:card" content="summary_large_image">
+
+
   </head>
   <body id="declic-app" class="bg-gray-50 text-gray-900">
     <%= render 'shared/navbar' %>

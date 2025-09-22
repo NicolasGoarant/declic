@@ -1,4 +1,60 @@
-<div class="max-w-[900px] mx-auto px-5 py-12">
-  <h1 class="text-3xl font-extrabold mb-4">Confidentialité & CGU</h1>
-  <p class="text-gray-700">Politique de confidentialité / conditions d’utilisation…</p>
-</div>
+<main class="max-w-3xl mx-auto px-6 py-10 prose prose-slate">
+  <h1>Confidentialité & CGU</h1>
+
+  <h2>Résumé</h2>
+  <p>
+    Déclic respecte votre vie privée. Nous ne traquons pas les utilisateurs, n’exécutons aucun outil de profilage,
+    et n’exploitons que les <strong>données strictement nécessaires</strong> au fonctionnement : affichage des cartes,
+    géolocalisation <em>côté navigateur</em> (après consentement), formulaire de contact/“Proposer”.
+  </p>
+
+  <h2>Données traitées</h2>
+  <ul>
+    <li><strong>Données de navigation</strong> : journaux techniques minimaux (logs Heroku) pour la sécurité.</li>
+    <li><strong>Géolocalisation</strong> : uniquement si vous l’acceptez. La position est utilisée pour centrer la carte et
+      peut être mémorisée <em>dans votre navigateur</em> (localStorage). Rien n’est stocké côté serveur.</li>
+    <li><strong>Formulaires</strong> : nom, e-mail et contenu transmis pour donner suite à la demande.</li>
+  </ul>
+
+  <h2>Bases légales (RGPD)</h2>
+  <ul>
+    <li><strong>Exécution du service</strong> (centrer la carte, répondre à une demande).</li>
+    <li><strong>Consentement</strong> (géolocalisation, communications facultatives).</li>
+    <li><strong>Intérêt légitime</strong> (sécurité / prévention des abus).</li>
+  </ul>
+
+  <h2>Durées de conservation</h2>
+  <ul>
+    <li>Logs techniques : 30 jours max (hébergeur).</li>
+    <li>Demandes reçues : 24 mois max.</li>
+    <li>Préférences locales (localStorage/cookies) : tant que vous ne les supprimez pas.</li>
+  </ul>
+
+  <h2>Vos droits</h2>
+  <p>
+    Accès, rectification, effacement, opposition, portabilité. Écrivez-nous à
+    <a href="mailto:nicolas.goarant@hotmail.fr">nicolas.goarant@hotmail.fr</a>.
+    Vous pouvez également saisir la CNIL.
+  </p>
+
+  <h2>Cookies</h2>
+  <p>
+    L’application n’utilise que des cookies/stockages techniques (session Rails, préférences de géoloc). 
+    Pas de mesure d’audience tierce par défaut. Si nous ajoutons un outil d’analyse, une bannière de consentement
+    apparaîtra et le dépôt sera bloqué tant que vous n’avez pas accepté.
+  </p>
+
+  <h2>Conditions d’utilisation</h2>
+  <ul>
+    <li>Les opportunités et liens externes sont fournis “tels quels”, sans garantie.</li>
+    <li>Vous restez responsable de vos démarches auprès des organisateurs.</li>
+    <li>Tout contenu illicite ou abusif peut être supprimé sans préavis.</li>
+  </ul>
+
+  <h2>Contact</h2>
+  <p>
+    <a href="mailto:nicolas.goarant@hotmail.fr">nicolas.goarant@hotmail.fr</a> — +33&nbsp;6&nbsp;67&nbsp;06&nbsp;31&nbsp;79
+  </p>
+
+  <p class="text-sm text-slate-500">Dernière mise à jour : <%= l(Date.today, format: :long, locale: :fr) %>.</p>
+</main>
