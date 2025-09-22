@@ -10,3 +10,4 @@
 
 // Stories PDFs
 //= link_tree ../stories .pdf
+//= link leaflet_tiles_fallback.js

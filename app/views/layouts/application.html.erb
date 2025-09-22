@@ -33,5 +33,7 @@
     <%= render 'shared/navbar' %>
     <%= yield %>
     <%= yield :scripts %>
+    <%= javascript_include_tag "leaflet_tiles_fallback", defer: true %>
+
   </body>
 </html>

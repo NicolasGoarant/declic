@@ -131,7 +131,7 @@
     const map = L.map(mapEl,{ zoomControl:true, scrollWheelZoom:true }).setView([46.6, 2.2], 6);
     mapEl._leaflet_map = map; // <- pour accès externe si besoin
     const userLayer = L.layerGroup().addTo(map);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap' }).addTo(map);
+    addFallbackTiles(map);
 
     // ---- Dataset
     const DATA = JSON.parse(document.getElementById('opps-json').textContent || '[]');
@@ -330,3 +330,91 @@
 <% end %>
 
 
+<script>
+(function(){
+  const mapEl = document.getElementById('map-opps');
+  if (!mapEl || !window.L) return;
+
+  const invalidateSoon = () => setTimeout(() => { try{ map.invalidateSize(); }catch{} }, 50);
+  const map = L.map(mapEl, { scrollWheelZoom:true, zoomControl:true });
+
+  // 🔁 tuiles avec fallback
+  addFallbackTiles(map);
+
+  const DATA = JSON.parse(document.getElementById('opps-json').textContent || '[]');
+
+  const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',default:'#6366f1'};
+  const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',default:'⭐'};
+  const iconFor = (cat)=> L.divIcon({className:'',html:`<div class="picon" style="--c:${colors[cat]||colors.default}"><span>${emojis[cat]||emojis.default}</span></div>`,iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
+
+  const layer = L.layerGroup().addTo(map);
+
+  function popupHtml(o){
+    const d = o.starts_at ? new Date(o.starts_at) : null;
+    const when = d ? d.toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' }) : '';
+    const loc  = [o.venue_name, o.city].filter(Boolean).join(' · ');
+    const url  = `/opportunities/${o.id}`;
+    return `<div style="min-width:220px">
+      <div style="font-weight:700;margin-bottom:4px">${o.title||''}</div>
+      ${when?`<div style="font-size:12px;opacity:.8">📅 ${when}</div>`:''}
+      ${loc?`<div style="font-size:12px;opacity:.8">📍 ${loc}</div>`:''}
+      <div style="margin-top:8px"><a href="${url}" class="underline text-indigo-600">Voir la fiche</a></div>
+    </div>`;
+  }
+
+  function plot(items){
+    layer.clearLayers();
+    const bounds=[];
+    (items||[]).forEach(o=>{
+      if(typeof o.latitude==='number' && typeof o.longitude==='number'){
+        L.marker([o.latitude,o.longitude], { icon: iconFor((o.category||'').toLowerCase()) })
+          .addTo(layer)
+          .bindPopup(popupHtml(o));
+        bounds.push([o.latitude,o.longitude]);
+      }
+    });
+    if(bounds.length){ map.fitBounds(bounds,{padding:[24,24]}); }
+    else { map.setView([48.692054, 6.184417], 12); }
+    invalidateSoon();
+  }
+
+  plot(DATA);
+
+  // Filtres
+  const chips=[...document.querySelectorAll('.chip')];
+  const cards=[...document.querySelectorAll('.op-card')];
+  function applyFilter(cat){
+    const filtered = (cat==='toutes') ? DATA : DATA.filter(o => (o.category||'').toLowerCase()===cat);
+    plot(filtered);
+    cards.forEach(c=>{
+      const ok = (cat==='toutes' || (c.dataset.cat||'').toLowerCase()===cat);
+      c.style.display = ok ? '' : 'none';
+    });
+  }
+  chips.forEach(chip=>chip.addEventListener('click',()=>{
+    chips.forEach(c=>c.classList.remove('is-active')); chip.classList.add('is-active');
+    applyFilter(chip.dataset.cat);
+  }));
+
+  // Géolocalisation bouton
+  document.getElementById('btn-locate-opps')?.addEventListener('click', ()=>{
+    if(!('geolocation' in navigator)) return alert("Géolocalisation indisponible.");
+    navigator.geolocation.getCurrentPosition(
+      (pos)=>{
+        const { latitude:lat, longitude:lng, accuracy } = pos.coords;
+        const icon=L.divIcon({className:'',html:`<div class="picon" style="--c:#2563eb"><span>📍</span></div>`,iconSize:[26,32],iconAnchor:[13,28]});
+        const uLayer = (map._userLayer ||= L.layerGroup().addTo(map));
+        uLayer.clearLayers();
+        L.marker([lat,lng],{icon}).addTo(uLayer).bindPopup(`<strong>Tu es ici</strong>${accuracy?`<br><small>±${Math.round(accuracy)} m</small>`:''}`);
+        map.flyTo([lat,lng], Math.max(map.getZoom(), 13), { duration:.6 });
+      },
+      ()=>alert("Autorise la géolocalisation pour centrer la carte."),
+      { enableHighAccuracy:true, timeout:10000 }
+    );
+  });
+
+  window.addEventListener('resize', invalidateSoon);
+  document.addEventListener('turbo:load', invalidateSoon);
+  document.addEventListener('DOMContentLoaded', invalidateSoon);
+})();
+</script>

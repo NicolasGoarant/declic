@@ -268,7 +268,7 @@
   // --- Carte
   const map = L.map('map',{ zoomControl:true, scrollWheelZoom:true }).setView([46.6, 2.2], 6);
   mapEl._leaflet_map = map;
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap' }).addTo(map);
+  addFallbackTiles(map);
 
   const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#a855f7',default:'#6366f1'};
   const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',histoires:'📖',default:'⭐'};
@@ -503,3 +503,100 @@
 
 
 
+
+<%# --- Boot Leaflet + carte d'accueil (fallback tuiles) --- %>
+<% content_for :scripts do %>
+  <!-- Leaflet CSS/JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+  <style>
+    /* Filet de sécurité : assure au moins un fond et la position des panes */
+    .leaflet-container { background: #eef2ff; outline: 0; }
+  </style>
+
+  <script>
+  // Helper de fallback tuiles, au cas où la version "asset" n'est pas chargée
+  if (typeof addFallbackTiles !== 'function') {
+    function addFallbackTiles(map){
+      const providers = [
+        { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          options: { maxZoom: 19, attribution: '© OpenStreetMap' } },
+        { url: 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
+          options: { subdomains: 'abc', maxZoom: 19, attribution: '© OpenStreetMap, © OSM-FR' } },
+        { url: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+          options: { subdomains: 'abcd', maxZoom: 19, attribution: '© OpenStreetMap, © Carto' } }
+      ];
+      let layer = null, idx = 0;
+      const tryNext = () => {
+        if (layer) { map.removeLayer(layer); layer = null; }
+        if (idx >= providers.length) { console.warn('Aucune source de tuiles n’a répondu'); return null; }
+        const p = providers[idx++]; layer = L.tileLayer(p.url, p.options);
+        let loaded = false;
+        const onLoad = () => { loaded = true; layer.off('load', onLoad); layer.off('tileerror', onErr); };
+        const onErr  = () => setTimeout(() => { if (!loaded) tryNext(); }, 500);
+        layer.on('load', onLoad); layer.on('tileerror', onErr);
+        layer.addTo(map); return layer;
+      };
+      return tryNext();
+    }
+  }
+
+  (function(){
+    // trouve le conteneur existant de la home
+    const el = document.querySelector('#map-opps, #home-map, #map');
+    if (!el || !window.L) return;
+
+    // garantit une hauteur visible
+    if (!el.style.height || el.clientHeight < 200) {
+      el.style.height = '420px';
+    }
+
+    const map = L.map(el, { scrollWheelZoom:true, zoomControl:true });
+    // tuiles (avec fallback)
+    addFallbackTiles(map);
+
+    // invalider la taille après rendu
+    const invalidateSoon = () => setTimeout(() => { try { map.invalidateSize(); } catch {} }, 80);
+    window.addEventListener('resize', invalidateSoon);
+    document.addEventListener('turbo:load', invalidateSoon);
+    document.addEventListener('DOMContentLoaded', invalidateSoon);
+
+    // charge 100 points max pour la home
+    fetch('<%= opportunities_path(format: :json) %>')
+      .then(r => r.json())
+      .then(all => {
+        const points = (all || []).filter(p => typeof p.latitude === 'number' && typeof p.longitude === 'number').slice(0, 100);
+        const layer = L.layerGroup().addTo(map);
+        const bounds = [];
+
+        const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',default:'#6366f1'};
+        const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',default:'⭐'};
+        const iconFor = (cat)=> L.divIcon({className:'',html:`<div style="width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;background:${colors[cat]||colors.default};color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative"><span>${emojis[cat]||emojis.default}</span><i style="content:'';position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);border:6px solid transparent;border-top-color:${colors[cat]||colors.default}"></i></div>`,iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
+
+        points.forEach(o => {
+          const cat = String(o.category||'').toLowerCase();
+          const m = L.marker([o.latitude, o.longitude], { icon: iconFor(cat) }).addTo(layer);
+          const d = o.starts_at ? new Date(o.starts_at) : null;
+          const when = d ? d.toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' }) : '';
+          const loc  = [o.venue_name, o.city].filter(Boolean).join(' · ');
+          m.bindPopup(`<div style="min-width:220px">
+            <div style="font-weight:700;margin-bottom:4px">${o.title||''}</div>
+            ${when?`<div style="font-size:12px;opacity:.8">📅 ${when}</div>`:''}
+            ${loc?`<div style="font-size:12px;opacity:.8">📍 ${loc}</div>`:''}
+            <div style="margin-top:8px"><a href="/opportunities/${o.id}" class="underline text-indigo-600">Voir la fiche</a></div>
+          </div>`);
+          bounds.push([o.latitude, o.longitude]);
+        });
+
+        if (bounds.length) map.fitBounds(bounds, { padding: [24,24] });
+        else map.setView([48.692054, 6.184417], 12); // Nancy
+        invalidateSoon();
+      })
+      .catch(err => {
+        console.warn('Home map fetch error:', err);
+        map.setView([48.692054, 6.184417], 12);
+      });
+  })();
+  </script>
+<% end %>
