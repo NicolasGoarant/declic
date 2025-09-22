@@ -1,37 +1,92 @@
-<main class="max-w-3xl mx-auto px-6 py-10 prose prose-slate">
-  <h1>Mentions légales</h1>
+<%# ---------- META ---------- %>
+<% content_for :head do %>
+  <meta property="og:title" content="Mentions légales — Déclic">
+  <meta property="og:description" content="Éditeur, hébergeur, propriété intellectuelle, liens sortants et signalement.">
+  <meta name="robots" content="index,follow">
+<% end %>
 
-  <h2>Éditeur</h2>
-  <p>
-    <strong>Déclic</strong><br>
-    Projet citoyen (association en formation)<br>
-    Contact : <a href="mailto:nicolas.goarant@hotmail.fr">nicolas.goarant@hotmail.fr</a> — +33&nbsp;6&nbsp;67&nbsp;06&nbsp;31&nbsp;79
-  </p>
+<main class="max-w-6xl mx-auto px-6 py-10">
+  <div class="mb-6">
+    <%= link_to "← Accueil", root_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+  </div>
 
-  <h2>Responsable de la publication</h2>
-  <p>Nicolas Goarant.</p>
+  <!-- HERO -->
+  <header class="rounded-2xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white p-6 ring-1 ring-black/10">
+    <h1 class="text-2xl sm:text-3xl font-extrabold">Mentions légales</h1>
+    <p class="mt-2 text-white/90 max-w-3xl">
+      Informations sur l’éditeur, l’hébergeur et les règles qui s’appliquent au site.
+    </p>
+  </header>
 
-  <h2>Hébergement</h2>
-  <p>
-    <strong>Heroku (Salesforce, Inc.)</strong><br>
-    Salesforce Tower, 415 Mission Street, 3rd Floor, San Francisco, CA 94105, USA<br>
-    <a href="https://www.heroku.com/policy/security">Politique de sécurité Heroku</a>
-  </p>
+  <div class="mt-8 grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8">
+    <!-- SIDE NAV -->
+    <aside class="lg:sticky lg:top-24 self-start">
+      <nav class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-4 text-sm">
+        <p class="font-semibold text-slate-900 mb-2">Sommaire</p>
+        <ul class="space-y-2">
+          <li><a href="#editeur" class="block text-slate-600 hover:text-indigo-600">• Éditeur</a></li>
+          <li><a href="#hebergeur" class="block text-slate-600 hover:text-indigo-600">• Hébergeur</a></li>
+          <li><a href="#propriete" class="block text-slate-600 hover:text-indigo-600">• Propriété intellectuelle</a></li>
+          <li><a href="#liens" class="block text-slate-600 hover:text-indigo-600">• Liens sortants</a></li>
+          <li><a href="#signalement" class="block text-slate-600 hover:text-indigo-600">• Signalement</a></li>
+          <li><a href="#contact" class="block text-slate-600 hover:text-indigo-600">• Contact</a></li>
+        </ul>
+      </nav>
+    </aside>
 
-  <h2>Propriété intellectuelle</h2>
-  <p>
-    Sauf mention contraire, les textes et éléments graphiques sont © Déclic. Les logos et marques de tiers
-    restent la propriété de leurs détenteurs. Toute reproduction non autorisée est interdite.
-  </p>
+    <!-- CONTENT -->
+    <section class="space-y-6">
+      <article id="editeur" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-xl font-bold text-slate-900">Éditeur</h2>
+        <dl class="mt-3 text-slate-700 space-y-1">
+          <div><dt class="inline font-semibold">Déclic</dt> — <dd class="inline">projet citoyen (association en formation)</dd></div>
+          <div><dt class="inline font-semibold">Responsable de publication</dt> — <dd class="inline">Nicolas Goarant</dd></div>
+          <div><dt class="inline font-semibold">Contact</dt> — <dd class="inline"><a href="mailto:nicolas.goarant@hotmail.fr" class="text-indigo-600 underline">nicolas.goarant@hotmail.fr</a> — +33 6 67 06 31 79</dd></div>
+        </dl>
+      </article>
 
-  <h2>Liens sortants</h2>
-  <p>
-    Des liens vers des sites tiers peuvent être proposés. Déclic n’exerce aucun contrôle sur leur contenu et
-    décline toute responsabilité s’y rapportant.
-  </p>
+      <article id="hebergeur" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Hébergement</h2>
+        <p class="mt-2 text-slate-700">
+          <strong>Heroku (Salesforce, Inc.)</strong><br>
+          Salesforce Tower, 415 Mission Street, 3rd Floor, San Francisco, CA 94105, USA.<br>
+          Sécurité : politique publique de Salesforce/Heroku.
+        </p>
+      </article>
 
-  <h2>Signalement</h2>
-  <p>
-    Pour signaler un contenu ou une erreur : <a href="mailto:nicolas.goarant@hotmail.fr">nous écrire</a>.
-  </p>
+      <article id="propriete" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Propriété intellectuelle</h2>
+        <p class="mt-2 text-slate-700">
+          Sauf mention contraire, les textes et éléments graphiques sont © Déclic.
+          Les logos et marques de tiers restent la propriété de leurs détenteurs.
+          Toute reproduction non autorisée est interdite.
+        </p>
+      </article>
+
+      <article id="liens" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Liens sortants</h2>
+        <p class="mt-2 text-slate-700">
+          Des liens vers des sites tiers peuvent être proposés. Déclic n’exerce aucun contrôle sur leur contenu
+          et décline toute responsabilité s’y rapportant.
+        </p>
+      </article>
+
+      <article id="signalement" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Signalement</h2>
+        <p class="mt-2 text-slate-700">
+          Pour signaler un contenu ou une erreur : écris-nous à
+          <a href="mailto:nicolas.goarant@hotmail.fr" class="text-indigo-600 underline">nicolas.goarant@hotmail.fr</a>.
+        </p>
+      </article>
+
+      <article id="contact" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Contact</h2>
+        <p class="mt-2 text-slate-700">
+          <a href="mailto:nicolas.goarant@hotmail.fr" class="text-indigo-600 underline">nicolas.goarant@hotmail.fr</a> —
+          +33 6 67 06 31 79
+        </p>
+      </article>
+    </section>
+  </div>
 </main>
+

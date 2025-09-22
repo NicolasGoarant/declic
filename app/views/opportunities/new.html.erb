@@ -46,7 +46,7 @@
     <% if @opportunity.errors.any? %>
       <div class="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4">
         <div class="font-semibold text-rose-800">
-          ⚠️ <%= pluralize(@opportunity.errors.count, "erreur") %> dans votre proposition
+          ⚠️ <%= pluralize(@opportunity.errors.count, "erreur") %> dans ton proposition
         </div>
         <ul class="mt-2 list-disc pl-5 text-rose-700 text-sm space-y-1">
           <% @opportunity.errors.full_messages.each do |msg| %>
@@ -175,7 +175,7 @@
               <%= link_to "Annuler", root_path,
                     class: "inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50" %>
               <p class="text-xs text-gray-500 sm:ml-2">
-                En envoyant, vous acceptez que votre proposition soit modérée avant publication.
+                En envoyant, vous acceptez que ton proposition soit modérée avant publication.
               </p>
             </div>
           <% end %>

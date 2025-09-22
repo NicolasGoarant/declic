@@ -11,10 +11,11 @@
       <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] gap-8 items-center">
         <div>
           <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900">
-            Donne du sens à tes projets, <span class="bg-gradient-to-r from-fuchsia-600 to-indigo-600 bg-clip-text text-transparent">proche de chez toi</span>
+            En quelques clics, <span class="bg-gradient-to-r from-fuchsia-600 to-indigo-600 bg-clip-text text-transparent">donne un tournant à ta vie</span>
           </h1>
           <p class="mt-4 text-lg text-slate-700 max-w-2xl">
-            Déclic agrège les opportunités locales : entreprendre, se former, rencontrer, aider — et découvrir des <em>belles histoires</em> qui inspirent.
+            Déclic te montre, autour de toi et maintenant, les opportunités pour entreprendre, te former, rencontrer des personnes inspirantes ou t’engager dans une cause.
+            Chaque occasion est une chance de créer ton propre déclic.
           </p>
 
           <dl class="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -42,7 +43,7 @@
           end
           hero_src ||= "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=1600&auto=format&fit=crop"
         %>
-        <img src="<%= hero_src %>" alt="Déclic — projets près de chez vous"
+        <img src="<%= hero_src %>" alt="Déclic — projets près de chez toi"
              class="w-full h-64 sm:h-80 lg:h-[22rem] object-cover rounded-2xl shadow ring-1 ring-black/5">
       </div>
     </div>
@@ -82,7 +83,7 @@
           <div class="flex items-start gap-4 lg:gap-5">
             <span class="<%= icon_wrap %>">❤️</span>
             <div class="min-w-0">
-              <p class="<%= title_txt %>">Je veux aider</p>
+              <p class="<%= title_txt %>">Je veux secourir</p>
               <p class="<%= desc_txt %>">Des missions utiles et humaines</p>
             </div>
           </div>
@@ -102,7 +103,7 @@
           <div class="flex items-start gap-4 lg:gap-5">
             <span class="<%= icon_wrap %>">📖</span>
             <div class="min-w-0">
-              <p class="<%= title_txt %>">Belles histoires</p>
+              <p class="<%= title_txt %>">De "Belles histoires"</p>
               <p class="<%= desc_txt %>">Déclics, reconversions, prises de risque</p>
             </div>
           </div>
@@ -115,9 +116,9 @@
   <section id="explorer" class="mt-12">
     <div class="mx-auto max-w-[90rem] px-5 sm:px-6 lg:px-8">
       <div class="text-center">
-        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">Explorez les opportunités</h2>
+        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">Explore les opportunités</h2>
         <p class="mt-2 text-[17px] sm:text-lg text-slate-600">
-          Découvrez sur la carte toutes les possibilités d’engagement près de chez vous.
+          Découvre sur la carte toutes les possibilités d’engagement près de chez toi.
         </p>
       </div>
 
@@ -170,7 +171,7 @@
   <%# ============================ TÉMOIGNAGES =========================== %>
   <section id="temoignages" class="mt-14">
     <div class="mx-auto max-w-[90rem] px-5 sm:px-6 lg:px-8">
-      <h3 class="text-xl font-semibold text-slate-900">Ils/elles ont trouvé leur déclic</h3>
+      <h3 class="text-xl font-semibold text-slate-900">Ils/elles ont trouvé leur "déclic" !</h3>
       <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <% (@testimonials || []).each do |t| %>
           <div class="rounded-xl bg-white p-5 ring-1 ring-gray-200">
@@ -246,7 +247,7 @@
   <div class="absolute inset-0 grid place-items-center p-4">
     <div class="w-full max-w-md rounded-2xl bg-white shadow-xl ring-1 ring-black/10 p-6">
       <h3 class="text-lg font-semibold">Activer la géolocalisation&nbsp;?</h3>
-      <p class="mt-1 text-sm text-gray-600">Nous l’utilisons uniquement pour centrer la carte autour de votre position. Aucune donnée n’est stockée côté serveur.</p>
+      <p class="mt-1 text-sm text-gray-600">Nous l’utilisons uniquement pour centrer la carte autour de ta position. Aucune donnée n’est stockée côté serveur.</p>
       <div class="mt-4 flex gap-3">
         <button id="geo-accept" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Oui, me localiser</button>
         <button id="geo-decline" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">Plus tard</button>
@@ -376,7 +377,7 @@
     userLayer.clearLayers();
     const icon=L.divIcon({className:'',html:`<div class="picon" style="--c:#2563eb"><span>📍</span></div>`,iconSize:[26,32],iconAnchor:[13,28]});
     L.marker([lat, lon], {icon}).addTo(userLayer)
-      .bindPopup(`<strong>Vous êtes ici</strong>${accuracy?`<br><small>Précision ~${Math.round(accuracy)} m</small>`:''}`);
+      .bindPopup(`<strong>Tu es ici</strong>${accuracy?`<br><small>Précision ~${Math.round(accuracy)} m</small>`:''}`);
     if(accuracy && accuracy<2000){
       L.circle([lat, lon], { radius: accuracy, color:'#2563eb', fillColor:'#3b82f6', fillOpacity:.12, weight:1 }).addTo(userLayer);
     }
@@ -416,13 +417,13 @@
         }else{
           tryImproveFix(
             (better)=>{ centerUser(better.latitude, better.longitude, better.accuracy); localStorage.setItem('declic_geo_pref','granted'); },
-            ()=>{ centerUser(c.latitude, c.longitude, c.accuracy); toast("Localisation approximative. Cliquez « Définir ma position » puis un point sur la carte pour corriger."); }
+            ()=>{ centerUser(c.latitude, c.longitude, c.accuracy); toast("Localisation approximative. Clique « Définir ma position » puis un point sur la carte pour corriger."); }
           );
         }
       },
       ()=>{
         localStorage.setItem('declic_geo_pref','denied');
-        toast("Géolocalisation refusée. Vous pouvez la réactiver via le bouton « Me localiser ».");
+        toast("Géolocalisation refusée. Tu peux la réactiver via le bouton « Me localiser ».");
       },
       { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
     );
@@ -450,7 +451,7 @@
     btn.addEventListener('click',()=>{
       clickToSet = !clickToSet;
       btn.style.background = clickToSet ? '#eef2ff' : 'rgba(255,255,255,.95)';
-      toast(clickToSet ? "Cliquez sur la carte pour définir votre position." : "Mode désactivé.");
+      toast(clickToSet ? "Clique sur la carte pour définir ta position." : "Mode désactivé.");
     });
   })();
 

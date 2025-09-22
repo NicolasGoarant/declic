@@ -1,60 +1,160 @@
-<main class="max-w-3xl mx-auto px-6 py-10 prose prose-slate">
-  <h1>Confidentialité & CGU</h1>
+<%# ---------- META ---------- %>
+<% content_for :head do %>
+  <meta property="og:title" content="Confidentialité & CGU — Déclic">
+  <meta property="og:description" content="Données traitées, géolocalisation, cookies, durées de conservation, droits RGPD et conditions d’utilisation.">
+  <meta name="robots" content="index,follow">
+<% end %>
 
-  <h2>Résumé</h2>
-  <p>
-    Déclic respecte votre vie privée. Nous ne traquons pas les utilisateurs, n’exécutons aucun outil de profilage,
-    et n’exploitons que les <strong>données strictement nécessaires</strong> au fonctionnement : affichage des cartes,
-    géolocalisation <em>côté navigateur</em> (après consentement), formulaire de contact/“Proposer”.
-  </p>
+<%# Helpers locaux %>
+<% last_updated = Date.new(2025,9,22) rescue Date.current %>
+<% def fr_date(d); (I18n.l(d, format: "%-d %B %Y", locale: :fr) rescue d.strftime("%d/%m/%Y")); end %>
 
-  <h2>Données traitées</h2>
-  <ul>
-    <li><strong>Données de navigation</strong> : journaux techniques minimaux (logs Heroku) pour la sécurité.</li>
-    <li><strong>Géolocalisation</strong> : uniquement si vous l’acceptez. La position est utilisée pour centrer la carte et
-      peut être mémorisée <em>dans votre navigateur</em> (localStorage). Rien n’est stocké côté serveur.</li>
-    <li><strong>Formulaires</strong> : nom, e-mail et contenu transmis pour donner suite à la demande.</li>
-  </ul>
+<main class="max-w-6xl mx-auto px-6 py-10">
+  <div class="mb-6">
+    <%= link_to "← Accueil", root_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+  </div>
 
-  <h2>Bases légales (RGPD)</h2>
-  <ul>
-    <li><strong>Exécution du service</strong> (centrer la carte, répondre à une demande).</li>
-    <li><strong>Consentement</strong> (géolocalisation, communications facultatives).</li>
-    <li><strong>Intérêt légitime</strong> (sécurité / prévention des abus).</li>
-  </ul>
+  <!-- HERO -->
+  <header class="rounded-2xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white p-6 ring-1 ring-black/10">
+    <h1 class="text-2xl sm:text-3xl font-extrabold">Confidentialité & CGU</h1>
+    <p class="mt-2 text-white/90 max-w-3xl">
+      Déclic respecte ta vie privée. Voici, simplement, ce que nous collectons (très peu), pourquoi, et comment exercer tes droits.
+    </p>
+    <p class="mt-3 text-white/80 text-sm">Dernière mise à jour : <%= fr_date(last_updated) %></p>
+  </header>
 
-  <h2>Durées de conservation</h2>
-  <ul>
-    <li>Logs techniques : 30 jours max (hébergeur).</li>
-    <li>Demandes reçues : 24 mois max.</li>
-    <li>Préférences locales (localStorage/cookies) : tant que vous ne les supprimez pas.</li>
-  </ul>
+  <div class="mt-8 grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8">
+    <!-- SIDE NAV -->
+    <aside class="lg:sticky lg:top-24 self-start">
+      <nav class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-4 text-sm">
+        <p class="font-semibold text-slate-900 mb-2">Sommaire</p>
+        <ul class="space-y-2">
+          <% %w[resume donnees geoloc formulaires bases service consentement interet durees prefs droits cookies cgu contact].each do |id| %>
+            <li><a href="#<%= id %>" class="block text-slate-600 hover:text-indigo-600">• <%= id == "resume" ? "Résumé" :
+              id == "donnees" ? "Données traitées" :
+              id == "geoloc" ? "Géolocalisation" :
+              id == "formulaires" ? "Formulaires" :
+              id == "bases" ? "Bases légales (RGPD)" :
+              id == "service" ? "Exécution du service" :
+              id == "consentement" ? "Consentement" :
+              id == "interet" ? "Intérêt légitime" :
+              id == "durees" ? "Durées de conservation" :
+              id == "prefs" ? "Préférences locales" :
+              id == "droits" ? "Tes droits" :
+              id == "cookies" ? "Cookies" :
+              id == "cgu" ? "Conditions d’utilisation" :
+              "Contact"
+            %></a></li>
+          <% end %>
+        </ul>
+      </nav>
+    </aside>
 
-  <h2>Vos droits</h2>
-  <p>
-    Accès, rectification, effacement, opposition, portabilité. Écrivez-nous à
-    <a href="mailto:nicolas.goarant@hotmail.fr">nicolas.goarant@hotmail.fr</a>.
-    Vous pouvez également saisir la CNIL.
-  </p>
+    <!-- CONTENT -->
+    <section class="space-y-6">
+      <article id="resume" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-xl font-bold text-slate-900">Résumé</h2>
+        <p class="mt-2 text-slate-700">
+          Nous ne traquons pas les utilisateurs, nous n’exécutons aucun outil de profilage, et nous n’exploitons
+          que des <strong>données strictement nécessaires</strong> au bon fonctionnement : affichage des cartes,
+          géolocalisation (si tu l’acceptes), et formulaire de contact/“Proposer”.
+        </p>
+      </article>
 
-  <h2>Cookies</h2>
-  <p>
-    L’application n’utilise que des cookies/stockages techniques (session Rails, préférences de géoloc). 
-    Pas de mesure d’audience tierce par défaut. Si nous ajoutons un outil d’analyse, une bannière de consentement
-    apparaîtra et le dépôt sera bloqué tant que vous n’avez pas accepté.
-  </p>
+      <article id="donnees" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Données traitées</h2>
+        <ul class="mt-2 list-disc list-inside text-slate-700 space-y-1">
+          <li><strong>Données de navigation</strong> : journaux techniques minimaux (logs Heroku) pour la sécurité.</li>
+          <li><strong>Géolocalisation</strong> : uniquement si tu acceptes, stockée <em>dans ton navigateur</em> (localStorage), jamais côté serveur.</li>
+          <li><strong>Formulaires</strong> : nom, e-mail et contenu transmis pour donner suite à ta demande.</li>
+        </ul>
+      </article>
 
-  <h2>Conditions d’utilisation</h2>
-  <ul>
-    <li>Les opportunités et liens externes sont fournis “tels quels”, sans garantie.</li>
-    <li>Vous restez responsable de vos démarches auprès des organisateurs.</li>
-    <li>Tout contenu illicite ou abusif peut être supprimé sans préavis.</li>
-  </ul>
+      <article id="geoloc" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Géolocalisation</h2>
+        <p class="mt-2 text-slate-700">
+          Utilisée pour centrer la carte près de chez toi. Tu peux l’activer/désactiver à tout moment. La préférence
+          est mémorisée localement pour éviter de te redemander.
+        </p>
+      </article>
 
-  <h2>Contact</h2>
-  <p>
-    <a href="mailto:nicolas.goarant@hotmail.fr">nicolas.goarant@hotmail.fr</a> — +33&nbsp;6&nbsp;67&nbsp;06&nbsp;31&nbsp;79
-  </p>
+      <article id="formulaires" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Formulaires</h2>
+        <p class="mt-2 text-slate-700">Nous utilisons ces données uniquement pour répondre à ta demande.</p>
+      </article>
 
-  <p class="text-sm text-slate-500">Dernière mise à jour : <%= l(Date.today, format: :long, locale: :fr) %>.</p>
+      <article id="bases" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Bases légales (RGPD)</h2>
+        <ul class="mt-2 list-disc list-inside text-slate-700 space-y-1">
+          <li><strong>Exécution du service</strong> (ex. centrer la carte, répondre à une demande).</li>
+          <li><strong>Consentement</strong> (géolocalisation, communications facultatives).</li>
+          <li><strong>Intérêt légitime</strong> (sécurité, prévention des abus).</li>
+        </ul>
+      </article>
+
+      <article id="service" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Exécution du service</h2>
+        <p class="mt-2 text-slate-700">Centrer la carte, afficher des opportunités, répondre aux messages.</p>
+      </article>
+
+      <article id="consentement" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Consentement</h2>
+        <p class="mt-2 text-slate-700">Nous demandons ton accord explicite pour la géolocalisation et les e-mails non obligatoires.</p>
+      </article>
+
+      <article id="interet" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Intérêt légitime</h2>
+        <p class="mt-2 text-slate-700">Sécurité du site, prévention du spam et des abus.</p>
+      </article>
+
+      <article id="durees" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Durées de conservation</h2>
+        <ul class="mt-2 list-disc list-inside text-slate-700 space-y-1">
+          <li><strong>Logs techniques</strong> : ~30 jours max (hébergeur).</li>
+          <li><strong>Demandes reçues</strong> : 24 mois max.</li>
+          <li><strong>Préférences locales</strong> (localStorage/cookies) : tant que tu ne les supprimes pas.</li>
+        </ul>
+      </article>
+
+      <article id="prefs" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Préférences locales</h2>
+        <p class="mt-2 text-slate-700">Sauvegardées dans ton navigateur (ex. géoloc activée). Tu peux les effacer via les réglages du navigateur.</p>
+      </article>
+
+      <article id="droits" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Tes droits</h2>
+        <p class="mt-2 text-slate-700">
+          Accès, rectification, effacement, opposition, portabilité. Écris-nous à
+          <a href="mailto:nicolas.goarant@hotmail.fr" class="text-indigo-600 underline">nicolas.goarant@hotmail.fr</a>.
+          Tu peux également saisir la CNIL.
+        </p>
+      </article>
+
+      <article id="cookies" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Cookies</h2>
+        <p class="mt-2 text-slate-700">
+          Pas de mesure d’audience tierce par défaut. Si nous ajoutons un outil d’analyse, une bannière de consentement
+          apparaîtra et aucun cookie ne sera déposé sans ton accord.
+        </p>
+      </article>
+
+      <article id="cgu" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Conditions d’utilisation</h2>
+        <ul class="mt-2 list-disc list-inside text-slate-700 space-y-1">
+          <li>Les opportunités et liens externes sont fournis “tels quels”, sans garantie.</li>
+          <li>Tu restes responsable de tes démarches auprès des organisateurs.</li>
+          <li>Tout contenu illicite ou abusif peut être supprimé sans préavis.</li>
+        </ul>
+      </article>
+
+      <article id="contact" class="rounded-xl bg-white ring-1 ring-gray-200 shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-900">Contact</h2>
+        <p class="mt-2 text-slate-700">
+          <a href="mailto:nicolas.goarant@hotmail.fr" class="text-indigo-600 underline">nicolas.goarant@hotmail.fr</a> —
+          +33 6 67 06 31 79
+        </p>
+      </article>
+    </section>
+  </div>
 </main>
+

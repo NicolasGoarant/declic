@@ -81,7 +81,7 @@
     <div class="w-full max-w-md rounded-2xl bg-white shadow-xl ring-1 ring-black/10 p-6">
       <h3 class="text-lg font-semibold">Activer la géolocalisation&nbsp;?</h3>
       <p class="mt-1 text-sm text-gray-600">
-        Nous l’utilisons uniquement pour centrer la carte autour de votre position. Aucune donnée n’est stockée côté serveur.
+        Nous l’utilisons uniquement pour centrer la carte autour de ton position. Aucune donnée n’est stockée côté serveur.
       </p>
       <div class="mt-4 flex gap-3">
         <button id="geo-accept" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Oui, me localiser</button>
@@ -271,7 +271,7 @@
         },
         ()=>{
           localStorage.setItem('declic_geo_pref','denied');
-          toast("Géolocalisation refusée. Vous pouvez la réactiver via le bouton « Me localiser ».");
+          toast("Géolocalisation refusée. Tu peux la réactiver via le bouton « Me localiser ».");
         },
         { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
       );
@@ -294,7 +294,7 @@
     btnFix?.addEventListener('click', ()=>{
       clickToSet = !clickToSet;
       btnFix.style.background = clickToSet ? '#eef2ff' : 'rgba(255,255,255,.95)';
-      toast(clickToSet ? "Cliquez sur la carte pour définir votre position." : "Mode désactivé.");
+      toast(clickToSet ? "Cliquez sur la carte pour définir ton position." : "Mode désactivé.");
     });
     map.on('click', (e)=>{
       if(!clickToSet) return;

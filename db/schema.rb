@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_21_064134) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_22_170357) do
   create_table "friendly_id_slugs", force: :cascade do |t|
     t.string "slug", null: false
     t.integer "sluggable_id", null: false
@@ -73,10 +73,19 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_21_064134) do
     t.text "impact_metric_hint"
     t.string "schedule_text"
     t.string "external_url"
+    t.text "summary"
+    t.string "intensity"
+    t.string "mode"
+    t.string "timezone"
+    t.string "venue_name"
+    t.string "organizer_name"
+    t.string "url"
+    t.index ["city"], name: "index_opportunities_on_city"
     t.index ["ends_at"], name: "index_opportunities_on_ends_at"
     t.index ["slug"], name: "index_opportunities_on_slug", unique: true
     t.index ["source", "external_id"], name: "index_opportunities_on_source_and_external_id", unique: true
     t.index ["starts_at"], name: "index_opportunities_on_starts_at"
+    t.index ["url"], name: "index_opportunities_on_url", unique: true
   end
 
   create_table "raw_ingestions", force: :cascade do |t|
@@ -99,7 +108,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_21_064134) do
     t.text "last_error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "active", default: true
+    t.datetime "last_fetched_at"
+    t.float "success_rate"
     t.index ["kind", "enabled"], name: "index_sources_on_kind_and_enabled"
+    t.index ["url"], name: "index_sources_on_url", unique: true
   end
 
   create_table "stories", force: :cascade do |t|

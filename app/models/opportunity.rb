@@ -1,8 +1,8 @@
-# app/models/opportunity.rb
+# frozen_string_literal: true
+
 class Opportunity < ApplicationRecord
   # --- Stockage JSON (SQLite/Postgres) ---
   attribute :raw_payload, :json
-
 
   # --- Slug ---
   extend FriendlyId
@@ -15,8 +15,16 @@ class Opportunity < ApplicationRecord
   scope :active, -> { where(is_active: true) }
   CATEGORIES = %w[benevolat formation rencontres entreprendre].freeze
 
-  # --- Géocodage (adresse -> lat/lng) ---
-  reverse_geocoded_by :latitude, :longitude
+  # --- Géocodage (forward: adresse -> lat/lng) ---
+  # Utilise full_address (venue_name, address, postcode, city, France)
+  extend Geocoder::Model::ActiveRecord
+  geocoded_by :full_address do |obj, results|
+    if (geo = results.first)
+      obj.latitude  ||= geo.latitude
+      obj.longitude ||= geo.longitude
+      obj.location  ||= geo.city.presence || obj.city
+    end
+  end
   before_validation :geocode_if_needed
 
   # --- Anti-spam (honeypot) ---
@@ -58,6 +66,27 @@ class Opportunity < ApplicationRecord
   end
   # ======================================
 
+  # ----- Géocodage helpers -----
+  def full_address
+    [
+      venue_name.presence,
+      address.presence,
+      postcode.presence,
+      city.presence,
+      "France"
+    ].compact.join(", ")
+  end
+
+  def geocode_if_needed
+    should_geo =
+      latitude.blank? || longitude.blank? ||
+      saved_change_to_address? || saved_change_to_postcode? ||
+      saved_change_to_city? || saved_change_to_venue_name?
+
+    geocode if should_geo && full_address.present?
+  end
+  # -----------------------------
+
   private
 
   def apply_defaults
@@ -65,26 +94,7 @@ class Opportunity < ApplicationRecord
     self.is_active = false if is_active.nil?
   end
 
-  def geocode_if_needed
-    return unless latitude.blank? || longitude.blank?
-    q = [address, postcode, city].compact.join(', ').strip
-    return if q.blank?
-
-    if (res = Geocoder.search(q).first)
-      self.latitude  ||= res.latitude
-      self.longitude ||= res.longitude
-      self.location  ||= res.city.presence || city
-    end
-  end
-
   def honeypot_must_be_blank
     errors.add(:base, 'Spam détecté') if honeypot_url.present?
   end
 end
-
-
-
-
-
-
-

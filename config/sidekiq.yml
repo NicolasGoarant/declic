@@ -1,0 +1,6 @@
+:queues:
+  - ingest
+:schedule:
+  sources_sweep:
+    cron: "*/30 * * * *"
+    class: "Sources::SweepJob"

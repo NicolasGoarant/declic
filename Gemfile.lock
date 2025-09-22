@@ -96,6 +96,9 @@ GEM
     concurrent-ruby (1.3.5)
     connection_pool (2.5.3)
     crass (1.0.6)
+    cronex (0.15.0)
+      tzinfo
+      unicode (>= 0.4.4.5)
     csv (3.3.5)
     date (3.4.1)
     debug (1.11.0)
@@ -104,6 +107,8 @@ GEM
     drb (2.2.3)
     erb (5.0.2)
     erubi (1.13.1)
+    et-orbi (1.3.0)
+      tzinfo
     faraday (2.13.4)
       faraday-net_http (>= 2.0, < 3.5)
       json
@@ -116,6 +121,9 @@ GEM
       sax-machine (>= 1.0, < 2)
     friendly_id (5.5.1)
       activerecord (>= 4.0.0)
+    fugit (1.11.2)
+      et-orbi (~> 1, >= 1.2.11)
+      raabro (~> 1.4)
     geocoder (1.8.5)
       base64 (>= 0.1.0)
       csv (>= 3.0.0)
@@ -215,6 +223,7 @@ GEM
     public_suffix (6.0.2)
     puma (6.6.1)
       nio4r (~> 2.0)
+    raabro (1.4.0)
     racc (1.8.1)
     rack (3.1.16)
     rack-session (2.1.1)
@@ -258,12 +267,12 @@ GEM
     rdoc (6.14.2)
       erb
       psych (>= 4.0.0)
+    redis-client (0.25.3)
+      connection_pool
     regexp_parser (2.11.2)
     reline (0.6.2)
       io-console (~> 0.5)
     rexml (3.4.1)
-    rss (0.3.1)
-      rexml
     rubocop (1.80.0)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
@@ -302,6 +311,17 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 4.0)
       websocket (~> 1.0)
+    sidekiq (8.0.7)
+      connection_pool (>= 2.5.0)
+      json (>= 2.9.0)
+      logger (>= 1.6.2)
+      rack (>= 3.1.0)
+      redis-client (>= 0.23.2)
+    sidekiq-cron (2.3.1)
+      cronex (>= 0.13.0)
+      fugit (~> 1.8, >= 1.11.1)
+      globalid (>= 1.0.1)
+      sidekiq (>= 6.5.0)
     sprockets (4.2.2)
       concurrent-ruby (~> 1.0)
       logger
@@ -335,6 +355,7 @@ GEM
       railties (>= 7.1.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
+    unicode (0.4.4.5)
     unicode-display_width (3.1.5)
       unicode-emoji (~> 4.0, >= 4.0.4)
     unicode-emoji (4.0.4)
@@ -373,18 +394,20 @@ DEPENDENCIES
   faraday
   feedjira (~> 3.2)
   friendly_id (~> 5.5)
-  geocoder (~> 1.8)
+  geocoder
   httparty
   icalendar
   importmap-rails
   jbuilder
+  nokogiri
   pagy (~> 9.4)
   pg (~> 1.5)
   puma (>= 5.0)
   rails (~> 7.2.2, >= 7.2.2.2)
-  rss
   rubocop-rails-omakase
   selenium-webdriver
+  sidekiq
+  sidekiq-cron
   sprockets-rails
   sqlite3 (~> 1.4)
   stimulus-rails

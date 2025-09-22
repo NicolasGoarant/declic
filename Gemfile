@@ -59,13 +59,9 @@ end
 
 gem "friendly_id", "~> 5.5"
 
-gem "geocoder", "~> 1.8"
 
 gem "pagy", "~> 9.4"
 gem 'faraday'
-gem 'rss'           # parseur RSS/Atom de base (utilisé par feedjira aussi)
-gem 'feedjira', '~> 3.2'
-gem 'icalendar'
 gem 'httparty'
 
 # --- Production ---
@@ -79,3 +75,9 @@ ruby "3.3.0"
 
 # ...
 
+gem "sidekiq"
+gem "sidekiq-cron"
+gem "feedjira", "~> 3.2"
+gem "icalendar"
+gem "nokogiri"
+gem "geocoder"

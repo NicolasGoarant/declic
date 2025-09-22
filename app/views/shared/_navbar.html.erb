@@ -11,9 +11,9 @@
 
     <!-- Liens desktop -->
     <nav class="hidden md:flex items-center gap-6 text-sm">
-      <%= link_to "Explorer",    root_path(anchor: "explorer"),    class: "hover:text-gray-900" %>
-      <%= link_to "Parcours",    root_path(anchor: "parcours"),    class: "hover:text-gray-900" %>
-      <%= link_to "Témoignages", root_path(anchor: "temoignages"), class: "hover:text-gray-900" %>
+      <%= link_to "Explorer",  root_path(anchor: "explorer"), class: "hover:text-gray-900" %>
+      <%= link_to "Histoires", stories_path,               class: "hover:text-gray-900" %>
+      <%= link_to "À propos",  root_path(anchor: "about"), class: "hover:text-gray-900" %>
     </nav>
 
     <!-- CTA desktop -->
@@ -38,7 +38,7 @@
   </div>
 </header>
 
-<!-- Menu mobile (BLANC, opaque, au-dessus de Leaflet) -->
+<!-- Menu mobile (opaque, au-dessus de Leaflet) -->
 <div id="mobile-menu" class="md:hidden hidden" aria-hidden="true">
   <!-- Overlay -->
   <div id="mobile-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-[1px] z-[2000]"></div>
@@ -62,14 +62,14 @@
         <span>🗺️</span><span>Explorer</span>
       <% end %>
 
-      <%= link_to root_path(anchor: "parcours"),
+      <%= link_to stories_path,
           class: "flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 ring-1 ring-black/5" do %>
-        <span>🧭</span><span>Parcours</span>
+        <span>📖</span><span>Histoires</span>
       <% end %>
 
-      <%= link_to root_path(anchor: "temoignages"),
+      <%= link_to root_path(anchor: "about"),
           class: "flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 ring-1 ring-black/5" do %>
-        <span>💬</span><span>Témoignages</span>
+        <span>ℹ️</span><span>À propos</span>
       <% end %>
 
       <div class="pt-2">
@@ -82,7 +82,7 @@
     </nav>
 
     <div class="mt-3 text-gray-500 text-xs">
-      © <%= Time.current.year %> Déclic — donnez du sens à votre vie.
+      © <%= Time.current.year %> Déclic — donne un tournant à ta vie.
     </div>
   </div>
 </div>
@@ -129,4 +129,5 @@
   document.addEventListener('turbo:before-cache', close);
 })();
 </script>
+
 

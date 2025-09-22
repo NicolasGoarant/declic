@@ -1,0 +1,105 @@
+<div class="w-full" style="max-width: 1200px; margin: 0 auto;">
+  <div id="opps-map" style="width:100%; height: 540px; border-radius: 12px; border: 1px solid #e5e7eb;"></div>
+</div>
+
+<!-- Leaflet CSS/JS via CDN (léger et fiable) -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""
+/>
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+></script>
+
+<script>
+(() => {
+  const onTurboLoad = () => {
+    const el = document.getElementById('opps-map');
+    if (!el) return;
+
+    // Évite les doubles inits si on navigue avec Turbo
+    if (el.dataset.initialized === '1') return;
+    el.dataset.initialized = '1';
+
+    // 1) Init carte
+    const map = L.map(el, { scrollWheelZoom: true, attributionControl: true });
+    // Fond OSM
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> & contributors'
+    }).addTo(map);
+
+    // 2) Récupère les opportunités en JSON
+    fetch('<%= opportunities_path(format: :json) %>', { headers: { 'Accept': 'application/json' } })
+      .then(r => r.json())
+      .then(points => {
+        // Filtre sécurité : lat/lng valides
+        const valid = points.filter(p =>
+          typeof p.latitude === 'number' && typeof p.longitude === 'number'
+        );
+
+        if (valid.length === 0) {
+          // Centre par défaut sur Nancy
+          map.setView([48.692054, 6.184417], 12);
+          const msg = document.createElement('div');
+          msg.style.margin = '12px auto';
+          msg.style.maxWidth = '1200px';
+          msg.innerHTML = 'Aucun point à afficher (pas de coordonnées). Vérifie le géocodage.';
+          el.insertAdjacentElement('afterend', msg);
+          return;
+        }
+
+        // 3) Ajoute les marqueurs
+        const group = L.featureGroup().addTo(map);
+        const fmtDate = (iso) => {
+          try {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return new Intl.DateTimeFormat('fr-FR', {
+              weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+            }).format(d).replace(',', ' •');
+          } catch { return ''; }
+        };
+
+        valid.forEach(p => {
+          const latlng = [p.latitude, p.longitude];
+          const title = p.title || 'Sans titre';
+          const date  = fmtDate(p.starts_at);
+          const url   = p.url || '#';
+          const lieu  = p.venue_name || p.city || '';
+
+          const popup = `
+            <div style="min-width:220px">
+              <div style="font-weight:700; margin-bottom:4px">${title}</div>
+              ${date ? `<div style="font-size:12px; opacity:.8">${date}</div>` : ''}
+              ${lieu ? `<div style="font-size:12px; opacity:.8">${lieu}</div>` : ''}
+              <div style="margin-top:8px">
+                <a href="${url}" target="_blank" rel="noopener" style="text-decoration:underline">Ouvrir la fiche ↗</a>
+              </div>
+            </div>
+          `;
+
+          const marker = L.marker(latlng);
+          marker.bindPopup(popup, { maxWidth: 320 });
+          marker.addTo(group);
+        });
+
+        // 4) Ajuste la vue
+        map.fitBounds(group.getBounds().pad(0.15));
+      })
+      .catch(err => {
+        console.error('Map fetch error:', err);
+        map.setView([48.692054, 6.184417], 12);
+      });
+  };
+
+  // Support Turbo + fallback DOMContentLoaded
+  document.addEventListener('turbo:load', onTurboLoad);
+  document.addEventListener('DOMContentLoaded', onTurboLoad);
+})();
+</script>
