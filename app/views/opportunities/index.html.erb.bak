@@ -129,14 +129,7 @@
 
     // ---- Carte
     const map = L.map(mapEl,{ zoomControl:true, scrollWheelZoom:true }).setView([46.6, 2.2], 6);
-    
-// -- Suivi géolocalisation --
-if (typeof addFollowControl === "function" && typeof startGeoWatch === "function") {
-  addFollowControl(map, (opts)=> startGeoWatch(map, opts));
-} else if (typeof startGeoWatch === "function") {
-  startGeoWatch(map, { follow:true });
-}
-mapEl._leaflet_map = map; // <- pour accès externe si besoin
+    mapEl._leaflet_map = map; // <- pour accès externe si besoin
     const userLayer = L.layerGroup().addTo(map);
     addFallbackTiles(map);
 

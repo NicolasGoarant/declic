@@ -266,7 +266,10 @@
 
   // --- Carte
   const map = L.map('map',{ zoomControl:true, scrollWheelZoom:true }).setView([46.6, 2.2], 6);
-  mapEl._leaflet_map = map;
+  
+// -- Suivi géolocalisation (home) --
+if (typeof startGeoWatch === "function") { startGeoWatch(map, { follow:true }); }
+mapEl._leaflet_map = map;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap' }).addTo(map);
 
   const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#a855f7',default:'#6366f1'};
