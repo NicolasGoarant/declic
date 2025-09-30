@@ -387,35 +387,36 @@ stories = [
     MD
     quote: "Revenir à Nancy et parler goût chaque jour : c’était le sens qui me manquait."
   },
-  {
-    slug: "laiterie-de-nancy",
-    title: "La Laiterie de Nancy (Nancy)",
-    chapo: "Matthieu quitte le salariat pour créer une laiterie urbaine.",
-    description: "Fabrication sur place (yaourts, fromages) au lait de foin.",
-    location: "6 Rue Saint-Nicolas, 54000 Nancy",
-    latitude: 48.689, longitude: 6.187,
-    source_name: "Site officiel",
-    source_url:  "https://www.lalaiteriedenancy.fr/",
-    image_url:   "https://static.wixstatic.com/media/9f3674e120564679859a204316cae6a8.jpg/v1/fill/w_250,h_166,al_c,q_90/9f3674e120564679859a204316cae6a8.jpg",
-    body: <<~MD,
-      ### Le déclic
-      Matthieu rêve d’entreprendre utile. Il choisit le lait, symbole du quotidien, et veut prouver qu’une laiterie urbaine est possible.
+{
+  slug: "laiterie-de-nancy",
+  title: "La Laiterie de Nancy (Nancy)",
+  chapo: "Matthieu quitte le salariat pour créer une laiterie urbaine.",
+  description: "Fabrication sur place (yaourts, fromages) au lait de foin.",
+  location: "6 Rue Saint-Nicolas, 54000 Nancy",
+  latitude: 48.689, longitude: 6.187,
+  source_name: "Article PDF",
+  source_url:  "/stories/articles/laiterie-urbaine.pdf",
+  image_url:   "https://static.wixstatic.com/media/9f3674e120564679859a204316cae6a8.jpg/v1/fill/w_250,h_166,al_c,q_90/9f3674e120564679859a204316cae6a8.jpg",
+  body: <<~MD,
+    ### Le déclic
+    Matthieu rêve d’entreprendre utile. Il choisit le lait, symbole du quotidien, et veut prouver qu’une laiterie urbaine est possible.
 
-      ### Le projet
-      Fabrication sur place : yaourts, fromages frais, desserts lactés. Lait de foin payé au **juste prix**, transparence sur les recettes, atelier visible derrière la vitrine.
+    ### Le projet
+    Fabrication sur place : yaourts, fromages frais, desserts lactés. Lait de foin payé au **juste prix**, transparence sur les recettes, atelier visible derrière la vitrine.
 
-      ### Les étapes clés
-      Formation, maîtrise HACCP, financement des cuves/pasteurisateur, premier panel clients. Les premiers mois sont consacrés à stabiliser recettes et rendements.
+    ### Les étapes clés
+    Formation, maîtrise HACCP, financement des cuves/pasteurisateur, premier panel clients. Les premiers mois sont consacrés à stabiliser recettes et rendements.
 
-      ### Ce que ça change
-      Des produits ultra-frais, un lien clair avec les éleveurs, et une pédagogie régulière auprès des clients et des écoles.
+    ### Ce que ça change
+    Des produits ultra-frais, un lien clair avec les éleveurs, et une pédagogie régulière auprès des clients et des écoles.
 
-      **À retenir**
-      - Savoir dire non à des volumes irréalistes  
-      - L’histoire derrière le produit vend plus que le packaging
-    MD
-    quote: "Que chacun sache d’où vient le lait et qui on rémunère."
-  },
+    **À retenir**
+    - Savoir dire non à des volumes irréalistes  
+    - L’histoire derrière le produit vend plus que le packaging
+  MD
+  quote: "Que chacun sache d’où vient le lait et qui on rémunère."
+},
+
   {
     slug: "seventheen-coffee-luneville",
     title: "SEVENTHÉEN Coffee — Coffee shop (Lunéville)",
@@ -424,7 +425,7 @@ stories = [
     location: "57 Rue de la République, 54300 Lunéville",
     latitude: 48.591, longitude: 6.496,
     source_name: "Page officielle",
-    source_url:  "https://seventheen-coffee.eatbu.com/?lang=fr",
+    source_url:  "/stories/articles/coffee-shop_luneville.pdf",
     image_url:   "https://cdn.website.dish.co/media/5c/2f/2551554/SEVENTHEEN-Coffee-Luneville.jpg",
     body: <<~MD,
       ### Le parcours
