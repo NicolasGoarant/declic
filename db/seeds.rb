@@ -296,20 +296,45 @@ nancy_real = [
 records += nancy_real
 
 # — Axe Nancy ⇄ Saint-Dié : opportunités enrichies (développées)
+# — Axe Nancy ⇄ Saint-Dié : opportunités enrichies (développées)
 vosges_corridor = [
   {
     title: "SEVENTHÉEN Coffee — ateliers découverte",
-    description: "☕ Découvrir le café de spécialité à Lunéville.\n\n**Ce que tu peux faire :** participer à un atelier (mouture, méthode douce, latte-art), filer un coup de main sur une soirée (service, accueil), ou proposer une **rencontre pro** (freelances, étudiants, créatifs).\n\n**Pourquoi c’est intéressant :** tu apprends un vrai savoir-faire sensoriel, tu rencontres du monde et tu **animes le centre-ville** avec un format simple à répliquer (1h–2h).",
+    description: <<~MD.strip,
+      ☕ Découvrir le **café de spécialité** à Lunéville.
+
+      **Ce que tu peux faire**
+      - Participer à un atelier : mouture, méthode douce (V60, Chemex), latte-art
+      - Filer un coup de main sur une **soirée** (service léger, accueil, encaissement simple)
+      - Proposer une **rencontre pro** : freelances, étudiants, créatifs (format 1 h)
+
+      **Pourquoi c’est intéressant**
+      - Tu apprends un vrai **savoir-faire sensoriel** (fraîcheur, extraction)
+      - Tu **rencontres du monde** et tu animes le centre-ville
+      - Format **facile à répliquer** (1–2 h), idéal pour se lancer dans l’événementiel
+    MD
     category: "rencontres",
     organization: "SEVENTHÉEN Coffee",
     location: "Lunéville (rue de la République)",
-    time_commitment: "Ateliers 1h–2h, soirées ponctuelles",
+    time_commitment: "Ateliers 1–2 h, soirées ponctuelles",
     latitude: 48.591, longitude: 6.496,
     is_active: true, tags: "atelier,café,communauté"
   },
   {
     title: "Baccarat — Atelier vitrail & découverte du verre",
-    description: "🧪 Initie-toi aux bases du **vitrail** et des découpes de verre.\n\n**Ce que tu peux faire :** atelier d’initiation (2–3h), visite d’atelier, rencontre d’artisans. Possibilité de proposer une **animation jeunesse** ou un temps « portes ouvertes ».\n\n**Pourquoi c’est intéressant :** c’est **ultra-concret**, tu repars avec une pièce simple, et tu rencontres un réseau d’artisans du verre **emblématiques de la vallée**.",
+    description: <<~MD.strip,
+      🧪 Initie-toi aux bases du **vitrail** et des découpes de verre (sécurité + gestes).
+
+      **Ce que tu peux faire**
+      - Atelier d’initiation **2–3 h** (découpe, sertissage, assemblage simple)
+      - Visite d’atelier, **rencontre d’artisans** du Pays du Cristal
+      - Proposer une **animation jeunesse** ou une mini **portes ouvertes**
+
+      **Pourquoi c’est intéressant**
+      - **Ultra concret** : tu repars avec une petite pièce
+      - Tu te fais un **réseau d’artisans** emblématiques de la vallée
+      - Idéal pour tester un **savoir-faire manuel** avant une formation longue
+    MD
     category: "formation",
     organization: "Atelier associatif du Pays du Cristal",
     location: "Baccarat",
@@ -319,7 +344,19 @@ vosges_corridor = [
   },
   {
     title: "Raon-l’Étape — Repair & Low-tech au tiers-lieu",
-    description: "🔧 Soirée **réparation** et démonstrations **low-tech**.\n\n**Ce que tu peux faire :** tenir l’accueil, aiguiller les participants, apprendre les bases (électricité, affûtage, couture), animer un mini-atelier (entretien vélo, petites soudures).\n\n**Pourquoi c’est intéressant :** tu **apprends en faisant**, tu rends service, et tu tisses un **réseau local** bricoleurs ↔︎ habitants.",
+    description: <<~MD.strip,
+      🔧 Soirée **réparation** et démonstrations **low-tech**.
+
+      **Ce que tu peux faire**
+      - Tenir l’**accueil** et aiguiller les participants
+      - Apprendre les bases (petite électricité, affûtage, couture, colle/époxy)
+      - Animer un **mini-atelier** (entretien vélo, petites soudures, diagnostic)
+
+      **Pourquoi c’est intéressant**
+      - Tu **apprends en faisant** et tu rends service
+      - Tu tisses un **réseau local** bricoleurs ↔︎ habitants
+      - Tu découvres la **sobriété pratique** (réparer plutôt que jeter)
+    MD
     category: "benevolat",
     organization: "Tiers-lieu Vallée de la Plaine",
     location: "Raon-l’Étape",
@@ -329,7 +366,19 @@ vosges_corridor = [
   },
   {
     title: "Étival-Clairefontaine — Atelier micro-entreprise express",
-    description: "💼 Comprendre les **bases de la micro-entreprise** : statuts, obligations, prix de revient, premiers clients.\n\n**Ce que tu peux faire :** venir avec une idée et repartir avec un **plan 30 jours** + outils (facture, devis, trame prospection).\n\n**Pourquoi c’est intéressant :** format **très opérationnel** pour déclencher un premier chiffre d’affaires en local.",
+    description: <<~MD.strip,
+      💼 Comprendre les **bases de la micro-entreprise** : statuts, obligations, prix de revient, premiers clients.
+
+      **Ce que tu peux faire**
+      - Venir avec une idée et repartir avec un **plan 30 jours**
+      - Répartir les premières actions : **facture/devis** (modèles), **script d’appel**, **mail de prospection**
+      - Poser toutes tes questions (TVA, ARE/ACRE, plafond, compte pro…)
+
+      **Pourquoi c’est intéressant**
+      - Format **très opérationnel** pour déclencher un premier **CA** local
+      - Tu repars avec un **kit prêt-à-l’emploi** (templates + check-list)
+      - Tu rencontres d’autres personnes **au même stade**
+    MD
     category: "entreprendre",
     organization: "Com’Com de la Plaine",
     location: "Étival-Clairefontaine",
@@ -339,17 +388,41 @@ vosges_corridor = [
   },
   {
     title: "Saint-Dié-des-Vosges — Club projet (bénévolat utile)",
-    description: "❤️ Un **club d’entraide** où chacun apporte 1 ressource (compétence, contact, temps) pour **faire avancer** les projets des autres.\n\n**Ce que tu peux faire :** présenter ton besoin (5 min), proposer un coup de main (20–30 min), rejoindre un **mini-commando** (ex : créer un formulaire, faire 10 appels, rédiger un mail type).\n\n**Pourquoi c’est intéressant :** tu **gagnes en réseau**, tu avances **tout de suite** et tu aides des projets locaux.",
+    description: <<~MD.strip,
+      ❤️ **Club d’entraide** où chacun apporte 1 ressource (compétence, contact, temps) pour **faire avancer** les projets des autres.
+
+      **Ce que tu peux faire**
+      - Présenter ton besoin (**5 min**) : “je cherche 5 retours clients”, “je dois faire un devis…”
+      - Proposer un **coup de main express** (20–30 min) pendant la session
+      - Rejoindre un **mini-commando** : créer un formulaire, faire 10 appels, rédiger un mail-type
+
+      **Pourquoi c’est intéressant**
+      - Tu **gagnes en réseau** (liens concrets)
+      - Tu avances **tout de suite** (action pendant la séance)
+      - Tu aides des **projets locaux** qui ont du sens
+    MD
     category: "rencontres",
     organization: "Communauté Déclic Vosges",
     location: "Saint-Dié-des-Vosges",
-    time_commitment: "Toutes les 2 semaines, 1h30",
+    time_commitment: "Toutes les 2 semaines, 1 h 30",
     latitude: 48.285, longitude: 6.949,
     is_active: true, tags: "entraide,réseau,accélération"
   },
   {
     title: "Saint-Nicolas-de-Port — Reprise de bar alternatif (diagnostic)",
-    description: "🍻 **Étude de reprise** d’un petit bar alternatif : clientèle locale, petite prog’ concerts/stand-up.\n\n**Ce que tu peux faire :** visite + check-list (licences, voisinage, travaux, sécurité), **tester une soirée** (format réduit), chiffrer un **P&L réaliste**.\n\n**Pourquoi c’est intéressant :** parfait pour quelqu’un qui veut **entreprendre avec un lieu vivant**, à taille humaine.",
+    description: <<~MD.strip,
+      🍻 **Étude de reprise** d’un petit bar alternatif (clientèle locale, mini-prog concerts/stand-up).
+
+      **Ce que tu peux faire**
+      - Visite + **check-list** : licences, voisinage, sécurité, accessibilité, travaux, assurances
+      - **Tester une soirée** pilote (format réduit) pour jauger le potentiel
+      - Chiffrer un **P&L réaliste** (loyer, marge, masse salariale, billetterie)
+
+      **Pourquoi c’est intéressant**
+      - Idéal si tu veux **entreprendre avec un lieu vivant** à taille humaine
+      - Tu apprends à **évaluer un fonds** (risques/opportunités) avant de signer
+      - Tu repars avec une **feuille de route** claire
+    MD
     category: "entreprendre",
     organization: "Accompagnement Déclic",
     location: "Saint-Nicolas-de-Port",
@@ -360,6 +433,7 @@ vosges_corridor = [
 ]
 
 records += vosges_corridor
+
 
 # — Quelques autres villes (léger bruit pour la carte)
 { "Lyon" => [45.7640, 4.8357], "Rennes" => [48.1173, -1.6778], "Lille" => [50.6292, 3.0573] }.each do |city, (lat, lon)|

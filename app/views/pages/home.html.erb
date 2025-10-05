@@ -252,131 +252,113 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <% content_for :scripts do %>
-<script>
-document.addEventListener('turbo:load', bootHome, { once:true });
-document.addEventListener('DOMContentLoaded',  bootHome, { once:true });
 
-function bootHome(){
+  <script>
+(function(){
   const mapEl = document.getElementById('map');
   if(!mapEl || !window.L) return;
 
-  // --- Carte
   const map = L.map('map',{ zoomControl:true, scrollWheelZoom:true }).setView([46.6, 2.2], 6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap' }).addTo(map);
   mapEl._leaflet_map = map;
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap' }).addTo(map);
 
-  // --- GEO WATCH (auto-start + premier recentrage fort)
-  if (window.DeclicGeo && window.DeclicGeo.startGeoWatch) {
-    window.DeclicGeo.startGeoWatch(map, {
-      follow: true,
-      showAccuracy: false,
-      firstFitZoom: 15 // 👈 recadre fort dès le premier fix
-    });
-    if (window.DeclicGeo.setFollow) window.DeclicGeo.setFollow(true);
-  }
+  // ⚠️ SUPPRIMER tout appel auto à startGeoWatch ici.
+  // -> on gère un seul chemin: startGeoIfAllowed()
 
-  // --- Icônes & calques
-  const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#a855f7',default:'#6366f1'};
-  const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',histoires:'📖',default:'⭐'};
-  const iconFor = (cat)=> L.divIcon({className:'',html:`<div class="picon" style="--c:${colors[cat]||colors.default}"><span>${emojis[cat]||emojis.default}</span></div>`,iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
-  const layer = L.layerGroup().addTo(map);
+  const userLayer = L.layerGroup().addTo(map);
+  let watchId = null;
 
-  // --- Helpers popup
-  function parseDate(x){ if(!x) return null; const d=new Date(x); return isNaN(d)?null:d; }
-  function frLongDate(d){ return d?d.toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}):''; }
-  function frHM(d){ return d?d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''; }
-  function thumbFor(o){
-    if(o.image_url) return o.image_url;
-    const cat=(o.category||'').toLowerCase();
-    if(cat==='benevolat')    return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=300&auto=format&fit=crop';
-    if(cat==='formation')    return 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=300&auto=format&fit=crop';
-    if(cat==='rencontres')   return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=300&auto=format&fit=crop';
-    if(cat==='entreprendre') return 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=300&auto=format&fit=crop';
-    if(cat==='histoires')    return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
-    return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
-  }
-  function popupHtml(o){
-    const cat=(o.category||'');
-    const base=(cat.toLowerCase()==='histoires')?'/stories':'/opportunities';
-    const url=`${base}/${o.slug||o.id}`;
-    const st=parseDate(o.starts_at||o.start_at||o.start_time||o.date||o.scheduled_on);
-    const en=parseDate(o.ends_at||o.end_at||o.end_time);
-    const when = st ? `📅 ${frLongDate(st)}${en?` — ${frHM(st)}–${frHM(en)}`: (o.schedule_text?``:` — ${frHM(st)}`)}` : (o.schedule_text||'');
-    const loc = o.location ? `📍 ${o.location}` : '';
-    const img = thumbFor(o);
-    return `
-      <div class="popcard" style="display:grid;grid-template-columns:72px 1fr;gap:10px;min-width:260px;align-items:start">
-        <img src="${img}" alt="" style="width:72px;height:72px;border-radius:10px;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,.2)" />
-        <div>
-          <h4 style="margin:0;font-weight:700;font-size:14px;line-height:1.2">${o.title||''}</h4>
-          ${o.organization?`<div class="muted" style="color:#475569;font-size:12px">${o.organization}</div>`:''}
-          ${when?`<div class="muted" style="color:#475569;font-size:12px">${when}</div>`:''}
-          ${loc?`<div class="muted" style="color:#475569;font-size:12px">${loc}</div>`:''}
-          <div style="margin-top:6px"><a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a></div>
-        </div>
-      </div>`;
-  }
-
-  // --- Chargement des données + tracé
-  let dataset = [];
-  function plot(items){
-    layer.clearLayers();
-    const bounds=[];
-    (items||[]).forEach(o=>{
-      if(!o.latitude || !o.longitude) return;
-      L.marker([o.latitude,o.longitude],{icon:iconFor((o.category||'').toLowerCase())})
-        .addTo(layer).bindPopup(popupHtml(o));
-      bounds.push([o.latitude,o.longitude]);
-    });
-    if(bounds.length){
-      // On laisse DeclicGeo recadrer sur l'utilisateur; la carte s’ajustera ensuite au mouvement.
-      if (!window.DeclicGeo || !window.DeclicGeo.isRunning || !window.DeclicGeo.isRunning()) {
-        map.fitBounds(bounds,{padding:[30,30]});
+  const OK_ACC = 5000;
+  function centerUser(lat, lon, accuracy){
+    userLayer.clearLayers();
+    map.flyTo([lat, lon], Math.max(map.getZoom(), 13), { duration:.8 });
+    try {
+      if (!accuracy || accuracy <= OK_ACC) {
+        localStorage.setItem('declic_user_pos', JSON.stringify({ lat, lng: lon }));
       }
+    } catch {}
+  }
+
+  function stopWatch(){ if(watchId!=null){ navigator.geolocation.clearWatch(watchId); watchId=null; } }
+
+  function startWatch(){
+    if(!('geolocation' in navigator)) return;
+    // petit marqueur user (optionnel)
+    const u = L.circleMarker([0,0], { radius:7, weight:2, fillOpacity:.9, color:'#2563eb' }).addTo(userLayer);
+
+    watchId = navigator.geolocation.watchPosition(
+      (pos)=>{
+        const { latitude:lat, longitude:lon, accuracy } = pos.coords;
+        u.setLatLng([lat,lon]);
+        centerUser(lat, lon, accuracy);
+      },
+      ()=>{},
+      { enableHighAccuracy:true, maximumAge:0, timeout:20000 }
+    );
+  }
+
+  function startGeoIfAllowed(){
+    const pref = localStorage.getItem('declic_geo_pref'); // 'granted' | 'denied' | null
+    // priorité au cache utilisateur
+    if (pref === 'granted') { startWatch(); return; }
+    if (pref === 'denied')  { return; }
+
+    // sinon, on utilise Permissions API (si dispo)
+    if (navigator.permissions?.query) {
+      navigator.permissions.query({ name:'geolocation' }).then((st)=>{
+        if (st.state === 'granted') {
+          localStorage.setItem('declic_geo_pref','granted');
+          startWatch();
+        } else if (st.state === 'denied') {
+          localStorage.setItem('declic_geo_pref','denied');
+        } else {
+          // state === 'prompt' → on montre TA MODALE, pas d’appel geoloc ici
+          openModal();
+        }
+      }).catch(openModal);
+    } else {
+      openModal();
     }
   }
 
-  Promise.all([
-    fetch('/api/v1/opportunities').then(r=>r.ok?r.json():[]).catch(()=>[]),
-    fetch('/api/v1/stories').then(r=>r.ok?r.json():[]).catch(()=>[])
-  ]).then(([opps, stories])=>{
-    (stories||[]).forEach(s=> s.category='histoires');
-    dataset = ([]).concat(opps||[], stories||[]);
-    window.__DATASET = dataset;
-    plot(dataset);
+  // ------- Boutons UI existants --------
+  function openModal(){ document.getElementById('geo-consent')?.classList.remove('hidden'); }
+  function closeModal(){ document.getElementById('geo-consent')?.classList.add('hidden'); }
+
+  document.getElementById('geo-accept')?.addEventListener('click', ()=>{
+    closeModal();
+    // ici uniquement on appelle geoloc (1ère fois)
+    navigator.geolocation.getCurrentPosition(
+      (pos)=>{ localStorage.setItem('declic_geo_pref','granted'); centerUser(pos.coords.latitude,pos.coords.longitude,pos.coords.accuracy); startWatch(); },
+      ()=>{ localStorage.setItem('declic_geo_pref','denied'); },
+      { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
+    );
   });
 
-  // Filtres
-  const chips=[...document.querySelectorAll('.chip')];
-  chips.forEach(chip=>chip.addEventListener('click',()=>{
-    chips.forEach(c=>c.classList.remove('is-active')); chip.classList.add('is-active');
-    const cat=chip.dataset.cat;
-    if(cat==='toutes'){ plot(dataset); return; }
-    plot((dataset||[]).filter(o=> (o.category||'').toLowerCase()===cat));
-  }));
+  document.getElementById('geo-decline')?.addEventListener('click', ()=>{
+    closeModal(); localStorage.setItem('declic_geo_pref','denied');
+  });
 
-  // Bouton "📍 Me localiser" = remettre le follow et recoller sur le point bleu
   document.getElementById('btn-locate')?.addEventListener('click', ()=>{
-    if (window.DeclicGeo && window.DeclicGeo.setFollow) window.DeclicGeo.setFollow(true);
+    // clic explicite => on (re)demande si besoin
+    navigator.geolocation.getCurrentPosition(
+      (pos)=>{ localStorage.setItem('declic_geo_pref','granted'); centerUser(pos.coords.latitude,pos.coords.longitude,pos.coords.accuracy); startWatch(); },
+      ()=>{ localStorage.setItem('declic_geo_pref','denied'); },
+      { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
+    );
   });
 
-  // Consentement simple (modal)
-  const modal=document.getElementById('geo-consent'), accept=document.getElementById('geo-accept'), decline=document.getElementById('geo-decline');
-  const openModal=()=>modal?.classList.remove('hidden'); const closeModal=()=>modal?.classList.add('hidden');
-  accept?.addEventListener('click', ()=>{ closeModal(); if(window.DeclicGeo?.setFollow) window.DeclicGeo.setFollow(true); });
-  decline?.addEventListener('click', ()=>{ closeModal(); });
-
-  // Si le navigateur n'a pas encore de permission tranchée, on propose
-  (async function askConsentIfNeeded(){
-    try{
-      if(navigator.permissions?.query){
-        const st=await navigator.permissions.query({ name:'geolocation' });
-        if(st.state==='prompt') openModal();
-      }
-    }catch{ /* no-op */ }
-  })();
-}
+  // ne pas spammer entre navigations Turbo/SPA : on ne montre la modale qu’une fois par session si 'prompt'
+  if (!sessionStorage.getItem('declic_geo_modal_shown')) {
+    sessionStorage.setItem('declic_geo_modal_shown','1');
+    startGeoIfAllowed();
+  } else {
+    // retour page d’accueil : on respecte le choix précédent
+    startGeoIfAllowed();
+  }
+})();
 </script>
+
 <% end %>
 
 
