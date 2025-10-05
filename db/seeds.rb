@@ -1,7 +1,7 @@
 # db/seeds.rb
-# Idempotent, compatible Heroku (Postgres + assets précompilés)
+# Idempotent, compatible Heroku (Postgres)
 
-# ===== Helpers =====
+# ======================= Helpers =======================
 CATEGORIES = %w[benevolat formation rencontres entreprendre].freeze
 
 def jitter(lat, lon, km_max = 3.0)
@@ -31,9 +31,8 @@ def mk(loc:, lat:, lon:, n:, category:, orgs:, titles:, city_label: nil)
   end
 end
 
-# Helper pour produire l'URL fingerprintée d'un asset (production Heroku)
+# URL fingerprintée d’un asset (production Heroku)
 def asset_url(path)
-  # ex: "avatars/julien.png" -> "/assets/avatars/julien-abcdef123.png"
   ActionController::Base.helpers.asset_path(path)
 rescue
   "/assets/#{path}"
@@ -43,7 +42,7 @@ def add_link(desc, url)
   [desc.to_s.strip, "\n\n🔗 En savoir plus : #{url}"].join
 end
 
-# ===== Données de base =====
+# =================== Données de base ===================
 paris = { city: "Paris",  lat: 48.8566,   lon: 2.3522 }
 nancy = { city: "Nancy",  lat: 48.692054, lon: 6.184417 }
 
@@ -98,14 +97,16 @@ orgs_common = [
 ]
 orgs_paris = orgs_common + ["Le Wagon", "Makesense", "Latitudes", "Simplon", "Fab City"]
 
-# ===== Opportunités (maquettes : Paris + autres villes) =====
+# ================== Opportunités ==================
 records = []
+
+# — Paris (maquette pour densifier la carte)
 records += mk(loc: "Paris", lat: paris[:lat], lon: paris[:lon], n: 14, category: "benevolat",    orgs: orgs_paris, titles: benevolat_titles)
 records += mk(loc: "Paris", lat: paris[:lat], lon: paris[:lon], n: 10, category: "formation",    orgs: orgs_paris, titles: formation_titles)
 records += mk(loc: "Paris", lat: paris[:lat], lon: paris[:lon], n:  8, category: "rencontres",   orgs: orgs_paris, titles: rencontres_titles)
 records += mk(loc: "Paris", lat: paris[:lat], lon: paris[:lon], n:  6, category: "entreprendre", orgs: orgs_paris, titles: entreprendre_titles)
 
-# ⚠️ On évite de “faker” Nancy : on ajoute des items réalistes / curés.
+# — Nancy : entrées réelles & actionnables
 nancy_real = [
   # ===== ENTREPRENDRE (CCI…) =====
   {
@@ -292,116 +293,83 @@ nancy_real = [
   }
 ]
 
-# === Corridor Nancy ↔ Saint-Dié : ajouts ciblés (densification)
-vosges_more = [
-  # Étival-Clairefontaine
-  { title: "Atelier vélo participatif",
-    description: "Apprendre à entretenir son vélo, outillage partagé et transmission.",
-    category: "benevolat", organization: "Atelier Mobile des Vosges",
-    location: "Étival-Clairefontaine",
-    latitude: 48.406, longitude: 6.851, time_commitment: "Samedi matin (mensuel)",
-    is_active: true, tags: "vélo,transmission,convivial" },
-  { title: "Micro-formation — caisse & inventaire (épicerie locale)",
-    description: "2×2h en boutique : tenue de caisse, inventaire, hygiène.",
-    category: "formation", organization: "Coop’ du Val",
-    location: "Étival-Clairefontaine",
-    latitude: 48.408, longitude: 6.846, time_commitment: "4 h au total",
-    is_active: true, tags: "commerce,formation courte" },
+records += nancy_real
 
-  # Moyenmoutier
-  { title: "Café-réseau porteurs de projet",
-    description: "Rencontre informelle + retours d’expérience, ouvert débutant·es.",
-    category: "rencontres", organization: "Collectif Entreprendre Moyenmoutier",
-    location: "Moyenmoutier",
-    latitude: 48.378, longitude: 6.888, time_commitment: "Mensuel, 18:30–20:00",
-    is_active: true, tags: "réseau,entraide" },
-  { title: "Permanence juridique — statuts & contrats",
-    description: "RDV individuel 30 min, focus statuts, CGV, baux.",
-    category: "entreprendre", organization: "Conseil Pro Solidaire",
-    location: "Moyenmoutier (Maison des services)",
-    latitude: 48.382, longitude: 6.894, time_commitment: "Hebdo sur RDV",
-    is_active: true, tags: "juridique,statuts,contrats" },
-
-  # Deneuvre (Baccarat)
-  { title: "Animation ressourcerie — tri & accueil",
-    description: "Trier, mettre en rayon, accueil donateurs.",
-    category: "benevolat", organization: "Ressourcerie du Cristal",
-    location: "Deneuvre",
-    latitude: 48.457, longitude: 6.713, time_commitment: "2–3 h / semaine",
-    is_active: true, tags: "réemploi,logistique,accueil" },
-
-  # Baccarat
-  { title: "Sprint produit local (2h) — idée → mini-plan",
-    description: "Cadrer une idée en 120 minutes : problème, solution, canal.",
-    category: "entreprendre", organization: "Tiers-Lieu du Verre",
+# — Axe Nancy ⇄ Saint-Dié : opportunités enrichies (développées)
+vosges_corridor = [
+  {
+    title: "SEVENTHÉEN Coffee — ateliers découverte",
+    description: "☕ Découvrir le café de spécialité à Lunéville.\n\n**Ce que tu peux faire :** participer à un atelier (mouture, méthode douce, latte-art), filer un coup de main sur une soirée (service, accueil), ou proposer une **rencontre pro** (freelances, étudiants, créatifs).\n\n**Pourquoi c’est intéressant :** tu apprends un vrai savoir-faire sensoriel, tu rencontres du monde et tu **animes le centre-ville** avec un format simple à répliquer (1h–2h).",
+    category: "rencontres",
+    organization: "SEVENTHÉEN Coffee",
+    location: "Lunéville (rue de la République)",
+    time_commitment: "Ateliers 1h–2h, soirées ponctuelles",
+    latitude: 48.591, longitude: 6.496,
+    is_active: true, tags: "atelier,café,communauté"
+  },
+  {
+    title: "Baccarat — Atelier vitrail & découverte du verre",
+    description: "🧪 Initie-toi aux bases du **vitrail** et des découpes de verre.\n\n**Ce que tu peux faire :** atelier d’initiation (2–3h), visite d’atelier, rencontre d’artisans. Possibilité de proposer une **animation jeunesse** ou un temps « portes ouvertes ».\n\n**Pourquoi c’est intéressant :** c’est **ultra-concret**, tu repars avec une pièce simple, et tu rencontres un réseau d’artisans du verre **emblématiques de la vallée**.",
+    category: "formation",
+    organization: "Atelier associatif du Pays du Cristal",
     location: "Baccarat",
-    latitude: 48.450, longitude: 6.738, time_commitment: "Session bimensuelle",
-    is_active: true, tags: "business design,atelier" },
-
-  # Raon-l’Étape
-  { title: "Repair Café — accueil",
-    description: "Orientation, prise en charge, café/thé pour le public.",
-    category: "benevolat", organization: "Collectif Transition Raon",
-    location: "Raon-l'Étape",
-    latitude: 48.402, longitude: 6.846, time_commitment: "Mensuel, samedi",
-    is_active: true, tags: "repair,accueil" },
-  { title: "Découverte CNC / bois (initiation 3h)",
-    description: "Sécurité, usinage basique, repartir avec une pièce simple.",
-    category: "formation", organization: "Fablab des Deux Rives",
-    location: "Raon-l'Étape",
-    latitude: 48.399, longitude: 6.838, time_commitment: "3 h, soirée",
-    is_active: true, tags: "fablab,bois,cnc" },
-
-  # Saint-Nicolas-de-Port
-  { title: "Épicerie coop — tenue du stand producteurs",
-    description: "Accueil, conseil produits, mise en avant saisonnière.",
-    category: "benevolat", organization: "Coop’ du Port",
-    location: "Saint-Nicolas-de-Port",
-    latitude: 48.633, longitude: 6.303, time_commitment: "Hebdo 2 h",
-    is_active: true, tags: "coopérative,accueil" },
-  { title: "Atelier financement participatif (2h)",
-    description: "Préparer une campagne locale : contreparties, pitch, budget.",
-    category: "entreprendre", organization: "Maison de l’Initiative",
-    location: "Saint-Nicolas-de-Port",
-    latitude: 48.636, longitude: 6.305, time_commitment: "2 h en soirée",
-    is_active: true, tags: "crowdfunding,pitch" },
-
-  # Bruyères
-  { title: "Balade urbaine — lecture de ville",
-    description: "Comprendre commerces vacants, flux, potentiel de reprise.",
-    category: "rencontres", organization: "Atelier Territoires Viva",
-    location: "Bruyères",
-    latitude: 48.209, longitude: 6.716, time_commitment: "1 samedi / mois",
-    is_active: true, tags: "urbanisme,revitalisation" },
-
-  # Saint-Dié-des-Vosges
-  { title: "Cowork découverte + office hours",
-    description: "Journée test + RDV 20 min : modèle éco, pricing, canaux.",
-    category: "entreprendre", organization: "NovaDéodatie",
+    time_commitment: "2–3 h (samedi AM/PM)",
+    latitude: 48.450, longitude: 6.742,
+    is_active: true, tags: "artisanat,verre,initiation"
+  },
+  {
+    title: "Raon-l’Étape — Repair & Low-tech au tiers-lieu",
+    description: "🔧 Soirée **réparation** et démonstrations **low-tech**.\n\n**Ce que tu peux faire :** tenir l’accueil, aiguiller les participants, apprendre les bases (électricité, affûtage, couture), animer un mini-atelier (entretien vélo, petites soudures).\n\n**Pourquoi c’est intéressant :** tu **apprends en faisant**, tu rends service, et tu tisses un **réseau local** bricoleurs ↔︎ habitants.",
+    category: "benevolat",
+    organization: "Tiers-lieu Vallée de la Plaine",
+    location: "Raon-l’Étape",
+    time_commitment: "Mensuel (soirée 3 h)",
+    latitude: 48.404, longitude: 6.838,
+    is_active: true, tags: "repair,lowtech,entraide"
+  },
+  {
+    title: "Étival-Clairefontaine — Atelier micro-entreprise express",
+    description: "💼 Comprendre les **bases de la micro-entreprise** : statuts, obligations, prix de revient, premiers clients.\n\n**Ce que tu peux faire :** venir avec une idée et repartir avec un **plan 30 jours** + outils (facture, devis, trame prospection).\n\n**Pourquoi c’est intéressant :** format **très opérationnel** pour déclencher un premier chiffre d’affaires en local.",
+    category: "entreprendre",
+    organization: "Com’Com de la Plaine",
+    location: "Étival-Clairefontaine",
+    time_commitment: "Atelier 2 h",
+    latitude: 48.407, longitude: 6.882,
+    is_active: true, tags: "création,pricing,prospection"
+  },
+  {
+    title: "Saint-Dié-des-Vosges — Club projet (bénévolat utile)",
+    description: "❤️ Un **club d’entraide** où chacun apporte 1 ressource (compétence, contact, temps) pour **faire avancer** les projets des autres.\n\n**Ce que tu peux faire :** présenter ton besoin (5 min), proposer un coup de main (20–30 min), rejoindre un **mini-commando** (ex : créer un formulaire, faire 10 appels, rédiger un mail type).\n\n**Pourquoi c’est intéressant :** tu **gagnes en réseau**, tu avances **tout de suite** et tu aides des projets locaux.",
+    category: "rencontres",
+    organization: "Communauté Déclic Vosges",
     location: "Saint-Dié-des-Vosges",
-    latitude: 48.285, longitude: 6.950, time_commitment: "Mensuel",
-    is_active: true, tags: "cowork,mentorat" },
-  { title: "Atelier podcast — raconter son projet",
-    description: "3 h : prise de son, structure, teaser audio.",
-    category: "formation", organization: "Radio Locale",
-    location: "Saint-Dié-des-Vosges",
-    latitude: 48.286, longitude: 6.953, time_commitment: "3 h, samedi",
-    is_active: true, tags: "podcast,communication" }
+    time_commitment: "Toutes les 2 semaines, 1h30",
+    latitude: 48.285, longitude: 6.949,
+    is_active: true, tags: "entraide,réseau,accélération"
+  },
+  {
+    title: "Saint-Nicolas-de-Port — Reprise de bar alternatif (diagnostic)",
+    description: "🍻 **Étude de reprise** d’un petit bar alternatif : clientèle locale, petite prog’ concerts/stand-up.\n\n**Ce que tu peux faire :** visite + check-list (licences, voisinage, travaux, sécurité), **tester une soirée** (format réduit), chiffrer un **P&L réaliste**.\n\n**Pourquoi c’est intéressant :** parfait pour quelqu’un qui veut **entreprendre avec un lieu vivant**, à taille humaine.",
+    category: "entreprendre",
+    organization: "Accompagnement Déclic",
+    location: "Saint-Nicolas-de-Port",
+    time_commitment: "2 rendez-vous (2×2 h) + 1 soirée test",
+    latitude: 48.634, longitude: 6.300,
+    is_active: true, tags: "reprise,événementiel,gestion"
+  }
 ]
 
-# Ajoute les opportunités RÉELLES Nancy + la densification Vosges
-records += nancy_real
-records += vosges_more
+records += vosges_corridor
 
-# Quelques autres villes (légère maquette pour la carte)
+# — Quelques autres villes (léger bruit pour la carte)
 { "Lyon" => [45.7640, 4.8357], "Rennes" => [48.1173, -1.6778], "Lille" => [50.6292, 3.0573] }.each do |city, (lat, lon)|
   records += mk(loc: city, lat: lat, lon: lon, n: 2, category: "rencontres", orgs: orgs_common, titles: rencontres_titles, city_label: city)
 end
 
-# ===== Insertion idempotente =====
+# ================== Insertion idempotente (Opportunities) ==================
 created_opps = 0
 records.each do |h|
-  # idempotent : on évite les doublons grossiers
+  next unless h[:latitude] && h[:longitude]
   found = Opportunity.find_or_initialize_by(title: h[:title], organization: h[:organization], location: h[:location])
   found.assign_attributes(h)
   created_opps += 1 if found.new_record?
@@ -409,8 +377,7 @@ records.each do |h|
 end
 puts "Seeds -> opportunities: +#{created_opps} (total: #{Opportunity.count})"
 
-# ===== Témoignages =====
-# Les images doivent être dans app/assets/images/avatars/ (julien.png, emma.png, thomas.png, marie.png)
+# ================== Témoignages ==================
 testimonials = [
   {
     name: "Julien",
@@ -451,8 +418,9 @@ testimonials.each do |attrs|
 end
 puts "Seeds -> testimonials: +#{created_t} (total: #{Testimonial.count})"
 
-# ===== Belles histoires (localisées) =====
+# ================== “Belles histoires” (localisées) ==================
 stories = [
+  # — Nancy et agglo (déjà existantes)
   {
     slug: "caseus-nancy",
     title: "CASEUS — Crèmerie-fromagerie (Nancy)",
@@ -468,17 +436,13 @@ stories = [
       Après des années dans la finance, Bénédicte veut retrouver du concret, du local et du contact. Le fromage s’impose : produit vivant, saisonnier, qui raconte des paysans.
 
       ### Le projet
-      Ouverture d’une crèmerie-fromagerie en Vieille-Ville. Sélection courte, affineurs et producteurs suivis, conseil à la coupe, plateaux sur mesure. Objectif : faire (re)découvrir des textures, maturations et accords.
+      Ouverture d’une crèmerie-fromagerie en Vieille-Ville. Sélection courte, affineurs et producteurs suivis, conseil à la coupe, plateaux sur mesure.
 
       ### Les obstacles
-      Quitter un CDI, financer la chambre froide et l’affinage, passer les normes d’hygiène, apprivoiser les pics de saison. La régularité d’approvisionnement a demandé une vraie relation fournisseurs.
+      Financement des équipements, normes d’hygiène, gestion des pics de saison.
 
       ### Impact local
-      Un commerce de proximité, des dégustations, et la valorisation de fermes qui travaillent proprement et sont mieux rémunérées.
-
-      **À retenir**
-      - Vendre des produits vivants demande rigueur et pédagogie  
-      - La confiance producteurs ↔︎ commerçants est le nerf de la guerre
+      Commerce de proximité, dégustations, valorisation des fermes partenaires.
     MD
     quote: "Revenir à Nancy et parler goût chaque jour : c’était le sens qui me manquait."
   },
@@ -494,20 +458,13 @@ stories = [
     image_url:   "https://static.wixstatic.com/media/9f3674e120564679859a204316cae6a8.jpg/v1/fill/w_250,h_166,al_c,q_90/9f3674e120564679859a204316cae6a8.jpg",
     body: <<~MD,
       ### Le déclic
-      Matthieu rêve d’entreprendre utile. Il choisit le lait, symbole du quotidien, et veut prouver qu’une laiterie urbaine est possible.
+      Entreprendre utile, local, visible depuis la rue.
 
       ### Le projet
-      Fabrication sur place : yaourts, fromages frais, desserts lactés. Lait de foin payé au **juste prix**, transparence sur les recettes, atelier visible derrière la vitrine.
-
-      ### Les étapes clés
-      Formation, maîtrise HACCP, financement des cuves/pasteurisateur, premier panel clients. Les premiers mois sont consacrés à stabiliser recettes et rendements.
+      Atelier vitré : yaourts, fromages frais, desserts lactés. Lait de foin payé au juste prix, transparence recettes.
 
       ### Ce que ça change
-      Des produits ultra-frais, un lien clair avec les éleveurs, et une pédagogie régulière auprès des clients et des écoles.
-
-      **À retenir**
-      - Savoir dire non à des volumes irréalistes  
-      - L’histoire derrière le produit vend plus que le packaging
+      Produits ultra-frais, lien aux éleveurs, pédagogie auprès des écoles.
     MD
     quote: "Que chacun sache d’où vient le lait et qui on rémunère."
   },
@@ -523,17 +480,13 @@ stories = [
     image_url:   "https://cdn.website.dish.co/media/5c/2f/2551554/SEVENTHEEN-Coffee-Luneville.jpg",
     body: <<~MD,
       ### Le parcours
-      Plusieurs virages pro, des voyages, puis un coup de cœur pour la culture café de spécialité. Barista, torréfacteurs, latte-art : ils se forment avant d’ouvrir.
+      Formation barista, rencontres torréfacteurs, ouverture en cœur de ville.
 
       ### L’expérience
-      Origines précises, méthodes douces, espresso maîtrisé, petite restauration maison. Ateliers d’initiation et playlists soignées pour animer la journée.
+      Origines précises, méthodes douces, ateliers d’initiation.
 
       ### Les défis
-      Trouver un local lumineux, gérer le flux du midi, tenir les coûts sans rogner sur le grain. Les habitués deviennent la meilleure com.
-
-      **À retenir**
-      - Un café de spécialité, c’est 80 % d’éducation bienveillante  
-      - La constance d’extraction vaut plus qu’un menu trop long
+      Flux du midi, constance d’extraction, pédagogie client.
     MD
     quote: "On sert un café, mais on partage surtout une culture."
   },
@@ -549,17 +502,13 @@ stories = [
     image_url:   "https://www.saveurs-exotics.fr/wp-content/uploads/2025/06/Slide1-compressed.jpg",
     body: <<~MD,
       ### Le déclic
-      Après des années en RH, envie d’entreprendre “à taille humaine” et de valoriser des goûts d’enfance et d’ailleurs.
+      Entrepreneuriat à taille humaine, valoriser des goûts d’enfance.
 
       ### La boutique
-      Épicerie antillaise & africaine : condiments, farines, boissons, frais. Bar à salade, plats du jour et ateliers cuisine pour apprendre à apprivoiser les produits.
+      Références de qualité, ateliers cuisine, bar à salade.
 
       ### L’impact
-      La clientèle locale découvre de nouvelles recettes, la diaspora trouve des références de qualité. Les producteurs partenaires sont mis en avant.
-
-      **À retenir**
-      - Tester des paniers découverte accélère l’adoption  
-      - Le conseil au rayon vaut toutes les campagnes
+      Découverte culinaire, mise en avant producteurs partenaires.
     MD
     quote: "Faire voyager les gens, sans quitter Toul."
   },
@@ -567,7 +516,7 @@ stories = [
     slug: "fred-taxi-saulxures",
     title: "Fred’Taxi — Artisan taxi (Saulxures-lès-Nancy)",
     chapo: "À 48 ans, Frédéric passe de cariste à artisan taxi.",
-    description: "Reconversion, carte pro obtenue et création de sa société de taxi.",
+    description: "Reconversion, carte pro et création d’entreprise.",
     location: "38 Grande Rue, 54420 Saulxures-lès-Nancy",
     latitude: 48.654, longitude: 6.209,
     source_name: "",
@@ -575,17 +524,13 @@ stories = [
     image_url:   "",
     body: <<~MD,
       ### Le déclic
-      À 48 ans, Frédéric veut gagner en liberté. Il prépare la carte pro, révise code/réglementation, puis crée son entreprise.
+      Chercher plus d’autonomie et de contact client.
 
       ### Le métier
-      Courses locales, scolaires, médicales, gares/aéroports. Ponctualité, propreté du véhicule, sourire : le trio qui fidélise. Outils : planning simple + messagerie pour confirmer.
+      Courses locales, médicales, scolaires. Outils simples pour planifier.
 
       ### Les réalités
-      Horaires décalés, gestion carburant/assurance, réponses rapides. Le bouche-à-oreille reste décisif, surtout au village.
-
-      **À retenir**
-      - Bien choisir sa zone de chalandise  
-      - Dire non aux courses qui font perdre de l’argent
+      Horaires, assurance, relationnel : constance et fiabilité.
     MD
     quote: "Ce que je vends ? La fiabilité."
   },
@@ -601,17 +546,13 @@ stories = [
     image_url:   "",
     body: <<~MD,
       ### Le déclic
-      Après un poste en Ehpad, elle veut créer un lieu vivant, sûr et chaleureux. Elle reprend un bar, le rénove et peaufine une identité plus “lounge”.
+      Créer un lieu sûr, chaleureux, animé.
 
       ### La proposition
-      Carte courte, produits simples mais soignés, soirées à thème, scènes ouvertes, partenariats associatifs. Le lieu devient repère de quartier.
+      Carte courte, scènes ouvertes, partenariats associatifs.
 
       ### Les coulisses
-      Licence, voisinage, sécurité : anticipation et dialogue. Une communication sobre et régulière sur les réseaux fait la différence.
-
-      **À retenir**
-      - La programmation vaut autant que la déco  
-      - Une charte de convivialité claire évite 90 % des soucis
+      Licence, voisinage, sécurité, com’ régulière.
     MD
     quote: "Un endroit où l’on se sent bien, tout simplement."
   },
@@ -627,17 +568,13 @@ stories = [
     image_url:   "https://cdn.website.dish.co/media/5f/a2/7245201/Madame-Bergamote-312987467-105901108988435-4889136544572526137-n-jpg.jpg",
     body: <<~MD,
       ### Le déclic
-      Passion pâtisserie + envie de recevoir = un salon de thé artisanal à deux pas de Stanislas.
+      Pâtisserie artisanale + accueil soigné = lieu de rendez-vous.
 
       ### L’expérience
-      Gâteaux du jour, tartes de saison, thés infusés correctement, petites attentions. Sourcing farine/beurre/œufs de qualité, production quotidienne pour éviter le gaspillage.
+      Production quotidienne, carte courte, ateliers.
 
       ### Les défis
-      Rythme fournil/salle, météo capricieuse, pics week-end. La vitrine vit au fil des saisons.
-
-      **À retenir**
-      - La fraîcheur se voit et… se goûte  
-      - Moins de références, mais parfaitement exécutées
+      Flux week-end, gestion des coûts matière, précommandes.
     MD
     quote: "La simplicité, quand elle est précise, devient un vrai luxe."
   },
@@ -653,17 +590,13 @@ stories = [
     image_url:   "",
     body: <<~MD,
       ### Le déclic
-      Éducatrice de jeunes enfants, Laure veut un commerce aligné avec ses valeurs : utile, durable, pédagogique.
+      Vendre utile et durable, avec pédagogie.
 
       ### Le concept
-      Sélection de puériculture, jeux, mode et accessoires éthiques. Critères : matériaux, réparabilité, conditions de fabrication. Ateliers parents-enfants et partenariats avec la monnaie locale **Florain**.
+      Sélection éthique, ateliers parents-enfants, monnaie locale.
 
       ### Les clés
-      Transparence sur les prix, fiches pédagogiques, SAV soigné. Le magasin devient un lieu-ressource.
-
-      **À retenir**
-      - La preuve d’impact se construit produit par produit  
-      - Former l’équipe au conseil “anti-greenwashing”
+      Transparence prix, fiches pédagogiques, SAV soigné.
     MD
     quote: "Mieux acheter, c’est déjà agir."
   },
@@ -679,17 +612,13 @@ stories = [
     image_url:   "https://www.misscookies.com/photos/produits-patisseries.jpg",
     body: <<~MD,
       ### Le virage
-      Après la fonction publique, Aude choisit une franchise pour s’outiller vite (procédures, appro, marque) et se concentrer sur le service.
+      Utiliser le cadre franchise pour aller vite et se concentrer sur l’exécution.
 
       ### Le quotidien
-      Cookies, boissons chaudes, snacking du midi. Recrutement local, suivi de qualité, rythme soutenu en centre-ville. La vitrine vit au fil des saisons.
+      Qualité constante, recrutement local, saisonnalité.
 
       ### Leçon
-      Franchise ≠ facilité : c’est un cadre. L’exécution, l’accueil et la gestion des coûts font la différence.
-
-      **À retenir**
-      - Les process servent la constance  
-      - Mesurer chaque poste (matière, casse, temps)
+      Les process sont un support, l’accueil fait la différence.
     MD
     quote: "Je voulais entreprendre, mais jamais seule."
   },
@@ -705,22 +634,84 @@ stories = [
     image_url:   "https://static.wixstatic.com/media/d30316_7bde4702681c4fd5ab1446470d45bf88~mv2.jpeg/v1/fill/w_980,h_980,al_c,q_85/Entremets%20vanille%20fruits%20rouges.jpeg",
     body: <<~MD,
       ### Le déclic
-      Alexandra quitte l’enseignement pour un CAP pâtisserie et des stages. Elle démarre à petite échelle : commandes, évènementiel, marché bio.
+      CAP pâtisserie, commandes locales, ateliers.
 
       ### Signature
-      Entremets soignés, biscuits de voyage, options sur mesure (sans alcool, peu sucré). Le carnet en ligne simplifie devis et retraits.
+      Entremets soignés, options personnalisées, carnet en ligne.
 
       ### Montée en puissance
-      Photos soignées, retours clients, partenariats avec salles/traiteurs. Chaque lot devient vitrine.
-
-      **À retenir**
-      - Tester petit, apprendre vite, réinvestir  
-      - Un calendrier clair des disponibilités évite la charge mentale
+      Retours clients, partenariats, lots vitrines.
     MD
     quote: "Je fabrique peu, mais très bien, pour de vraies personnes."
+  },
+
+  # — 3 histoires sourcées L’Est Républicain (axe Nancy ⇄ Saint-Dié)
+  {
+    slug: "seventheen-coffee-luneville-er",
+    title: "SEVENTHÉEN Coffee (Lunéville) — Un coffee shop de spécialité en cœur de ville",
+    chapo: "Deux reconversions aboutissent à l’ouverture d’un coffee shop de spécialité rue de la République.",
+    description: "Café de spécialité, petite restauration, ateliers d’initiation : un lieu qui anime Lunéville.",
+    location: "57 Rue de la République, 54300 Lunéville",
+    latitude: 48.591, longitude: 6.496,
+    source_name: "L’Est Républicain",
+    source_url:  "https://www.estrepublicain.fr/edition-luneville/2024/11/25/seventheen-coffee-un-coffee-shop-rue-de-la-republique",
+    image_url:   "",
+    body: <<~MD,
+      ### Le déclic
+      Après des parcours pros différents, les fondateurs tombent amoureux du café de spécialité.
+
+      ### Le projet
+      Espresso constant, méthodes douces, **ateliers découverte** ouverts à tous.
+
+      ### Pourquoi c’est inspirant
+      Une adresse qui **réveille le centre-ville** et crée des habitudes.
+    MD
+  },
+  {
+    slug: "pierre-percee-plein-air-relance-er",
+    title: "Pierre-Percée (54) — Parier sur le plein air pour relancer un village",
+    chapo: "Investir pour monter en gamme et faire revenir les visiteurs autour du lac.",
+    description: "Hébergements et activités de nature comme levier de redynamisation locale.",
+    location: "54540 Pierre-Percée",
+    latitude: 48.498, longitude: 6.912,
+    source_name: "L’Est Républicain",
+    source_url:  "https://www.estrepublicain.fr/economie/2025/01/24/pierre-percee-veut-monter-en-gamme-pour-seduir-les-visiteurs",
+    image_url:   "",
+    body: <<~MD,
+      ### Le déclic
+      Capitaliser sur le lac et les activités outdoor.
+
+      ### Le projet
+      Mise à niveau des équipements, meilleure **expérience visiteur**.
+
+      ### Pourquoi c’est inspirant
+      Vision territoriale concrète avec retombées locales.
+    MD
+  },
+  {
+    slug: "le-pas-sage-nancy-er",
+    title: "Le Pas Sage (Nancy) — La constance d’une cuisine simple et précise",
+    chapo: "Dans le faubourg des Trois-Maisons, une adresse qui a trouvé son rythme.",
+    description: "Cuisine courte, produits frais et saison, exécution précise.",
+    location: "Quartier des Trois-Maisons, 54000 Nancy",
+    latitude: 48.701, longitude: 6.177,
+    source_name: "L’Est Républicain",
+    source_url:  "https://www.estrepublicain.fr/economie/2024/10/26/le-pas-sage-soigne-les-produits-frais-et-les-met-en-scene",
+    image_url:   "",
+    body: <<~MD,
+      ### Le déclic
+      Travailler **court, frais, de saison** et viser la régularité.
+
+      ### Le projet
+      Carte ramassée, exécution précise, renouvellement saisonnier.
+
+      ### Pourquoi c’est inspirant
+      Un restaurant de quartier peut **tenir la distance** sans sur-promettre.
+    MD
   }
 ]
 
+# Insertion idempotente (Stories)
 created_stories = 0
 stories.each do |attrs|
   attrs = attrs.dup
@@ -742,10 +733,8 @@ stories.each do |attrs|
     longitude:    attrs[:longitude]
   )
 
-  if Story.column_names.include?("quote") && quote.present?
-    s.assign_attributes(quote: quote)
-  end
-
+  s.assign_attributes(quote: quote) if s.respond_to?(:quote=) && quote.present?
   s.save!
 end
 puts "Seeds -> stories: +#{created_stories} (total: #{Story.count})"
+
