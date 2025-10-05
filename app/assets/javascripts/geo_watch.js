@@ -1,116 +1,244 @@
 /* global L */
-// Démarre un suivi GPS continu. Retourne une fonction stop().
-// opts: { follow: boolean, accuracy: boolean, maxAgeMs: number, highAccuracy: boolean }
-function startGeoWatch(map, opts){
-if (!('geolocation' in navigator) || !map) {
-console.warn('Geolocation non dispo ou map manquante');
-return function(){};
-}
-const cfg = Object.assign({
-follow: true,
-accuracy: true,
-maxAgeMs: 10000,
-highAccuracy: true
-}, opts || {});
+/*
+ * GeoWatch — Déclic
+ * ----------------------------------------------
+ * - Un unique point BLEU qui suit l'utilisateur.
+ * - AUCUN pin rouge, AUCUN halo d'accuracy par défaut.
+ * - Démarrage/arrêt propre, idempotent (peut être appelé plusieurs fois).
+ * - "Follow" actif au démarrage ; se désactive si l'utilisateur manipule la carte.
+ * - Supprime tout contrôle Leaflet non lié au zoom (évite l'icône carré avec pin rouge).
+ * - Exposé sous window.DeclicGeo : start(map, opts), stop(), isRunning(), setFollow(bool)
+ *
+ *  opts (tous facultatifs) :
+ *    - follow: true        // recadre automatiquement la carte
+ *    - showAccuracy: false // si true, affiche un cercle d'accuracy (désactivé selon demande)
+ *    - highAccuracy: true
+ *    - maxAgeMs: 15000
+ *    - panIntervalMs: 800  // délai min entre recadrages
+ *    - firstFitZoom: null  // si nombre, fait map.setView([lat,lng], firstFitZoom) au 1er fix
+ */
 
-let marker = null, circle = null, lastPan = 0;
+(function () {
+  // Ne crée l'objet global qu'une seule fois
+  if (window.DeclicGeo && window.DeclicGeo.__ready) return;
 
-const onPos = (pos) => {
-const c = (pos && pos.coords) || {};
-const lat = typeof c.latitude === 'number' ? c.latitude : null;
-const lng = typeof c.longitude === 'number' ? c.longitude : null;
-const acc = typeof c.accuracy === 'number' ? c.accuracy : null;
-if (lat === null || lng === null) return;
+  const state = {
+    map: null,
+    watchId: null,
+    marker: null,
+    accCircle: null,
+    following: true,
+    lastPanAt: 0,
+    opts: null,
+    boundAutoStopFollow: null
+  };
 
-if (!marker) {
-marker = L.marker([lat, lng], {
-icon: L.divIcon({
-className: '',
-html: '<div style="width:18px;height:18px;border-radius:9999px;background:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.35);border:2px solid #fff;"></div>',
-iconSize: [18,18],
-iconAnchor: [9,9]
-})
-}).addTo(map);
-} else {
-marker.setLatLng([lat, lng]);
-}
+  const DEFAULTS = {
+    follow: true,
+    showAccuracy: false,
+    highAccuracy: true,
+    maxAgeMs: 15000,
+    panIntervalMs: 800,
+    firstFitZoom: null
+  };
 
-if (cfg.accuracy) {
-const r = Math.max(10, Math.min(acc || 0, 400));
-if (!circle) {
-circle = L.circle([lat, lng], { radius: r, color: '#2563eb', weight: 1, fillColor: '#60a5fa', fillOpacity: 0.2 }).addTo(map);
-} else {
-circle.setLatLng([lat, lng]).setRadius(r);
-}
-}
+  function ensureMapOk(map) {
+    return !!(map && typeof map.on === 'function' && map._loaded !== undefined);
+  }
 
-if (cfg.follow) {
-const now = Date.now();
-if (now - lastPan > 800) {
-map.panTo([lat, lng], { animate: true, duration: 0.6 });
-lastPan = now;
-}
-}
-};
+  function removeNonZoomControls(map) {
+    try {
+      const root = map.getContainer().querySelector('.leaflet-top.leaflet-left');
+      if (!root) return;
+      Array.from(root.children).forEach(el => {
+        const isZoom = el.classList.contains('leaflet-control-zoom');
+        if (!isZoom) el.remove();
+      });
+    } catch (_) { /* no-op */ }
+  }
 
-const onErr = (err) => console.warn('Geolocation error:', (err && err.message) || err);
+  function blueDotIcon() {
+    // petit point bleu (comme iOS) : cercle bleu avec bordure blanche et léger ring
+    const html =
+      '<div style="' +
+      'width:18px;height:18px;border-radius:9999px;' +
+      'background:#2563eb;border:2px solid #fff;' +
+      'box-shadow:0 0 0 3px rgba(37,99,235,.35);' +
+      '"></div>';
+    return L.divIcon({
+      className: '',
+      html: html,
+      iconSize: [18, 18],
+      iconAnchor: [9, 9]
+    });
+  }
 
-const watchId = navigator.geolocation.watchPosition(onPos, onErr, {
-enableHighAccuracy: !!cfg.highAccuracy,
-maximumAge: cfg.maxAgeMs,
-timeout: 10000
-});
+  function onPosition(pos) {
+    if (!state.map || !pos || !pos.coords) return;
 
-const stop = function(){
-try { navigator.geolocation.clearWatch(watchId); } catch(e) {}
-};
-window.addEventListener('beforeunload', stop, { once: true });
-return stop;
-}
+    const { latitude, longitude, accuracy } = pos.coords;
+    if (typeof latitude !== 'number' || typeof longitude !== 'number') return;
 
-// Bouton Leaflet pour activer/désactiver l'autocentrage
-// + coupe automatiquement le suivi dès que l'utilisateur manipule la carte.
-function addFollowControl(map, startFn){
-const ctl = L.control({ position: 'topleft' });
-let following = true, stopFn = null, _btn = null;
+    // Crée/maj du point bleu
+    if (!state.marker) {
+      state.marker = L.marker([latitude, longitude], { icon: blueDotIcon() }).addTo(state.map);
+      // 1er fix : on centre immédiatement
+      if (state.opts.firstFitZoom && Number.isFinite(state.opts.firstFitZoom)) {
+        state.map.setView([latitude, longitude], Number(state.opts.firstFitZoom), { animate: true });
+      } else if (state.opts.follow) {
+        state.map.panTo([latitude, longitude], { animate: true });
+      }
+    } else {
+      state.marker.setLatLng([latitude, longitude]);
+    }
 
-ctl.onAdd = function(){
-const btn = L.DomUtil.create('button');
-_btn = btn;
-btn.type = 'button';
-btn.textContent = '📍 Suivre';
-btn.title = 'Activer/désactiver le suivi de ma position';
-btn.style.cssText = 'background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15);';
-L.DomEvent.on(btn, 'click', function(e){
-L.DomEvent.stopPropagation(e);
-following = !following;
-btn.textContent = following ? '📍 Suivre' : '📍 Libre';
-if (stopFn) { stopFn(); stopFn = null; }
-if (following && typeof startFn === 'function') { stopFn = startFn({ follow:true }); }
-});
-return btn;
-};
+    // Accuracy (désactivé par défaut)
+    if (state.opts.showAccuracy) {
+      const r = Math.max(5, Math.min(accuracy || 0, 1000));
+      if (!state.accCircle) {
+        state.accCircle = L.circle([latitude, longitude], {
+          radius: r,
+          color: '#2563eb',
+          weight: 1,
+          fillColor: '#60a5fa',
+          fillOpacity: 0.18
+        }).addTo(state.map);
+      } else {
+        state.accCircle.setLatLng([latitude, longitude]).setRadius(r);
+      }
+    }
 
-ctl.addTo(map);
+    // Follow
+    if (state.following) {
+      const now = Date.now();
+      if (now - state.lastPanAt > state.opts.panIntervalMs) {
+        state.map.panTo([latitude, longitude], { animate: true });
+        state.lastPanAt = now;
+      }
+    }
+  }
 
-// démarre en mode "suivre"
-if (typeof startFn === 'function') { stopFn = startFn({ follow:true }); }
+  function onError(err) {
+    // Pas d'alertes intrusives : on log juste
+    console.warn('Geolocation error:', err && err.message ? err.message : err);
+  }
 
-// 🔻 Dès que l'utilisateur manipule la carte, on coupe le follow
-const autoStopFollow = function(){
-if (!following) return; // déjà libre
-following = false;
-if (_btn) _btn.textContent = '📍 Libre';
-if (stopFn) { stopFn(); stopFn = null; }
-};
-map.on('dragstart zoomstart', autoStopFollow);
+  function bindAutoStopFollow() {
+    if (!state.map) return;
+    if (state.boundAutoStopFollow) return;
 
-// renvoie un nettoyeur
-return function(){
-if (stopFn) stopFn();
-map.off('dragstart zoomstart', autoStopFollow);
-};
-}
+    const handler = function () {
+      if (!state.following) return;
+      state.following = false;
+    };
+    state.boundAutoStopFollow = handler;
+    state.map.on('dragstart zoomstart', handler);
+  }
+
+  function unbindAutoStopFollow() {
+    if (!state.map || !state.boundAutoStopFollow) return;
+    state.map.off('dragstart zoomstart', state.boundAutoStopFollow);
+    state.boundAutoStopFollow = null;
+  }
+
+  function start(map, opts) {
+    if (!ensureMapOk(map)) {
+      console.warn('[DeclicGeo] Carte Leaflet manquante ou invalide.');
+      return () => {};
+    }
+
+    // Si déjà en cours, on stoppe proprement avant de relancer
+    if (state.watchId !== null) stop();
+
+    state.map = map;
+    state.opts = Object.assign({}, DEFAULTS, opts || {});
+    state.following = !!state.opts.follow;
+    state.lastPanAt = 0;
+
+    // Nettoie d'éventuels contrôles non-zoom restants
+    removeNonZoomControls(map);
+
+    // Lance le watch
+    try {
+      state.watchId = navigator.geolocation.watchPosition(onPosition, onError, {
+        enableHighAccuracy: !!state.opts.highAccuracy,
+        maximumAge: state.opts.maxAgeMs,
+        timeout: 10000
+      });
+    } catch (e) {
+      console.warn('[DeclicGeo] Geolocation non disponible sur ce navigateur.', e);
+      state.watchId = null;
+    }
+
+    // Un "nudge" au retour d'onglet (iOS/Android parfois gèlent le watch)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && navigator.geolocation && navigator.geolocation.getCurrentPosition) {
+        navigator.geolocation.getCurrentPosition(onPosition, onError, {
+          enableHighAccuracy: !!state.opts.highAccuracy,
+          maximumAge: state.opts.maxAgeMs,
+          timeout: 8000
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible, { passive: true });
+
+    // Sécurité : arrêter le watch à la fermeture
+    const stopOnUnload = () => stop();
+    window.addEventListener('beforeunload', stopOnUnload, { once: true });
+
+    // Mémorise pour stop()
+    state._cleanup = () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('beforeunload', stopOnUnload);
+    };
+
+    // Désactive follow dès que l'utilisateur manipule la carte
+    bindAutoStopFollow();
+
+    return stop;
+  }
+
+  function stop() {
+    // Arrête geolocation
+    try {
+      if (state.watchId !== null) navigator.geolocation.clearWatch(state.watchId);
+    } catch (_) { /* no-op */ }
+    state.watchId = null;
+
+    // Nettoie couche/marker/accuracy
+    try {
+      if (state.marker) { state.marker.remove(); }
+      if (state.accCircle) { state.accCircle.remove(); }
+    } catch (_) { /* no-op */ }
+    state.marker = null;
+    state.accCircle = null;
+
+    // Nettoie events
+    unbindAutoStopFollow();
+    if (state._cleanup) { try { state._cleanup(); } catch (_) {} }
+    state._cleanup = null;
+
+    // Ne touche pas à la map (laisse les autres couches)
+  }
+
+  function isRunning() {
+    return state.watchId !== null;
+  }
+
+  function setFollow(on) {
+    state.following = !!on;
+  }
+
+  // API publique
+  window.DeclicGeo = {
+    startGeoWatch: start,
+    stopGeoWatch: stop,
+    isRunning: isRunning,
+    setFollow: setFollow,
+    __ready: true
+  };
+})();
+
 
 
 

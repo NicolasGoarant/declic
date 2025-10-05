@@ -1,0 +1,205 @@
+<main class="max-w-6xl mx-auto px-6 py-8 pt-20 md:pt-24">
+  <h1 class="text-3xl sm:text-4xl font-extrabold">Belles histoires</h1>
+  <p class="text-gray-600 mt-2">Des parcours inspirants de reconversion et de prise de risque.</p>
+
+  <!-- CARTE -->
+  <div class="relative rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden mt-4 mb-6">
+    <div id="map-stories" class="h-64 md:h-80 w-full"></div>
+
+    <!-- Boutons flottants -->
+    <button id="btn-locate-stories"
+            class="absolute right-3 top-3 z-20 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/95 ring-1 ring-gray-200 shadow hover:bg-white">
+      <span>📍</span><span class="text-sm font-medium">Me localiser</span>
+    </button>
+    <button id="btn-fixloc-stories"
+            class="absolute right-3 top-14 z-20 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/95 ring-1 ring-gray-200 shadow hover:bg-white">
+      <span>🗺️</span><span class="text-sm font-medium">Définir ma position</span>
+    </button>
+  </div>
+
+  <style>
+    .picon{width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;
+      color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:var(--c,#a855f7)}
+    .picon::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+      border:6px solid transparent;border-top-color:var(--c,#a855f7)}
+  </style>
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+    <% @stories.each do |s| %>
+      <article class="bg-white rounded-2xl border border-gray-100 shadow hover:shadow-md transition overflow-hidden">
+        <img src="<%= s.image_url.presence || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1200&auto=format&fit=crop' %>" class="w-full h-40 object-cover" alt="">
+        <div class="p-5">
+          <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full bg-violet-100 text-violet-700">Belle histoire</span>
+          <h2 class="mt-2 font-semibold text-lg line-clamp-2"><%= s.title %></h2>
+          <p class="text-sm text-gray-600 mt-1 line-clamp-3"><%= (s.try(:chapo).presence || s.try(:description)).to_s %></p>
+          <div class="mt-4 flex items-center justify-between text-sm text-gray-500">
+            <% if s.location.present? %><span>📍 <%= s.location %></span><% end %>
+            <%= link_to "Lire", story_path(s.respond_to?(:slug) && s.slug.present? ? s.slug : s.id),
+                        class: "inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700" %>
+          </div>
+        </div>
+      </article>
+    <% end %>
+  </div>
+</main>
+
+<!-- Modal consentement géoloc (réutilise la logique de la home) -->
+<div id="geo-consent" class="fixed inset-0 z-[500] hidden">
+  <div class="absolute inset-0 bg-black/40"></div>
+  <div class="absolute inset-0 grid place-items-center p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl ring-1 ring-black/10 p-6">
+      <h3 class="text-lg font-semibold">Activer la géolocalisation&nbsp;?</h3>
+      <p class="mt-1 text-sm text-gray-600">Nous l’utilisons uniquement pour centrer la carte autour de votre position. Aucune donnée n’est stockée côté serveur.</p>
+      <div class="mt-4 flex gap-3">
+        <button id="geo-accept" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Oui, me localiser</button>
+        <button id="geo-decline" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">Plus tard</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%= content_for :scripts do %>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+  (async function(){
+    const el = document.getElementById('map-stories');
+    if(!el || !window.L) return;
+
+    // --- carte + calque utilisateur
+    const map=L.map(el,{zoomControl:true,scrollWheelZoom:true}).setView([46.6,2.2],6);
+    const userLayer=L.layerGroup().addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+
+    const VIOLET='#a855f7';
+    const icon=()=>L.divIcon({className:'',html:`<div class="picon" style="--c:${VIOLET}"><span>📖</span></div>`,iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
+
+    // --- marqueurs histoires
+    const layer=L.layerGroup().addTo(map);
+    let lastPopup=null, bounds=[];
+    function addMarker(s){
+      if(!s||!s.latitude||!s.longitude) return;
+      const m=L.marker([s.latitude,s.longitude],{icon:icon()}).addTo(layer);
+      const url=`/stories/${s.slug||s.id}`;
+      m.bindPopup(`<div style="min-width:220px">
+        <div style="margin-bottom:6px"><span style="font-size:11px;padding:2px 6px;border-radius:9999px;background:#f3e8ff;color:#6b21a8;">Belle histoire</span></div>
+        <strong>${s.title||''}</strong>
+        <p style="margin:.5rem 0">${(s.description||s.chapo||'').slice(0,110)}${((s.description||s.chapo||'').length>110)?'…':''}</p>
+        <a href="${url}" class="text-indigo-600 underline text-sm">Lire l’histoire</a></div>`);
+      m.on('popupopen',e=>{ if(lastPopup && lastPopup!==e.popup) lastPopup.close(); lastPopup=e.popup; });
+      bounds.push([s.latitude,s.longitude]);
+    }
+    let data=[]; try{ const r=await fetch('/api/v1/stories'); data=await r.json(); }catch(e){ data=[]; }
+    data.forEach(addMarker); if(bounds.length) map.fitBounds(bounds,{padding:[24,24]});
+
+    // ====== Géolocalisation (portée depuis la home)
+    const OK_ACC=5000; let clickToSet=false, watchId=null;
+
+    function toast(msg){
+      try{ const t=document.createElement('div'); t.textContent=msg;
+        t.className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[600] px-4 py-2 rounded-lg bg-slate-900 text-white shadow";
+        document.body.appendChild(t); setTimeout(()=>t.remove(),4500);
+      }catch{ alert(msg); }
+    }
+
+    function centerUser(lat, lon, accuracy, source='auto'){
+      userLayer.clearLayers();
+      if(accuracy && accuracy<2000){
+      }
+      map.flyTo([lat, lon], Math.max(map.getZoom(), 13), { duration:.8 });
+      if ((accuracy && accuracy <= 5000) || String(source).startsWith('manual')){
+        try{ localStorage.setItem('declic_user_pos', JSON.stringify({ lat, lng: lon })); }catch{}
+      }
+    }
+
+    function tryImproveFix(onBetter, onEnd){
+      if(!('geolocation' in navigator)) return onEnd?.();
+      const started = Date.now();
+      watchId = navigator.geolocation.watchPosition(
+        (pos)=>{
+          const c=pos.coords;
+          if(c.accuracy<=OK_ACC){ onBetter(c); stopWatch(); }
+          else if(Date.now()-started>30000){ onEnd?.(); stopWatch(); }
+        },
+        ()=>{ onEnd?.(); stopWatch(); },
+        { enableHighAccuracy:true, maximumAge:0, timeout:30000 }
+      );
+      function stopWatch(){ if(watchId!=null){ navigator.geolocation.clearWatch(watchId); watchId=null; } }
+    }
+
+    function doLocate(){
+      if(!('geolocation' in navigator)) return;
+      navigator.geolocation.getCurrentPosition(
+        (pos)=>{
+          const c=pos.coords;
+          if(c.accuracy<=OK_ACC){ centerUser(c.latitude,c.longitude,c.accuracy); localStorage.setItem('declic_geo_pref','granted'); }
+          else{
+            tryImproveFix(
+              (better)=>{ centerUser(better.latitude,better.longitude,better.accuracy); localStorage.setItem('declic_geo_pref','granted'); },
+              ()=>{ centerUser(c.latitude,c.longitude,c.accuracy); toast("Localisation approximative. Cliquez « Définir ma position » puis un point sur la carte pour corriger."); }
+            );
+          }
+        },
+        ()=>{
+          localStorage.setItem('declic_geo_pref','denied');
+          toast("Géolocalisation refusée. Vous pouvez la réactiver via le bouton « Me localiser ».");
+        },
+        { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
+      );
+    }
+
+    // Boutons
+    const btnLocate=document.getElementById('btn-locate-stories');
+    const btnFix=document.getElementById('btn-fixloc-stories');
+    btnLocate?.addEventListener('click', doLocate);
+    btnFix?.addEventListener('click', ()=>{
+      clickToSet=!clickToSet;
+      btnFix.style.background = clickToSet ? '#eef2ff' : 'rgba(255,255,255,.95)';
+      toast(clickToSet ? "Cliquez sur la carte pour définir votre position." : "Mode désactivé.");
+    });
+
+    map.on('click', (e)=>{
+      if(!clickToSet) return;
+      const {lat,lng}=e.latlng;
+      centerUser(lat, lng, 20, 'manual-click');
+      localStorage.setItem('declic_geo_pref','granted');
+      clickToSet=false; btnFix.style.background='rgba(255,255,255,.95)';
+    });
+
+    // Consentement
+    const modal=document.getElementById('geo-consent'), accept=document.getElementById('geo-accept'), decline=document.getElementById('geo-decline');
+    const openModal=()=>modal?.classList.remove('hidden'); const closeModal=()=>modal?.classList.add('hidden');
+    accept?.addEventListener('click', ()=>{ closeModal(); doLocate(); });
+    decline?.addEventListener('click', ()=>{ closeModal(); localStorage.setItem('declic_geo_pref','denied'); });
+
+    // Position mémorisée ?
+    try{
+      const saved = localStorage.getItem('declic_user_pos');
+      if (saved) {
+        const p = JSON.parse(saved);
+        if (p && typeof p.lat === 'number' && typeof p.lng === 'number') {
+          centerUser(p.lat, p.lng, 50, 'manual-cache');
+        }
+      }
+    }catch{}
+
+    // Demande de consentement comme sur la home
+    async function askConsentIfNeeded(){
+      const pref=localStorage.getItem('declic_geo_pref');
+      if(pref==='granted'){ doLocate(); return; }
+      if(pref==='denied'){ return; }
+      try{
+        if(navigator.permissions?.query){
+          const st=await navigator.permissions.query({ name:'geolocation' });
+          if(st.state==='granted'){ localStorage.setItem('declic_geo_pref','granted'); doLocate(); return; }
+          if(st.state==='denied'){  localStorage.setItem('declic_geo_pref','denied'); return; }
+          openModal();
+        }else{ openModal(); }
+      }catch{ openModal(); }
+    }
+    document.addEventListener('turbo:load', askConsentIfNeeded, { once:true });
+    document.addEventListener('DOMContentLoaded', askConsentIfNeeded, { once:true });
+  })();
+  </script>
+<% end %>
+

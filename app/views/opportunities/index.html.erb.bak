@@ -129,7 +129,14 @@
 
     // ---- Carte
     const map = L.map(mapEl,{ zoomControl:true, scrollWheelZoom:true }).setView([46.6, 2.2], 6);
-    mapEl._leaflet_map = map; // <- pour accès externe si besoin
+    
+// -- Suivi géolocalisation --
+if (typeof addFollowControl === "function" && typeof startGeoWatch === "function") {
+  addFollowControl(map, (opts)=> startGeoWatch(map, opts));
+} else if (typeof startGeoWatch === "function") {
+  startGeoWatch(map, { follow:true });
+}
+mapEl._leaflet_map = map; // <- pour accès externe si besoin
     const userLayer = L.layerGroup().addTo(map);
     addFallbackTiles(map);
 
@@ -230,11 +237,7 @@
 
     function centerUser(lat, lon, accuracy, source='auto'){
       userLayer.clearLayers();
-      const icon=L.divIcon({className:'',html:`<div class="picon" style="--c:#2563eb"><span>📍</span></div>`,iconSize:[26,32],iconAnchor:[13,28]});
-      L.marker([lat, lon], {icon}).addTo(userLayer)
-        .bindPopup(`<strong>Vous êtes ici</strong>${accuracy?`<br><small>Précision ~${Math.round(accuracy)} m</small>`:''}`);
       if(accuracy && accuracy<2000){
-        L.circle([lat, lon], { radius: accuracy, color:'#2563eb', fillColor:'#3b82f6', fillOpacity:.12, weight:1 }).addTo(userLayer);
       }
       map.flyTo([lat, lon], Math.max(map.getZoom(), 13), { duration:.8 });
       if ((accuracy && accuracy <= 5000) || String(source).startsWith('manual')){

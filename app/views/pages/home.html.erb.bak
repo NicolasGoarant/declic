@@ -11,10 +11,10 @@
       <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] gap-8 items-center">
         <div>
           <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900">
-            Donne du sens à tes projets, <span class="bg-gradient-to-r from-fuchsia-600 to-indigo-600 bg-clip-text text-transparent">proche de chez toi</span>
+            Change ta vie, <span class="bg-gradient-to-r from-fuchsia-600 to-indigo-600 bg-clip-text text-transparent">en quelques clics</span>
           </h1>
           <p class="mt-4 text-lg text-slate-700 max-w-2xl">
-            Déclic agrège les opportunités locales : entreprendre, se former, rencontrer, aider — et découvrir des <em>belles histoires</em> qui inspirent.
+            Déclic agrège les mille et une opportunités locales : entreprendre, se former, rencontrer, aider — et découvrir des <em>belles histoires</em> qui inspirent.
           </p>
 
           <dl class="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -102,7 +102,7 @@
           <div class="flex items-start gap-4 lg:gap-5">
             <span class="<%= icon_wrap %>">📖</span>
             <div class="min-w-0">
-              <p class="<%= title_txt %>">Belles histoires</p>
+              <p class="<%= title_txt %>">"Belles histoires !"</p>
               <p class="<%= desc_txt %>">Déclics, reconversions, prises de risque</p>
             </div>
           </div>
@@ -266,7 +266,10 @@
 
   // --- Carte
   const map = L.map('map',{ zoomControl:true, scrollWheelZoom:true }).setView([46.6, 2.2], 6);
-  mapEl._leaflet_map = map;
+  
+// -- Suivi géolocalisation (home) --
+if (typeof startGeoWatch === "function") { startGeoWatch(map, { follow:true }); }
+mapEl._leaflet_map = map;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap' }).addTo(map);
 
   const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#a855f7',default:'#6366f1'};
@@ -374,11 +377,7 @@
   function centerUser(lat, lon, accuracy, source='auto'){
     userCentred = true;
     userLayer.clearLayers();
-    const icon=L.divIcon({className:'',html:`<div class="picon" style="--c:#2563eb"><span>📍</span></div>`,iconSize:[26,32],iconAnchor:[13,28]});
-    L.marker([lat, lon], {icon}).addTo(userLayer)
-      .bindPopup(`<strong>Vous êtes ici</strong>${accuracy?`<br><small>Précision ~${Math.round(accuracy)} m</small>`:''}`);
     if(accuracy && accuracy<2000){
-      L.circle([lat, lon], { radius: accuracy, color:'#2563eb', fillColor:'#3b82f6', fillOpacity:.12, weight:1 }).addTo(userLayer);
     }
     map.flyTo([lat, lon], Math.max(map.getZoom(), 13), { duration:.8 });
     if ((accuracy && accuracy <= 5000) || String(source).startsWith('manual')) {
