@@ -231,6 +231,7 @@
   .picon::after{ content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
     border:6px solid transparent;border-top-color:var(--c,#6366f1); }
   .leaflet-container{ font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans","Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"; }
+  .myloc-btn{ width:34px;height:34px;background:#fff;border:none;cursor:pointer; }
   /* petite carte produit pour les popups */
   .popcard{display:grid;grid-template-columns:72px 1fr;gap:10px;min-width:260px;align-items:start}
   .popcard img{width:72px;height:72px;border-radius:10px;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,.2)}
@@ -253,258 +254,200 @@
   </div>
 </div>
 
-<%# Leaflet est déjà inclus dans le layout. Pas besoin de le réimporter ici. %>
+<!-- Leaflet (forcer le chargement côté Turbo) -->
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      data-turbo-track="reload" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        data-turbo-track="reload" defer></script>
 
 <% content_for :scripts do %>
 <script>
 (function(){
   const mapEl = document.getElementById('map');
-  if(!mapEl || !window.L) return;
+  if (!mapEl) return;
 
-  // --- Carte
-  const map = L.map('map', { zoomControl:true, scrollWheelZoom:true }).setView([46.6, 2.2], 6);
-  mapEl._leaflet_map = map;           // exposer la map sur l'élément
-  window.__declicMap = map;           // (optionnel) exposer globalement
-
-  // 👉 Démarrage immédiat du watcher (point bleu seulement)
-  if (window.DeclicGeo && window.DeclicGeo.startGeoWatch) {
-    window.DeclicGeo.startGeoWatch(map, { follow: true, showAccuracy: false });
+  // Réutiliser la carte si déjà créée (retours Turbo)
+  if (mapEl._leaflet_map) {
+    requestAnimationFrame(()=> mapEl._leaflet_map.invalidateSize(true));
+    setTimeout(()=> mapEl._leaflet_map.invalidateSize(true), 120);
   }
 
-  // --- Tuiles
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'© OpenStreetMap'
-  }).addTo(map);
+  function initMap(){
+    if (!window.L) { window.addEventListener('load', initMap, { once:true }); return; }
+    if (mapEl._leaflet_map) return;
 
-  // --- Icônes pour les opportunités / histoires
-  const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#a855f7',default:'#6366f1'};
-  const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',histoires:'📖',default:'⭐'};
-  const iconFor = (cat)=> L.divIcon({className:'',html:`<div class="picon" style="--c:${colors[cat]||colors.default}"><span>${emojis[cat]||emojis.default}</span></div>`,iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
+    const map = L.map('map', { zoomControl:true, scrollWheelZoom:true })
+                 .setView([46.6, 2.2], 6);
 
-  const layer = L.layerGroup().addTo(map);
+    mapEl._leaflet_map = map;
+    window.__declicMap = map;
 
-  let dataset = [];
-  let userCentred = false;
-  let clickToSet = false;
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:'© OpenStreetMap'
+    }).addTo(map);
 
-  // Charger position sauvegardée (si l’utilisateur a corrigé/accepté)
-  try {
-    const saved = localStorage.getItem('declic_user_pos');
-    if (saved) {
-      const p = JSON.parse(saved);
-      if (p && typeof p.lat === 'number' && typeof p.lng === 'number') {
-        userCentred = true;
-        map.flyTo([p.lat, p.lng], Math.max(map.getZoom(), 13), { duration:.8 });
+    map.whenReady(()=>{
+      requestAnimationFrame(()=> map.invalidateSize(true));
+      setTimeout(()=> map.invalidateSize(true), 120);
+    });
+
+    try {
+      const ro = new ResizeObserver(()=> map.invalidateSize());
+      ro.observe(mapEl);
+    } catch(_) {}
+
+    document.addEventListener('visibilitychange', ()=>{
+      if (document.visibilityState === 'visible') map.invalidateSize(true);
+    });
+
+    // Démarre le point bleu (DeclicGeo) dès l’init
+    if (window.DeclicGeo?.startGeoWatch) {
+      window.DeclicGeo.startGeoWatch(map, { follow:true, showAccuracy:false });
+    }
+
+    // ---- Couche données (opps + stories)
+    const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#a855f7',default:'#6366f1'};
+    const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',histoires:'📖',default:'⭐'};
+    const iconFor = (cat)=> L.divIcon({className:'',html:`<div class="picon" style="--c:${colors[cat]||colors.default}"><span>${emojis[cat]||emojis.default}</span></div>`,iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
+    const layer = L.layerGroup().addTo(map);
+    let dataset = [];
+    let userCentred = false;
+
+    function parseDate(x){ const d=new Date(x); return isNaN(d)?null:d; }
+    function frLongDate(d){ return d?d.toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}):''; }
+    function frHM(d){ return d?d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''; }
+    function thumbFor(o){
+      if (o.image_url) return o.image_url;
+      const cat=(o.category||'').toLowerCase();
+      if(cat==='benevolat')    return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=300&auto=format&fit=crop';
+      if(cat==='formation')    return 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=300&auto=format&fit=crop';
+      if(cat==='rencontres')   return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=300&auto=format&fit=crop';
+      if(cat==='entreprendre') return 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=300&auto=format&fit=crop';
+      if(cat==='histoires')    return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
+      return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
+    }
+    function popupHtml(o){
+      const cat=(o.category||'');
+      const base=(cat.toLowerCase()==='histoires')?'/stories':'/opportunities';
+      const url=`${base}/${o.slug||o.id}`;
+      const st=parseDate(o.starts_at||o.start_at||o.start_time||o.date||o.scheduled_on);
+      const en=parseDate(o.ends_at||o.end_at||o.end_time);
+      const when = st ? `📅 ${frLongDate(st)}${en?` — ${frHM(st)}–${frHM(en)}`: (o.schedule_text?``:` — ${frHM(st)}`)}` : (o.schedule_text||'');
+      const loc = o.location ? `📍 ${o.location}` : '';
+      const img = thumbFor(o);
+      return `
+        <div class="popcard">
+          <img src="${img}" alt="">
+          <div>
+            <h4>${o.title||''}</h4>
+            ${o.organization?`<div class="muted">${o.organization}</div>`:''}
+            ${when?`<div class="muted">${when}</div>`:''}
+            ${loc?`<div class="muted">${loc}</div>`:''}
+            <div style="margin-top:6px"><a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a></div>
+          </div>
+        </div>`;
+    }
+    function plot(items){
+      layer.clearLayers();
+      const bounds=[];
+      (items||[]).forEach(o=>{
+        if(!o.latitude || !o.longitude) return;
+        L.marker([o.latitude,o.longitude],{icon:iconFor((o.category||'').toLowerCase())})
+          .addTo(layer).bindPopup(popupHtml(o));
+        bounds.push([o.latitude,o.longitude]);
+      });
+      if(bounds.length && !userCentred){ map.fitBounds(bounds,{padding:[30,30]}); }
+    }
+
+    Promise.all([
+      fetch('/api/v1/opportunities').then(r=>r.ok?r.json():[]).catch(()=>[]),
+      fetch('/api/v1/stories').then(r=>r.ok?r.json():[]).catch(()=>[])
+    ]).then(([opps, stories])=>{
+      (stories||[]).forEach(s=> s.category='histoires');
+      dataset = ([]).concat(opps||[], stories||[]);
+      window.__DATASET = dataset;
+      plot(dataset);
+    });
+
+    // Filtres
+    const chips=[...document.querySelectorAll('.chip')];
+    chips.forEach(chip=>chip.addEventListener('click',()=>{
+      chips.forEach(c=>c.classList.remove('is-active')); chip.classList.add('is-active');
+      const cat=chip.dataset.cat;
+      if(cat==='toutes'){ plot(dataset); return; }
+      plot((dataset||[]).filter(o=> (o.category||'').toLowerCase()===cat));
+    }));
+
+    // Bouton “Me localiser” (trig DeclicGeo)
+    document.getElementById('btn-locate')?.addEventListener('click', ()=>{
+      if (window.DeclicGeo?.startGeoWatch && !window.DeclicGeo.isRunning?.()) {
+        window.DeclicGeo.startGeoWatch(map, { follow:true, showAccuracy:false });
       }
-    }
-  } catch {}
-
-  // --- helpers dates/images pour popup
-  function parseDate(x){
-    if(!x) return null;
-    const d = new Date(x);
-    return isNaN(d.getTime()) ? null : d;
-  }
-  function frLongDate(d){
-    if(!d) return '';
-    return d.toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-  }
-  function frHM(d){ return d ? d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : ''; }
-  function thumbFor(o){
-    if(o.image_url){ return o.image_url; }
-    const cat=(o.category||'').toLowerCase();
-    if(cat==='benevolat')    return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=300&auto=format&fit=crop';
-    if(cat==='formation')    return 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=300&auto=format&fit=crop';
-    if(cat==='rencontres')   return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=300&auto=format&fit=crop';
-    if(cat==='entreprendre') return 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=300&auto=format&fit=crop';
-    if(cat==='histoires')    return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
-    return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
-  }
-  function popupHtml(o){
-    const cat=(o.category||'');
-    const base=(cat.toLowerCase()==='histoires')?'/stories':'/opportunities';
-    const url=`${base}/${o.slug||o.id}`;
-    const st=parseDate(o.starts_at||o.start_at||o.start_time||o.date||o.scheduled_on);
-    const en=parseDate(o.ends_at||o.end_at||o.end_time);
-    const when = st ? `📅 ${frLongDate(st)}${en?` — ${frHM(st)}–${frHM(en)}`: (o.schedule_text?``:` — ${frHM(st)}`)}` : (o.schedule_text||'');
-    const loc = o.location ? `📍 ${o.location}` : '';
-    const img = thumbFor(o);
-    return `
-      <div class="popcard">
-        <img src="${img}" alt="">
-        <div>
-          <h4>${o.title||''}</h4>
-          ${o.organization?`<div class="muted">${o.organization}</div>`:''}
-          ${when?`<div class="muted">${when}</div>`:''}
-          ${loc?`<div class="muted">${loc}</div>`:''}
-          <div style="margin-top:6px"><a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a></div>
-        </div>
-      </div>`;
-  }
-
-  function plot(items){
-    layer.clearLayers();
-    const bounds=[];
-    (items||[]).forEach(o=>{
-      if(!o.latitude || !o.longitude) return;
-      L.marker([o.latitude,o.longitude],{icon:iconFor((o.category||'').toLowerCase())})
-        .addTo(layer).bindPopup(popupHtml(o));
-      bounds.push([o.latitude,o.longitude]);
+      // petit recentrage si déjà en route
+      if (window.DeclicGeo?.lastLatLng) {
+        map.flyTo(window.DeclicGeo.lastLatLng, Math.max(map.getZoom(), 13), { duration:.6 });
+      }
     });
-    if(bounds.length && !userCentred){
-      map.fitBounds(bounds,{padding:[30,30]});
-    }
-  }
 
-  Promise.all([
-    fetch('/api/v1/opportunities').then(r=>r.ok?r.json():[]).catch(()=>[]),
-    fetch('/api/v1/stories').then(r=>r.ok?r.json():[]).catch(()=>[])
-  ]).then(([opps, stories])=>{
-    (stories||[]).forEach(s=> s.category='histoires');
-    dataset = ([]).concat(opps||[], stories||[]);
-    window.__DATASET = dataset;
-    plot(dataset);
-  });
+    // Consentement modal
+    const modal=document.getElementById('geo-consent'),
+          accept=document.getElementById('geo-accept'),
+          decline=document.getElementById('geo-decline');
+    const openModal=()=>modal?.classList.remove('hidden');
+    const closeModal=()=>modal?.classList.add('hidden');
 
-  // Filtres
-  const chips=[...document.querySelectorAll('.chip')];
-  chips.forEach(chip=>chip.addEventListener('click',()=>{
-    chips.forEach(c=>c.classList.remove('is-active')); chip.classList.add('is-active');
-    const cat=chip.dataset.cat;
-    if(cat==='toutes'){ plot(dataset); return; }
-    plot((dataset||[]).filter(o=> (o.category||'').toLowerCase()===cat));
-  }));
-
-  // --------------------------- GÉOLOCALISATION ---------------------------
-  const OK_ACC = 5000;
-
-  function toast(msg){
-    try{
-      const t=document.createElement('div');
-      t.textContent=msg;
-      t.className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[600] px-4 py-2 rounded-lg bg-slate-900 text-white shadow";
-      document.body.appendChild(t);
-      setTimeout(()=>t.remove(), 4500);
-    }catch{ alert(msg); }
-  }
-
-  function centerUser(lat, lon, accuracy, source='auto'){
-    // aucun marker/halo ici : on laisse DeclicGeo afficher le point bleu
-    userCentred = true;
-    map.flyTo([lat, lon], Math.max(map.getZoom(), 13), { duration:.8 });
-    if ((accuracy && accuracy <= OK_ACC) || String(source).startsWith('manual')) {
-      try { localStorage.setItem('declic_user_pos', JSON.stringify({ lat, lng: lon })); } catch {}
-    }
-  }
-
-  function tryImproveFix(onBetter, onEnd){
-    if(!('geolocation' in navigator)) return onEnd?.();
-    const started = Date.now();
-    const wId = navigator.geolocation.watchPosition(
-      (pos)=>{
-        const c = pos.coords;
-        if(c.accuracy <= OK_ACC){
-          onBetter(c);
-          navigator.geolocation.clearWatch(wId);
-        }else if(Date.now() - started > 30000){
-          onEnd?.(); navigator.geolocation.clearWatch(wId);
+    function askConsentIfNeeded(){
+      const pref=localStorage.getItem('declic_geo_pref');
+      if(pref==='granted'){
+        if (window.DeclicGeo?.startGeoWatch && !window.DeclicGeo.isRunning?.()) {
+          window.DeclicGeo.startGeoWatch(map, { follow:true, showAccuracy:false });
         }
-      },
-      ()=>{ onEnd?.(); navigator.geolocation.clearWatch(wId); },
-      { enableHighAccuracy:true, maximumAge:0, timeout:30000 }
-    );
-  }
+        return;
+      }
+      if(pref==='denied'){ return; }
+      try{
+        if(navigator.permissions?.query){
+          navigator.permissions.query({ name:'geolocation' }).then(st=>{
+            if(st.state==='granted'){ localStorage.setItem('declic_geo_pref','granted');
+              if (window.DeclicGeo?.startGeoWatch && !window.DeclicGeo.isRunning?.()) {
+                window.DeclicGeo.startGeoWatch(map, { follow:true, showAccuracy:false });
+              }
+            } else if(st.state==='denied'){ localStorage.setItem('declic_geo_pref','denied'); }
+            else { openModal(); }
+          });
+        } else { openModal(); }
+      }catch{ openModal(); }
+    }
 
-  function doLocate(){
-    if(!('geolocation' in navigator)) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos)=>{
-        const c = pos.coords;
-        if(c.accuracy <= OK_ACC){
-          centerUser(c.latitude, c.longitude, c.accuracy);
-          localStorage.setItem('declic_geo_pref','granted');
-          // réactive le follow du watcher au besoin
-          if (window.DeclicGeo?.setFollow) window.DeclicGeo.setFollow(true);
-        }else{
-          tryImproveFix(
-            (better)=>{ centerUser(better.latitude, better.longitude, better.accuracy); localStorage.setItem('declic_geo_pref','granted'); if (window.DeclicGeo?.setFollow) window.DeclicGeo.setFollow(true); },
-            ()=>{ centerUser(c.latitude, c.longitude, c.accuracy); toast("Localisation approximative. Cliquez « Définir ma position » puis un point sur la carte pour corriger."); }
-          );
-        }
-      },
-      ()=>{
-        localStorage.setItem('declic_geo_pref','denied');
-        toast("Géolocalisation refusée. Vous pouvez la réactiver via le bouton « Me localiser ».");
-      },
-      { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
-    );
-  }
-
-  document.getElementById('btn-locate')?.addEventListener('click', doLocate);
-
-  // Bouton "Définir ma position" (manuel)
-  (function addFixBtn(){
-    const btn=document.createElement('button');
-    btn.id='btn-fixloc';
-    btn.className='absolute right-3 top-14 z-20 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/95 ring-1 ring-gray-200 shadow hover:bg-white';
-    btn.innerHTML='<span>🗺️</span><span class="text-sm font-medium">Définir ma position</span>';
-    mapEl.parentElement.appendChild(btn);
-    let clickToSet = false;
-    btn.addEventListener('click',()=>{
-      clickToSet = !clickToSet;
-      btn.style.background = clickToSet ? '#eef2ff' : 'rgba(255,255,255,.95)';
-      toast(clickToSet ? "Cliquez sur la carte pour définir votre position." : "Mode désactivé.");
-      map.__clickToSet = clickToSet;
+    accept?.addEventListener('click', ()=>{ closeModal();
+      localStorage.setItem('declic_geo_pref','granted');
+      if (window.DeclicGeo?.startGeoWatch && !window.DeclicGeo.isRunning?.()) {
+        window.DeclicGeo.startGeoWatch(map, { follow:true, showAccuracy:false });
+      }
     });
-  })();
+    decline?.addEventListener('click', ()=>{ closeModal(); localStorage.setItem('declic_geo_pref','denied'); });
 
-  map.on('click', (e)=>{
-    if(!map.__clickToSet) return;
-    const {lat, lng} = e.latlng;
-    centerUser(lat, lng, 20, 'manual-click');
-    localStorage.setItem('declic_geo_pref','granted');
-    map.__clickToSet = false;
-  });
-
-  // Consentement (modal)
-  const modal=document.getElementById('geo-consent'), accept=document.getElementById('geo-accept'), decline=document.getElementById('geo-decline');
-  const openModal=()=>modal?.classList.remove('hidden'); const closeModal=()=>modal?.classList.add('hidden');
-
-  accept?.addEventListener('click', ()=>{ closeModal(); doLocate(); });
-  decline?.addEventListener('click', ()=>{ closeModal(); localStorage.setItem('declic_geo_pref','denied'); });
-
-  async function askConsentIfNeeded(){
-    const pref=localStorage.getItem('declic_geo_pref');
-    if(pref==='granted'){ doLocate(); return; }
-    if(pref==='denied'){ return; }
-    try{
-      if(navigator.permissions?.query){
-        const st=await navigator.permissions.query({ name:'geolocation' });
-        if(st.state==='granted'){ localStorage.setItem('declic_geo_pref','granted'); doLocate(); return; }
-        if(st.state==='denied'){  localStorage.setItem('declic_geo_pref','denied'); return; }
-        openModal();
-      }else{ openModal(); }
-    }catch{ openModal(); }
+    askConsentIfNeeded();
   }
 
-  // Filets de sécurité : démarrer/relancer proprement au premier affichage
-  document.addEventListener('turbo:load', function(){
-    if (window.DeclicGeo && window.DeclicGeo.startGeoWatch && !window.DeclicGeo.isRunning?.()) {
-      window.DeclicGeo.startGeoWatch(map, { follow:true, showAccuracy:false });
-    }
-    askConsentIfNeeded();
-  }, { once:true });
+  initMap();
 
-  document.addEventListener('DOMContentLoaded', function(){
-    if (window.DeclicGeo && window.DeclicGeo.startGeoWatch && !window.DeclicGeo.isRunning?.()) {
-      window.DeclicGeo.startGeoWatch(map, { follow:true, showAccuracy:false });
+  // Turbo: s’assure que la taille est correcte et que le watcher est lancé
+  document.addEventListener('turbo:load', ()=>{
+    if (mapEl._leaflet_map) {
+      mapEl._leaflet_map.invalidateSize(true);
+      if (window.DeclicGeo?.startGeoWatch && !window.DeclicGeo.isRunning?.()) {
+        window.DeclicGeo.startGeoWatch(mapEl._leaflet_map, { follow:true, showAccuracy:false });
+      }
+    } else {
+      initMap();
     }
-    askConsentIfNeeded();
   }, { once:true });
-
 })();
 </script>
 <% end %>
+
 
 
 
