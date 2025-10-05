@@ -1,197 +1,153 @@
 /* global L */
 
-/**
- * Petit utilitaire: appeler cb quand window.map est prêt.
- * - Essaie sur DOMContentLoaded, turbo:load et pageshow
- * - Si la carte n'est pas encore là, on attend via un polling très léger.
- */
-function whenMapReady(cb) {
-  const tryOnce = () => {
-    if (window.map && typeof window.map.addLayer === 'function') {
-      cb(window.map);
-      return true;
+// ------------------------------
+// Géoloc continue (un seul point bleu, pas de pin rouge)
+// ------------------------------
+(function () {
+  // état module (évite les doublons quand Turbo/Stimulus rechargent la page)
+  let watchId = null;
+  let dot = null;       // point bleu
+  let ring = null;      // cercle d'imprécision
+  let lastPan = 0;
+  let cleanupMapHooks = null;
+
+  // crée/maj le point bleu
+  function upsertBlueDot(map, lat, lng) {
+    if (!dot) {
+      dot = L.marker([lat, lng], {
+        // point BLEU plein – sans marqueur « pin »
+        icon: L.divIcon({
+          className: 'declic-blue-dot',
+          html:
+            '<div style="width:14px;height:14px;border-radius:9999px;background:#2563eb;border:2px solid #fff;box-shadow:0 0 0 4px rgba(37,99,235,.25)"></div>',
+          iconSize: [14, 14],
+          iconAnchor: [7, 7]
+        }),
+        interactive: false,
+        keyboard: false,
+        pane: "markerPane"
+      }).addTo(map);
+    } else {
+      dot.setLatLng([lat, lng]);
     }
-    return false;
-  };
-
-  if (tryOnce()) return;
-
-  const tick = setInterval(() => {
-    if (tryOnce()) clearInterval(tick);
-  }, 60);
-
-  const onLoad = () => tryOnce();
-  document.addEventListener('turbo:load', onLoad, { once: true });
-  document.addEventListener('DOMContentLoaded', onLoad, { once: true });
-  window.addEventListener('pageshow', onLoad, { once: true });
-}
-
-/**
- * Supprime tout marker "étranger" qui serait posé près d'un point (ex: pin rouge par un autre script).
- * On garde seulement notre marker (identifié par data-user-dot="1").
- */
-function pruneStrayMarkers(map, latlng, keepEl) {
-  const maxMeters = 60; // on considère “proche” si < 60 m
-  map.eachLayer((layer) => {
-    if (!(layer instanceof L.Marker)) return;
-
-    // notre marker à garder ?
-    const el = layer.getElement && layer.getElement();
-    if (el && el.getAttribute && el.getAttribute('data-user-dot') === '1') return;
-    if (keepEl && el === keepEl) return;
-
-    // opportunités : souvent avec une icône custom (divIcon avec autre HTML ou className spécifique)
-    // On ne supprime que les markers quasi au même endroit que l'utilisateur
-    try {
-      const p = layer.getLatLng && layer.getLatLng();
-      if (!p) return;
-      const d = map.distance([p.lat, p.lng], latlng);
-      if (d <= maxMeters) map.removeLayer(layer);
-    } catch (_) {}
-  });
-}
-
-/**
- * Démarre un watchPosition et crée un unique marker “point bleu” qui suit l’utilisateur.
- * Pas de cercle d’accuracy.
- * Retourne un stop().
- */
-function startGeoWatch(map, opts) {
-  if (!('geolocation' in navigator) || !map) {
-    console.warn('Geolocation non dispo ou map manquante');
-    return function () {};
   }
 
-  const cfg = Object.assign(
-    {
-      follow: true,
-      maxAgeMs: 10000,
-      highAccuracy: true
-    },
-    opts || {}
-  );
+  // cercle d’imprécision (souple)
+  function upsertAccuracyRing(map, lat, lng, acc) {
+    const r = Math.max(10, Math.min(acc || 0, 400));
+    if (!ring) {
+      ring = L.circle([lat, lng], {
+        radius: r,
+        color: '#2563eb',
+        weight: 1,
+        fillColor: '#60a5fa',
+        fillOpacity: 0.20
+      }).addTo(map);
+    } else {
+      ring.setLatLng([lat, lng]).setRadius(r);
+    }
+  }
 
-  let marker = null;
-  let lastPan = 0;
+  // supprime tout contrôle « pin rouge » (boutons ajoutés par d’autres scripts)
+  function removeForeignTopLeftControls(map) {
+    const topLeft = map && map._controlCorners && map._controlCorners.topleft;
+    if (!topLeft) return;
+    Array.from(topLeft.children).forEach(el => {
+      // on garde UNIQUEMENT le contrôle de zoom natif
+      if (!el.classList.contains('leaflet-control-zoom')) el.remove();
+    });
+  }
 
-  const makeUserIcon = () =>
-    L.divIcon({
-      className: '',
-      html:
-        '<div data-user-dot="1" style="width:16px;height:16px;border-radius:50%;background:#2563eb;border:2px solid #fff;box-shadow:0 0 0 6px rgba(37,99,235,.22);"></div>',
-      iconSize: [16, 16],
-      iconAnchor: [8, 8]
+  // démarre la watch (1 seule fois)
+  function start(map, { follow = true, highAccuracy = true, maxAgeMs = 10000, showAccuracy = true } = {}) {
+    if (!map || !('geolocation' in navigator)) return () => {};
+
+    // retire le bouton « pin rouge » éventuel
+    removeForeignTopLeftControls(map);
+
+    // s’il existait une watch précédente (navigation Turbo, etc.)
+    stop();
+
+    const onPos = (pos) => {
+      const c = pos && pos.coords || {};
+      const lat = (typeof c.latitude === 'number') ? c.latitude : null;
+      const lng = (typeof c.longitude === 'number') ? c.longitude : null;
+      const acc = (typeof c.accuracy === 'number') ? c.accuracy : null;
+      if (lat == null || lng == null) return;
+
+      upsertBlueDot(map, lat, lng);
+      if (showAccuracy) upsertAccuracyRing(map, lat, lng, acc);
+
+      if (follow) {
+        const now = Date.now();
+        if (now - lastPan > 700) {
+          map.panTo([lat, lng], { animate: true, duration: 0.45 });
+          lastPan = now;
+        }
+      }
+    };
+
+    const onErr = (err) => {
+      // pas de popup, on log seulement
+      console.warn('Geolocation error:', err && err.message || err);
+    };
+
+    watchId = navigator.geolocation.watchPosition(onPos, onErr, {
+      enableHighAccuracy: !!highAccuracy,
+      maximumAge: maxAgeMs,
+      timeout: 10000
     });
 
-  const onPos = (pos) => {
-    const c = pos && pos.coords;
-    const lat = c && typeof c.latitude === 'number' ? c.latitude : null;
-    const lng = c && typeof c.longitude === 'number' ? c.longitude : null;
-    if (lat == null || lng == null) return;
+    // si l’utilisateur bouge la carte → on désactive juste l’auto-centrage,
+    // MAIS on continue à mettre à jour le point (on ne coupe pas la watch)
+    const stopFollow = () => { follow = false; };
+    map.on('dragstart zoomstart', stopFollow);
 
-    const here = [lat, lng];
+    cleanupMapHooks = () => {
+      map.off('dragstart zoomstart', stopFollow);
+    };
 
-    if (!marker) {
-      marker = L.marker(here, { icon: makeUserIcon(), interactive: false }).addTo(map);
-      // Nettoie tout marker parasite proche (ex: pin rouge posé par un autre script)
-      const el = marker.getElement && marker.getElement();
-      if (el) el.setAttribute('data-user-dot', '1');
-      pruneStrayMarkers(map, { lat, lng }, el);
-    } else {
-      marker.setLatLng(here);
-      pruneStrayMarkers(map, { lat, lng }, marker.getElement && marker.getElement());
+    // retour: fonction d’arrêt
+    return stop;
+  }
+
+  function stop() {
+    if (watchId != null) {
+      try { navigator.geolocation.clearWatch(watchId); } catch(e) {}
+      watchId = null;
     }
+    if (cleanupMapHooks) { cleanupMapHooks(); cleanupMapHooks = null; }
+  }
 
-    if (cfg.follow) {
-      const now = Date.now();
-      if (now - lastPan > 700) {
-        map.panTo(here, { animate: true, duration: 0.6 });
-        lastPan = now;
-      }
-    }
+  // Expose pour ton module « map » (appel explicite depuis ta création de carte)
+  window.DeclicGeo = {
+    start,
+    stop
   };
 
-  const onErr = (err) => console.warn('Geolocation error:', err && err.message ? err.message : err);
+  // ---------- Auto-init : démarre dès que la map existe ----------
+  // 1) si ton script “map” met l’instance sur window.__declicMap
+  if (window.__declicMap && typeof window.__declicMap.panTo === 'function') {
+    start(window.__declicMap, { follow: true, showAccuracy: true });
+  }
 
-  const watchId = navigator.geolocation.watchPosition(onPos, onErr, {
-    enableHighAccuracy: !!cfg.highAccuracy,
-    maximumAge: cfg.maxAgeMs,
-    timeout: 10000
+  // 2) si ton script émet un event custom quand la map est prête
+  document.addEventListener('declic:map-ready', (e) => {
+    const map = e && e.detail && e.detail.map;
+    if (map) start(map, { follow: true, showAccuracy: true });
   });
 
-  const stop = () => {
-    try {
-      navigator.geolocation.clearWatch(watchId);
-    } catch (_) {}
-  };
-  window.addEventListener('beforeunload', stop, { once: true });
-  return stop;
-}
-
-/**
- * Petit bouton “📍 Suivre / Libre” (optionnel)
- * Si tu ne le veux pas, commente l’appel à addFollowControl plus bas.
- */
-function addFollowControl(map, startFn) {
-  const ctl = L.control({ position: 'topleft' });
-  let following = true;
-  let stopFn = null;
-  let _btn = null;
-
-  ctl.onAdd = function () {
-    const btn = L.DomUtil.create('button');
-    _btn = btn;
-    btn.type = 'button';
-    btn.textContent = '📍 Suivre';
-    btn.title = 'Activer/désactiver le suivi de ma position';
-    btn.style.cssText =
-      'background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15);';
-    L.DomEvent.on(btn, 'click', function (e) {
-      L.DomEvent.stopPropagation(e);
-      following = !following;
-      btn.textContent = following ? '📍 Suivre' : '📍 Libre';
-      if (stopFn) {
-        stopFn();
-        stopFn = null;
-      }
-      if (following && typeof startFn === 'function') {
-        stopFn = startFn({ follow: true });
-      }
-    });
-    return btn;
-  };
-
-  ctl.addTo(map);
-
-  // démarre en mode “suivre”
-  if (typeof startFn === 'function') stopFn = startFn({ follow: true });
-
-  // coupe le follow si l'utilisateur manipule la carte
-  const autoStopFollow = function () {
-    if (!following) return;
-    following = false;
-    if (_btn) _btn.textContent = '📍 Libre';
-    if (stopFn) {
-      stopFn();
-      stopFn = null;
+  // 3) sécurité : si tu crées la map avant ce fichier,
+  //    on tente de l’attraper via un pointeur global courant
+  document.addEventListener('turbo:load', () => {
+    if (window.__declicMap && typeof window.__declicMap.panTo === 'function') {
+      start(window.__declicMap, { follow: true, showAccuracy: true });
     }
-  };
-  map.on('dragstart zoomstart', autoStopFollow);
+  });
 
-  return function () {
-    if (stopFn) stopFn();
-    map.off('dragstart zoomstart', autoStopFollow);
-  };
-}
-
-/* ======== Lancer automatiquement dès que la carte est prête ======== */
-whenMapReady((map) => {
-  // 1) démarre le suivi immédiatement
-  startGeoWatch(map, { follow: true });
-
-  // 2) (optionnel) ajoute le bouton suivre/libre
-  addFollowControl(map, (opts) => startGeoWatch(map, opts));
-});
+  // nettoyage quand on quitte la page
+  window.addEventListener('beforeunload', stop, { once: true });
+})();
 
 
 
