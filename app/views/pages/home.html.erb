@@ -266,6 +266,11 @@
 
   // --- Carte
   const map = L.map('map',{ zoomControl:true, scrollWheelZoom:true }).setView([46.6, 2.2], 6);
+
+  if (window.DeclicGeo && window.DeclicGeo.startGeoWatch) {
+  window.DeclicGeo.startGeoWatch(map, { follow: true, showAccuracy: false });
+}
+
   
 // -- Suivi géolocalisation (home) --
 if (typeof startGeoWatch === "function") { startGeoWatch(map, { follow:true }); }
