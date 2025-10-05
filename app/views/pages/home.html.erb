@@ -57,7 +57,6 @@
         <% title_txt = "font-semibold text-lg lg:text-xl" %>
         <% desc_txt = "text-white/95 text-[16px] sm:text-[17px] lg:text-base leading-snug mt-1" %>
 
-
         <%= link_to parcours_path(category: "entreprendre"), class: btn_base, style: "background:linear-gradient(135deg,#f59e0b 0%,#ef4444 50%,#fb7185 100%);" do %>
           <div class="flex items-start gap-4 lg:gap-5">
             <span class="<%= icon_wrap %>">🚀</span>
@@ -232,7 +231,6 @@
   .picon::after{ content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
     border:6px solid transparent;border-top-color:var(--c,#6366f1); }
   .leaflet-container{ font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans","Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"; }
-  .myloc-btn{ width:34px;height:34px;background:#fff;border:none;cursor:pointer; }
   /* petite carte produit pour les popups */
   .popcard{display:grid;grid-template-columns:72px 1fr;gap:10px;min-width:260px;align-items:start}
   .popcard img{width:72px;height:72px;border-radius:10px;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,.2)}
@@ -255,8 +253,7 @@
   </div>
 </div>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<%# Leaflet est déjà inclus dans le layout. Pas besoin de le réimporter ici. %>
 
 <% content_for :scripts do %>
 <script>
@@ -265,28 +262,30 @@
   if(!mapEl || !window.L) return;
 
   // --- Carte
-  const map = L.map('map',{ zoomControl:true, scrollWheelZoom:true }).setView([46.6, 2.2], 6);
+  const map = L.map('map', { zoomControl:true, scrollWheelZoom:true }).setView([46.6, 2.2], 6);
+  mapEl._leaflet_map = map;           // exposer la map sur l'élément
+  window.__declicMap = map;           // (optionnel) exposer globalement
 
+  // 👉 Démarrage immédiat du watcher (point bleu seulement)
   if (window.DeclicGeo && window.DeclicGeo.startGeoWatch) {
-  window.DeclicGeo.startGeoWatch(map, { follow: true, showAccuracy: false });
-}
+    window.DeclicGeo.startGeoWatch(map, { follow: true, showAccuracy: false });
+  }
 
-  
-// -- Suivi géolocalisation (home) --
-if (typeof startGeoWatch === "function") { startGeoWatch(map, { follow:true }); }
-mapEl._leaflet_map = map;
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap' }).addTo(map);
+  // --- Tuiles
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap'
+  }).addTo(map);
 
+  // --- Icônes pour les opportunités / histoires
   const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#a855f7',default:'#6366f1'};
   const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',histoires:'📖',default:'⭐'};
   const iconFor = (cat)=> L.divIcon({className:'',html:`<div class="picon" style="--c:${colors[cat]||colors.default}"><span>${emojis[cat]||emojis.default}</span></div>`,iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
 
   const layer = L.layerGroup().addTo(map);
-  const userLayer = L.layerGroup().addTo(map);
+
   let dataset = [];
   let userCentred = false;
   let clickToSet = false;
-  let watchId = null;
 
   // Charger position sauvegardée (si l’utilisateur a corrigé/accepté)
   try {
@@ -295,7 +294,7 @@ mapEl._leaflet_map = map;
       const p = JSON.parse(saved);
       if (p && typeof p.lat === 'number' && typeof p.lng === 'number') {
         userCentred = true;
-        centerUser(p.lat, p.lng, 50, 'manual-cache');
+        map.flyTo([p.lat, p.lng], Math.max(map.getZoom(), 13), { duration:.8 });
       }
     }
   } catch {}
@@ -376,16 +375,24 @@ mapEl._leaflet_map = map;
     plot((dataset||[]).filter(o=> (o.category||'').toLowerCase()===cat));
   }));
 
-  // --------------------- GÉOLOCALISATION ----------------------
+  // --------------------------- GÉOLOCALISATION ---------------------------
   const OK_ACC = 5000;
 
+  function toast(msg){
+    try{
+      const t=document.createElement('div');
+      t.textContent=msg;
+      t.className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[600] px-4 py-2 rounded-lg bg-slate-900 text-white shadow";
+      document.body.appendChild(t);
+      setTimeout(()=>t.remove(), 4500);
+    }catch{ alert(msg); }
+  }
+
   function centerUser(lat, lon, accuracy, source='auto'){
+    // aucun marker/halo ici : on laisse DeclicGeo afficher le point bleu
     userCentred = true;
-    userLayer.clearLayers();
-    if(accuracy && accuracy<2000){
-    }
     map.flyTo([lat, lon], Math.max(map.getZoom(), 13), { duration:.8 });
-    if ((accuracy && accuracy <= 5000) || String(source).startsWith('manual')) {
+    if ((accuracy && accuracy <= OK_ACC) || String(source).startsWith('manual')) {
       try { localStorage.setItem('declic_user_pos', JSON.stringify({ lat, lng: lon })); } catch {}
     }
   }
@@ -393,20 +400,19 @@ mapEl._leaflet_map = map;
   function tryImproveFix(onBetter, onEnd){
     if(!('geolocation' in navigator)) return onEnd?.();
     const started = Date.now();
-    watchId = navigator.geolocation.watchPosition(
+    const wId = navigator.geolocation.watchPosition(
       (pos)=>{
         const c = pos.coords;
         if(c.accuracy <= OK_ACC){
           onBetter(c);
-          stopWatch();
+          navigator.geolocation.clearWatch(wId);
         }else if(Date.now() - started > 30000){
-          onEnd?.(); stopWatch();
+          onEnd?.(); navigator.geolocation.clearWatch(wId);
         }
       },
-      ()=>{ onEnd?.(); stopWatch(); },
+      ()=>{ onEnd?.(); navigator.geolocation.clearWatch(wId); },
       { enableHighAccuracy:true, maximumAge:0, timeout:30000 }
     );
-    function stopWatch(){ if(watchId!=null){ navigator.geolocation.clearWatch(watchId); watchId=null; } }
   }
 
   function doLocate(){
@@ -417,9 +423,11 @@ mapEl._leaflet_map = map;
         if(c.accuracy <= OK_ACC){
           centerUser(c.latitude, c.longitude, c.accuracy);
           localStorage.setItem('declic_geo_pref','granted');
+          // réactive le follow du watcher au besoin
+          if (window.DeclicGeo?.setFollow) window.DeclicGeo.setFollow(true);
         }else{
           tryImproveFix(
-            (better)=>{ centerUser(better.latitude, better.longitude, better.accuracy); localStorage.setItem('declic_geo_pref','granted'); },
+            (better)=>{ centerUser(better.latitude, better.longitude, better.accuracy); localStorage.setItem('declic_geo_pref','granted'); if (window.DeclicGeo?.setFollow) window.DeclicGeo.setFollow(true); },
             ()=>{ centerUser(c.latitude, c.longitude, c.accuracy); toast("Localisation approximative. Cliquez « Définir ma position » puis un point sur la carte pour corriger."); }
           );
         }
@@ -432,47 +440,31 @@ mapEl._leaflet_map = map;
     );
   }
 
-  function toast(msg){
-    try{
-      const t=document.createElement('div');
-      t.textContent=msg;
-      t.className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[600] px-4 py-2 rounded-lg bg-slate-900 text-white shadow";
-      document.body.appendChild(t);
-      setTimeout(()=>t.remove(), 4500);
-    }catch{ alert(msg); }
-  }
-
   document.getElementById('btn-locate')?.addEventListener('click', doLocate);
 
-  // Ajouter « Définir ma position »
+  // Bouton "Définir ma position" (manuel)
   (function addFixBtn(){
     const btn=document.createElement('button');
     btn.id='btn-fixloc';
     btn.className='absolute right-3 top-14 z-20 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/95 ring-1 ring-gray-200 shadow hover:bg-white';
     btn.innerHTML='<span>🗺️</span><span class="text-sm font-medium">Définir ma position</span>';
     mapEl.parentElement.appendChild(btn);
+    let clickToSet = false;
     btn.addEventListener('click',()=>{
       clickToSet = !clickToSet;
       btn.style.background = clickToSet ? '#eef2ff' : 'rgba(255,255,255,.95)';
       toast(clickToSet ? "Cliquez sur la carte pour définir votre position." : "Mode désactivé.");
+      map.__clickToSet = clickToSet;
     });
   })();
 
   map.on('click', (e)=>{
-    if(!clickToSet) return;
+    if(!map.__clickToSet) return;
     const {lat, lng} = e.latlng;
     centerUser(lat, lng, 20, 'manual-click');
     localStorage.setItem('declic_geo_pref','granted');
-    clickToSet = false;
+    map.__clickToSet = false;
   });
-
-  // Contrôle Leaflet “📍”
-  const LocateCtl = L.Control.extend({
-    options:{ position:'topleft' },
-    onAdd(){ const wrap=L.DomUtil.create('div','leaflet-bar'); const b=L.DomUtil.create('button','myloc-btn',wrap);
-      b.type='button'; b.title='Me localiser'; b.innerHTML='📍'; L.DomEvent.disableClickPropagation(b); b.addEventListener('click',doLocate); return wrap; }
-  });
-  map.addControl(new LocateCtl());
 
   // Consentement (modal)
   const modal=document.getElementById('geo-consent'), accept=document.getElementById('geo-accept'), decline=document.getElementById('geo-decline');
@@ -494,11 +486,26 @@ mapEl._leaflet_map = map;
       }else{ openModal(); }
     }catch{ openModal(); }
   }
-  document.addEventListener('turbo:load', askConsentIfNeeded, { once:true });
-  document.addEventListener('DOMContentLoaded', askConsentIfNeeded, { once:true });
+
+  // Filets de sécurité : démarrer/relancer proprement au premier affichage
+  document.addEventListener('turbo:load', function(){
+    if (window.DeclicGeo && window.DeclicGeo.startGeoWatch && !window.DeclicGeo.isRunning?.()) {
+      window.DeclicGeo.startGeoWatch(map, { follow:true, showAccuracy:false });
+    }
+    askConsentIfNeeded();
+  }, { once:true });
+
+  document.addEventListener('DOMContentLoaded', function(){
+    if (window.DeclicGeo && window.DeclicGeo.startGeoWatch && !window.DeclicGeo.isRunning?.()) {
+      window.DeclicGeo.startGeoWatch(map, { follow:true, showAccuracy:false });
+    }
+    askConsentIfNeeded();
+  }, { once:true });
+
 })();
 </script>
 <% end %>
+
 
 
 
