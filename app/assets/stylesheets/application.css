@@ -1,15 +1,213 @@
 /*
- * This is a manifest file that'll be compiled into application.css, which will include all the files
- * listed below.
- *
- * Any CSS (and SCSS, if configured) file within this directory, lib/assets/stylesheets, or any plugin's
- * vendor/assets/stylesheets directory can be referenced here using a relative path.
- *
- * You're free to add application-wide styles to this file and they'll appear at the bottom of the
- * compiled file so the styles you add here take precedence over styles defined in any other CSS
- * files in this directory. Styles in this file should be added after the last require_* statement.
- * It is generally better to create a new file per style scope.
- *
  *= require_tree .
  *= require_self
- */
+*/
+
+/* ===============================
+   Styles "Belles histoires" (vanilla)
+   =============================== */
+
+/* ---- Conteneur global ---- */
+.story-wrap{
+  max-width:1200px;
+  margin:0 auto;
+  padding:24px;
+  padding-top:104px;                 /* espace sous la navbar fixe */
+  background:linear-gradient(180deg,#f7f8fc 0%, #fafbff 16%, #ffffff 100%);
+}
+
+/* ---- HERO (image + titre) ---- */
+.story-hero{
+  position:relative;
+  height:clamp(420px, 52vh, 680px);  /* plus haut pour éviter l’écrasement */
+  min-height:420px;
+  overflow:hidden;
+  border-radius:18px;
+  margin-top:12px;
+  box-shadow:0 8px 20px rgba(16,24,40,.08);
+}
+.story-hero img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center 35%;        /* recadre un peu au-dessus du centre */
+  display:block;
+}
+.story-hero .overlay{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.42));
+}
+
+/* ---- Titre sur le hero ---- */
+.story-title{
+  position:absolute;
+  left:24px;
+  right:24px;
+  bottom:18px;
+  color:#fff;
+  text-shadow:0 2px 10px rgba(0,0,0,.40);
+}
+.story-title h1{
+  margin:0;
+  font-weight:800;
+  line-height:1.15;
+  font-size:clamp(26px, 3.1vw, 44px);
+}
+
+/* ---- Actions ---- */
+.actions{
+  position:absolute;
+  top:12px;
+  right:12px;
+  display:flex;
+  gap:8px;
+}
+.actions a{
+  background:#fff;
+  color:#111827;
+  border-radius:10px;
+  padding:8px 10px;
+  text-decoration:none;
+  border:1px solid #e5e7eb;
+  box-shadow:0 2px 10px rgba(0,0,0,.06);
+}
+
+/* ---- Pastille ---- */
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+  padding:4px 8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.18);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.35);
+  backdrop-filter:blur(8px);
+}
+
+/* ---- Chapô ---- */
+.lead{
+  margin-top:14px;
+  margin-bottom:10px;
+  background:linear-gradient(180deg,#fafaff,#ffffff);
+  border:1px solid #eef1f6;
+  border-radius:14px;
+  padding:18px 20px;
+  box-shadow:0 6px 24px rgba(16,24,40,.06);
+}
+.lead .lead-text{
+  margin:0;
+  font-size:20.5px;
+  line-height:1.9;
+  color:#0f172a;
+}
+
+/* ---- Breadcrumb ---- */
+.breadcrumb{ margin:12px 0 6px; font-size:15px; }
+.breadcrumb a{ color:#667085; text-decoration:none; }
+.breadcrumb a:hover{ color:#475467; text-decoration:underline; }
+
+/* ---- Grille ---- */
+.story-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:24px;
+  margin-top:12px;
+}
+@media(min-width:1024px){
+  .story-grid{ grid-template-columns:minmax(0,2fr) minmax(0,1fr); }
+}
+
+/* ---- Cartes ---- */
+.card{
+  background:#fff;
+  border:1px solid #eef1f6;
+  border-radius:16px;
+  box-shadow:0 6px 24px rgba(16,24,40,.08);
+  padding:22px;
+}
+
+/* ---- Prose ---- */
+.prose{
+  color:#0f172a;
+  font-size:19.5px;
+  line-height:1.92;
+  letter-spacing:.2px;
+}
+.prose p{ margin:1em 0; max-width:72ch; }
+
+/* Forcer le gras/italique une fois pour toutes */
+.prose strong, .prose b, .lead strong, .pullquote strong{ font-weight:700 !important; }
+.prose em, .prose i{ font-style:italic !important; }
+
+/* Titres de section */
+.prose h2, .prose h3{ margin:1.7em 0 .6em; }
+.prose h3{
+  font-size:23px;
+  border-left:4px solid #e9d5ff;
+  padding-left:.65em;
+  color:#1e1b4b;
+}
+
+/* Liens */
+.prose a{ color:#4338ca; text-decoration:none; }
+.prose a:hover{ text-decoration:underline; }
+
+/* Listes stylées */
+.prose ul{ list-style:none; padding-left:0; margin:10px 0; }
+.prose ul li{ position:relative; padding-left:1.4em; margin:.5em 0; }
+.prose ul li::before{
+  content:"•";
+  position:absolute; left:0; top:0;
+  color:#7c3aed; font-weight:700; line-height:1;
+}
+
+/* Séparateur Markdown (---) */
+.prose hr{
+  border:0; height:1px;
+  background:linear-gradient(90deg,#fff,#e5e7eb,#fff);
+  margin:2rem 0;
+}
+
+/* Pullquote */
+.pullquote{
+  font-style:italic;
+  font-size:19.5px;
+  color:#5b21b6;
+  background:linear-gradient(90deg,#ede9fe,#eef2ff);
+  border:1px solid #e9d5ff;
+  padding:16px;
+  border-radius:14px;
+  margin-bottom:14px;
+}
+
+/* TOC */
+.toc.card{ padding:18px 20px; }
+.toc h3{ margin:0 0 10px; font-size:16px; color:#111827; }
+.toc .info-list a{ color:#4338ca; text-decoration:none; }
+.toc .info-list a:hover{ text-decoration:underline; }
+
+/* Aside */
+.side{ position:sticky; top:112px; align-self:start; }
+.info-list{ list-style:none; margin:0; padding:0; }
+.info-list li{ display:flex; gap:8px; margin:10px 0; color:#344054; font-size:15px; }
+
+/* Mini-carte */
+.mini-map{
+  height:220px;
+  border-radius:12px;
+  overflow:hidden;
+  border:1px solid #e5e7eb;
+}
+
+/* Utils */
+.mt-0{ margin-top:0; }
+.text-muted{ color:#667085; }
+
+
+
+
+
+

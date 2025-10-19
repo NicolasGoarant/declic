@@ -165,7 +165,7 @@ nancy_real = [
     is_active: true, tags: "mentorat,roadmap,coaching"
   },
 
-  # ===== FORMATION (CCI) =====
+  # ===== FORMATION (CCI & ICN) =====
   {
     title: "Atelier Pitch & Storytelling",
     description: add_link("Structurer un pitch clair et mémorable : problème, solution, traction. Exercices filmés + feedback.",
@@ -198,6 +198,18 @@ nancy_real = [
     time_commitment: "Session bimensuelle",
     latitude: 48.6932, longitude: 6.1829,
     is_active: true, tags: "haccp,restauration,hygiène"
+  },
+  # ★ ICN Executive MBA (à partir de l’article demandé)
+  {
+    title: "Executive MBA — se réinventer (ICN Business School)",
+    description: add_link("Parcours pour cadres/dirigeants : leadership, stratégie, innovation et soutenance d’un projet de transformation. Compatible activité pro.",
+                          "https://www.lasemaine.fr/enseignement-formation/executive-mba-quand-icn-aide-les-cadres-a-se-reinventer/"),
+    category: "formation",
+    organization: "ICN Business School",
+    location: "86 Rue Sergent Blandan, 54000 Nancy",
+    time_commitment: "Part-time (18–24 mois)",
+    latitude: 48.6829, longitude: 6.1766,
+    is_active: true, tags: "executive,mba,leadership,transformation"
   },
 
   # ===== RENCONTRES =====
@@ -295,7 +307,6 @@ nancy_real = [
 
 records += nancy_real
 
-# — Axe Nancy ⇄ Saint-Dié : opportunités enrichies (développées)
 # — Axe Nancy ⇄ Saint-Dié : opportunités enrichies (développées)
 vosges_corridor = [
   {
@@ -434,7 +445,6 @@ vosges_corridor = [
 
 records += vosges_corridor
 
-
 # — Quelques autres villes (léger bruit pour la carte)
 { "Lyon" => [45.7640, 4.8357], "Rennes" => [48.1173, -1.6778], "Lille" => [50.6292, 3.0573] }.each do |city, (lat, lon)|
   records += mk(loc: city, lat: lat, lon: lon, n: 2, category: "rencontres", orgs: orgs_common, titles: rencontres_titles, city_label: city)
@@ -445,7 +455,9 @@ created_opps = 0
 records.each do |h|
   next unless h[:latitude] && h[:longitude]
   found = Opportunity.find_or_initialize_by(title: h[:title], organization: h[:organization], location: h[:location])
-  found.assign_attributes(h)
+  # ⚠️ n'assigner QUE les attributs existants sur Opportunity
+  allowed = h.slice(:title, :description, :category, :organization, :location, :time_commitment, :latitude, :longitude, :is_active, :tags)
+  found.assign_attributes(allowed)
   created_opps += 1 if found.new_record?
   found.save!
 end
@@ -492,298 +504,413 @@ testimonials.each do |attrs|
 end
 puts "Seeds -> testimonials: +#{created_t} (total: #{Testimonial.count})"
 
-# ================== “Belles histoires” (localisées) ==================
+# ================== “Belles histoires” (localisées, émojis dans le body) ==================
 stories = [
-  # — Nancy et agglo (déjà existantes)
   {
     slug: "caseus-nancy",
     title: "CASEUS — Crèmerie-fromagerie (Nancy)",
-    chapo: "Bénédicte, ex-finance à Paris, ouvre une fromagerie à Nancy.",
-    description: "Retour au sens, commerce de proximité en Vieille-Ville.",
+    chapo: "Bénédicte, ex-finance à Paris, ouvre une fromagerie en Vieille-Ville pour remettre du goût, du local et du lien au cœur du quotidien.",
+    description: "Sélection courte, producteurs suivis, conseil à la coupe et plateaux sur mesure.",
     location: "21 Grande Rue, 54000 Nancy",
     latitude: 48.693, longitude: 6.183,
     source_name: "Site officiel",
     source_url:  "https://caseus-nancy.fr/",
     image_url:   "https://caseus-nancy.fr/ims25/enseigne.png",
     body: <<~MD,
-      ### Le déclic
-      Après des années dans la finance, Bénédicte veut retrouver du concret, du local et du contact. Le fromage s’impose : produit vivant, saisonnier, qui raconte des paysans.
+      ### 🌿 Le projet
+      **CASEUS**, c’est un comptoir de fromages pensé comme une petite boussole du quotidien. Pas d’étagères qui débordent ni de promesses floues : une **sélection courte** tenue avec amour, des **producteurs suivis** dans le temps, des explications simples pour aider chacun à choisir selon l’instant. On y vient pour un comté bien affiné, un chèvre encore tendre, une tomme qui raconte son alpage — et on repart avec une **histoire** à table. L’idée n’est pas de tout avoir, mais de **bien tenir** ce qu’on propose : régularité, fraîcheur, justesse des prix, petites trouvailles de saison.
 
-      ### Le projet
-      Ouverture d’une crèmerie-fromagerie en Vieille-Ville. Sélection courte, affineurs et producteurs suivis, conseil à la coupe, plateaux sur mesure.
+      ### 🚶‍♀️ Parcours avant l’ouverture
+      Après des années dans la finance, **Bénédicte** avait envie d’un métier où l’on **regarde les gens dans les yeux**. Elle se forme aux gestes de cave, visite des affineurs, apprend la patience des fromages qui vivent. Elle dresse des listes, en rature la moitié, garde le **meilleur rapport goût/prix**. Elle teste des plateaux chez des voisins, corrige les tranches, ajuste la coupe, apprivoise la conservation et les températures. Et surtout, elle s’exerce au **conseil** : écouter les envies, proposer une découverte, donner un accord pain/confiture, expliquer d’où vient ce goût noisette ou ce parfum de fleurs sèches.
 
-      ### Les obstacles
-      Financement des équipements, normes d’hygiène, gestion des pics de saison.
+      ### 🧀 La vie du lieu
+      À CASEUS, on n’est pas intimidé. On peut demander « un fromage qui plaît à tout le monde », « quelque chose de plus **caractère** », « un plateau pour six sans se ruiner ». Le samedi, la file avance au rythme des échanges : un peu de **pédagogie** et beaucoup de **bienveillance**. Les enfants goûtent, les curieux notent, les habitués reviennent pour « le même que la dernière fois ». Bénédicte propose aussi des **plateaux prêts** pour les apéros, avec étiquettes et mini-fiches pour glisser deux mots au moment de servir. Le commerce devient **point d’appui gourmand** en Vieille-Ville, un endroit où le goût et la simplicité se saluent.
 
-      ### Impact local
-      Commerce de proximité, dégustations, valorisation des fermes partenaires.
+      ### 💡 Pourquoi c’est inspirant
+      - Une reconversion **incarnée** qui valorise des fermes et des gestes 🐄
+      - Le **conseil** comme différence, au-delà du produit 🧑‍🍳
+      - Le choix du **peu mais bien**, gage de confiance et de fidélité ✨
+
+      —
+      📍 Adresse : 21 Grande Rue, 54000 Nancy
+      📸 Crédit photo : CASEUS
+      📰 Source : Site officiel
     MD
     quote: "Revenir à Nancy et parler goût chaque jour : c’était le sens qui me manquait."
   },
+
   {
     slug: "laiterie-de-nancy",
     title: "La Laiterie de Nancy (Nancy)",
-    chapo: "Matthieu quitte le salariat pour créer une laiterie urbaine.",
-    description: "Fabrication sur place (yaourts, fromages) au lait de foin.",
+    chapo: "Matthieu quitte le salariat pour créer une laiterie urbaine visible depuis la rue : yaourts, fromages frais et transparence totale.",
+    description: "Atelier vitré, lait de foin rémunéré au juste prix, pédagogie du goût.",
     location: "6 Rue Saint-Nicolas, 54000 Nancy",
     latitude: 48.689, longitude: 6.187,
     source_name: "Article PDF",
     source_url:  "/stories/articles/laiterie-urbaine.pdf",
     image_url:   "https://static.wixstatic.com/media/9f3674e120564679859a204316cae6a8.jpg/v1/fill/w_250,h_166,al_c,q_90/9f3674e120564679859a204316cae6a8.jpg",
     body: <<~MD,
-      ### Le déclic
-      Entreprendre utile, local, visible depuis la rue.
+      ### 🌿 Le projet
+      **La Laiterie de Nancy** a quelque chose d’enfantin et de moderne à la fois : on **voit** travailler, on **comprend** ce qu’on mange. Dans l’atelier **vitré**, on fabrique des yaourts, des fromages frais, des desserts lactés avec un lait de foin **payé correctement** aux éleveurs. Les recettes sont courtes, les gestes précis, l’hygiène millimétrée. Point de secret : sur l’ardoise, Matthieu note la température, les temps, les ingrédients. Moins de poudre et de promesses ; **plus de lait, plus de maîtrise**.
 
-      ### Le projet
-      Atelier vitré : yaourts, fromages frais, desserts lactés. Lait de foin payé au juste prix, transparence recettes.
+      ### 🚶‍♂️ Parcours avant l’ouverture
+      Matthieu n’a pas posé un jour un pot de yaourt en vitrine par hasard. Il a **appris**, observé, tâtonné. Formations en micro-transformation, visites d’ateliers, calcul des déperditions, des cadences, de la chaîne du froid. Il a construit un **planning** serré pour produire **juste à temps**, sans stock inutile. Et surtout, il a trouvé son ton : parler simplement de ce qui est compliqué, sans dogme ni posture, avec cette **humilité de fabricant** qui rassure et donne envie.
 
-      ### Ce que ça change
-      Produits ultra-frais, lien aux éleveurs, pédagogie auprès des écoles.
+      ### 🥛 La vie du lieu
+      Ici, on passe « voir si c’est sorti », on revient chercher « ceux d’hier, ils étaient incroyables ». Les enfants collent leur nez à la vitre, posent mille questions. Les écoles visitent ; on goûte, on sent, on apprend. Les habitants suivent les **saisons** et les essais — un peu plus fermes, un peu plus onctueux ? Chaque lot devient une **conversation** avec le quartier. Et petit à petit, la laiterie s’installe comme une évidence : le **frais** a un visage, une adresse, un prénom.
+
+      ### 💡 Pourquoi c’est inspirant
+      - La **transparence** comme promesse tenue 🪟
+      - Des produits **ultra-frais** qui racontent une filière locale 🐄
+      - Une **pédagogie douce** qui redonne du sens à l’alimentation 🧑‍🏫
+
+      —
+      📍 Adresse : 6 Rue Saint-Nicolas, 54000 Nancy
+      📸 Crédit photo : Laiterie de Nancy
+      📰 Source : Article PDF
     MD
     quote: "Que chacun sache d’où vient le lait et qui on rémunère."
   },
-  {
-    slug: "seventheen-coffee-luneville",
-    title: "SEVENTHÉEN Coffee — Coffee shop (Lunéville)",
-    chapo: "Deux reconversions, puis ouverture d'un coffee shop.",
-    description: "Café de spécialité, petite restauration, animations.",
-    location: "57 Rue de la République, 54300 Lunéville",
-    latitude: 48.591, longitude: 6.496,
-    source_name: "Page officielle",
-    source_url:  "/stories/articles/coffee-shop_luneville.pdf",
-    image_url:   "https://cdn.website.dish.co/media/5c/2f/2551554/SEVENTHEEN-Coffee-Luneville.jpg",
-    body: <<~MD,
-      ### Le parcours
-      Formation barista, rencontres torréfacteurs, ouverture en cœur de ville.
 
-      ### L’expérience
-      Origines précises, méthodes douces, ateliers d’initiation.
-
-      ### Les défis
-      Flux du midi, constance d’extraction, pédagogie client.
-    MD
-    quote: "On sert un café, mais on partage surtout une culture."
-  },
-  {
-    slug: "saveurs-exotics-toul",
-    title: "Saveurs Exotics — Épicerie antillaise & africaine (Toul)",
-    chapo: "Du conseil RH à l'entrepreneuriat local.",
-    description: "Épicerie fine, ateliers cuisine, bar à salade.",
-    location: "9 Rue Pont-des-Cordeliers, 54200 Toul",
-    latitude: 48.682, longitude: 5.894,
-    source_name: "Site officiel",
-    source_url:  "https://www.saveurs-exotics.fr/",
-    image_url:   "https://www.saveurs-exotics.fr/wp-content/uploads/2025/06/Slide1-compressed.jpg",
-    body: <<~MD,
-      ### Le déclic
-      Entrepreneuriat à taille humaine, valoriser des goûts d’enfance.
-
-      ### La boutique
-      Références de qualité, ateliers cuisine, bar à salade.
-
-      ### L’impact
-      Découverte culinaire, mise en avant producteurs partenaires.
-    MD
-    quote: "Faire voyager les gens, sans quitter Toul."
-  },
-  {
-    slug: "fred-taxi-saulxures",
-    title: "Fred’Taxi — Artisan taxi (Saulxures-lès-Nancy)",
-    chapo: "À 48 ans, Frédéric passe de cariste à artisan taxi.",
-    description: "Reconversion, carte pro et création d’entreprise.",
-    location: "38 Grande Rue, 54420 Saulxures-lès-Nancy",
-    latitude: 48.654, longitude: 6.209,
-    source_name: "",
-    source_url:  "",
-    image_url:   "",
-    body: <<~MD,
-      ### Le déclic
-      Chercher plus d’autonomie et de contact client.
-
-      ### Le métier
-      Courses locales, médicales, scolaires. Outils simples pour planifier.
-
-      ### Les réalités
-      Horaires, assurance, relationnel : constance et fiabilité.
-    MD
-    quote: "Ce que je vends ? La fiabilité."
-  },
-  {
-    slug: "lecrin-damelevieres",
-    title: "L’Écrin Bar & Lounge (Damelevières)",
-    chapo: "Ancienne salariée d’Ehpad, elle reprend un bar-lounge en centre-bourg.",
-    description: "Reprise d’établissement, animations et nouvelle dynamique locale.",
-    location: "19 Rue de la Libération, 54360 Damelevières",
-    latitude: 48.573, longitude: 6.346,
-    source_name: "L'Est Républicain (12/09/2025)",
-    source_url:  "/stories/articles/lecrin-damelevieres.pdf",
-    image_url:   "",
-    body: <<~MD,
-      ### Le déclic
-      Créer un lieu sûr, chaleureux, animé.
-
-      ### La proposition
-      Carte courte, scènes ouvertes, partenariats associatifs.
-
-      ### Les coulisses
-      Licence, voisinage, sécurité, com’ régulière.
-    MD
-    quote: "Un endroit où l’on se sent bien, tout simplement."
-  },
   {
     slug: "madame-bergamote-nancy",
     title: "Madame Bergamote — Salon de thé (Nancy)",
-    chapo: "Un salon de thé artisanal près de Stanislas.",
-    description: "Pâtisserie maison, boissons chaudes, ateliers créatifs.",
+    chapo: "Un salon de thé artisanal près de Stanislas : pâtisseries fines, thés choisis et accueil soigné.",
+    description: "Recettes maison, ateliers créatifs, ambiance douce et régulière.",
     location: "3 Grande Rue, 54000 Nancy",
     latitude: 48.695, longitude: 6.184,
     source_name: "Page officielle",
     source_url:  "https://madame-bergamote-nancy.eatbu.com/?lang=fr",
     image_url:   "https://cdn.website.dish.co/media/5f/a2/7245201/Madame-Bergamote-312987467-105901108988435-4889136544572526137-n-jpg.jpg",
     body: <<~MD,
-      ### Le déclic
-      Pâtisserie artisanale + accueil soigné = lieu de rendez-vous.
+      ### 🌿 Le projet
+      **Madame Bergamote**, c’est une parenthèse lumineuse à deux pas de la place Stanislas. On y entre pour un **thé fumant** ou une tarte de saison, on y reste pour l’**accueil** et l’odeur de beurre qui sort du four. Tout est **fait maison**, sans esbroufe : une carte courte qui tient ses promesses, un soin particulier pour la régularité, et ce goût de reviens-y qui crée des **habitudes**.
 
-      ### L’expérience
-      Production quotidienne, carte courte, ateliers.
+      ### 🚶‍♀️ Parcours avant l’ouverture
+      Derrière le comptoir, une passionnée passée par la **formation** et des expériences en **restauration/vente**. Elle tient un carnet où s’alignent grammages, températures, temps de repos. Elle **ajuste** ses recettes jusqu’à ce qu’elles tiennent la distance : le samedi de rush comme le mardi pluvieux. Elle apprend la petite logistique des salons de thé : **flux**, vitrine de 11 h, commandes à la journée, et ce geste qui rassure : répondre par le **prénom**.
 
-      ### Les défis
-      Flux week-end, gestion des coûts matière, précommandes.
+      ### 🍰 La vie du lieu
+      On vient pour un **goûter partagé**, une lecture au calme, un atelier de **pâtisserie** ou d’**aquarelle**. La vitrine suit les saisons : fruits rouges, pistache, agrumes. Les assiettes sont **généreuses**, les prix **raisonnables**, l’ambiance **douce**. Ce n’est pas spectaculaire, c’est **tenu**. Et c’est précisément ce qui fidélise : savoir ce que l’on va trouver, et que ce sera **bon**.
+
+      ### 💡 Pourquoi c’est inspirant
+      - Une reconversion portée par la **patience** et la **précision** 🧁
+      - Le **fait-maison** comme promesse simple et tenue ✨
+      - Un commerce d’**accueil** qui tisse une communauté
+
+      —
+      📍 Adresse : 3 Grande Rue, 54000 Nancy
+      📸 Crédit photo : Madame Bergamote
+      📰 Source : Page officielle
     MD
     quote: "La simplicité, quand elle est précise, devient un vrai luxe."
   },
+
   {
     slug: "galapaga-villers",
     title: "GALAPAGA — Concept-store éthique (Villers-lès-Nancy)",
-    chapo: "Laure, éducatrice de jeunes enfants, lance une boutique responsable.",
-    description: "Puériculture, jeux, mode et ateliers, partenaire de la monnaie locale Florain.",
+    chapo: "Laure, éducatrice de jeunes enfants, lance une boutique joyeuse et responsable : écologie, pédagogie, bienveillance.",
+    description: "Puériculture, jeux, mode éthique, ateliers parentaux ; partenaire de la monnaie locale Florain.",
     location: "34 Boulevard de Baudricourt, 54600 Villers-lès-Nancy",
     latitude: 48.672, longitude: 6.152,
-    source_name: "",
-    source_url:  "",
-    image_url:   "",
+    source_name: "L’Est Républicain — commerce local",
+    source_url: "/stories/articles/galapaga.pdf",
+    image_url: "",
     body: <<~MD,
-      ### Le déclic
-      Vendre utile et durable, avec pédagogie.
+      ### 🌿 Le projet
+      **GALAPAGA** ressemble à son nom : doux, coloré, **posé**. Laure y rassemble des **marques responsables** (puériculture, jeux, mode), choisies pour leurs matériaux, leur durabilité, leur **bon sens**. La boutique n’est pas un défilé d’objets : c’est un **parcours**. On touche, on comprend, on achète **mieux**. Et régulièrement, on se retrouve pour des **ateliers parents-enfants** où l’on parle usage, réparation, tri, sans donner de leçon.
 
-      ### Le concept
-      Sélection éthique, ateliers parents-enfants, monnaie locale.
+      ### 👣 Parcours avant l’ouverture
+      Ancienne **éducatrice de jeunes enfants**, Laure voulait un commerce **pédagogique**. Elle crée des **fiches claires** (d’où vient la matière ? comment ça vieillit ?), prépare des démonstrations, et adhère à la monnaie locale **Florain** pour **ancrer** l’économie dans le territoire. Elle apprend la vie d’une petite boutique : passer commande sans sur-stocker, raconter les produits, **accueillir les questions**.
 
-      ### Les clés
-      Transparence prix, fiches pédagogiques, SAV soigné.
+      ### 🧩 La vie du lieu
+      Chez GALAPAGA, on peut venir « juste pour comprendre ». On essaie un **portage**, on répare un petit **jouet**, on troque un **vêtement** encore bon. L’ambiance est **bienveillante**, les prix **explicites**, les retours **écoutés**. Peu à peu, la boutique devient un **tiers-lieu léger**, un point de rendez-vous pour celles et ceux qui veulent consommer **mieux** sans se compliquer la vie.
+
+      ### 💡 Pourquoi c’est inspirant
+      - La **pédagogie** au cœur de l’expérience d’achat
+      - Une économie **locale et circulaire** encouragée au quotidien
+      - Un commerce qui **donne envie d’agir** simplement
+
+      —
+      📍 Adresse : 34 Boulevard de Baudricourt, 54600 Villers-lès-Nancy
+      📰 Source : *L’Est Républicain*
     MD
     quote: "Mieux acheter, c’est déjà agir."
   },
+
   {
     slug: "miss-cookies-nancy",
-    title: "Miss Cookies Coffee (Nancy)",
-    chapo: "Aude quitte la fonction publique pour ouvrir un coffee-shop franchisé.",
-    description: "Coffee/snacking rue des Ponts, nouvelle vie entrepreneuriale.",
+    title: "Miss Cookies Coffee — Coffee-shop franchisé (Nancy)",
+    chapo: "Aude quitte la fonction publique pour se lancer en franchise : un cadre rassurant, un accueil très personnel.",
+    description: "Coffee/snacking rue des Ponts, exécution régulière, équipe locale.",
     location: "9 Rue des Ponts, 54000 Nancy",
     latitude: 48.693, longitude: 6.182,
     source_name: "Site officiel",
     source_url:  "https://www.misscookies.com/",
     image_url:   "https://www.misscookies.com/photos/produits-patisseries.jpg",
     body: <<~MD,
-      ### Le virage
-      Utiliser le cadre franchise pour aller vite et se concentrer sur l’exécution.
+      ### 🔄 Le virage
+      **Choisir une franchise**, pour Aude, c’est un moyen d’**accélérer** sans partir de zéro : process éprouvés, achats centralisés, formation initiale. Elle garde l’essentiel pour elle : **l’accueil**, la **régularité**, l’**ambiance**. Son café doit être un repère simple, ouvert, **bien tenu**.
 
-      ### Le quotidien
-      Qualité constante, recrutement local, saisonnalité.
+      ### 🧰 Parcours avant l’ouverture
+      Quitter la fonction publique n’a pas été un caprice. Aude a **visité**, **comparé**, interrogé des franchisés, pris des notes sur les flux, les heures pleines, la gestion des stocks. Elle a validé l’**emplacement**, recruté une **équipe locale**, appris à **lire la journée** (vitrine 11 h, rush 16 h, fermeture douce). Les premières semaines ont servi d’**ajustement** ; puis les rouages se sont posés.
 
-      ### Leçon
-      Les process sont un support, l’accueil fait la différence.
+      ### ☕ La vie du lieu
+      Le matin, ce sont les **petits-déjeuners** chauds et les cafés à emporter ; l’après-midi, les **cookies** et les pauses réconfort. Aude ajoute sa **touche** : playlists douces, partenariats avec des créateurs du coin, **opérations solidaires**. Rien d’extravagant ; juste la **constance** qui donne envie de revenir.
+
+      ### 💡 Pourquoi c’est inspirant
+      - Une reconversion **pragmatique** et assumée
+      - Des **process** au service d’un **accueil** très personnel
+      - Un commerce **régulier** qui gagne la confiance du quartier
+
+      —
+      📍 Adresse : 9 Rue des Ponts, 54000 Nancy
+      📸 Crédit photo : Miss Cookies Coffee
+      📰 Source : Site officiel
     MD
     quote: "Je voulais entreprendre, mais jamais seule."
   },
+
   {
     slug: "alexs-pastries-vandoeuvre",
     title: "Alex’s Pastries — Pâtisserie (Vandœuvre-lès-Nancy)",
-    chapo: "Reconversion : de l’enseignement à la pâtisserie.",
-    description: "Sur commande + ateliers à domicile.",
+    chapo: "De l’enseignement à la pâtisserie artisanale : une entreprise gourmande, locale et sur-mesure.",
+    description: "Entremets, gâteaux personnalisés, ateliers à domicile et commande en ligne.",
     location: "6 Rue Notre-Dame-des-Pauvres, 54500 Vandœuvre-lès-Nancy",
     latitude: 48.656, longitude: 6.176,
-    source_name: "Site officiel",
-    source_url:  "https://alexloulous.wixsite.com/alexspastries",
-    image_url:   "https://static.wixstatic.com/media/d30316_7bde4702681c4fd5ab1446470d45bf88~mv2.jpeg/v1/fill/w_980,h_980,al_c,q_85/Entremets%20vanille%20fruits%20rouges.jpeg",
+    source_name: "Site & réseaux — Alex’s Pastries",
+    source_url: "https://alexloulous.wixsite.com/alexspastries",
+    image_url: "https://static.wixstatic.com/media/d30316_7bde4702681c4fd5ab1446470d45bf88~mv2.jpeg/v1/fill/w_980,h_980,al_c,q_85/Entremets%20vanille%20fruits%20rouges.jpeg",
     body: <<~MD,
-      ### Le déclic
-      CAP pâtisserie, commandes locales, ateliers.
+      ### 🌿 Le projet
+      **Alex’s Pastries** fabrique des **entremets soignés** et des gâteaux personnalisés qui racontent une personne, une table, une fête. Le cœur du modèle est simple : **commande** pour éviter le gâchis, **ateliers** pour transmettre. Les recettes sont équilibrées, les décors précis, et les échanges avec les clients font partie de la **création**.
 
-      ### Signature
-      Entremets soignés, options personnalisées, carnet en ligne.
+      ### 🎓 Parcours avant l’ouverture
+      Ancienne **enseignante**, Alex prépare son **CAP pâtisserie**, enchaîne les **stages**, documente ses essais. Elle se dote d’un **calendrier de production**, d’une prise de **rendez-vous** en ligne, d’un petit kit de **devis** clair. Le bouche-à-oreille fait le reste, avec une promesse tenue : peu, mais **très bien**.
 
-      ### Montée en puissance
-      Retours clients, partenariats, lots vitrines.
+      ### 🎂 La vie du lieu
+      Les week-ends, c’est la ronde des **événements** (anniversaires, mariages) ; en semaine, place aux **ateliers** à la maison ou en tiers-lieu, où l’on apprend la mousse qui tient, la ganache qui brille, la poche qui rassure. Les **retours clients** nourrissent les recettes. Alex a trouvé son tempo : un artisanat **joyeux**, précis, et profondément **humain**.
+
+      ### 💡 Pourquoi c’est inspirant
+      - Un modèle **agile** et frugal pour se lancer 🍰
+      - La progression par **petites itérations** et feedbacks
+      - L’exigence artisanale au service de **vraies personnes** ✨
+
+      —
+      📍 Adresse : Vandœuvre-lès-Nancy
+      📸 Crédit photo : Alex’s Pastries
+      📰 Source : Site & réseaux
     MD
     quote: "Je fabrique peu, mais très bien, pour de vraies personnes."
   },
 
-  # — 3 histoires sourcées L’Est Républicain (axe Nancy ⇄ Saint-Dié)
-  {
-    slug: "seventheen-coffee-luneville-er",
-    title: "SEVENTHÉEN Coffee (Lunéville) — Un coffee shop de spécialité en cœur de ville",
-    chapo: "Deux reconversions aboutissent à l’ouverture d’un coffee shop de spécialité rue de la République.",
-    description: "Café de spécialité, petite restauration, ateliers d’initiation : un lieu qui anime Lunéville.",
-    location: "57 Rue de la République, 54300 Lunéville",
-    latitude: 48.591, longitude: 6.496,
-    source_name: "L’Est Républicain",
-    source_url:  "https://www.estrepublicain.fr/edition-luneville/2024/11/25/seventheen-coffee-un-coffee-shop-rue-de-la-republique",
-    image_url:   "",
+    {
+    slug: "saveurs-exotics-toul",
+    title: "Saveurs Exotics — Épicerie antillaise & africaine (Toul)",
+    chapo: "Du conseil RH à l’entrepreneuriat local : une épicerie qui fait voyager les papilles et rassemble les gens.",
+    description: "Produits antillais et africains, bar à salade, ateliers cuisine et conseils personnalisés.",
+    location: "9 Rue Pont-des-Cordeliers, 54200 Toul",
+    latitude: 48.682, longitude: 5.894,
+    source_name: "Site officiel",
+    source_url: "https://www.saveurs-exotics.fr/",
+    image_url: "https://www.saveurs-exotics.fr/wp-content/uploads/2025/06/Slide1-compressed.jpg",
     body: <<~MD,
-      ### Le déclic
-      Après des parcours pros différents, les fondateurs tombent amoureux du café de spécialité.
+      ### 🌿 Le projet
+      À Toul, **Saveurs Exotics** met des couleurs et des arômes dans le quotidien. Derrière le comptoir, on trouve une femme passionnée de cuisine et de partage, passée du **conseil en ressources humaines** à l’**entrepreneuriat gourmand**. Son ambition : faire découvrir des **saveurs d’enfance**, valoriser des producteurs méconnus et créer un lieu où l’on vient autant pour **échanger que pour acheter**.
 
-      ### Le projet
-      Espresso constant, méthodes douces, **ateliers découverte** ouverts à tous.
+      Sur les étagères, des produits soigneusement choisis : épices des Antilles, condiments africains, boissons artisanales, confitures maison. Chaque référence est sélectionnée pour sa qualité, son histoire et son authenticité. Et parce que la curiosité ouvre l’appétit, le magasin propose aussi un **bar à salade** et des **dégustations thématiques**.
 
-      ### Pourquoi c’est inspirant
-      Une adresse qui **réveille le centre-ville** et crée des habitudes.
+      ### 🚶‍♀️ Parcours avant l’ouverture
+      Après plusieurs années dans le monde de la formation, la fondatrice ressent le besoin de **retrouver du concret**. Elle reprend ses racines culinaires, multiplie les salons, échange avec des importateurs et affine ses recettes maison. Étudier les produits, apprendre la gestion d’un stock vivant, comprendre les attentes du public : tout cela devient son **nouvel apprentissage**. Un pari audacieux, mené avec rigueur et enthousiasme.
+
+      ### 🍛 La vie du lieu
+      Chaque semaine, le magasin s’anime : **ateliers cuisine**, **soirées dégustation**, playlists créoles et recettes partagées sur un coin de table. Les habitués viennent pour un conseil, un mot, une idée. Ici, on parle aussi bien de **goût que de souvenirs**. En deux ans, l’adresse s’est imposée comme un **point de rencontre** entre cultures et générations.
+
+      ### 💡 Pourquoi c’est inspirant
+      - Une reconversion **authentique**, qui fait du commerce un vecteur de lien 💬
+      - La **pédagogie** comme ingrédient essentiel de la réussite 🍴
+      - Un commerce local qui redonne des **couleurs au centre-ville** 🌈
+
+      —
+      📍 Adresse : 9 Rue Pont-des-Cordeliers, 54200 Toul
+      📸 Crédit photo : Saveurs Exotics
+      📰 Source : Site officiel
     MD
+    quote: "Faire voyager les gens, sans quitter Toul."
   },
+
   {
-    slug: "pierre-percee-plein-air-relance-er",
-    title: "Pierre-Percée (54) — Parier sur le plein air pour relancer un village",
-    chapo: "Investir pour monter en gamme et faire revenir les visiteurs autour du lac.",
-    description: "Hébergements et activités de nature comme levier de redynamisation locale.",
-    location: "54540 Pierre-Percée",
-    latitude: 48.498, longitude: 6.912,
-    source_name: "L’Est Républicain",
-    source_url:  "https://www.estrepublicain.fr/economie/2025/01/24/pierre-percee-veut-monter-en-gamme-pour-seduir-les-visiteurs",
-    image_url:   "",
+    slug: "lecrin-damelevieres",
+    title: "L’Écrin — Bar & Lounge (Damelevières)",
+    chapo: "Ancienne salariée d’EHPAD, elle reprend un bar-lounge et relance la vie du bourg avec une programmation simple et régulière.",
+    description: "Carte courte, scènes ouvertes, partenariats associatifs et ambiance chaleureuse.",
+    location: "19 Rue de la Libération, 54360 Damelevières",
+    latitude: 48.573, longitude: 6.346,
+    source_name: "L'Est Républicain (12/09/2025)",
+    source_url: "/stories/articles/lecrin-damelevieres.pdf",
+    image_url: "",
     body: <<~MD,
-      ### Le déclic
-      Capitaliser sur le lac et les activités outdoor.
+      ### 🌿 Le projet
+      **L’Écrin** porte bien son nom : un petit lieu convivial niché au cœur de Damelevières, où l’on se sent accueilli dès le seuil franchi. L’ancienne salariée d’EHPAD qui l’a repris voulait un endroit pour **rassembler sans prétention**, un espace de respiration après des années au service des autres. Son idée : un **bar-lounge** où la carte reste courte, les visages familiers, et la musique bien choisie.
 
-      ### Le projet
-      Mise à niveau des équipements, meilleure **expérience visiteur**.
+      Entre un verre de vin, un café ou une planche apéro, on échange, on rit, on se retrouve. Chaque semaine, l’Écrin propose une **soirée thématique** : karaoké, blind test, concert acoustique ou soirée jeux. Rien d’excessif, mais **tenu, sincère et régulier**. L’énergie du lieu repose sur la simplicité : une lumière douce, une poignée de tables, un sourire franc.
 
-      ### Pourquoi c’est inspirant
-      Vision territoriale concrète avec retombées locales.
+      ### 🚶‍♀️ Parcours avant l’ouverture
+      Après quinze ans en maison de retraite, elle décide de **changer de mission** sans changer de valeurs : **prendre soin**. Dossier de licence, formation en gestion, recherche de financement… L’ouverture du bar a été une école de patience. Elle s’entoure de proches, de bénévoles, de voisins, et apprend sur le tas la comptabilité, la communication, les autorisations. Chaque étape devient une **victoire tranquille**.
+
+      ### 🎵 La vie du lieu
+      Aujourd’hui, L’Écrin est plus qu’un bar : c’est un **rendez-vous de quartier**. Les jeunes viennent y chanter, les seniors y discutent l’après-midi, les associations locales y trouvent un point d’ancrage pour leurs événements. Les habitants redécouvrent la chaleur d’un commerce de proximité où l’on peut simplement **être bien**.
+
+      ### 💡 Pourquoi c’est inspirant
+      - Une **reprise audacieuse** qui prouve qu’on peut changer de vie à tout âge ✨
+      - Une **programmation légère** mais constante, au service du lien social 🎶
+      - Le **prendre soin** transposé à l’accueil et à la convivialité 🤝
+
+      —
+      📍 Adresse : 19 Rue de la Libération, 54360 Damelevières
+      📸 Crédit photo : L’Écrin
+      📰 Source : *L’Est Républicain* (2025)
     MD
+    quote: "Un endroit où l’on se sent bien, tout simplement."
   },
+
   {
-    slug: "le-pas-sage-nancy-er",
-    title: "Le Pas Sage (Nancy) — La constance d’une cuisine simple et précise",
-    chapo: "Dans le faubourg des Trois-Maisons, une adresse qui a trouvé son rythme.",
-    description: "Cuisine courte, produits frais et saison, exécution précise.",
-    location: "Quartier des Trois-Maisons, 54000 Nancy",
-    latitude: 48.701, longitude: 6.177,
-    source_name: "L’Est Républicain",
-    source_url:  "https://www.estrepublicain.fr/economie/2024/10/26/le-pas-sage-soigne-les-produits-frais-et-les-met-en-scene",
-    image_url:   "",
+    slug: "fred-taxi-saulxures",
+    title: "Fred’Taxi — Artisan taxi (Saulxures-lès-Nancy)",
+    chapo: "À 48 ans, Frédéric passe de cariste à artisan taxi : autonomie, service et confiance au quotidien.",
+    description: "Transport local, médical, scolaire ; qualité de service et régularité.",
+    location: "38 Grande Rue, 54420 Saulxures-lès-Nancy",
+    latitude: 48.654, longitude: 6.209,
+    source_name: "Témoignage local",
+    source_url: "",
+    image_url: "",
     body: <<~MD,
-      ### Le déclic
-      Travailler **court, frais, de saison** et viser la régularité.
+      ### 🚕 Le projet
+      Après vingt ans passés en entrepôt, **Frédéric** avait besoin d’air et de liberté. Son choix : devenir **artisan taxi**. À première vue, un simple changement de volant. En réalité, une nouvelle manière d’être utile. Aujourd’hui, il transporte des **patients**, des **enfants**, des **habitants isolés**, toujours avec le même soin. Ponctuel, poli, fiable, il est devenu pour beaucoup un **repère discret mais essentiel**.
 
-      ### Le projet
-      Carte ramassée, exécution précise, renouvellement saisonnier.
+      ### 🔧 Parcours avant l’ouverture
+      Reprendre la route n’a rien d’improvisé : formation, obtention de la **carte professionnelle**, recherche du bon véhicule, création d’une micro-entreprise, conventions avec les caisses de santé. Frédéric apprend tout, seul ou presque, avec l’aide d’anciens du métier. Ce qu’il gagne en paperasse, il le retrouve en **autonomie**. Il connaît ses clients, adapte ses horaires, entretient une **relation de confiance** qui dépasse la simple course.
 
-      ### Pourquoi c’est inspirant
-      Un restaurant de quartier peut **tenir la distance** sans sur-promettre.
+      ### 🤝 La vie du service
+      Dans les villages autour de Nancy, son numéro circule de bouche à oreille. Les gens l’appellent pour un rendez-vous médical, un trajet vers la gare, un retour tardif. Toujours une voix calme au bout du fil, un trajet sûr, un mot gentil. Fred sait écouter, patienter, rassurer. Et c’est peut-être là son vrai métier : **rendre la mobilité humaine**.
+
+      ### 💡 Pourquoi c’est inspirant
+      - Une reconversion **sobre et utile** qui recrée du lien de proximité 🛣️
+      - Un modèle de **service artisanal** au cœur du quotidien 🚗
+      - La preuve que la **fiabilité** peut être une vocation à part entière 💬
+
+      —
+      📍 Secteur : Saulxures-lès-Nancy & environs
+      📸 Crédit photo : Fred’Taxi
+      📰 Source : Témoignages locaux
     MD
+    quote: "Ce que je vends ? La fiabilité."
   }
 ]
+
+# ——— Ajouts “Belles histoires” depuis Destination Nancy (pp.16–17)
+[
+  {
+    slug: "cerfav-vannes-le-chatel",
+    title: "CERFAV — Arts verriers (Vannes-le-Châtel)",
+    category: "formation",
+    chapo: "Un lieu unique où l’on souffle le verre, on apprend, on crée — du premier cœur en duo à la boule de Noël, la magie devient geste.",
+    description: "Formations & ateliers grand public (soufflage, fusing), galerie-boutique et expositions autour du verre.",
+    location: "Rue du Grippot, 54112 Vannes-le-Châtel",
+    latitude: nil, longitude: nil,
+    source_name: "Destination Nancy",
+    source_url: "/stories/articles/destination-nancy.pdf",
+    image_url: "stories/cerfav.jpg",
+    body: <<~MD,
+      ### 🌿 Le projet
+      À Vannes-le-Châtel, le **CERFAV** mélange transmission, création et émerveillement. On y vient pour **voir** le verre prendre forme au bout de la canne, pour **essayer** un premier geste, pour repartir avec une pièce qui a une histoire : la vôtre. Entre ateliers **grand public** (soufflage d’ornements, **fusing** en couleurs) et expositions, le lieu fonctionne comme un **accélérateur d’envies** : il rend le geste verrier accessible, sans rien enlever à sa poésie. :contentReference[oaicite:0]{index=0}
+
+      ### 🚶‍♀️ Parcours & pédagogie
+      C’est d’abord un **centre de formation** et de recherche reconnu — mais ici, la pédagogie ne s’arrête pas aux pros. L’équipe a conçu des formats courts **dès 6 ans**, pensés pour que chacun réussisse **en sécurité**, avec un résultat concret (boules de Noël, **cœurs soufflés**, pièces en verre fusionné). L’idée : **apprendre par le faire**, comprendre la chaleur, la gravité, le refroidissement… et regarder la matière vivre sous vos yeux. :contentReference[oaicite:1]{index=1}
+
+      ### 🔥 La vie du lieu
+      Les temps forts rythment l’année : ateliers de **Noël** pour souffler sa boule, sessions **Saint-Valentin** pour créer un cœur à deux, découverte du **fusing** pendant l’hiver… La **galerie-boutique** prolonge l’expérience et l’Office de Tourisme métropolitain propose aussi des créations du CERFAV en ville — de quoi offrir local, **beau et durable**. Réservation en ligne, accueil bienveillant, équipe passionnée : on repart avec une pièce et une **étincelle**. :contentReference[oaicite:2]{index=2}
+
+      ### 💡 Pourquoi c’est inspirant
+      - Un savoir-faire d’exception rendu **accessible** ✨
+      - Des ateliers courts qui **réenchantent** l’apprentissage 🧪
+      - Un lien direct entre **créateurs, habitants et visiteurs** 🫶
+
+      —
+      📍 Rue du Grippot, Vannes-le-Châtel
+      📰 Source : *Destination Nancy*, pp.16 (programmation & ateliers). :contentReference[oaicite:3]{index=3}
+    MD
+    quote: "Le verre se travaille comme une histoire : souffle, patience… et lumière."
+  },
+
+  {
+    slug: "le-lupin-atelier-ceramique-nancy",
+    title: "Le Lupin — Atelier de céramique (Nancy)",
+    category: "formation",
+    chapo: "Un atelier familial, des cours et des stages pour apprivoiser la terre — et une box 100 % céramique, pensée à Nancy.",
+    description: "Cours, initiations, pratique autonome encadrée, ventes éphémères & abonnement « La Box du Lupin ». ",
+    location: "5 Place de la Croix de Bourgogne, 54000 Nancy",
+    latitude: nil, longitude: nil,
+    source_name: "Destination Nancy",
+    source_url: "/stories/articles/destination-nancy.pdf",
+    image_url: "stories/le-lupin.jpg",
+    body: <<~MD,
+      ### 🌿 Le projet
+      **Le Lupin** est un atelier de céramique tenu par deux artisans passionnés. C’est un lieu **vivant** plus qu’une vitrine : on y façonne, on y tourne, on y émaille, on y parle de gestes et de temps long. L’équipe propose des **cours** et **initiations**, mais aussi des temps de **pratique autonome** pour continuer à créer **à son rythme**, comme un abonnement à sa propre progression. Des **ventes éphémères** ponctuent l’année : des pièces en grès ou en porcelaine, utiles et durables. :contentReference[oaicite:4]{index=4}
+
+      ### 🎁 Une box qui soutient l’artisanat
+      Leur **Box du Lupin** (tous les deux mois) réunit des pièces faites main à Nancy — un concentré d’objets **utiles, sobres, touchants**, livrés à domicile. C’est une excellente porte d’entrée pour qui veut **offrir local** ou s’équiper autrement, en apprenant à reconnaître la **qualité d’une cuisson**, d’un émail, d’un bord bien tourné. :contentReference[oaicite:5]{index=5}
+
+      ### 🏺 La vie du lieu
+      L’atelier est ouvert **du lundi au samedi** : cours, **stages**, créneaux d’atelier libre… Les débutants y trouvent une **pédagogie rassurante** (on dédramatise le « raté »), les plus avancés viennent pour l’**exigence des finitions**. On s’y croise, on s’encourage, on compare des terres, on passe dire bonjour lors d’une **vente d’artisans**. Une vraie **communauté** de mains dans la terre. :contentReference[oaicite:6]{index=6}
+
+      ### 💡 Pourquoi c’est inspirant
+      - Une **école du geste** chaleureuse, pour tous niveaux 👐
+      - Un modèle mêlant **formation & diffusion** locale 📦
+      - Le temps long de l’artisanat, rendu **désirable** au quotidien ⏳
+
+      —
+      📍 5 place de la Croix de Bourgogne, Nancy
+      📰 Source : *Destination Nancy*, p.17 (atelier & Box du Lupin). :contentReference[oaicite:7]{index=7}
+    MD
+    quote: "Apprendre la terre, c’est apprendre la patience… et la joie du concret."
+  },
+
+  {
+    slug: "club-sandwich-illustration-nancy",
+    title: "Club Sandwich — Atelier-boutique d’illustrations (Nancy)",
+    category: "rencontres",
+    chapo: "Deux illustratrices, une vitrine colorée et des rendez-vous réguliers pour faire vibrer l’imaginaire — du dessin à la sérigraphie.",
+    description: "Boutique-atelier, sérigraphies, objets illustrés, événements & rencontres avec des artistes locaux.",
+    location: "21 Rue de la Source, 54000 Nancy",
+    latitude: nil, longitude: nil,
+    source_name: "Destination Nancy",
+    source_url: "/stories/articles/destination-nancy.pdf",
+    image_url: "stories/club-sandwich.jpg",
+    body: <<~MD,
+      ### 🌿 Le projet
+      **Club Sandwich** (ex-Cueillir) est la boutique-atelier de deux illustratrices, **Chloé Revel** et **Cami Berni**. Leur univers mêle **Art nouveau**, faune & flore, **Japon** et estampe — le tout décliné en **illustrations et sérigraphies** qui accrochent l’œil et le sourire. On entre pour une affiche, on reste pour la **conversation** sur un papier, une encre, une trame, un cadrage. :contentReference[oaicite:8]{index=8}
+
+      ### ✍️ Parcours & engagement
+      Investies dans le tissu **associatif et culturel**, elles conçoivent la boutique comme un **lieu de circulation** : accueillir d’autres illustrateurs, organiser des **temps forts**, provoquer des rencontres. On peut aussi **commander une illustration** personnalisée — une façon joyeuse de célébrer une histoire, un lieu, une passion. :contentReference[oaicite:9]{index=9}
+
+      ### 🎨 La vie du lieu
+      Ouverte **du mercredi au samedi (14h–18h)**, la boutique est un point de ralliement pour les curieux, les étudiants, les **amoureux d’objets imprimés**. Entre **petites séries**, pochettes, pins et pièces chinées, chacun trouve de quoi **offrir local** sans se ruiner. Et comme les vitrines changent au fil des saisons, **revenir** est toujours une bonne idée. :contentReference[oaicite:10]{index=10}
+
+      ### 💡 Pourquoi c’est inspirant
+      - Un **atelier-boutique** qui crée de la **rencontre** 🤝
+      - L’illustration **vivante**, entre artisanat et culture populaire 🖼️
+      - Des **commandes sur mesure** qui racontent les gens 💬
+
+      —
+      📍 21 rue de la Source, Nancy
+      📰 Source : *Destination Nancy*, p.17 (profil & horaires). :contentReference[oaicite:11]{index=11}
+    MD
+    quote: "Donner à voir, et donner envie de créer."
+  },
+]
+
+
+
 
 # Insertion idempotente (Stories)
 created_stories = 0
@@ -811,4 +938,3 @@ stories.each do |attrs|
   s.save!
 end
 puts "Seeds -> stories: +#{created_stories} (total: #{Story.count})"
-

@@ -1,48 +1,132 @@
+# app/helpers/stories_helper.rb
 module StoriesHelper
+  # ----------------------------- Emoji mapping (fallback) -----------------------------
   def emoji_for(title)
     key = title.to_s.downcase
     case
-    when key.include?('déclic')           then '💡'
-    when key.include?('projet')           then '🧭'
-    when key.include?('proposition')      then '🧩'
-    when key.include?('expérience')       then '✨'
-    when key.include?('défi') || key.include?('obstacle') then '⚡'
-    when key.include?('impact')           then '📍'
-    when key.include?('coulisses')        then '🔧'
-    when key.include?('virage')           then '🔄'
-    when key.include?('signature')        then '⭐'
-    when key.include?('montée')           then '📈'
-    when key.include?('boutique')         then '🛒'
-    when key.include?('métier')           then '🧰'
-    when key.include?('concept')          then '🧠'
+    when key.include?('projet')            then '🌿'
+    when key.include?('parcours')          then '🚶‍♀️'
+    when key.include?('vie du lieu') ||
+         key.include?('vie du') ||
+         key.include?('le lieu')           then '☕'
+    when key.include?('carte') ||
+         key.include?('menu')              then '🍰'
+    when key.include?('inspirant') ||
+         key.include?('pourquoi')          then '💡'
     else '👉'
     end
   end
 
-  # Markdown light -> HTML (### titres, **À retenir**, listes "- ")
-  # Sans encadré pour "À retenir" ; bullets avec ✓
+  # ----------------------------- Inline Markdown sûr ---------------------------------
+  # Convertit **gras**, *italique* et [lien](https://...) après échappement HTML.
+  def inline_format(text)
+    s = ERB::Util.html_escape(text.to_s)
+
+    # Liens [label](http/https)
+    s = s.gsub(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/i) do
+      label = Regexp.last_match(1)
+      href  = Regexp.last_match(2)
+      %Q(<a href="#{href}" target="_blank" rel="noopener nofollow">#{ERB::Util.html_escape(label)}</a>)
+    end
+
+    # **gras**
+    s = s.gsub(/\*\*(.+?)\*\*/) { "<strong>#{Regexp.last_match(1)}</strong>" }
+
+    # *italique* (éviter de matcher dans **…**)
+    s = s.gsub(/(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)/) { "<em>#{Regexp.last_match(1)}</em>" }
+
+    s
+  end
+
+  # ----------------------------- Images Markdown -------------------------------------
+  # Gère ![alt](src) -> <figure><img><figcaption>
+  def render_image_line(md_line)
+    return nil unless md_line =~ /\A!\[(.*?)\]\((.*?)\)\s*\z/
+    alt = Regexp.last_match(1).to_s.strip
+    src = Regexp.last_match(2).to_s.strip
+    src = (src =~ /\Ahttps?:\/\//i) ? src : asset_path(src)
+
+    %Q(
+      <figure class="story-img my-4">
+        <img src="#{src}" alt="#{ERB::Util.html_escape(alt)}" loading="lazy" class="rounded-xl shadow-md w-full h-auto object-cover">
+        <figcaption class="mt-2 text-sm text-slate-600">#{ERB::Util.html_escape(alt)}</figcaption>
+      </figure>
+    )
+  end
+
+  # ----------------------------- Détection émoji en début de ligne -------------------
+  EMOJI_START_RX = /\A[\p{Emoji}\u2600-\u27BF]/u
+
+  # Ajoute un émoji "pratique" uniquement si la ligne n'en possède pas déjà
+  def auto_emoji_line(line)
+    l = line.to_s
+    return l if l.strip.empty?
+    return l if l.lstrip =~ EMOJI_START_RX
+
+    # Mots-clés de bas de page / infos pratiques
+    lowered = l.downcase
+    if lowered.start_with?('adresse')
+      "📍 #{l}"
+    elsif lowered.start_with?('crédit photo') || lowered.start_with?('crédit photo') || lowered.start_with?('crédit photo')
+      "📸 #{l}"
+    elsif lowered.start_with?('source')
+      "📰 #{l}"
+    elsif lowered.start_with?('contact')
+      "✉️ #{l}"
+    else
+      l
+    end
+  end
+
+  # ----------------------------- Rendu principal -------------------------------------
+  # Markdown light :
+  # - Titres "### ..." avec émoji saisi par l’auteur (🌿 Titre ou {🌿} Titre) sinon fallback emoji_for
+  # - Listes "- ..."
+  # - Bloc "**À retenir**" => liste à checkmarks
+  # - Paragraphes + inline_format
+  # - Images Markdown ![alt](src)
   def render_story_body(text)
     return "".html_safe if text.blank?
 
-    lines = text.to_s.split(/\r?\n/)
-    html  = []
-    in_list = false
+    lines        = text.to_s.split(/\r?\n/)
+    html         = []
+    in_list      = false
     in_takeaways = false
 
     lines.each do |raw|
       line = raw.rstrip
 
-      if line =~ /\A###\s+(.+)/
-        title = Regexp.last_match(1).strip
-        emoji = emoji_for(title)
-        # ferme blocs en cours
-        if in_list
-          html << %(</ul>)
-          in_list = false
+      # Images
+      if (img_html = render_image_line(line))
+        html << %(</ul>) if in_list
+        in_list = false
+        html << img_html
+        next
+      end
+
+      # Titres ### (avec émoji saisi par l’auteur optionnel)
+      if line =~ /\A[ \t\u00A0\u2000-\u200B\u202F]*###[ \t\u00A0\u2000-\u200B\u202F]+(.+)/
+        title_raw = Regexp.last_match(1).strip
+
+        # 1) "### 🌿 Titre"
+        # 2) "### {🌿} Titre"
+        custom_emoji = nil
+        title = title_raw
+
+        if title_raw =~ /\A\{(?<em>[\p{Emoji}\u2600-\u27BF])\}[ \t]*(?<rest>.+)\z/u
+          custom_emoji = Regexp.last_match(:em)
+          title        = Regexp.last_match(:rest).strip
+        elsif title_raw =~ /\A(?<em>[\p{Emoji}\u2600-\u27BF])[ \t]*(?<rest>.+)\z/u
+          custom_emoji = Regexp.last_match(:em)
+          title        = Regexp.last_match(:rest).strip
         end
-        if in_takeaways
-          in_takeaways = false
-        end
+
+        emoji = custom_emoji || emoji_for(title)
+
+        html << %(</ul>) if in_list
+        in_list = false
+        in_takeaways = false
+
         html << %(
           <h3 class="mt-7 mb-3 flex items-center gap-3 text-xl font-semibold text-slate-900">
             <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-violet-600/10 text-lg">#{emoji}</span>
@@ -52,8 +136,8 @@ module StoriesHelper
         next
       end
 
+      # Bloc "À retenir"
       if line =~ /\A\*\*À retenir\*\*/
-        # pas d'encadré ; simple titre + on passe en mode "takeaways"
         html << %(
           <h4 class="mt-6 mb-2 flex items-center gap-2 text-base font-semibold text-amber-900">
             <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-sm">📌</span>
@@ -61,13 +145,15 @@ module StoriesHelper
           </h4>
         )
         in_takeaways = true
+        html << %(</ul>) if in_list
+        in_list = false
         next
       end
 
+      # Listes "- ..."
       if line =~ /\A-\s+(.+)/
         item = Regexp.last_match(1).strip
         unless in_list
-          # listes normales -> puces ; "À retenir" -> checkmarks et pas de puces par défaut
           if in_takeaways
             html << %(<ul class="pl-0 list-none space-y-1 text-slate-800">)
           else
@@ -76,36 +162,44 @@ module StoriesHelper
           in_list = true
         end
         if in_takeaways
-          html << %(<li class="flex items-start gap-2"><span class="mt-0.5 text-emerald-600">✓</span><span>#{ERB::Util.html_escape(item)}</span></li>)
+          html << %(<li class="flex items-start gap-2"><span class="mt-0.5 text-emerald-600">✓</span><span>#{inline_format(item)}</span></li>)
         else
-          html << %(<li>#{ERB::Util.html_escape(item)}</li>)
+          html << %(<li>#{inline_format(item)}</li>)
         end
         next
       end
 
+      # Ligne vide -> fermer liste si besoin
       if line.blank?
         if in_list
           html << %(</ul>)
           in_list = false
         end
-        # on reste en mode "takeaways" tant qu'on n'a pas vu un nouveau titre
         next
       end
 
+      # Paragraphe
       if in_list
         html << %(</ul>)
         in_list = false
       end
 
-      html << %(<p class="text-slate-800 leading-relaxed">#{ERB::Util.html_escape(line)}</p>)
+      # Émoji auto pour les lignes d’infos pratiques si pas déjà présent
+      formatted_line = auto_emoji_line(line)
+
+      html << %(<p class="text-slate-800 leading-relaxed">#{inline_format(formatted_line)}</p>)
     end
 
     html << %(</ul>) if in_list
     html.join("\n").html_safe
   end
 
+  # ----------------------------- Utilitaires -----------------------------------------
   def safe_excerpt(text, words: 25)
     text.to_s.split(/\s+/).first(words).join(" ")
   end
 end
+
+
+
 

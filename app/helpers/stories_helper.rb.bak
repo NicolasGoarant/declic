@@ -1,0 +1,157 @@
+# app/helpers/stories_helper.rb
+module StoriesHelper
+  # ---------------- Emoji pour les titres H3 ----------------
+  def emoji_for(title)
+    key = title.to_s.downcase
+    case
+    when key.include?('déclic')                         then '💡'
+    when key.include?('projet')                         then '🌿'
+    when key.include?('parcours')                       then '🚶‍♀️'
+    when key.include?('vie')                            then '☕'
+    when key.include?('carte') || key.include?('menu')  then '🍰'
+    when key.include?('expérience')                     then '✨'
+    when key.include?('défi') || key.include?('obstacle') then '⚡'
+    when key.include?('impact')                         then '📍'
+    when key.include?('coulisses')                      then '🔧'
+    when key.include?('virage')                         then '🔄'
+    when key.include?('signature')                      then '⭐'
+    when key.include?('montée')                         then '📈'
+    when key.include?('boutique')                       then '🛒'
+    when key.include?('métier')                         then '🧰'
+    when key.include?('concept')                        then '🧠'
+    else '👉'
+    end
+  end
+
+  # -------------- Mini-Markdown inline (safe) --------------
+  # **gras**, *italique*, [lien](https://…)
+  def inline_format(text)
+    s = ERB::Util.html_escape(text.to_s)
+
+    # liens http(s) uniquement
+    s = s.gsub(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/i) do
+      label = Regexp.last_match(1)
+      href  = Regexp.last_match(2)
+      %Q(<a href="#{href}" target="_blank" rel="noopener nofollow">#{ERB::Util.html_escape(label)}</a>)
+    end
+
+    # **gras**
+    s = s.gsub(/\*\*(.+?)\*\*/) { "<strong>#{Regexp.last_match(1)}</strong>" }
+    # *italique* (éviter d’attraper l’intérieur de **…**)
+    s = s.gsub(/(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)/) { "<em>#{Regexp.last_match(1)}</em>" }
+
+    s
+  end
+
+  # -------------- Image Markdown ![alt](src) ----------------
+  def render_image_line(md_line)
+    return nil unless md_line =~ /\A!\[(.*?)\]\((.*?)\)\s*\z/
+    alt = Regexp.last_match(1).to_s.strip
+    src = Regexp.last_match(2).to_s.strip
+    src = (src =~ /\Ahttps?:\/\//i) ? src : asset_path(src)
+    %Q(
+      <figure class="story-img">
+        <img src="#{src}" alt="#{ERB::Util.html_escape(alt)}" loading="lazy">
+        <figcaption>#{ERB::Util.html_escape(alt)}</figcaption>
+      </figure>
+    )
+  end
+
+  # -------------- Rendu principal Markdown light ------------
+  # - Titres ### (avec émoji)
+  # - Bloc "**À retenir**" => puces ✓
+  # - Listes "- "
+  # - Paragraphes avec inline_format
+  def render_story_body(text)
+    return "".html_safe if text.blank?
+
+    lines        = text.to_s.split(/\r?\n/)
+    html         = []
+    in_list      = false
+    in_takeaways = false
+
+    lines.each do |raw|
+      line = raw.rstrip
+
+      # Image Markdown
+      if (img_html = render_image_line(line))
+        html << %(</ul>) if in_list
+        in_list = false
+        html << img_html
+        next
+      end
+
+      # Titres H3
+      if line =~ /\A###\s+(.+)/
+        title = Regexp.last_match(1).strip
+        emoji = emoji_for(title)
+        html << %(</ul>) if in_list
+        in_list = false
+        in_takeaways = false
+        html << %(
+          <h3 class="mt-7 mb-3 flex items-center gap-3 text-xl font-semibold text-slate-900">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-violet-600/10 text-lg">#{emoji}</span>
+            <span>#{ERB::Util.html_escape(title)}</span>
+          </h3>
+        )
+        next
+      end
+
+      # "À retenir"
+      if line =~ /\A\*\*À retenir\*\*/
+        html << %(
+          <h4 class="mt-6 mb-2 flex items-center gap-2 text-base font-semibold text-amber-900">
+            <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-sm">📌</span>
+            <span>À retenir</span>
+          </h4>
+        )
+        in_takeaways = true
+        html << %(</ul>) if in_list
+        in_list = false
+        next
+      end
+
+      # Listes "- "
+      if line =~ /\A-\s+(.+)/
+        item = Regexp.last_match(1).strip
+        unless in_list
+          html << (in_takeaways ? %(<ul class="pl-0 list-none space-y-1 text-slate-800">)
+                                : %(<ul class="list-disc pl-6 space-y-1 text-slate-700">))
+          in_list = true
+        end
+        if in_takeaways
+          html << %(<li class="flex items-start gap-2"><span class="mt-0.5 text-emerald-600">✓</span><span>#{inline_format(item)}</span></li>)
+        else
+          html << %(<li>#{inline_format(item)}</li>)
+        end
+        next
+      end
+
+      # Ligne vide
+      if line.blank?
+        if in_list
+          html << %(</ul>)
+          in_list = false
+        end
+        next
+      end
+
+      # Paragraphe
+      if in_list
+        html << %(</ul>)
+        in_list = false
+      end
+      html << %(<p class="text-slate-800 leading-relaxed">#{inline_format(line)}</p>)
+    end
+
+    html << %(</ul>) if in_list
+    html.join("\n").html_safe
+  end
+
+  def safe_excerpt(text, words: 25)
+    text.to_s.split(/\s+/).first(words).join(" ")
+  end
+end
+
+
+
