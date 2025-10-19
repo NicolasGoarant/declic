@@ -703,7 +703,7 @@ stories = [
     quote: "Je fabrique peu, mais très bien, pour de vraies personnes."
   },
 
-    {
+  {
     slug: "saveurs-exotics-toul",
     title: "Saveurs Exotics — Épicerie antillaise & africaine (Toul)",
     chapo: "Du conseil RH à l’entrepreneuriat local : une épicerie qui fait voyager les papilles et rassemble les gens.",
@@ -808,7 +808,7 @@ stories = [
 ]
 
 # ——— Ajouts “Belles histoires” depuis Destination Nancy (pp.16–17)
-[
+stories += [
   {
     slug: "cerfav-vannes-le-chatel",
     title: "CERFAV — Arts verriers (Vannes-le-Châtel)",
@@ -816,19 +816,19 @@ stories = [
     chapo: "Un lieu unique où l’on souffle le verre, on apprend, on crée — du premier cœur en duo à la boule de Noël, la magie devient geste.",
     description: "Formations & ateliers grand public (soufflage, fusing), galerie-boutique et expositions autour du verre.",
     location: "Rue du Grippot, 54112 Vannes-le-Châtel",
-    latitude: nil, longitude: nil,
+    latitude: 48.5555, longitude: 5.8476,
     source_name: "Destination Nancy",
     source_url: "/stories/articles/destination-nancy.pdf",
     image_url: "stories/cerfav.jpg",
     body: <<~MD,
       ### 🌿 Le projet
-      À Vannes-le-Châtel, le **CERFAV** mélange transmission, création et émerveillement. On y vient pour **voir** le verre prendre forme au bout de la canne, pour **essayer** un premier geste, pour repartir avec une pièce qui a une histoire : la vôtre. Entre ateliers **grand public** (soufflage d’ornements, **fusing** en couleurs) et expositions, le lieu fonctionne comme un **accélérateur d’envies** : il rend le geste verrier accessible, sans rien enlever à sa poésie. :contentReference[oaicite:0]{index=0}
+      À Vannes-le-Châtel, le **CERFAV** mélange transmission, création et émerveillement. On y vient pour **voir** le verre prendre forme au bout de la canne, pour **essayer** un premier geste, pour repartir avec une pièce qui a une histoire : la vôtre. Entre ateliers **grand public** (soufflage d’ornements, **fusing** en couleurs) et expositions, le lieu fonctionne comme un **accélérateur d’envies** : il rend le geste verrier accessible, sans rien enlever à sa poésie.
 
       ### 🚶‍♀️ Parcours & pédagogie
-      C’est d’abord un **centre de formation** et de recherche reconnu — mais ici, la pédagogie ne s’arrête pas aux pros. L’équipe a conçu des formats courts **dès 6 ans**, pensés pour que chacun réussisse **en sécurité**, avec un résultat concret (boules de Noël, **cœurs soufflés**, pièces en verre fusionné). L’idée : **apprendre par le faire**, comprendre la chaleur, la gravité, le refroidissement… et regarder la matière vivre sous vos yeux. :contentReference[oaicite:1]{index=1}
+      C’est d’abord un **centre de formation** et de recherche reconnu — mais ici, la pédagogie ne s’arrête pas aux pros. L’équipe a conçu des formats courts **dès 6 ans**, pensés pour que chacun réussisse **en sécurité**, avec un résultat concret (boules de Noël, **cœurs soufflés**, pièces en verre fusionné). L’idée : **apprendre par le faire**, comprendre la chaleur, la gravité, le refroidissement… et regarder la matière vivre sous vos yeux.
 
       ### 🔥 La vie du lieu
-      Les temps forts rythment l’année : ateliers de **Noël** pour souffler sa boule, sessions **Saint-Valentin** pour créer un cœur à deux, découverte du **fusing** pendant l’hiver… La **galerie-boutique** prolonge l’expérience et l’Office de Tourisme métropolitain propose aussi des créations du CERFAV en ville — de quoi offrir local, **beau et durable**. Réservation en ligne, accueil bienveillant, équipe passionnée : on repart avec une pièce et une **étincelle**. :contentReference[oaicite:2]{index=2}
+      Les temps forts rythment l’année : ateliers de **Noël** pour souffler sa boule, sessions **Saint-Valentin** pour créer un cœur à deux, découverte du **fusing** pendant l’hiver… La **galerie-boutique** prolonge l’expérience et l’Office de Tourisme métropolitain propose aussi des créations du CERFAV en ville — de quoi offrir local, **beau et durable**. Réservation en ligne, accueil bienveillant, équipe passionnée : on repart avec une pièce et une **étincelle**.
 
       ### 💡 Pourquoi c’est inspirant
       - Un savoir-faire d’exception rendu **accessible** ✨
@@ -836,8 +836,9 @@ stories = [
       - Un lien direct entre **créateurs, habitants et visiteurs** 🫶
 
       —
-      📍 Rue du Grippot, Vannes-le-Châtel
-      📰 Source : *Destination Nancy*, pp.16 (programmation & ateliers). :contentReference[oaicite:3]{index=3}
+      📍 Rue du Grippot, 54112 Vannes-le-Châtel
+      📸 Crédit photo : CERFAV
+      📰 Source : *Destination Nancy*, p.16
     MD
     quote: "Le verre se travaille comme une histoire : souffle, patience… et lumière."
   },
@@ -849,19 +850,19 @@ stories = [
     chapo: "Un atelier familial, des cours et des stages pour apprivoiser la terre — et une box 100 % céramique, pensée à Nancy.",
     description: "Cours, initiations, pratique autonome encadrée, ventes éphémères & abonnement « La Box du Lupin ». ",
     location: "5 Place de la Croix de Bourgogne, 54000 Nancy",
-    latitude: nil, longitude: nil,
+    latitude: 48.6867, longitude: 6.1842,
     source_name: "Destination Nancy",
     source_url: "/stories/articles/destination-nancy.pdf",
     image_url: "stories/le-lupin.jpg",
     body: <<~MD,
       ### 🌿 Le projet
-      **Le Lupin** est un atelier de céramique tenu par deux artisans passionnés. C’est un lieu **vivant** plus qu’une vitrine : on y façonne, on y tourne, on y émaille, on y parle de gestes et de temps long. L’équipe propose des **cours** et **initiations**, mais aussi des temps de **pratique autonome** pour continuer à créer **à son rythme**, comme un abonnement à sa propre progression. Des **ventes éphémères** ponctuent l’année : des pièces en grès ou en porcelaine, utiles et durables. :contentReference[oaicite:4]{index=4}
+      **Le Lupin** est un atelier de céramique tenu par deux artisans passionnés. C’est un lieu **vivant** plus qu’une vitrine : on y façonne, on y tourne, on y émaille, on y parle de gestes et de temps long. L’équipe propose des **cours** et **initiations**, mais aussi des temps de **pratique autonome** pour continuer à créer **à son rythme**, comme un abonnement à sa propre progression. Des **ventes éphémères** ponctuent l’année : des pièces en grès ou en porcelaine, utiles et durables.
 
       ### 🎁 Une box qui soutient l’artisanat
-      Leur **Box du Lupin** (tous les deux mois) réunit des pièces faites main à Nancy — un concentré d’objets **utiles, sobres, touchants**, livrés à domicile. C’est une excellente porte d’entrée pour qui veut **offrir local** ou s’équiper autrement, en apprenant à reconnaître la **qualité d’une cuisson**, d’un émail, d’un bord bien tourné. :contentReference[oaicite:5]{index=5}
+      Leur **Box du Lupin** (tous les deux mois) réunit des pièces faites main à Nancy — un concentré d’objets **utiles, sobres, touchants**, livrés à domicile. C’est une excellente porte d’entrée pour qui veut **offrir local** ou s’équiper autrement, en apprenant à reconnaître la **qualité d’une cuisson**, d’un émail, d’un bord bien tourné.
 
       ### 🏺 La vie du lieu
-      L’atelier est ouvert **du lundi au samedi** : cours, **stages**, créneaux d’atelier libre… Les débutants y trouvent une **pédagogie rassurante** (on dédramatise le « raté »), les plus avancés viennent pour l’**exigence des finitions**. On s’y croise, on s’encourage, on compare des terres, on passe dire bonjour lors d’une **vente d’artisans**. Une vraie **communauté** de mains dans la terre. :contentReference[oaicite:6]{index=6}
+      L’atelier est ouvert **du lundi au samedi** : cours, **stages**, créneaux d’atelier libre… Les débutants y trouvent une **pédagogie rassurante** (on dédramatise le “raté”), les plus avancés viennent pour l’**exigence des finitions**. On s’y croise, on s’encourage, on compare des terres, on passe dire bonjour lors d’une **vente d’artisans**. Une vraie **communauté** de mains dans la terre.
 
       ### 💡 Pourquoi c’est inspirant
       - Une **école du geste** chaleureuse, pour tous niveaux 👐
@@ -870,7 +871,8 @@ stories = [
 
       —
       📍 5 place de la Croix de Bourgogne, Nancy
-      📰 Source : *Destination Nancy*, p.17 (atelier & Box du Lupin). :contentReference[oaicite:7]{index=7}
+      📸 Crédit photo : Le Lupin
+      📰 Source : *Destination Nancy*, p.17
     MD
     quote: "Apprendre la terre, c’est apprendre la patience… et la joie du concret."
   },
@@ -882,19 +884,19 @@ stories = [
     chapo: "Deux illustratrices, une vitrine colorée et des rendez-vous réguliers pour faire vibrer l’imaginaire — du dessin à la sérigraphie.",
     description: "Boutique-atelier, sérigraphies, objets illustrés, événements & rencontres avec des artistes locaux.",
     location: "21 Rue de la Source, 54000 Nancy",
-    latitude: nil, longitude: nil,
+    latitude: 48.6889, longitude: 6.1785,
     source_name: "Destination Nancy",
     source_url: "/stories/articles/destination-nancy.pdf",
     image_url: "stories/club-sandwich.jpg",
     body: <<~MD,
       ### 🌿 Le projet
-      **Club Sandwich** (ex-Cueillir) est la boutique-atelier de deux illustratrices, **Chloé Revel** et **Cami Berni**. Leur univers mêle **Art nouveau**, faune & flore, **Japon** et estampe — le tout décliné en **illustrations et sérigraphies** qui accrochent l’œil et le sourire. On entre pour une affiche, on reste pour la **conversation** sur un papier, une encre, une trame, un cadrage. :contentReference[oaicite:8]{index=8}
+      **Club Sandwich** (ex-Cueillir) est la boutique-atelier de deux illustratrices, **Chloé Revel** et **Cami Berni**. Leur univers mêle **Art nouveau**, faune & flore, **Japon** et estampe — le tout décliné en **illustrations et sérigraphies** qui accrochent l’œil et le sourire. On entre pour une affiche, on reste pour la **conversation** sur un papier, une encre, une trame, un cadrage.
 
       ### ✍️ Parcours & engagement
-      Investies dans le tissu **associatif et culturel**, elles conçoivent la boutique comme un **lieu de circulation** : accueillir d’autres illustrateurs, organiser des **temps forts**, provoquer des rencontres. On peut aussi **commander une illustration** personnalisée — une façon joyeuse de célébrer une histoire, un lieu, une passion. :contentReference[oaicite:9]{index=9}
+      Investies dans le tissu **associatif et culturel**, elles conçoivent la boutique comme un **lieu de circulation** : accueillir d’autres illustrateurs, organiser des **temps forts**, provoquer des rencontres. On peut aussi **commander une illustration** personnalisée — une façon joyeuse de célébrer une histoire, un lieu, une passion.
 
       ### 🎨 La vie du lieu
-      Ouverte **du mercredi au samedi (14h–18h)**, la boutique est un point de ralliement pour les curieux, les étudiants, les **amoureux d’objets imprimés**. Entre **petites séries**, pochettes, pins et pièces chinées, chacun trouve de quoi **offrir local** sans se ruiner. Et comme les vitrines changent au fil des saisons, **revenir** est toujours une bonne idée. :contentReference[oaicite:10]{index=10}
+      Ouverte **du mercredi au samedi (14h–18h)**, la boutique est un point de ralliement pour les curieux, les étudiants, les **amoureux d’objets imprimés**. Entre **petites séries**, pochettes, pins et pièces chinées, chacun trouve de quoi **offrir local** sans se ruiner. Et comme les vitrines changent au fil des saisons, **revenir** est toujours une bonne idée.
 
       ### 💡 Pourquoi c’est inspirant
       - Un **atelier-boutique** qui crée de la **rencontre** 🤝
@@ -902,15 +904,13 @@ stories = [
       - Des **commandes sur mesure** qui racontent les gens 💬
 
       —
-      📍 21 rue de la Source, Nancy
-      📰 Source : *Destination Nancy*, p.17 (profil & horaires). :contentReference[oaicite:11]{index=11}
+      📍 21 rue de la Source, 54000 Nancy
+      📸 Crédit photo : Club Sandwich
+      📰 Source : *Destination Nancy*, p.17
     MD
     quote: "Donner à voir, et donner envie de créer."
-  },
+  }
 ]
-
-
-
 
 # Insertion idempotente (Stories)
 created_stories = 0
