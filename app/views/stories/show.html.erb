@@ -1,11 +1,21 @@
 <%# frozen_string_literal: true %>
 <%# ─────────────────────────────────────────────────────────────────────────────
-    Stories#show — version "magazine d’impact" (tolérante : pas de Story#category,
-    pas de Story#quote requis)
+    Stories#show — “magazine d’engagement” + carte Leaflet intégrée localement
+    - On embarque Leaflet CSS/JS ici pour éviter les disparitions liées au chargement
+    - Tolérant si Story#category / Story#quote n’existent pas
    ───────────────────────────────────────────────────────────────────────────── %>
 
+<%# —— Leaflet (CSS + JS) : inclus localement pour fiabiliser l’affichage —— %>
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-o9N1j7kGStb6m6qN2k3Z5U9G2VqE3zFE1f2l1hGg54Q="
+      crossorigin="anonymous">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-o8U9mQnQZkq1mYz5qJvZcXzWcQ2n6M0F6w8Z8R2D4nE="
+        crossorigin="anonymous"></script>
+
 <%
-# Accent par catégorie (si disponible), sinon couleur par défaut
+# Accent par catégorie si dispo
 cat = @story.respond_to?(:category) && @story.category.present? ? @story.category.to_s : ""
 accent =
   case cat
@@ -13,7 +23,7 @@ accent =
   when "formation"    then "#0069D9"  # bleu
   when "rencontres"   then "#FF6F61"  # corail
   when "entreprendre" then "#F6A623"  # orange
-  else "#4B5563"                     # fallback neutre
+  else "#4B5563"                     # neutre
   end
 
 # Image héros (HTTP absolu ou asset pipeline)
@@ -25,7 +35,92 @@ img =
   end
 %>
 
-<div class="story-page" style="--accent:<%= accent %>">
+<style>
+  /* ============ Look & feel magazine d’engagement ============ */
+  .story-page { --accent:<%= accent %>; background:#fafafa; color:#1e1e1e; }
+  .story-page .container { max-width:1120px; margin:0 auto; padding:0 18px; }
+  .story-page .container.narrow { max-width:1100px; }
+
+  /* Hero */
+  .story-hero{
+    height:clamp(320px,40vh,460px);
+    background-image:url('<%= img %>');
+    background-size:cover; background-position:center;
+    border-radius:0 0 2rem 2rem; position:relative; overflow:hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  }
+  .story-hero .overlay{ position:absolute; inset:0;
+    background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15)); }
+  .story-hero .inner{ position:absolute; bottom:0; padding:2rem; }
+  .story-hero .kicker{
+    display:inline-block; padding:.3rem .75rem; border-radius:999px;
+    background: color-mix(in oklab, var(--accent) 85%, black); color:#fff;
+    font-weight:600; font-size:.75rem; letter-spacing:.4px;
+  }
+  .story-hero .title{
+    margin:.35rem 0 0; color:#fff; font-weight:800;
+    font-size: clamp(1.8rem, 3vw, 2.8rem);
+    font-family: "Newsreader", Georgia, serif;
+    text-shadow: 0 1px 10px rgba(0,0,0,.25);
+  }
+
+  /* Top actions */
+  .backline{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:16px 0 12px; }
+  .backlink{ color:#374151; text-decoration:none; font-weight:600; }
+  .backlink:hover{ text-decoration:underline; }
+  .actions .pill{
+    display:inline-block; margin-left:8px; padding:.45rem .8rem; border-radius:999px;
+    background:#eef2ff; color:#1f2937; text-decoration:none; font-weight:600;
+  }
+
+  /* Grille */
+  .layout{ display:grid; grid-template-columns: 1fr; gap:18px; margin-bottom:42px; }
+  @media (min-width: 980px){
+    .layout{ grid-template-columns: minmax(0, 680px) 360px; align-items:start; }
+  }
+
+  /* Carte latérale (hauteur fixée !) */
+  .side .sidecard{ background:#fff; border-radius:1rem; box-shadow:0 8px 22px rgba(0,0,0,.06); padding:1rem; }
+  .side-title{ margin:.25rem 0 8px; font-weight:800; color:#111827; }
+  .meta{ list-style:none; padding:0; margin:0 0 .5rem; }
+  .meta li{ display:flex; gap:.5rem; margin:.35rem 0; }
+  .meta .meta-label{ min-width:84px; color:#6b7280; font-size:.9rem; }
+  #story-map{ height:220px; border-radius:.8rem; overflow:hidden; margin:.5rem 0 .25rem; }
+
+  /* Corps */
+  .main .chapo.card{
+    margin-top:-28px; background:#fff; border-radius:1rem;
+    box-shadow:0 12px 26px rgba(0,0,0,.06); padding:1rem 1.25rem;
+  }
+  .card{ background:#fff; border-radius:1rem; box-shadow:0 8px 22px rgba(0,0,0,.06); padding:1.25rem 1.35rem; }
+  .card.soft{ box-shadow:0 6px 14px rgba(0,0,0,.05); }
+  .story-section{ margin:12px 0; opacity:1; }
+  .story-section h3{
+    font-family:"Newsreader", Georgia, serif;
+    color:var(--accent); font-size:1.35rem; margin:.25rem 0 .5rem;
+  }
+  .prose p{ line-height:1.7; margin:0 0 .9rem; }
+
+  /* Citation (affichée seulement si présente) */
+  .quote.card{ background: color-mix(in oklab, var(--accent) 9%, white); text-align:center; }
+  .quote blockquote{ margin:0; font-family:"Newsreader", Georgia, serif; font-size:1.2rem; color:#111827; }
+
+  /* CTA */
+  .story-cta{ margin-top:26px; text-align:center; }
+  .story-cta .cta-title{ margin:0; font-weight:800; font-size:1.15rem; color:#111827; }
+  .story-cta .cta-sub{ margin:.1rem 0 .8rem; color:#6b7280; }
+  .btn-cta{
+    background:var(--accent); color:#fff; text-decoration:none; font-weight:800;
+    padding:.85rem 1.35rem; border-radius:999px; display:inline-block;
+    box-shadow:0 8px 18px color-mix(in oklab, var(--accent) 25%, transparent);
+    transition: transform .08s ease, background .2s ease;
+  }
+  .btn-cta:hover{ transform: translateY(-1px); background: color-mix(in oklab, var(--accent) 85%, black); }
+
+  .muted{ color:#4b5563; font-size:.95rem; }
+</style>
+
+<div class="story-page">
   <div class="container narrow">
 
     <div class="backline">
@@ -38,7 +133,8 @@ img =
       </div>
     </div>
 
-    <div class="story-hero" style="background-image:url('<%= img %>')">
+    <!-- HERO -->
+    <div class="story-hero">
       <div class="overlay"></div>
       <div class="inner">
         <div class="kicker">Belle histoire</div>
@@ -49,7 +145,6 @@ img =
     <div class="layout">
       <!-- Colonne principale -->
       <main class="main">
-
         <% if @story.chapo.present? %>
           <div class="chapo card soft">
             <p><%= @story.chapo %></p>
@@ -64,10 +159,8 @@ img =
           <% lines = bloc.lines %>
           <% heading = lines.first.to_s.strip %>
           <% content_md = lines.drop(1).join.strip %>
-
-          <section class="story-section card reveal">
-            <h3 class="h3"><%= heading %></h3>
-
+          <section class="story-section card">
+            <h3><%= heading %></h3>
             <% if respond_to?(:markdown) %>
               <div class="prose"><%= markdown(content_md) %></div>
             <% else %>
@@ -76,7 +169,6 @@ img =
           </section>
         <% end %>
 
-        <%# Bloc citation : uniquement si l’attribut existe ET non vide %>
         <% if @story.respond_to?(:quote) && @story.quote.present? %>
           <figure class="quote card">
             <blockquote>« <%= @story.quote %> »</blockquote>
@@ -90,7 +182,7 @@ img =
         </div>
       </main>
 
-      <!-- Colonne latérale -->
+      <!-- Colonne latérale (carte conservée) -->
       <aside class="side">
         <div class="card sidecard">
           <h4 class="side-title">Infos pratiques</h4>
@@ -113,56 +205,51 @@ img =
             <% end %>
           </ul>
 
-          <%# Carte : conteneur + data lat/lon (affichée si coords présentes) %>
           <% if @story.latitude.present? && @story.longitude.present? %>
             <div id="story-map"
-                 class="mini-map"
                  data-lat="<%= @story.latitude %>"
-                 data-lon="<%= @story.longitude %>"
-                 style="margin-top:10px;height:180px;border-radius:12px;overflow:hidden;">
-              <div class="mini-map-fallback">Carte à venir</div>
-            </div>
+                 data-lon="<%= @story.longitude %>"></div>
+          <% end %>
+
+          <% if @story.description.present? %>
+            <div class="muted"><%= @story.description %></div>
           <% end %>
         </div>
-
-        <% if @story.description.present? %>
-          <div class="card sidecard muted">
-            <p><%= @story.description %></p>
-          </div>
-        <% end %>
       </aside>
     </div>
   </div>
 </div>
 
-<%# ─────────────────────────────────────────────────────────────────────────────
-    Script carte (Leaflet). Nécessite leaflet.css/js dans le layout.
-    Compatible DOMContentLoaded + Turbo Drive.
-   ───────────────────────────────────────────────────────────────────────────── %>
-<% content_for :scripts do %>
-  <script>
-    (function () {
-      function bootStoryMap() {
-        var el = document.getElementById('story-map');
-        if (!el || !window.L) return;
+<script>
+  // Apparition des sections
+  document.querySelectorAll('.story-section').forEach((el, i) => {
+    el.style.opacity = 0; el.style.transform = "translateY(6px)";
+    setTimeout(() => {
+      el.style.transition = "opacity .5s ease, transform .5s ease";
+      el.style.opacity = 1; el.style.transform = "translateY(0)";
+    }, 120 + i * 100);
+  });
 
-        var lat = parseFloat(el.dataset.lat);
-        var lon = parseFloat(el.dataset.lon);
-        if (isNaN(lat) || isNaN(lon)) return;
+  // Initialisation carte — robuste (DOMContentLoaded + Turbo)
+  function initStoryMap(){
+    var mapEl = document.getElementById('story-map');
+    if(!mapEl || !window.L) return;
 
-        // (ré)initialisation
-        var map = L.map(el, { zoomControl: false, attributionControl: false })
-                   .setView([lat, lon], 14);
+    var lat = parseFloat(mapEl.dataset.lat), lon = parseFloat(mapEl.dataset.lon);
+    if(isNaN(lat) || isNaN(lon)) return;
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-        L.marker([lat, lon]).addTo(map);
+    // évite double init si navigation Turbo
+    if(mapEl.dataset.mapInited === "1") return;
 
-        // Ajuste la taille une fois le bloc visible
-        setTimeout(function(){ map.invalidateSize(); }, 120);
-      }
+    var map = L.map(mapEl, { zoomControl: false, attributionControl: false })
+               .setView([lat, lon], 14);
 
-      document.addEventListener('DOMContentLoaded', bootStoryMap);
-      window.addEventListener('turbo:load', bootStoryMap);
-    })();
-  </script>
-<% end %>
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+    L.marker([lat, lon]).addTo(map);
+
+    mapEl.dataset.mapInited = "1";
+  }
+
+  document.addEventListener('DOMContentLoaded', initStoryMap);
+  document.addEventListener('turbo:load', initStoryMap);
+</script>
