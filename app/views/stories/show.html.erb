@@ -1,150 +1,168 @@
-<%# app/views/stories/show.html.erb — hero ajusté, Sommaire → Chapô → Article %>
-<% raw_body = (@story.body.presence || @story.description).to_s %>
+<%# frozen_string_literal: true %>
+<%# ─────────────────────────────────────────────────────────────────────────────
+    Stories#show — version "magazine d’impact" (tolérante : pas de Story#category,
+    pas de Story#quote requis)
+   ───────────────────────────────────────────────────────────────────────────── %>
 
-<%# Titres H3 pour le sommaire %>
-<% headings = raw_body.scan(/^\s*#{'#'*3}\s+(.+?)\s*$/) %>
-
-<%# Chapô : @story.chapo sinon extrait court %>
 <%
-def chapo_from(text)
-  para = text.to_s.split(/\n{2,}/).find { |blk| blk.strip.present? && blk !~ /^\s*###/ }.to_s
-  para = para.gsub(/\*\*([^*]+)\*\*/, '\1').gsub(/\*([^*]+)\*/, '\1') # on retire le markdown
-  para = para.gsub(/\[([^\]]+)\]\([^)]+\)/, '\1')
-  para = para.gsub(/\s+/, ' ').strip
-  para.size > 300 ? para[0,300].rstrip + '…' : para
-end
-chapo_text = @story.chapo.presence || chapo_from(raw_body)
+# Accent par catégorie (si disponible), sinon couleur par défaut
+cat = @story.respond_to?(:category) && @story.category.present? ? @story.category.to_s : ""
+accent =
+  case cat
+  when "benevolat"    then "#2E8B57"  # vert
+  when "formation"    then "#0069D9"  # bleu
+  when "rencontres"   then "#FF6F61"  # corail
+  when "entreprendre" then "#F6A623"  # orange
+  else "#4B5563"                     # fallback neutre
+  end
+
+# Image héros (HTTP absolu ou asset pipeline)
+img =
+  if @story.image_url.present?
+    (@story.image_url =~ /\Ahttp/i) ? @story.image_url : asset_path(@story.image_url)
+  else
+    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1600&auto=format&fit=crop"
+  end
 %>
 
-<div class="story-wrap">
-  <div class="story-hero" style="height:clamp(260px,32vh,380px)">
-    <% img = if @story.image_url.present?
-               @story.image_url =~ /\Ahttp/i ? @story.image_url : asset_path(@story.image_url)
-             else
-               "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1600&auto=format&fit=crop"
-             end %>
-    <img src="<%= img %>" alt="<%= @story.title %>">
-    <div class="overlay"></div>
+<div class="story-page" style="--accent:<%= accent %>">
+  <div class="container narrow">
 
-    <div class="actions">
-      <% if @story.source_url.present? %>
-        <% src   = @story.source_url.to_s
-           href  = (src =~ /\Ahttps?:\/\//i) ? src : (src.start_with?("/") ? src : (asset_path(src) rescue "/#{src}"))
-           ispdf = href.downcase.end_with?(".pdf")
-           label = ispdf ? "Article (PDF)" : (@story.source_name.presence || "Source / plus d’infos") %>
-        <a href="<%= href %>" <%= ispdf ? '' : 'target="_blank" rel="noopener"' %> data-turbo="false">🔗 <%= label %></a>
-      <% end %>
-      <a href="mailto:?subject=<%= CGI.escape(@story.title) %>&body=<%= CGI.escape(request.original_url) %>">✉️ Partager</a>
+    <div class="backline">
+      <%= link_to "← Retour aux belles histoires", stories_path, class: "backlink" %>
+      <div class="actions">
+        <% if @story.source_url.present? %>
+          <%= link_to "Article (PDF)", @story.source_url, class: "pill", target: "_blank", rel: "noopener" %>
+        <% end %>
+        <%= link_to "Partager", request.original_url, class: "pill" %>
+      </div>
     </div>
 
-    <div class="story-title">
-      <span class="badge">📖 Belle histoire</span>
-      <h1><%= @story.title %></h1>
+    <div class="story-hero" style="background-image:url('<%= img %>')">
+      <div class="overlay"></div>
+      <div class="inner">
+        <div class="kicker">Belle histoire</div>
+        <h1 class="title"><%= @story.title %></h1>
+      </div>
     </div>
-  </div>
 
-  <div class="story-breadcrumb">
-    <%= link_to "← Retour aux belles histoires", stories_path, class: "crumb" %>
-  </div>
+    <div class="layout">
+      <!-- Colonne principale -->
+      <main class="main">
 
-  <div class="story-grid">
-    <section>
-      <%# Sommaire %>
-      <% if headings.any? %>
-        <div class="card card--toc">
-          <h3 class="card-title">Sommaire</h3>
-          <ul class="toc">
-            <% headings.each do |(h)| id = h.parameterize %>
-              <li><a href="#<%= id %>"><%= h %></a></li>
+        <% if @story.chapo.present? %>
+          <div class="chapo card soft">
+            <p><%= @story.chapo %></p>
+          </div>
+        <% end %>
+
+        <%# Découpe du body en sections à partir de "### " %>
+        <% raw_body = @story.body.to_s.strip %>
+        <% sections = raw_body.split(/^###\s+/).reject(&:blank?) %>
+
+        <% sections.each do |bloc| %>
+          <% lines = bloc.lines %>
+          <% heading = lines.first.to_s.strip %>
+          <% content_md = lines.drop(1).join.strip %>
+
+          <section class="story-section card reveal">
+            <h3 class="h3"><%= heading %></h3>
+
+            <% if respond_to?(:markdown) %>
+              <div class="prose"><%= markdown(content_md) %></div>
+            <% else %>
+              <div class="prose"><%= simple_format(content_md) %></div>
+            <% end %>
+          </section>
+        <% end %>
+
+        <%# Bloc citation : uniquement si l’attribut existe ET non vide %>
+        <% if @story.respond_to?(:quote) && @story.quote.present? %>
+          <figure class="quote card">
+            <blockquote>« <%= @story.quote %> »</blockquote>
+          </figure>
+        <% end %>
+
+        <div class="story-cta">
+          <p class="cta-title">Envie d’agir à ton tour ?</p>
+          <p class="cta-sub">Découvre des opportunités concrètes près de chez toi.</p>
+          <%= link_to "Voir les actions autour de moi", opportunities_path, class: "btn-cta" %>
+        </div>
+      </main>
+
+      <!-- Colonne latérale -->
+      <aside class="side">
+        <div class="card sidecard">
+          <h4 class="side-title">Infos pratiques</h4>
+          <ul class="meta">
+            <% if @story.location.present? %>
+              <li>
+                <span class="meta-label">📍 Adresse</span>
+                <span class="meta-value"><%= @story.location %></span>
+              </li>
+            <% end %>
+            <% if @story.source_name.present? %>
+              <li>
+                <span class="meta-label">📰 Source</span>
+                <% if @story.source_url.present? %>
+                  <span class="meta-value"><%= link_to @story.source_name, @story.source_url, target: "_blank", rel: "noopener" %></span>
+                <% else %>
+                  <span class="meta-value"><%= @story.source_name %></span>
+                <% end %>
+              </li>
             <% end %>
           </ul>
-        </div>
-      <% end %>
 
-      <%# Chapô (après le sommaire) %>
-      <% if chapo_text.present? %>
-        <div class="card chapo-card">
-          <p><%= chapo_text %></p>
-        </div>
-      <% end %>
-
-      <%# Article %>
-      <article class="card">
-        <% html = render_story_body(raw_body) %>
-
-        <%# Ajout d'id sur les h3 sans toucher au contenu (donc on garde les émojis) %>
-        <% html = html.gsub(/<h3([^>]*)>(.*?)<\/h3>/) do
-             attrs   = Regexp.last_match(1)
-             content = Regexp.last_match(2)
-             text    = content.gsub(/<[^>]+>/, '')
-             %Q(<h3#{attrs} id="#{text.parameterize}">#{content}</h3>)
-           end %>
-
-        <div class="prose"><%= html.html_safe %></div>
-      </article>
-    </section>
-
-    <aside class="side">
-      <div class="card">
-        <h3 class="card-title">Infos pratiques</h3>
-        <ul class="info-list">
-          <% if @story.location.present? %>
-            <li>📍 <span><%= @story.location %></span></li>
+          <%# Carte : conteneur + data lat/lon (affichée si coords présentes) %>
+          <% if @story.latitude.present? && @story.longitude.present? %>
+            <div id="story-map"
+                 class="mini-map"
+                 data-lat="<%= @story.latitude %>"
+                 data-lon="<%= @story.longitude %>"
+                 style="margin-top:10px;height:180px;border-radius:12px;overflow:hidden;">
+              <div class="mini-map-fallback">Carte à venir</div>
+            </div>
           <% end %>
-          <% if @story.source_url.present? %>
-            <% src  = @story.source_url.to_s
-               href = (src =~ /\Ahttps?:\/\//i) ? src : (src.start_with?("/") ? src : (asset_path(src) rescue "/#{src}")) %>
-            <li>📰 <%= link_to (@story.source_name.presence || "Site / article"), href, target: "_blank", rel: "noopener" %></li>
-          <% end %>
-        </ul>
+        </div>
 
-        <% if @story.latitude && @story.longitude %>
-          <div class="mini-map" id="mini-map"></div>
+        <% if @story.description.present? %>
+          <div class="card sidecard muted">
+            <p><%= @story.description %></p>
+          </div>
         <% end %>
-      </div>
-    </aside>
+      </aside>
+    </div>
   </div>
 </div>
 
-<%# Styles locaux (chapô, sommaire, figure) %>
-<style>
-  .story-breadcrumb{margin:12px 0 8px}
-  .crumb{color:#667085;text-decoration:none;font-size:.9rem}
-  .card--toc .toc{display:flex;flex-wrap:wrap;gap:10px;margin:0;padding:0;list-style:none}
-  .card--toc .toc a{color:#4338ca;text-decoration:none;padding:4px 8px;border:1px solid #eceaf8;border-radius:999px;background:#f7f6ff}
-  .chapo-card{border-left:4px solid #8b5cf6;background:linear-gradient(0deg,#faf8ff,#fff);font-size:1.02rem}
-  .chapo-card p{margin:0;color:#3a3a44;line-height:1.7}
-  .prose .story-img{margin:18px 0;border-radius:14px;overflow:hidden;border:1px solid #eef1f6}
-  .prose .story-img img{width:100%;height:auto;display:block}
-</style>
-
-<% if @story.latitude && @story.longitude %>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<%# ─────────────────────────────────────────────────────────────────────────────
+    Script carte (Leaflet). Nécessite leaflet.css/js dans le layout.
+    Compatible DOMContentLoaded + Turbo Drive.
+   ───────────────────────────────────────────────────────────────────────────── %>
+<% content_for :scripts do %>
   <script>
-    document.addEventListener("turbo:load", initMap);
-    document.addEventListener("DOMContentLoaded", initMap);
-    function initMap(){
-      var el = document.getElementById('mini-map'); if(!el || el.dataset.ready) return;
-      var map = L.map(el, { zoomControl:true, scrollWheelZoom:false })
-                 .setView([<%= @story.latitude.to_f %>, <%= @story.longitude.to_f %>], 14);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(map);
-      L.marker([<%= @story.latitude.to_f %>, <%= @story.longitude.to_f %>]).addTo(map);
-      el.dataset.ready = "1";
-    }
+    (function () {
+      function bootStoryMap() {
+        var el = document.getElementById('story-map');
+        if (!el || !window.L) return;
+
+        var lat = parseFloat(el.dataset.lat);
+        var lon = parseFloat(el.dataset.lon);
+        if (isNaN(lat) || isNaN(lon)) return;
+
+        // (ré)initialisation
+        var map = L.map(el, { zoomControl: false, attributionControl: false })
+                   .setView([lat, lon], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+        L.marker([lat, lon]).addTo(map);
+
+        // Ajuste la taille une fois le bloc visible
+        setTimeout(function(){ map.invalidateSize(); }, 120);
+      }
+
+      document.addEventListener('DOMContentLoaded', bootStoryMap);
+      window.addEventListener('turbo:load', bootStoryMap);
+    })();
   </script>
 <% end %>
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,0 +1,139 @@
+/* ──────────────────────────────────────────────────────────────
+   STORIES — Design "magazine d'engagement"
+   ──────────────────────────────────────────────────────────── */
+
+:root {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  --font-serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --radius: 16px;
+  --shadow: 0 8px 24px rgba(0,0,0,.08);
+  --muted: #f6f7f9;
+  --text: #111827;
+  --subtle: #6b7280;
+  --ring: rgba(0,0,0,.06);
+  --brand: #6b8afd; /* fallback si pas de catégorie */
+}
+
+body { color: var(--text); font-family: var(--font-sans); }
+
+/* Page wrapper — permet la couleur d’accent dynamique */
+.story-page { --accent: var(--brand); }
+.story-page .container.narrow {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 16px 16px 64px;
+}
+
+/* Bandeau retour + actions */
+.backline {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin: 10px 0 14px;
+}
+.backline .backlink { color: var(--accent); text-decoration: none; font-weight: 600; }
+.backline .backlink:hover { text-decoration: underline; }
+.backline .actions { display:flex; gap:8px; flex-wrap:wrap; }
+.pill {
+  display:inline-flex; align-items:center; gap:8px;
+  background:#fff; border:1px solid var(--ring);
+  padding:6px 10px; border-radius: 999px; font-size: 14px; color:#111;
+  text-decoration:none;
+}
+.pill:hover { box-shadow: var(--shadow); }
+
+/* Héros */
+.story-hero{
+  position: relative;
+  height: clamp(260px, 34vh, 420px);
+  border-radius: var(--radius);
+  background: #dfe7f3 center/cover no-repeat;
+  overflow: hidden; margin-bottom: 18px;
+}
+.story-hero .overlay{
+  position:absolute; inset:0;
+  background: linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.45) 100%);
+}
+.story-hero .inner{
+  position: absolute; inset: 0; display:flex; flex-direction:column;
+  justify-content:flex-end; padding: 18px 20px;
+  color: #fff;
+}
+.kicker{
+  align-self:flex-start; padding:6px 10px; font-size:12px;
+  background: color-mix(in srgb, var(--accent) 85%, white 15%);
+  border-radius:999px; margin-bottom:8px; letter-spacing:.2px;
+}
+.title{ font-size: clamp(24px, 2.6vw + 12px, 36px); line-height:1.15; margin:0; }
+
+/* Grille principale */
+.layout{
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 300px;
+  gap: 18px;
+}
+@media (max-width: 980px){ .layout{ grid-template-columns: 1fr; } }
+
+/* Cartes */
+.card{
+  background:#fff; border-radius: var(--radius); box-shadow: var(--shadow);
+  border:1px solid var(--ring);
+}
+.card.soft{ background: #fff; }
+.card.muted{ background: var(--muted); }
+
+/* Sections */
+.story-section{ padding: 18px 18px 6px; }
+.story-section .h3{
+  margin: 0 0 10px; font-size: 18px; line-height:1.2; letter-spacing:.2px;
+  color: var(--accent);
+}
+
+/* Chapo */
+.chapo{ padding: 14px 16px; border-left: 6px solid var(--accent); }
+
+/* Prose lisible */
+.prose{ font-size: 17px; line-height: 1.7; color:#1f2937; }
+.prose p{ margin: 10px 0 14px; }
+.prose ul{ margin:8px 0 14px 18px; }
+.prose li{ margin: 6px 0; }
+
+/* Citation */
+.quote{ padding: 10px 16px; border-left: 6px solid var(--accent); }
+.quote blockquote{
+  margin: 6px 0; font-family: var(--font-serif);
+  font-size: 20px; line-height:1.5; color:#111;
+}
+
+/* Colonne latérale */
+.side .sidecard{ padding: 14px; }
+.side-title{ margin:0 0 8px; font-size:14px; color:#111; }
+.meta{ list-style:none; padding:0; margin:0; display:grid; gap:8px; }
+.meta-label{ display:block; font-size:12px; color:#6b7280; }
+.meta-value a{ color:#0b61ff; text-decoration:none; }
+.meta-value a:hover{ text-decoration: underline; }
+.mini-map{
+  height: 180px; border-radius: 12px; border:1px dashed var(--ring);
+  display:flex; align-items:center; justify-content:center; margin-top:10px;
+  background: #fafafa;
+}
+.mini-map-fallback{ color:#9aa3af; font-size: 13px; }
+
+/* CTA d’engagement */
+.story-cta{
+  margin: 18px 0; text-align:center; padding: 18px;
+  background: color-mix(in srgb, var(--accent) 7%, white);
+  border:1px solid color-mix(in srgb, var(--accent) 20%, white);
+  border-radius: var(--radius);
+}
+.story-cta .cta-title{ font-weight:700; margin:0 0 4px; }
+.story-cta .cta-sub{ margin:0 0 10px; color: #6b7280; }
+.btn-cta{
+  display:inline-block; padding:10px 16px; border-radius: 999px;
+  text-decoration:none; color:#fff; background: var(--accent);
+  transition: transform .04s ease, box-shadow .2s ease;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.btn-cta:hover{ transform: translateY(-1px); }
+
+/* Animation légère */
+.reveal{ animation: rise .25s ease-out both; }
+@keyframes rise { from{ opacity:0; transform: translateY(4px);} to{opacity:1; transform:none;} }
