@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <title><%= content_for?(:title) ? yield(:title) : "Déclic" %></title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0ea5e9" />
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <!-- Fonts éditoriales -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Newsreader:opsz,wght@6..72,400..800&display=swap"
+      rel="stylesheet">
+
+    <!-- CSS (Tailwind + app) -->
+    <%= stylesheet_link_tag "tailwind", "application", "data-turbo-track": "reload" %>
+
+    <!-- JS (importmap / turbo) -->
+    <%= javascript_importmap_tags %>
+
+    <!-- Leaflet (CDN) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+
+    <!-- SEO par défaut -->
+    <meta name="description" content="<%= content_for?(:description) ? yield(:description) : 'Déclic — opportunités locales pour entreprendre, se former, rencontrer, aider.' %>">
+    <link rel="canonical" href="<%= request.original_url %>">
+
+    <!-- Open Graph / Twitter -->
+    <meta property="og:site_name" content="Déclic">
+    <meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : 'Déclic — Proche de chez toi' %>">
+    <meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : 'Explore des opportunités près de chez toi.' %>">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<%= request.original_url %>">
+    <meta property="og:image" content="<%= asset_path('og_default.jpg') rescue '' %>">
+    <meta name="twitter:card" content="summary_large_image">
+  </head>
+
+  <body id="declic-app" class="bg-gray-50 text-gray-900">
+    <%= render 'shared/navbar' %>
+
+    <%= yield %>
+
+    <!-- Scripts spécifiques à la page courante -->
+    <%= yield :scripts %>
+
+    <!-- JS globaux facultatifs -->
+    <%= javascript_include_tag "leaflet_tiles_fallback", defer: true %>
+    <%= javascript_include_tag "geo_watch", defer: true %>
+  </body>
+</html>
