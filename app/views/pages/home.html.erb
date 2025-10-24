@@ -1,4 +1,4 @@
-<%# app/views/pages/home.html.erb — v7.2 : center last row cards + fix stats overflow mobile %>
+<%# app/views/pages/home.html.erb — v7.4 : geoloc clamp + smoothing, single scripts block %>
 
 <div class="home-ms">
   <!-- HERO -->
@@ -83,7 +83,7 @@
       <h2 class="hm-h2">Explorez les opportunités</h2>
       <p class="hm-sub">Découvre sur la carte toutes les possibilités d’engagement près de chez toi.</p>
 
-    <div class="hm-filterbar">
+      <div class="hm-filterbar">
         <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
         <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
         <button class="chip" data-cat="formation">📘 Formation</button>
@@ -189,7 +189,6 @@
 
   /* ====== HERO ====== */
   .hm-hero{ position:relative; color:#fff; overflow:hidden; background:linear-gradient(160deg,var(--a1),var(--a2)); }
-  /* padding-top réduit pour éviter l’espace sous la navbar fixe */
   .hm-hero-inner{ position:relative; padding-top:clamp(72px,8vw,120px); padding-bottom:clamp(44px,6.5vw,84px); z-index:10; }
   .hm-hero::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(7,9,22,.62),rgba(7,9,22,.62)); mix-blend:multiply; z-index:2; }
   .hm-hero-img{ position:absolute; inset:0; background:var(--hero,none) center/cover no-repeat; filter:blur(2px) saturate(1.05) brightness(0.9); opacity:.85; z-index:1; }
@@ -201,7 +200,6 @@
   .hm-stats>div{ background:rgba(255,255,255,.92); backdrop-filter: blur(6px); border:1px solid #e6e8ee; border-radius:18px; padding:16px 18px; box-shadow:0 12px 34px rgba(15,23,42,.18); color:#0f172a; text-align:center; }
   .hm-stats dt{ font:700 .82rem/1 "Inter"; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; }
   .hm-stats dd{ margin:.25rem 0 0; font:900 1.8rem/1 "Epilogue"; }
-  /* Mobile : pile en colonne, tailles plus petites, pas de débordement */
   @media (max-width:640px){
     .hm-stats{ grid-template-columns:1fr; gap:10px; }
     .hm-stats>div{ padding:12px 14px; }
@@ -223,14 +221,14 @@
   .hm-h2::after{ content:""; display:block; width:100px; height:6px; border-radius:999px; background:var(--a1); margin:.55rem 0 .1rem; }
   .hm-sub{ margin:.2rem 0 1rem; color:#475569; font-size:1.05rem; }
 
-  /* ====== GROS BOUTONS (plus larges + centrage dernière ligne) ====== */
+  /* ====== GROS BOUTONS (larges + centrage dernière ligne) ====== */
   .hm-grid-cards{
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(min(100%, 380px), 1fr));
     gap:28px;
     justify-items:stretch;
-    justify-content:center;          /* centre la ligne incomplète */
-    max-width:1220px;                /* évite que les cartes s’écartent trop */
+    justify-content:center;
+    max-width:1220px;
     margin-inline:auto;
   }
   .hm-card{
@@ -251,7 +249,6 @@
   .hm-card.-rencontres{  background:linear-gradient(135deg,#10b981,#06b6d4); }
   .hm-card.-histoires{   background:linear-gradient(135deg,#6d28d9,#a855f7,#d946ef); }
 
-  /* Mobile compact, 2 lignes max, pas de débordement */
   @media (max-width:560px){
     .hm-card{ grid-template-columns:80px 1fr; padding:22px 18px; min-height:192px; border-radius:22px; }
     .hm-emoji{ width:72px; height:72px; border-radius:18px; font-size:36px; }
@@ -305,95 +302,194 @@
 
 <% content_for :scripts do %>
 <script>
-document.addEventListener('turbo:load', bootHome, { once:true });
-document.addEventListener('DOMContentLoaded', bootHome, { once:true });
+document.addEventListener('turbo:load', bootHome);
+document.addEventListener('DOMContentLoaded', bootHome);
 
 function bootHome(){
   const mapEl = document.getElementById('map');
-  if(!mapEl || !window.L) return;
-  if (mapEl.dataset.mapInited === "1") return;
+  if (!mapEl || !window.L) return;
 
-  const map = L.map(mapEl, { zoomControl:true, attributionControl:false }).setView([46.6, 2.2], 6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom: 19 }).addTo(map);
-  requestAnimationFrame(()=> map.invalidateSize());
-  setTimeout(()=> map.invalidateSize(), 250);
-  mapEl.dataset.mapInited = "1";
-
-  const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#a855f7',default:'#6366f1'};
-  const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',histoires:'📖',default:'⭐'};
-  const iconFor = (c)=> L.divIcon({className:'',html:`<div style="width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:${colors[c]||colors.default}"><span>${emojis[c]||emojis.default}</span></div>`,iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
-  const layer = L.layerGroup().addTo(map);
-
-  function parseDate(x){ if(!x) return null; const d=new Date(x); return isNaN(d)?null:d; }
-  function frLongDate(d){ return d?d.toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}):''; }
-  function frHM(d){ return d?d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''; }
-  function thumbFor(o){
-    if(o.image_url) return o.image_url;
-    const cat=(o.category||'').toLowerCase();
-    if(cat==='benevolat') return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=300&auto=format&fit=crop';
-    if(cat==='formation') return 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=300&auto=format&fit=crop';
-    if(cat==='rencontres') return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=300&auto=format&fit=crop';
-    if(cat==='entreprendre') return 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=300&auto=format&fit=crop';
-    if(cat==='histoires') return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
-    return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
-  }
-  function popupHtml(o){
-    const cat=(o.category||'');
-    const base=(cat.toLowerCase()==='histoires')?'/stories':'/opportunities';
-    const url=`${base}/${o.slug||o.id}`;
-    const st=parseDate(o.starts_at||o.start_at||o.start_time||o.date||o.scheduled_on);
-    const en=parseDate(o.ends_at||o.end_at||o.end_time);
-    const when = st ? `📅 ${frLongDate(st)}${en?` — ${frHM(st)}–${frHM(en)}`:` — ${frHM(st)}`}` : (o.schedule_text||'');
-    const loc = o.location ? `📍 ${o.location}` : '';
-    const img = thumbFor(o);
-    return `
-      <div style="display:grid;grid-template-columns:72px 1fr;gap:10px;min-width:260px;align-items:start">
-        <img src="${img}" alt="" style="width:72px;height:72px;border-radius:10px;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,.2)" />
-        <div>
-          <h4 style="margin:0;font-weight:700;font-size:14px;line-height:1.2">${o.title||''}</h4>
-          ${o.organization?`<div style="color:#475569;font-size:12px">${o.organization}</div>`:''}
-          ${when?`<div style="color:#475569;font-size:12px">${when}</div>`:''}
-          ${loc?`<div style="color:#475569;font-size:12px">${loc}</div>`:''}
-          <div style="margin-top:6px"><a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a></div>
-        </div>
-      </div>`;
+  // ---- 1) Map unique ----
+  let map = window._declicMap;
+  if (!map) {
+    map = L.map(mapEl, { zoomControl:true, attributionControl:false })
+            .setView([46.6, 2.2], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(map);
+    window._declicMap = map;
+  } else {
+    requestAnimationFrame(()=> map.invalidateSize());
   }
 
-  let dataset = [];
-  function plot(items){
-    layer.clearLayers();
-    const bounds=[];
-    (items||[]).forEach(o=>{
-      if(!o.latitude || !o.longitude) return;
-      L.marker([o.latitude,o.longitude],{icon:iconFor((o.category||'').toLowerCase())})
-        .addTo(layer).bindPopup(popupHtml(o));
-      bounds.push([o.latitude,o.longitude]);
+  // ---- 2) Couches données (opportunités + stories) : init 1x ----
+  if (!window._declicDataInit) {
+    const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#a855f7',default:'#6366f1'};
+    const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',histoires:'📖',default:'⭐'};
+    const iconFor = (c)=> L.divIcon({className:'',html:`<div style="width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:${colors[c]||colors.default}"><span>${emojis[c]||emojis.default}</span></div>`,iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
+    function parseDate(x){ if(!x) return null; const d=new Date(x); return isNaN(d)?null:d; }
+    function frLongDate(d){ return d?d.toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}):''; }
+    function frHM(d){ return d?d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''; }
+    function thumbFor(o){
+      if(o.image_url) return o.image_url;
+      const cat=(o.category||'').toLowerCase();
+      if(cat==='benevolat') return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=300&auto=format&fit=crop';
+      if(cat==='formation') return 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=300&auto=format&fit=crop';
+      if(cat==='rencontres') return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=300&auto=format&fit=crop';
+      if(cat==='entreprendre') return 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=300&auto=format&fit=crop';
+      if(cat==='histoires') return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
+      return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
+    }
+    function popupHtml(o){
+      const cat=(o.category||'');
+      const base=(cat.toLowerCase()==='histoires')?'/stories':'/opportunities';
+      const url=`${base}/${o.slug||o.id}`;
+      const st=parseDate(o.starts_at||o.start_at||o.start_time||o.date||o.scheduled_on);
+      const en=parseDate(o.ends_at||o.end_at||o.end_time);
+      const when = st ? `📅 ${frLongDate(st)}${en?` — ${frHM(st)}–${frHM(en)}`:` — ${frHM(st)}`}` : (o.schedule_text||'');
+      const loc = o.location ? `📍 ${o.location}` : '';
+      const img = thumbFor(o);
+      return `
+        <div style="display:grid;grid-template-columns:72px 1fr;gap:10px;min-width:260px;align-items:start">
+          <img src="${img}" alt="" style="width:72px;height:72px;border-radius:10px;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,.2)" />
+          <div>
+            <h4 style="margin:0;font-weight:700;font-size:14px;line-height:1.2">${o.title||''}</h4>
+            ${o.organization?`<div style="color:#475569;font-size:12px">${o.organization}</div>`:''}
+            ${when?`<div style="color:#475569;font-size:12px">${when}</div>`:''}
+            ${loc?`<div style="color:#475569;font-size:12px">${loc}</div>`:''}
+            <div style="margin-top:6px"><a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a></div>
+          </div>
+        </div>`;
+    }
+    const dataLayer = L.layerGroup().addTo(map);
+    window._declicDataLayer = dataLayer;
+    let dataset = [];
+    function plot(items){
+      dataLayer.clearLayers();
+      const bounds=[];
+      (items||[]).forEach(o=>{
+        if(!o.latitude || !o.longitude) return;
+        L.marker([o.latitude,o.longitude],{icon:iconFor((o.category||'').toLowerCase())})
+          .addTo(dataLayer).bindPopup(popupHtml(o));
+        bounds.push([o.latitude,o.longitude]);
+      });
+      if(bounds.length){ map.fitBounds(bounds,{padding:[30,30]}); }
+    }
+    Promise.all([
+      fetch('/api/v1/opportunities').then(r=>r.ok?r.json():[]).catch(()=>[]),
+      fetch('/api/v1/stories').then(r=>r.ok?r.json():[]).catch(()=>[])
+    ]).then(([opps, stories])=>{
+      (stories||[]).forEach(s=> s.category='histoires');
+      dataset = ([]).concat(opps||[], stories||[]);
+      plot(dataset);
     });
-    if(bounds.length){ map.fitBounds(bounds,{padding:[30,30]}); }
+    document.querySelectorAll('.chip').forEach(ch=>{
+      if (ch.dataset.bound === '1') return;
+      ch.dataset.bound = '1';
+      ch.addEventListener('click', ()=>{
+        document.querySelectorAll('.chip').forEach(c=>c.classList.remove('is-active'));
+        ch.classList.add('is-active');
+        const cat=ch.dataset.cat;
+        if(cat==='toutes'){ plot(dataset); return; }
+        plot((dataset||[]).filter(o=> (o.category||'').toLowerCase()===cat));
+      });
+    });
+    window._declicDataInit = true;
+    window._declicPlot = plot;
   }
 
-  Promise.all([
-    fetch('/api/v1/opportunities').then(r=>r.ok?r.json():[]).catch(()=>[]),
-    fetch('/api/v1/stories').then(r=>r.ok?r.json():[]).catch(()=>[])
-  ]).then(([opps, stories])=>{
-    (stories||[]).forEach(s=> s.category='histoires');
-    dataset = ([]).concat(opps||[], stories||[]);
-    plot(dataset);
-  });
+  // ---- 3) Couche "moi" : POINT BLEU + cercle (pas d'épingle rouge) ----
+  if (!window._declicMeLayer) window._declicMeLayer = L.layerGroup().addTo(map);
+  window._declicMeLayer.clearLayers();
 
-  // Filtres
-  const chips=[...document.querySelectorAll('.chip')];
-  chips.forEach(chip=>chip.addEventListener('click',()=>{
-    chips.forEach(c=>c.classList.remove('is-active')); chip.classList.add('is-active');
-    const cat=chip.dataset.cat;
-    if(cat==='toutes'){ plot(dataset); return; }
-    plot((dataset||[]).filter(o=> (o.category||'').toLowerCase()===cat));
-  }));
+  let meDot=null, meAcc=null, firstFix=true, _lastP=null;
 
-  // Me localiser
-  document.getElementById('btn-locate')?.addEventListener('click', ()=>{
-    if (window.DeclicGeo && window.DeclicGeo.setFollow) window.DeclicGeo.setFollow(true);
-  });
+  // mise à jour avec lissage + cercle borné
+  function updateMe(lat, lng, acc){
+    // lissage anti-jitter
+    const alpha = 0.35;
+    if (_lastP) {
+      lat = _lastP[0] + alpha * (lat - _lastP[0]);
+      lng = _lastP[1] + alpha * (lng - _lastP[1]);
+    }
+    _lastP = [lat, lng];
+    const p=[lat,lng];
+
+    // point bleu
+    if (!meDot) {
+      meDot = L.circleMarker(p, { radius:7, color:'#2563eb', weight:2, fill:true, fillOpacity:1 })
+              .addTo(window._declicMeLayer);
+    } else {
+      meDot.setLatLng(p);
+    }
+
+    // cercle de précision (clamp + halo discret si très mauvais)
+    const hasAcc = acc && isFinite(acc);
+    const rClamped = hasAcc ? Math.min(Math.max(acc, 30), 1200) : null; // 30m..1200m
+    const isBad = hasAcc && acc > 3000;
+
+    if (isBad) {
+      if (meAcc) { window._declicMeLayer.removeLayer(meAcc); meAcc = null; }
+      const fauxRayon = 150;
+      meAcc = L.circle(p, {
+        radius: fauxRayon, color: '#93c5fd', weight: 1,
+        fill: true, fillOpacity: .10, dashArray: '4,4'
+      }).addTo(window._declicMeLayer);
+    } else if (rClamped) {
+      if (!meAcc) {
+        meAcc = L.circle(p, { radius: rClamped, color:'#60a5fa', weight:1, fill:true, fillOpacity:.15 })
+                .addTo(window._declicMeLayer);
+      } else {
+        meAcc.setLatLng(p); meAcc.setRadius(rClamped);
+        meAcc.setStyle({ color:'#60a5fa', fillOpacity:.15, dashArray:null });
+      }
+    } else if (meAcc) {
+      window._declicMeLayer.removeLayer(meAcc); meAcc = null;
+    }
+
+    // centrage/suivi
+    if (firstFix) {
+      map.setView(p, Math.max(map.getZoom(), 12), { animate:true });
+      firstFix=false;
+    } else if (window._declicFollow) {
+      map.panTo(p, { animate:true });
+    }
+  }
+
+  // ---- 4) Watch geolocation : AUTO-START + bouton toggle ----
+  const btnEl = document.getElementById('btn-locate');
+  function bindLocateButton(){
+    if (!btnEl) return;
+    const btn = btnEl.cloneNode(true); btnEl.replaceWith(btn); // reset listeners
+    btn.addEventListener('click', ()=> (window._declicWatchId ? stopFollow() : startFollow()));
+    window._declicButton = btn;
+  }
+  bindLocateButton();
+
+  function startFollow(){
+    if (!('geolocation' in navigator)) { alert("La géolocalisation n'est pas disponible."); return; }
+    if (window._declicWatchId) return;
+    window._declicFollow = true;
+
+    navigator.geolocation.getCurrentPosition(
+      p => updateMe(p.coords.latitude, p.coords.longitude, p.coords.accuracy),
+      e => console.warn('[geo] getCurrentPosition ERR', e),
+      { enableHighAccuracy:true, timeout:8000, maximumAge:0 }
+    );
+    window._declicWatchId = navigator.geolocation.watchPosition(
+      p => updateMe(p.coords.latitude, p.coords.longitude, p.coords.accuracy),
+      e => console.warn('[geo] watch ERR', e),
+      { enableHighAccuracy:true, timeout:20000, maximumAge:5000 }
+    );
+    if (window._declicButton) window._declicButton.innerHTML = '<span>🛑</span> <span>Arrêter le suivi</span>';
+  }
+
+  function stopFollow(){
+    if (window._declicWatchId) { navigator.geolocation.clearWatch(window._declicWatchId); window._declicWatchId=null; }
+    window._declicFollow = false;
+    if (window._declicButton) window._declicButton.innerHTML = '<span>📍</span> <span>Me localiser</span>';
+  }
+
+  // ⚡️ AUTO-START : on lance tout de suite le suivi (même en état "prompt")
+  startFollow();
 }
 </script>
 <% end %>
