@@ -1,11 +1,27 @@
 /*
- * This is a manifest file that'll be compiled into application.css.
- * Load only what we need, in the right order.
- *
  *= require stories
  *= require_self
  */
 
-:root { /* base minuscule, tu peux la garder ou la supprimer */
-  color-scheme: light;
+/* --- Base globale --- */
+:root { color-scheme: light; }
+
+/* --- Wrapper home pour éviter les collisions de stories.css --- */
+body.home-ms,
+.home-ms {
+  background: radial-gradient(1400px 800px at 10% -10%, #efe8ff 0%, transparent 60%) no-repeat,
+              linear-gradient(180deg, #f8f5ff 0%, #f4f3ff 100%);
+  color: #111827;
 }
+
+/* assure qu'aucun body .story-page ne prenne la main sur la home */
+body.home-ms .story-page,
+.home-ms .story-page {
+  all: unset;
+}
+
+/* général : adoucir les transitions de scroll, boutons, liens */
+html {
+  scroll-behavior: smooth;
+}
+a { transition: color .2s, background .2s, box-shadow .2s; }
