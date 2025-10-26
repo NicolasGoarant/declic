@@ -1,45 +1,22 @@
+<%# app/views/opportunities/new.html.erb — Formulaire harmonisé (sans navbar doublon) %>
+
 <div class="bg-gray-50 min-h-screen">
-  <!-- Top bar / breadcrumb -->
-<!-- Header (mobile-safe) -->
-<header class="bg-white/70 backdrop-blur border-b border-gray-100">
-  <div class="max-w-6xl mx-auto h-14 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-    <!-- Brand + breadcrumb (title hidden on xs to avoid overflow) -->
-    <div class="flex items-center gap-3 min-w-0">
-      <a href="/" class="flex items-center gap-2 text-gray-700 hover:text-gray-900 shrink-0">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center">
-          <span class="text-white font-bold text-xs">D</span>
-        </div>
-        <span class="font-semibold">Déclic</span>
-      </a>
-      <span class="hidden sm:inline text-gray-300">/</span>
-      <!-- Keep this short on mobile; the big H1 is below in the page -->
-      <span class="hidden sm:block text-sm text-gray-500 truncate">
-        Proposer une opportunité
-      </span>
-    </div>
-
-    <!-- Back button (icon on xs, full label on ≥sm) -->
-    <div class="flex items-center gap-2 shrink-0">
-      <a href="<%= opportunities_path %>"
-         class="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
-        <span aria-hidden="true">←</span>
-        <span class="hidden sm:inline">Retour aux opportunités</span>
-      </a>
-    </div>
-  </div>
-</header>
-
-
   <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-    <!-- Title -->
-    <div class="mb-8">
-      <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">
-        Proposer une opportunité
-      </h1>
-      <p class="mt-2 text-gray-600">
-        Vous connaissez une mission, formation, rencontre ou projet à valoriser&nbsp;? Partagez-la ici.
-        Chaque proposition est vérifiée par notre équipe avant publication.
-      </p>
+    <!-- En-tête de page (pas de navbar locale : on s’appuie sur le layout global) -->
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+      <div class="min-w-0">
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">
+          Proposer une opportunité
+        </h1>
+        <p class="mt-2 text-gray-600">
+          Vous connaissez une mission, formation, rencontre ou projet à valoriser&nbsp;? Partagez-la ici.
+          Chaque proposition est vérifiée par notre équipe avant publication.
+        </p>
+      </div>
+      <div class="shrink-0">
+        <%= link_to "Retour aux opportunités", opportunities_path,
+              class: "inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" %>
+      </div>
     </div>
 
     <!-- Errors -->

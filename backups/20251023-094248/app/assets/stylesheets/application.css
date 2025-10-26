@@ -1,0 +1,11 @@
+/*
+ * This is a manifest file that'll be compiled into application.css.
+ * Load only what we need, in the right order.
+ *
+ *= require stories
+ *= require_self
+ */
+
+:root { /* base minuscule, tu peux la garder ou la supprimer */
+  color-scheme: light;
+}

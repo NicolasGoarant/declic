@@ -1,324 +1,213 @@
-<%# app/views/opportunities/show.html.erb %>
+<%# app/views/opportunities/show.html.erb — robuste aux attributs manquants, style “story” %>
+<% content_for :main_classes, "pt-0" %>
 
-<%# ---------- META (OG) ---------- %>
-<% content_for :head do %>
-  <meta property="og:title" content="<%= @opportunity.title %> - Déclic">
-  <meta property="og:description" content="<%= @opportunity.description.to_s.truncate(140) %>">
-  <meta property="og:type" content="website">
-<% end %>
-
-<%# ---------- Helpers locaux (vue) ---------- %>
 <%
-  # --- 1) Lien externe "officiel" ---
-  # On prend en charge plusieurs noms de colonnes possibles
-  candidates = %i[
-    external_url url link_url website website_url
-    registration_url signup_url source_url info_url more_info_url details_url
-  ]
+# ---------- Helpers robustes ----------
+def pick_attr(record, *names)
+  names.find { |n| record.respond_to?(n) && record.public_send(n).present? }&.then { |n| record.public_send(n) }
+end
 
-  def normalize_http(u)
-    return nil if u.blank?
-    s = u.to_s.strip
-    s = "https://#{s}" if s =~ /\Awww\./i
-    s if s =~ /\Ahttps?:\/\//i
+def pick_number(record, *names)
+  names.find { |n| record.respond_to?(n) && !record.public_send(n).nil? }&.then { |n| record.public_send(n) }
+end
+
+category = @opportunity.respond_to?(:category) ? @opportunity.category.to_s : ""
+
+# Couleurs d’accent selon la catégorie
+case category
+when "benevolat"    then accent1, accent2 = "#f43f5e", "#ec4899"   # rose
+when "formation"    then accent1, accent2 = "#3b82f6", "#38bdf8"   # bleu
+when "rencontres"   then accent1, accent2 = "#10b981", "#06b6d4"   # vert
+when "entreprendre" then accent1, accent2 = "#f59e0b", "#ef4444"   # orange
+else                    accent1, accent2 = "#7e5bef", "#3b82f6"    # violet défaut
+end
+
+title       = pick_attr(@opportunity, :title, :name, :label) || "Opportunité"
+desc_full   = pick_attr(@opportunity, :description, :summary, :details) || ""
+desc_chapo  = strip_tags(desc_full).presence || "Une opportunité concrète pour agir et s’impliquer localement."
+
+# Image de couverture — essaye plusieurs colonnes possibles
+img_src = pick_attr(@opportunity,
+  :image_url, :cover_url, :photo_url, :banner_url, :image, :cover, :photo, :banner
+)
+
+img =
+  if img_src.present?
+    img_src.to_s =~ /\Ahttps?:\/\//i ? img_src : asset_path(img_src)
+  else
+    "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1600&auto=format&fit=crop"
   end
 
-  ext_url = candidates.map { |m| @opportunity.respond_to?(m) && normalize_http(@opportunity.public_send(m)) }
-                     .compact_blank.first
+# Infos pratiques
+website     = pick_attr(@opportunity, :website, :url, :link)
+org         = pick_attr(@opportunity, :organization, :organizer, :org_name, :host, :owner)
+location    = pick_attr(@opportunity, :location, :address, :place, :city)
+email       = pick_attr(@opportunity, :contact_email, :email)
+phone       = pick_attr(@opportunity, :contact_phone, :phone, :telephone, :mobile)
+time_need   = pick_attr(@opportunity, :time_commitment, :time_needed, :time_per_week, :workload)
 
-  # Essaie d'extraire une URL depuis les textes si aucune colonne ne donne un lien
-  def extract_first_url(*texts)
-    texts.compact.map(&:to_s).join(" ").scan(%r{https?://[^\s"')<]+}i).first
-  end
-  extracted_url = normalize_http(extract_first_url(
-    @opportunity.try(:description),
-    @opportunity.try(:body),
-    @opportunity.try(:notes),
-    @opportunity.try(:tags)
-  ))
+lat         = pick_number(@opportunity, :latitude, :lat)
+lon         = pick_number(@opportunity, :longitude, :lon, :lng)
 
-  # Lien final (sans fallback Google)
-  final_url = ext_url.presence || extracted_url.presence
+rating      = pick_number(@opportunity, :rating, :score)
+org_line    = [org, (rating && "★ #{rating}")].compact.join(" • ")
 
-  # --- 2) Dates lisibles ---
-  def parse_dt(x)
-    return nil if x.blank?
-    return x if x.is_a?(Time) || x.is_a?(Date) ||
-                (defined?(ActiveSupport::TimeWithZone) && x.is_a?(ActiveSupport::TimeWithZone))
-    Time.zone.parse(x.to_s) rescue (Date.parse(x.to_s) rescue nil)
-  end
-
-  start_raw = [
-    (@opportunity.respond_to?(:starts_at)  && @opportunity.starts_at),
-    (@opportunity.respond_to?(:start_at)   && @opportunity.start_at),
-    (@opportunity.respond_to?(:start_time) && @opportunity.start_time),
-    (@opportunity.respond_to?(:date)       && @opportunity.date),
-    (@opportunity.respond_to?(:scheduled_on) && @opportunity.scheduled_on)
-  ].compact_blank.first
-
-  stop_raw = [
-    (@opportunity.respond_to?(:ends_at)    && @opportunity.ends_at),
-    (@opportunity.respond_to?(:end_at)     && @opportunity.end_at),
-    (@opportunity.respond_to?(:end_time)   && @opportunity.end_time)
-  ].compact_blank.first
-
-  start_dt = parse_dt(start_raw)
-  stop_dt  = parse_dt(stop_raw)
-
-  def fr_long_date(dt)
-    return nil unless dt
-    (I18n.l(dt.to_date, format: "%A %d %B %Y", locale: :fr) rescue dt.strftime("%A %d %B %Y"))
-  end
-
-  def fr_hm(dt)
-    return nil unless dt.respond_to?(:strftime)
-    dt.strftime("%Hh%M")
-  end
-
-  date_str  = fr_long_date(start_dt)
-  hours_str = start_dt && stop_dt ? "#{fr_hm(start_dt)}–#{fr_hm(stop_dt)}" : (start_dt ? fr_hm(start_dt) : nil)
-
-  # --- 3) Image ---
-  img =
-    if @opportunity.respond_to?(:image_url) && @opportunity.image_url.present?
-      @opportunity.image_url
-    else
-      case @opportunity.category.to_s
-      when 'benevolat'    then 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1600&auto=format&fit=crop'
-      when 'formation'    then 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=1600&auto=format&fit=crop'
-      when 'rencontres'   then 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=1600&auto=format&fit=crop'
-      when 'entreprendre' then 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1600&auto=format&fit=crop'
-      else                     'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1600&auto=format&fit=crop'
-      end
-    end
-
-  # --- 4) Contacts secondaires ---
-  email = @opportunity.respond_to?(:contact_email) && @opportunity.contact_email.presence
-  phone = @opportunity.respond_to?(:contact_phone) && @opportunity.contact_phone.presence
 %>
 
-<main class="max-w-6xl mx-auto px-6 py-6">
-  <div class="mb-4">
-    <%= link_to "← Retour aux opportunités", opportunities_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+<% content_for :title, title %>
+<% content_for :description, strip_tags(desc_chapo).truncate(160) %>
+
+<style>
+  .op-ms{
+    --accent1:<%= accent1 %>;
+    --accent2:<%= accent2 %>;
+    color:#0f172a; background:#fff;
+    font-family:"Inter",system-ui,sans-serif;
+  }
+  .op-ms .container{ max-width:1140px; margin:0 auto; padding:0 24px; }
+
+  .ms-backline{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0 10px;}
+  .ms-back{color:var(--accent1);font-weight:800;text-decoration:none;}
+  .ms-back:hover{text-decoration:underline;}
+  .ms-pill{display:inline-flex;align-items:center;gap:8px;padding:.55rem .9rem;border-radius:999px;text-decoration:none;font-weight:700;border:1px solid #e5e7eb;background:#fff;color:#0f172a;}
+
+  .ms-hero{position:relative;background:linear-gradient(160deg,var(--accent1),var(--accent2));color:#fff;overflow:hidden;}
+  .ms-hero::before{content:"";position:absolute;inset:0;background:url('<%= img %>') center/cover no-repeat;opacity:.25;mix-blend:multiply;}
+  .ms-hero-inner{position:relative;padding:clamp(88px,11vw,160px) 0 clamp(56px,8vw,100px);}
+  .ms-kicker{display:inline-block;padding:.45rem .8rem;border-radius:999px;background:rgba(255,255,255,.22);font:700 .85rem/1 "Epilogue",Inter;}
+  .ms-title{font-family:"Epilogue",Inter;font-weight:900;line-height:1.03;font-size:clamp(2.6rem,4.8vw,4rem);letter-spacing:-.02em;margin:.65rem 0 .45rem;text-wrap:balance;}
+  .ms-chapo{max-width:900px;font:600 clamp(1.2rem,1.1vw + .85rem,1.55rem)/1.65 "Inter";opacity:.98;}
+
+  .ms-slice{padding:clamp(3.2rem,6vw,5.4rem) 0;scroll-margin-top:96px;}
+  .ms-slice.bg-muted{background:#f8f9fb;}
+  .ms-slice h2{font-family:"Epilogue";font-weight:900;font-size:clamp(2rem,3.1vw,2.6rem);color:#0f172a;margin:0 0 .9rem;}
+  .ms-slice h2::after{content:"";display:block;width:80px;height:6px;border-radius:999px;background:var(--accent1);margin:.6rem 0 .2rem;}
+  .ms-prose{font:500 1.22rem/1.95 "Inter";color:#1f2937;}
+  .ms-prose p{margin:0 0 1.25rem;}
+
+  .ms-infos h3{margin:0 0 .8rem;font:900 1.15rem/1.2 "Epilogue";color:#0f172a;text-transform:uppercase;}
+  .ms-meta{list-style:none;padding:0;margin:0 0 1.2rem;display:grid;gap:.65rem;}
+  .ms-meta label{display:block;font:700 .9rem/1 "Epilogue";color:#64748b;text-transform:uppercase;}
+  .ms-meta .val{font:600 1.08rem/1.6 "Inter";}
+  .ms-meta .val a{color:var(--accent1);text-decoration:none;font-weight:700;}
+  .ms-meta .val a:hover{text-decoration:underline;}
+  #op-map{height:300px;border-radius:18px;border:1px solid #e6e8ee;overflow:hidden;box-shadow:0 6px 24px rgba(15,23,42,.06);}
+
+  .ms-cta{background:linear-gradient(160deg,var(--accent1),var(--accent2));color:#fff;text-align:center;padding:clamp(3.2rem,7vw,5.4rem) 0;}
+  .ms-cta h2{margin:0 0 .55rem;font:900 clamp(1.7rem,3.2vw,2.5rem)/1.1 "Epilogue";}
+  .ms-cta p{margin:0 0 1.4rem;font:600 1.18rem/1.75 "Inter";}
+  .ms-cta .btn{display:inline-block;border-radius:999px;padding:1.05rem 1.7rem;text-decoration:none;font:800 1.05rem/1 "Epilogue";margin:.35rem;}
+  .ms-cta .btn.primary{background:#fff;color:var(--accent1);box-shadow:0 8px 28px rgba(0,0,0,.08);}
+  .ms-cta .btn.secondary{background:transparent;border:2px solid #fff;color:#fff;}
+</style>
+
+<div class="op-ms">
+  <div class="container">
+    <div class="ms-backline">
+      <%= link_to "← Retour aux opportunités", (defined?(opportunities_path) ? opportunities_path : root_path), class: "ms-back" %>
+      <% if website.present? %>
+        <%= link_to "Source", website, class: "ms-pill", target: "_blank", rel: "noopener" %>
+      <% end %>
+    </div>
   </div>
 
-  <div class="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-    <!-- Colonne principale -->
-    <section class="min-w-0">
-      <div class="rounded-2xl overflow-hidden shadow ring-1 ring-black/5">
-        <img src="<%= img %>" class="w-full h-64 sm:h-72 object-cover" alt="">
-      </div>
-
-      <div class="mt-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div class="min-w-0">
-          <% badge =
-            case @opportunity.category
-            when 'benevolat'    then 'bg-rose-100 text-rose-700'
-            when 'formation'    then 'bg-blue-100 text-blue-700'
-            when 'rencontres'   then 'bg-green-100 text-green-700'
-            else 'bg-orange-100 text-orange-700'
-            end %>
-          <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full <%= badge %>">
-            <%= @opportunity.category.to_s.capitalize.presence || "Opportunité" %>
-          </span>
-
-          <h1 class="mt-2 text-3xl sm:text-4xl font-extrabold leading-tight"><%= @opportunity.title %></h1>
-          <% if @opportunity.organization.present? %>
-            <p class="mt-1 text-gray-600"><%= @opportunity.organization %></p>
-          <% end %>
-        </div>
-
-        <% rating = (4.2 + ((@opportunity.id || 1) % 6) / 10.0).round(1) rescue 4.6 %>
-        <div class="flex items-center gap-1 text-amber-500 shrink-0">
-          <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.293z"/></svg>
-          <span class="font-semibold"><%= rating %></span>
-        </div>
-      </div>
-
-      <div class="mt-4 bg-white rounded-2xl border border-gray-100 shadow p-6">
-        <p class="text-gray-800 leading-relaxed"><%= @opportunity.description %></p>
-
-        <% if @opportunity.tags.present? %>
-          <div class="mt-6">
-            <h3 class="font-semibold mb-2">Tags</h3>
-            <div class="flex flex-wrap gap-2">
-              <% @opportunity.tags.to_s.split(/[;,]/).map(&:strip).reject(&:blank?).each do |tag| %>
-                <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800"><%= tag %></span>
-              <% end %>
-            </div>
-          </div>
+  <!-- HERO -->
+  <header class="ms-hero">
+    <div class="ms-hero-inner">
+      <div class="container">
+        <span class="ms-kicker"><%= category.present? ? category.capitalize : "Opportunité" %></span>
+        <h1 class="ms-title"><%= title %></h1>
+        <p class="ms-chapo"><%= truncate(desc_chapo, length: 180) %></p>
+        <% if org_line.present? %>
+          <p class="ms-chapo" style="margin-top:.4rem;opacity:.9;font-weight:700;"><%= org_line %></p>
         <% end %>
       </div>
-    </section>
+    </div>
+  </header>
 
-    <!-- Aside -->
-    <aside class="min-w-0 lg:sticky lg:top-24">
-      <div class="bg-white rounded-2xl border border-gray-100 shadow p-5">
-        <h3 class="font-semibold mb-3">Informations pratiques</h3>
-        <ul class="space-y-3 text-sm text-gray-700">
-          <% if date_str.present? %>
-            <li class="flex items-start gap-2"><span>📅</span><span><%= date_str %><%== hours_str.present? ? " — <strong>#{hours_str}</strong>".html_safe : "" %></span></li>
+  <!-- Le projet -->
+  <section class="ms-slice">
+    <div class="container">
+      <h2>📋 Le projet</h2>
+      <div class="ms-prose">
+        <% if desc_full.present? %>
+          <%= simple_format(desc_full) %>
+        <% else %>
+          <p>Une expérience concrète, encadrée et utile — viens découvrir, apprendre et contribuer près de chez toi.</p>
+        <% end %>
+      </div>
+    </div>
+  </section>
+
+  <!-- Infos pratiques -->
+  <% if [org, location, email, phone, time_need, lat && lon].any?(&:present?) %>
+    <section class="ms-slice bg-muted ms-infos">
+      <div class="container">
+        <h3>Infos pratiques</h3>
+        <ul class="ms-meta">
+          <% if org.present? %>
+            <li><label>🏛 Organisation</label><div class="val"><%= org %></div></li>
           <% end %>
-          <% if @opportunity.location.present? %>
-            <li class="flex items-start gap-2"><span>📍</span><span><%= @opportunity.location %></span></li>
+          <% if location.present? %>
+            <li><label>📍 Adresse</label><div class="val"><%= location %></div></li>
           <% end %>
-          <% if @opportunity.time_commitment.present? %>
-            <li class="flex items-start gap-2"><span>⏱</span><span><%= @opportunity.time_commitment %></span></li>
+          <% if email.present? %>
+            <li><label>✉️ Contact</label><div class="val"><a href="mailto:<%= email %>"><%= email %></a></div></li>
           <% end %>
-          <% if @opportunity.effort_level.present? %>
-            <li class="flex items-start gap-2"><span>🔥</span><span>Engagement : <%= @opportunity.effort_level %></span></li>
+          <% if phone.present? %>
+            <li><label>📞 Téléphone</label><div class="val"><a href="tel:<%= phone %>"><%= phone %></a></div></li>
           <% end %>
-          <% if final_url.present? %>
-            <li class="flex items-start gap-2"><span>🔗</span>
-              <%= link_to "Lien officiel / informations", final_url, class: "text-indigo-600 hover:underline", target: "_blank", rel: "noopener" %>
-            </li>
-          <% end %>
-          <% if @opportunity.latitude && @opportunity.longitude %>
-            <li class="flex items-start gap-2"><span>🗺️</span><span>Carte ci-dessous</span></li>
+          <% if time_need.present? %>
+            <li><label>⏱ Temps à prévoir</label><div class="val"><%= time_need %></div></li>
           <% end %>
         </ul>
 
-        <% if email || phone %>
-          <h4 class="mt-5 font-semibold">Contact</h4>
-          <div class="mt-2 flex flex-wrap gap-2 text-sm" style="overflow-wrap:anywhere">
-            <% if email %>
-              <a class="inline-flex items-center gap-2 px-3 py-2 rounded-md ring-1 ring-gray-200 hover:bg-gray-50" href="mailto:<%= email %>">📧 Envoyer un email</a>
-            <% end %>
-            <% if phone %>
-              <a class="inline-flex items-center gap-2 px-3 py-2 rounded-md ring-1 ring-gray-200 hover:bg-gray-50" href="tel:<%= phone %>">📞 Appeler</a>
-            <% end %>
-          </div>
-        <% end %>
-
-        <%# CTA principal — toujours affiché %>
-        <a href="<%= final_url || '#' %>"
-           class="mt-5 inline-flex w-full items-center justify-center px-5 py-3 rounded-lg font-semibold
-                  <%= final_url ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-200 text-gray-500 cursor-not-allowed' %>"
-           <%= 'target="_blank" rel="noopener"' if final_url %>>
-          Se renseigner
-        </a>
-        <% unless final_url %>
-          <p class="mt-2 text-xs text-gray-500">Lien externe indisponible pour l’instant.</p>
-        <% end %>
-
-        <% if @opportunity.latitude && @opportunity.longitude %>
-          <div class="mt-5 rounded-lg overflow-hidden border">
-            <div id="mini-map" class="h-48 w-full"></div>
-          </div>
+        <% if lat && lon %>
+          <div id="op-map" data-lat="<%= lat %>" data-lon="<%= lon %>"></div>
         <% end %>
       </div>
-    </aside>
-  </div>
-</main>
+    </section>
+  <% end %>
 
-<%# ============================== À PROPOS (identique à pages/home) ============================ %>
-<section class="mt-14">
-  <div class="mx-auto max-w-[90rem] px-5 sm:px-6 lg:px-8">
-    <div class="rounded-2xl bg-slate-900 text-slate-100 p-6 ring-1 ring-black/10">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div>
-          <h3 class="text-lg font-semibold">À propos de Déclic</h3>
-          <p class="mt-2 text-slate-300">
-            Un projet citoyen pour connecter les personnes à des actions concrètes, des formations, des communautés locales
-            et des histoires inspirantes. Les données proviennent d’acteurs de terrain et de sources publiques.
-          </p>
-        </div>
-        <div>
-          <h4 class="text-sm font-semibold text-slate-200">Contact</h4>
-          <ul class="mt-2 space-y-1 text-slate-300 text-sm">
-            <li>📞 +33&nbsp;6&nbsp;67&nbsp;06&nbsp;31&nbsp;79</li>
-            <li>✉️ <a href="mailto:nicolas.goarant@hotmail.fr" class="underline">nicolas.goarant@hotmail.fr</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4 class="text-sm font-semibold text-slate-200">Ressources</h4>
-          <ul class="mt-2 space-y-1 text-slate-300 text-sm">
-            <li><a class="underline" href="/mentions-legales">Mentions légales</a></li>
-            <li><a class="underline" href="/confidentialite">Politique de confidentialité</a></li>
-            <li><a class="underline" href="/presse">Presse & média</a></li>
-            <li><a class="underline" href="/faq">FAQ</a></li>
-          </ul>
-        </div>
+  <!-- CTA -->
+  <section class="ms-cta">
+    <div class="container">
+      <h2>Envie d’agir à ton tour ?</h2>
+      <p>Découvre d’autres opportunités près de chez toi ou partage ta propre histoire pour inspirer d’autres personnes.</p>
+      <div>
+        <%= link_to "Voir les actions locales", (defined?(opportunities_path) ? opportunities_path : root_path), class: "btn primary" %>
+        <%= link_to "Partager mon histoire", (respond_to?(:new_story_path) ? new_story_path : (defined?(stories_path) ? stories_path : root_path)), class: "btn secondary" %>
       </div>
     </div>
-  </div>
-</section>
+  </section>
+</div>
 
-<%# ---------- Leaflet (mini-map + popup enrichi) ---------- %>
 <% content_for :scripts do %>
 <script>
 (function () {
-  var LAT = <%= @opportunity.latitude ? @opportunity.latitude.to_f : 'null' %>;
-  var LNG = <%= @opportunity.longitude ? @opportunity.longitude.to_f : 'null' %>;
-  var TITLE = <%= raw(@opportunity.title.to_json) %>;
-  var LOC   = <%= raw(@opportunity.location.to_s.to_json) %>;
-  var DATE  = <%= raw((date_str || "").to_json) %>;
-  var HOURS = <%= raw((hours_str || "").to_json) %>;
-  var EXT   = <%= raw((final_url || "").to_json) %>;
+  function initOpMap() {
+    var el = document.getElementById('op-map');
+    if (!el || !window.L) return;
+    if (el.dataset.mapInited === "1") return;
 
-  function ready(fn){
-    if (document.readyState === 'complete' || document.readyState === 'interactive') fn();
-    else document.addEventListener('DOMContentLoaded', fn);
-  }
-  function ensureLeafletThen(fn){
-    if (window.L) return fn();
-    window.addEventListener('load', fn, { once:true });
-  }
-  function waitForVisibleHeight(el, min = 80, tries = 30){
-    return new Promise(function(resolve){
-      (function tick(left){
-        var h = el ? el.getBoundingClientRect().height : 0;
-        if (h >= min || left <= 0) return resolve(h);
-        setTimeout(function(){ tick(left-1); }, 50);
-      })(tries);
+    var lat = parseFloat(el.dataset.lat), lon = parseFloat(el.dataset.lon);
+    if (isNaN(lat) || isNaN(lon)) return;
+
+    var map = L.map(el, { zoomControl:false, attributionControl:false }).setView([lat, lon], 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19 }).addTo(map);
+
+    var icon = L.divIcon({
+      className:'',
+      html:'<div style="width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:<%= accent1 %>">📍</div>',
+      iconSize:[26,32], iconAnchor:[13,28], popupAnchor:[0,-26]
     });
+
+    L.marker([lat, lon], {icon:icon}).addTo(map);
+    setTimeout(() => map.invalidateSize(), 200);
+    el.dataset.mapInited = "1";
   }
-
-  async function initMap(){
-    if (!LAT || !LNG) return;
-    var el = document.getElementById('mini-map');
-    if (!el || el.dataset.mapReady) return;
-
-    await waitForVisibleHeight(el);
-    if (!window.L) return;
-
-    var map = L.map(el, { zoomControl:true, dragging:true, scrollWheelZoom:false })
-               .setView([LAT, LNG], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-
-    var popup = '<div style="min-width:230px">'
-              + '<strong>'+TITLE+'</strong>'
-              + (DATE ? '<br><small>📅 '+DATE+(HOURS ? ' — '+HOURS : '')+'</small>' : '')
-              + (LOC  ? '<br><small>📍 '+LOC+'</small>' : '')
-              + (EXT  ? '<br><a class="text-indigo-600 underline text-sm" target="_blank" rel="noopener" href="'+EXT+'">Plus d’infos</a>' : '')
-              + '</div>';
-
-    L.marker([LAT, LNG]).addTo(map).bindPopup(popup).openPopup();
-
-    setTimeout(function(){ map.invalidateSize(); }, 100);
-    el.dataset.mapReady = '1';
-  }
-
-  function boot(){ ensureLeafletThen(initMap); }
-  document.addEventListener('turbo:load', boot);
-  document.addEventListener('turbo:render', boot);
-  ready(boot);
-  window.addEventListener('load', boot);
+  document.addEventListener("DOMContentLoaded", initOpMap);
+  document.addEventListener("turbo:load", initOpMap);
 })();
 </script>
 <% end %>
-
-
-
-
-
-
-
-
-
-
-
-
-

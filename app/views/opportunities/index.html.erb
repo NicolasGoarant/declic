@@ -1,336 +1,272 @@
-<%# app/views/opportunities/index.html.erb %>
+<%# app/views/opportunities/index.html.erb — Index harmonisé (fond violet, chips, carte + cards) %>
 
-<main class="max-w-[90rem] mx-auto px-5 sm:px-6 lg:px-8 pt-20 md:pt-24 pb-10">
-  <div class="flex items-start justify-between gap-4">
-    <div>
-      <h1 class="text-2xl sm:text-3xl font-extrabold">Opportunités</h1>
-      <p class="text-slate-600 mt-1">Trouvez une action concrète près de chez vous.</p>
-    </div>
-    <%= link_to "Proposer une opportunité", new_opportunity_path,
-        class: "hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow" %>
-  </div>
-
-  <!-- Filtres catégories -->
-  <div class="mt-5 flex flex-wrap gap-2">
-    <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
-    <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
-    <button class="chip" data-cat="formation">📘 Formation</button>
-    <button class="chip" data-cat="rencontres">👥 Rencontres</button>
-    <button class="chip" data-cat="entreprendre">💼 Entreprendre</button>
-  </div>
-
-  <!-- Carte -->
-  <div class="relative rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden mt-4 mb-6">
-    <div id="map-opps" class="h-[360px] md:h-[420px] w-full"></div>
-
-    <!-- Boutons flottants -->
-    <button id="btn-locate-opps"
-            class="absolute right-3 top-3 z-20 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/95 ring-1 ring-gray-200 shadow hover:bg-white">
-      <span>📍</span><span class="text-sm font-medium">Me localiser</span>
-    </button>
-    <button id="btn-fixloc-opps"
-            class="absolute right-3 top-14 z-20 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/95 ring-1 ring-gray-200 shadow hover:bg-white">
-      <span>🗺️</span><span class="text-sm font-medium">Définir ma position</span>
-    </button>
-  </div>
-
-  <!-- Liste cartes -->
-  <div id="cards-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-    <% @opportunities.each do |o| %>
-      <% badge =
-        case o.category.to_s
-        when 'benevolat'    then 'bg-rose-100 text-rose-700'
-        when 'formation'    then 'bg-blue-100 text-blue-700'
-        when 'rencontres'   then 'bg-green-100 text-green-700'
-        else                     'bg-amber-100 text-amber-700'
-        end %>
-      <article class="op-card bg-white rounded-2xl border border-gray-100 shadow hover:shadow-md transition"
-               data-cat="<%= o.category %>">
-        <div class="p-4">
-          <span class="inline-block text-[11px] font-semibold px-2 py-1 rounded-full <%= badge %>">
-            <%= o.category.to_s.capitalize.presence || "Opportunité" %>
-          </span>
-          <h2 class="mt-2 font-semibold text-lg leading-snug line-clamp-2">
-            <%= o.title %>
-          </h2>
-          <p class="text-[13px] text-gray-600 mt-1 line-clamp-3">
-            <%= o.description %>
-          </p>
-          <div class="mt-3 flex items-center gap-3 text-[13px] text-gray-600">
-            <% if o.location.present? %><span>📍 <%= o.location %></span><% end %>
-            <% if o.time_commitment.present? %><span>⏱ <%= o.time_commitment %></span><% end %>
-          </div>
-          <div class="mt-4 flex items-center justify-between">
-            <%= link_to "Voir la fiche", opportunity_path(o),
-                  class: "inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 text-sm" %>
-            <%# petit indicateur “carte” si coordonnées présentes %>
-            <% if o.latitude && o.longitude %>
-              <span class="text-xs text-gray-500">🗺️</span>
-            <% end %>
-          </div>
+<div class="ops-ms">
+  <!-- HERO / ENTÊTE -->
+  <header class="ops-hero" role="banner">
+    <div class="ops-hero-inner">
+      <div class="container">
+        <div class="ops-hero-head">
+          <h1 class="ops-title">Opportunités</h1>
+          <%= link_to "Proposer une opportunité", new_opportunity_path, class: "btn-cta" %>
         </div>
-      </article>
-    <% end %>
-  </div>
-</main>
-
-<!-- Modal consentement géoloc -->
-<div id="geo-consent" class="fixed inset-0 z-[500] hidden">
-  <div class="absolute inset-0 bg-black/40"></div>
-  <div class="absolute inset-0 grid place-items-center p-4">
-    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl ring-1 ring-black/10 p-6">
-      <h3 class="text-lg font-semibold">Activer la géolocalisation&nbsp;?</h3>
-      <p class="mt-1 text-sm text-gray-600">
-        Nous l’utilisons uniquement pour centrer la carte autour de votre position. Aucune donnée n’est stockée côté serveur.
-      </p>
-      <div class="mt-4 flex gap-3">
-        <button id="geo-accept" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Oui, me localiser</button>
-        <button id="geo-decline" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">Plus tard</button>
+        <p class="ops-chapo">
+          Trouve une action concrète près de chez toi&nbsp;: bénévolat, formations, rencontres, ou entreprendre.
+        </p>
       </div>
     </div>
-  </div>
+    <div class="ops-hero-bg"></div>
+  </header>
+
+  <!-- CARTE + FILTRES -->
+  <section class="ops-slice bg-muted grad-behind-map" id="explorer">
+    <div class="container">
+      <div class="ops-filters">
+        <div class="chips">
+          <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
+          <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
+          <button class="chip" data-cat="formation">📘 Formation</button>
+          <button class="chip" data-cat="rencontres">👥 Rencontres</button>
+          <button class="chip" data-cat="entreprendre">💼 Entreprendre</button>
+        </div>
+      </div>
+
+      <div class="ops-mapwrap">
+        <div id="map" class="ops-map" data-map-inited="0"></div>
+        <button id="btn-locate" class="ops-locate"><span>📍</span><span>Me localiser</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- LISTE / CARTES -->
+  <section class="ops-slice grad-soft">
+    <div class="container">
+      <div id="ops-list" class="ops-grid">
+        <% (@opportunities || []).each do |o| %>
+          <% cover =
+              if o.respond_to?(:image_url) && o.image_url.present?
+                o.image_url
+              else
+                case (o.category || "").to_s.downcase
+                when "benevolat"
+                  "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=800&auto=format&fit=crop"
+                when "formation"
+                  "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=800&auto=format&fit=crop"
+                when "rencontres"
+                  "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=800&auto=format&fit=crop"
+                when "entreprendre"
+                  "https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=800&auto=format&fit=crop"
+                else
+                  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800&auto=format&fit=crop"
+                end
+              end
+          %>
+          <%= link_to opportunity_path(o), class: "op-card" do %>
+            <div class="thumb">
+              <img src="<%= cover %>" alt="" loading="lazy" referrerpolicy="no-referrer">
+              <span class="badge"><%= o.category.to_s.capitalize.presence || "Opportunité" %></span>
+            </div>
+            <div class="body">
+              <p class="title"><%= o.title %></p>
+              <% if o.respond_to?(:organization) && o.organization.present? %>
+                <p class="org"><%= o.organization %></p>
+              <% end %>
+              <p class="desc"><%= o.description %></p>
+              <% if o.location.present? %>
+                <p class="loc">📍 <%= o.location %></p>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </section>
 </div>
 
-<!-- Données côté serveur -> JS -->
-<script id="opps-json" type="application/json">
-  <%= raw(
-        @opportunities.as_json(
-          only: [:id, :title, :description, :category, :organization, :location,
-                 :latitude, :longitude, :starts_at, :ends_at, :time_commitment, :image_url,
-                 :external_url, :url, :link_url, :registration_url, :source_url]
-        ).to_json
-      ) %>
-</script>
-
 <style>
-  .chip{ @apply inline-flex items-center rounded-full px-3 py-1.5 text-sm bg-white ring-1 ring-gray-200 hover:bg-gray-50; }
-  .chip.is-active{ @apply bg-indigo-600 text-white ring-0; }
-  .picon{
-    width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;
-    color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:var(--c,#6366f1);
-  }
-  .picon::after{ content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
-    border:6px solid transparent;border-top-color:var(--c,#6366f1); }
-  /* carte popup */
-  .popcard{display:grid;grid-template-columns:72px 1fr;gap:10px;min-width:260px;align-items:start}
-  .popcard img{width:72px;height:72px;border-radius:10px;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,.2)}
-  .popcard h4{margin:0;font-weight:700;font-size:14px;line-height:1.2}
-  .popcard .muted{color:#475569;font-size:12px}
+/* ===== Thème de page (cohérent Home/Stories) ===== */
+.ops-ms{ --a1:#7e5bef; --a2:#3b82f6; --muted:#f4f2fb; color:#0f172a; font-family: "Inter", system-ui, sans-serif;
+  background:
+    radial-gradient(1400px 800px at 10% -10%, #efe8ff 0%, transparent 60%) no-repeat,
+    linear-gradient(180deg, #fbfaff 0%, #f6f3ff 60%, #f3f1ff 100%);
+}
+.ops-ms .container{ max-width:1280px; margin:0 auto; padding:0 24px; }
+[id]{ scroll-margin-top:96px; }
+
+/* ===== HERO ===== */
+.ops-hero{ position:relative; overflow:hidden; color:#fff; background:linear-gradient(160deg,var(--a1),var(--a2)); }
+.ops-hero-inner{ position:relative; padding:clamp(70px,8vw,120px) 0 clamp(34px,5.5vw,64px); z-index:2; }
+.ops-hero-bg{ position:absolute; inset:0; background:
+  linear-gradient(180deg,rgba(9,13,28,.62),rgba(9,13,28,.62)),
+  url("https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2400&auto=format&fit=crop") center/cover no-repeat;
+  filter:saturate(1.05) brightness(.9); z-index:1;
+}
+.ops-hero-head{ display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.ops-title{ margin:0; font-family:"Epilogue",Inter; font-weight:900; letter-spacing:-.02em;
+  font-size:clamp(2rem,3.6vw,2.8rem); text-shadow:0 2px 16px rgba(0,0,0,.25);
+}
+.ops-chapo{ margin:.5rem 0 0; max-width:980px; font:600 clamp(1rem,.9vw + .8rem,1.25rem)/1.65 "Inter";
+  text-shadow:0 1px 8px rgba(0,0,0,.18);
+}
+.btn-cta{ display:inline-flex; align-items:center; gap:.5rem; padding:.75rem 1rem; border-radius:999px;
+  background:#fff; color:#4f46e5; text-decoration:none; font:900 .98rem/1 "Epilogue";
+  box-shadow:0 12px 34px rgba(0,0,0,.12); white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis;
+}
+.btn-cta:hover{ transform:translateY(-1px); }
+@media (max-width:640px){
+  .ops-hero-head{ flex-direction:column; align-items:flex-start; }
+  .btn-cta{ width:100%; justify-content:center; }
+}
+
+/* ===== Slices / fonds ===== */
+.ops-slice{ padding:clamp(2rem,4.6vw,4rem) 0; }
+.bg-muted{ background:var(--muted); }
+.grad-soft{ background: radial-gradient(900px 420px at 85% -10%, #eee7ff 0%, transparent 66%),
+                       linear-gradient(180deg,#f9f7ff 0%, #f3f1ff 100%); }
+.grad-behind-map{ background: radial-gradient(980px 460px at 50% -14%, #e9e2ff 0%, transparent 70%), var(--muted); }
+
+/* ===== Filtres ===== */
+.ops-filters{ margin-bottom:12px; }
+.chips{ display:flex; flex-wrap:wrap; gap:10px; }
+.chip{ display:inline-flex; align-items:center; justify-content:center; flex-wrap:wrap;
+  padding:.6rem 1rem; border-radius:999px; background:#fff; border:1px solid #e6e8ee;
+  font:800 .95rem/1.1 "Inter"; white-space:normal; word-break:break-word;
+}
+.chip.is-active{ background:var(--a1); color:#fff; border-color:transparent; }
+
+/* ===== Carte ===== */
+.ops-mapwrap{ position:relative; }
+.ops-map{ height:560px; width:100%; border-radius:20px; border:1px solid #e6e8ee; overflow:hidden;
+  box-shadow:0 10px 30px rgba(15,23,42,.10); background:#fff;
+}
+.ops-locate{ position:absolute; right:12px; top:12px; z-index:20; display:inline-flex; gap:8px; align-items:center;
+  padding:.7rem 1rem; border-radius:12px; background:#fff; border:1px solid #e6e8ee; box-shadow:0 8px 22px rgba(15,23,42,.10);
+}
+
+/* ===== Grille de cartes ===== */
+.ops-grid{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:18px; }
+@media (max-width:980px){ .ops-grid{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
+@media (max-width:640px){ .ops-grid{ grid-template-columns:1fr; } }
+
+.op-card{ display:block; border-radius:20px; overflow:hidden; background:#fff; border:1px solid #e6e8ee;
+  box-shadow:0 10px 26px rgba(15,23,42,.08); text-decoration:none; color:#0f172a;
+}
+.op-card .thumb{ position:relative; aspect-ratio: 16/9; background:#f2f2f2; }
+.op-card .thumb img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.op-card .thumb .badge{
+  position:absolute; left:10px; top:10px; padding:.3rem .55rem; border-radius:999px;
+  background:rgba(255,255,255,.92); border:1px solid #e6e8ee; font:800 .75rem/1 "Inter"; color:#334155;
+}
+.op-card .body{ padding:14px 16px 16px; }
+.op-card .title{ margin:0; font:900 1.05rem/1.2 "Epilogue"; }
+.op-card .org{ margin:.15rem 0 0; color:#64748b; font:.88rem/1.1 "Inter"; }
+.op-card .desc{ margin:.4rem 0; color:#475569; font:.98rem/1.55 "Inter";
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.op-card .loc{ margin:0; color:#1f2937; font:.98rem/1.35 "Inter"; }
 </style>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <% content_for :scripts do %>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('turbo:load', bootOps, { once:true });
+document.addEventListener('DOMContentLoaded', bootOps, { once:true });
 
-  <script>
-  (function(){
-    const mapEl = document.getElementById('map-opps');
-    if(!mapEl || !window.L) return;
+function bootOps(){
+  const mapEl = document.getElementById('map');
+  if(!mapEl || !window.L) return;
+  if (mapEl.dataset.mapInited === "1") return;
 
-    // ---- Carte
-    const map = L.map(mapEl,{ zoomControl:true, scrollWheelZoom:true }).setView([46.6, 2.2], 6);
-    
-// -- Suivi géolocalisation --
-if (typeof addFollowControl === "function" && typeof startGeoWatch === "function") {
-  addFollowControl(map, (opts)=> startGeoWatch(map, opts));
-} else if (typeof startGeoWatch === "function") {
-  startGeoWatch(map, { follow:true });
+  const map = L.map(mapEl, { zoomControl:true, attributionControl:false }).setView([46.6, 2.2], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom: 19 }).addTo(map);
+  requestAnimationFrame(()=> map.invalidateSize());
+  setTimeout(()=> map.invalidateSize(), 250);
+  mapEl.dataset.mapInited = "1";
+
+  const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',default:'#6366f1'};
+  const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',default:'⭐'};
+  const iconFor = (c)=> L.divIcon({
+    className:'',
+    html:`<div style="width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:${colors[c]||colors.default}"><span>${emojis[c]||emojis.default}</span></div>`,
+    iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]
+  });
+  const layer = L.layerGroup().addTo(map);
+
+  function popupHtml(o){
+    const url = `/opportunities/${o.slug || o.id}`;
+    const loc = o.location ? `📍 ${o.location}` : '';
+    const org = o.organization ? `${o.organization}` : '';
+    const img = o.image_url || coverFor(o.category);
+    return `
+      <div style="display:grid;grid-template-columns:72px 1fr;gap:10px;min-width:260px;align-items:start">
+        <img src="${img}" alt="" style="width:72px;height:72px;border-radius:10px;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,.2)"/>
+        <div>
+          <h4 style="margin:0;font-weight:700;font-size:14px;line-height:1.2">${o.title||''}</h4>
+          ${org?`<div style="color:#475569;font-size:12px">${org}</div>`:''}
+          ${loc?`<div style="color:#475569;font-size:12px">${loc}</div>`:''}
+          <div style="margin-top:6px"><a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a></div>
+        </div>
+      </div>`;
+  }
+  function coverFor(cat){
+    const c=(cat||'').toLowerCase();
+    if(c==='benevolat') return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=300&auto=format&fit=crop';
+    if(c==='formation') return 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=300&auto=format&fit=crop';
+    if(c==='rencontres') return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=300&auto=format&fit=crop';
+    if(c==='entreprendre') return 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=300&auto=format&fit=crop';
+    return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
+  }
+
+  let dataset = [];
+  function plot(items){
+    layer.clearLayers();
+    const bounds=[];
+    (items||[]).forEach(o=>{
+      if(!o.latitude || !o.longitude) return;
+      L.marker([o.latitude,o.longitude],{icon:iconFor((o.category||'').toLowerCase())})
+        .addTo(layer).bindPopup(popupHtml(o));
+      bounds.push([o.latitude,o.longitude]);
+    });
+    if(bounds.length){ map.fitBounds(bounds,{padding:[30,30]}); }
+  }
+
+  // Charge les opportunités depuis l'API
+  fetch('/api/v1/opportunities').then(r=>r.ok?r.json():[]).then(data=>{
+    dataset = data || [];
+    plot(dataset);
+  }).catch(()=>{});
+
+  // Filtres carte + liste
+  const chips = [...document.querySelectorAll('.chip')];
+  chips.forEach(chip=> chip.addEventListener('click', ()=>{
+    chips.forEach(c=>c.classList.remove('is-active'));
+    chip.classList.add('is-active');
+    const cat = chip.dataset.cat;
+    if(cat==='toutes'){ plot(dataset); filterList(null); return; }
+    plot((dataset||[]).filter(o=> (o.category||'').toLowerCase()===cat));
+    filterList(cat);
+  }));
+
+  function filterList(cat){
+    const cards = document.querySelectorAll('.op-card');
+    cards.forEach(card=>{
+      if(!cat){ card.style.display='block'; return; }
+      const badge = card.querySelector('.badge');
+      const text = (badge?.textContent || '').trim().toLowerCase();
+      card.style.display = text.startsWith(cat) ? 'block' : 'none';
+    });
+  }
+
+  // Me localiser
+  document.getElementById('btn-locate')?.addEventListener('click', ()=>{
+    if (window.DeclicGeo && window.DeclicGeo.setFollow) { window.DeclicGeo.setFollow(true); return; }
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition((pos)=>{
+      const { latitude, longitude } = pos.coords;
+      map.flyTo([latitude, longitude], 12, { duration: .8 });
+    });
+  });
 }
-mapEl._leaflet_map = map; // <- pour accès externe si besoin
-    const userLayer = L.layerGroup().addTo(map);
-    addFallbackTiles(map);
-
-
-    // ---- Dataset
-    const DATA = JSON.parse(document.getElementById('opps-json').textContent || '[]');
-
-    // ---- Icônes / couleurs
-    const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',default:'#6366f1'};
-    const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',default:'⭐'};
-    const iconFor = (cat)=> L.divIcon({className:'',html:`<div class="picon" style="--c:${colors[cat]||colors.default}"><span>${emojis[cat]||emojis.default}</span></div>`,iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
-
-    // ---- Aides dates/images
-    function parseDate(x){ if(!x) return null; const d=new Date(x); return isNaN(d.getTime())?null:d; }
-    function frLongDate(d){ return d ? d.toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}) : ''; }
-    function frHM(d){ return d ? d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : ''; }
-    function thumbFor(o){
-      if(o.image_url) return o.image_url;
-      const cat=(o.category||'').toLowerCase();
-      if(cat==='benevolat') return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=300&auto=format&fit=crop';
-      if(cat==='formation') return 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=300&auto=format&fit=crop';
-      if(cat==='rencontres')return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=300&auto=format&fit=crop';
-      if(cat==='entreprendre')return 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=300&auto=format&fit=crop';
-      return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
-    }
-    function extUrl(o){
-      const cands = [o.external_url,o.url,o.link_url,o.registration_url,o.source_url];
-      return (cands.find(u=>u && /^https?:\/\//i.test(String(u))) || null);
-    }
-
-    // ---- Markers
-    const layer = L.layerGroup().addTo(map);
-    function popupHtml(o){
-      const st=parseDate(o.starts_at||o.start_at||o.start_time||o.date||o.scheduled_on);
-      const en=parseDate(o.ends_at||o.end_at||o.end_time);
-      const when = st ? `📅 ${frLongDate(st)}${en?` — ${frHM(st)}–${frHM(en)}`:` — ${frHM(st)}`}` : (o.time_commitment||'');
-      const loc = o.location ? `📍 ${o.location}` : '';
-      const img = thumbFor(o);
-      const url = `/opportunities/${o.id}`;
-      const more = extUrl(o);
-      return `
-        <div class="popcard">
-          <img src="${img}" alt="">
-          <div>
-            <h4>${o.title||''}</h4>
-            ${o.organization?`<div class="muted">${o.organization}</div>`:''}
-            ${when?`<div class="muted">${when}</div>`:''}
-            ${loc?`<div class="muted">${loc}</div>`:''}
-            <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
-              <a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a>
-              ${more?`<a href="${more}" target="_blank" rel="noopener" class="text-indigo-600 underline text-sm">Plus d’infos</a>`:''}
-            </div>
-          </div>
-        </div>`;
-    }
-    function plot(items){
-      layer.clearLayers();
-      const bounds=[];
-      (items||[]).forEach(o=>{
-        if(!o.latitude || !o.longitude) return;
-        L.marker([o.latitude,o.longitude],{icon:iconFor((o.category||'').toLowerCase())})
-          .addTo(layer).bindPopup(popupHtml(o));
-        bounds.push([o.latitude,o.longitude]);
-      });
-      if(bounds.length) map.fitBounds(bounds,{padding:[24,24]});
-    }
-    plot(DATA);
-
-    // ---- Filtres (carte + cartes)
-    const chips=[...document.querySelectorAll('.chip')];
-    const cards=[...document.querySelectorAll('.op-card')];
-    function applyFilter(cat){
-      // carte
-      const filtered = (cat==='toutes') ? DATA : DATA.filter(o => (o.category||'').toLowerCase()===cat);
-      plot(filtered);
-      // cartes
-      cards.forEach(c=>{
-        const ok = (cat==='toutes' || (c.dataset.cat||'').toLowerCase()===cat);
-        c.style.display = ok ? '' : 'none';
-      });
-    }
-    chips.forEach(chip=>chip.addEventListener('click',()=>{
-      chips.forEach(c=>c.classList.remove('is-active')); chip.classList.add('is-active');
-      applyFilter(chip.dataset.cat);
-    }));
-
-    // ==================== Géolocalisation ====================
-    const OK_ACC = 5000;
-    let clickToSet=false, watchId=null;
-
-    function toast(msg){
-      try{
-        const t=document.createElement('div'); t.textContent=msg;
-        t.className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[600] px-4 py-2 rounded-lg bg-slate-900 text-white shadow";
-        document.body.appendChild(t); setTimeout(()=>t.remove(), 4500);
-      }catch{ alert(msg); }
-    }
-
-    function centerUser(lat, lon, accuracy, source='auto'){
-      userLayer.clearLayers();
-      if(accuracy && accuracy<2000){
-      }
-      map.flyTo([lat, lon], Math.max(map.getZoom(), 13), { duration:.8 });
-      if ((accuracy && accuracy <= 5000) || String(source).startsWith('manual')){
-        try{ localStorage.setItem('declic_user_pos', JSON.stringify({ lat, lng: lon })); }catch{}
-      }
-    }
-
-    function tryImproveFix(onBetter, onEnd){
-      if(!('geolocation' in navigator)) return onEnd?.();
-      const started = Date.now();
-      watchId = navigator.geolocation.watchPosition(
-        (pos)=>{
-          const c=pos.coords;
-          if(c.accuracy<=OK_ACC){ onBetter(c); stopWatch(); }
-          else if(Date.now()-started>30000){ onEnd?.(); stopWatch(); }
-        },
-        ()=>{ onEnd?.(); stopWatch(); },
-        { enableHighAccuracy:true, maximumAge:0, timeout:30000 }
-      );
-      function stopWatch(){ if(watchId!=null){ navigator.geolocation.clearWatch(watchId); watchId=null; } }
-    }
-
-    function doLocate(){
-      if(!('geolocation' in navigator)) return;
-      navigator.geolocation.getCurrentPosition(
-        (pos)=>{
-          const c=pos.coords;
-          if(c.accuracy<=OK_ACC){ centerUser(c.latitude, c.longitude, c.accuracy); localStorage.setItem('declic_geo_pref','granted'); }
-          else{
-            tryImproveFix(
-              (better)=>{ centerUser(better.latitude,better.longitude,better.accuracy); localStorage.setItem('declic_geo_pref','granted'); },
-              ()=>{ centerUser(c.latitude,c.longitude,c.accuracy); toast("Localisation approximative. Cliquez « Définir ma position » puis un point sur la carte pour corriger."); }
-            );
-          }
-        },
-        ()=>{
-          localStorage.setItem('declic_geo_pref','denied');
-          toast("Géolocalisation refusée. Vous pouvez la réactiver via le bouton « Me localiser ».");
-        },
-        { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
-      );
-    }
-
-    // Position mémorisée
-    try{
-      const saved = localStorage.getItem('declic_user_pos');
-      if (saved) {
-        const p = JSON.parse(saved);
-        if (p && typeof p.lat === 'number' && typeof p.lng === 'number') {
-          centerUser(p.lat, p.lng, 50, 'manual-cache');
-        }
-      }
-    }catch{}
-
-    // Boutons
-    document.getElementById('btn-locate-opps')?.addEventListener('click', doLocate);
-    const btnFix = document.getElementById('btn-fixloc-opps');
-    btnFix?.addEventListener('click', ()=>{
-      clickToSet = !clickToSet;
-      btnFix.style.background = clickToSet ? '#eef2ff' : 'rgba(255,255,255,.95)';
-      toast(clickToSet ? "Cliquez sur la carte pour définir votre position." : "Mode désactivé.");
-    });
-    map.on('click', (e)=>{
-      if(!clickToSet) return;
-      const {lat, lng} = e.latlng;
-      centerUser(lat, lng, 20, 'manual-click');
-      localStorage.setItem('declic_geo_pref','granted');
-      clickToSet=false; btnFix.style.background='rgba(255,255,255,.95)';
-    });
-
-    // Consentement (même logique que la home)
-    const modal=document.getElementById('geo-consent'), accept=document.getElementById('geo-accept'), decline=document.getElementById('geo-decline');
-    const openModal=()=>modal?.classList.remove('hidden'); const closeModal=()=>modal?.classList.add('hidden');
-    accept?.addEventListener('click', ()=>{ closeModal(); doLocate(); });
-    decline?.addEventListener('click', ()=>{ closeModal(); localStorage.setItem('declic_geo_pref','denied'); });
-
-    async function askConsentIfNeeded(){
-      const pref=localStorage.getItem('declic_geo_pref');
-      if(pref==='granted'){ doLocate(); return; }
-      if(pref==='denied'){ return; }
-      try{
-        if(navigator.permissions?.query){
-          const st=await navigator.permissions.query({ name:'geolocation' });
-          if(st.state==='granted'){ localStorage.setItem('declic_geo_pref','granted'); doLocate(); return; }
-          if(st.state==='denied'){  localStorage.setItem('declic_geo_pref','denied'); return; }
-          openModal();
-        }else{ openModal(); }
-      }catch{ openModal(); }
-    }
-    document.addEventListener('turbo:load', askConsentIfNeeded, { once:true });
-    document.addEventListener('DOMContentLoaded', askConsentIfNeeded, { once:true });
-  })();
-  </script>
+</script>
 <% end %>
-
-

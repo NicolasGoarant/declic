@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title><%= content_for?(:title) ? yield(:title) : "Déclic" %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <!-- Évite les previews Turbo -->
+    <meta name="turbo-visit-control" content="reload">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Epilogue:wght@600;700;800;900&display=swap"
+      rel="stylesheet">
+
+    <!-- CSS -->
+    <%= stylesheet_link_tag "tailwind", "application", "data-turbo-track": "reload" %>
+
+    <!-- Importmap / Turbo quand même chargés (mais on désactive Drive pour ce layout) -->
+    <%= javascript_importmap_tags %>
+
+    <!-- Leaflet (pour la carte de la home) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+      html { font-size:18px }
+      @media (max-width:1024px){ html{font-size:17px} }
+      @media (max-width:640px){  html{font-size:16px} }
+      body { font-family:"Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif }
+      main { padding-top:72px }
+      @media (max-width:640px){ main{padding-top:64px} }
+      section, header, [id]{ scroll-margin-top:84px }
+    </style>
+  </head>
+
+  <body class="bg-gray-50 text-gray-900" data-turbo="false">
+    <%= render 'shared/navbar' %>
+
+    <main>
+      <%= yield %>
+    </main>
+
+    <!-- JS maison (s’ils existent) -->
+    <%= javascript_include_tag "leaflet_tiles_fallback", defer: true, skip_pipeline: true rescue nil %>
+    <%= javascript_include_tag "geo_watch", defer: true,        skip_pipeline: true rescue nil %>
+
+    <%= yield :scripts %>
+  </body>
+</html>

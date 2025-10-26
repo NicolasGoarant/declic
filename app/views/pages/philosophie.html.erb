@@ -1,0 +1,188 @@
+<%# v3 — Pourquoi Déclic ? (typo XL + visuels chaleureux + fix rectangle + nouvelle accroche) %>
+
+<section class="ph-hero">
+  <div class="container">
+    <p class="kicker">À propos</p>
+    <h1>Pourquoi <span>Déclic</span> ?</h1>
+    <p class="lead">
+      On veut rendre l’engagement <b>facile</b> et <b>concret</b> : des actions proches de toi, de l’accompagnement humain,
+      et des histoires vraies qui donnent envie d’essayer. <br>
+      <b>À portée de main, à portée de clic</b>, nous pouvons changer notre vie. Les initiatives foisonnent :
+      <b>Déclic</b> permet de les repérer. ✨
+    </p>
+    <div class="cta">
+      <%= link_to "Voir les actions locales", (url_for(controller: :opportunities, action: :index, category: 'toutes') rescue root_path(anchor:"explorer")), class: "btn primary" %>
+      <%= link_to "Notre carte", root_path(anchor:"explorer"), class:"btn ghost" %>
+    </div>
+
+    <!-- bandeau visuel (images chaleureuses / incarnées) -->
+    <div class="gallery">
+      <img src="https://images.unsplash.com/photo-1525253013412-55c1a69a5738?w=1200&q=80&auto=format&fit=crop" alt="Atelier cuisine de quartier" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=1200&q=80&auto=format&fit=crop" alt="Bénévoles au jardin partagé" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1541711635-de7f96afe55f?w=1200&q=80&auto=format&fit=crop" alt="Atelier créatif, mains en action" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section class="ph-slice">
+  <div class="container grid-3">
+    <article class="card">
+      <div class="icon">🧩</div>
+      <h3>Le défi</h3>
+      <p>Des initiatives locales partout… mais dispersées, peu visibles, et on ne sait pas par où commencer.</p>
+      <img class="thumb" src="https://images.unsplash.com/photo-1529336953121-a0ce2f4f02d1?w=900&q=80&auto=format&fit=crop" alt="Panneau d’affichage associatif" loading="lazy">
+    </article>
+
+    <article class="card">
+      <div class="icon">🧭</div>
+      <h3>Notre approche</h3>
+      <p>On centralise les <b>opportunités</b> autour de toi, puis on te guide selon ton intention :
+         entreprendre, t’engager, progresser…</p>
+      <img class="thumb" src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=900&q=80&auto=format&fit=crop" alt="Groupe autour d’une table, post-its" loading="lazy">
+    </article>
+
+    <article class="card">
+      <div class="icon">🌱</div>
+      <h3>Ce que tu y gagnes</h3>
+      <p>Des actions concrètes près de chez toi, un réseau bienveillant, et des <em>belles histoires</em> qui donnent
+         l’élan pour passer du “un jour” au “jour 1”.</p>
+      <img class="thumb" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=900&q=80&auto=format&fit=crop" alt="Sourires en extérieur" loading="lazy">
+    </article>
+  </div>
+</section>
+
+<section class="ph-slice alt">
+  <div class="container">
+    <h2>Comment ça marche ?</h2>
+    <ol class="steps">
+      <li><span>1</span><b>Choisis ton parcours.</b> 🚀 Entreprendre, 📘 te former, ❤️ aider, 🤝 rencontrer, ou 📖 t’inspirer.</li>
+      <li><span>2</span><b>Localise-toi.</b> 📍 On trouve ce qui est près de toi (et on respecte ta vie privée).</li>
+      <li><span>3</span><b>Agis en petit.</b> 🧪 Un atelier, une mission d’essai, un café-rencontre.</li>
+      <li><span>4</span><b>Partage ton déclic.</b> ✍️ Inspire la suite et aide d’autres à franchir le pas.</li>
+    </ol>
+
+    <!-- illustration chaleureuse ; plus de rectangle blanc : pas de fond, pas de hauteur forcée -->
+    <figure class="illustr">
+      <img src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1600&q=80&auto=format&fit=crop"
+           alt="Événement de quartier, convivial" loading="lazy">
+    </figure>
+  </div>
+</section>
+
+<section class="ph-slice">
+  <div class="container">
+    <h2>Nos principes</h2>
+    <ul class="chips">
+      <li>🤝 Ouvert & non partisan</li>
+      <li>📍 Impact local</li>
+      <li>💜 Bienveillance</li>
+      <li>🔎 Transparence</li>
+      <li>🌿 Sobriété numérique</li>
+    </ul>
+  </div>
+</section>
+
+<section class="ph-slice alt">
+  <div class="container grid-2">
+    <div class="card">
+      <div class="icon">🔐</div>
+      <h3>Données & vie privée</h3>
+      <p>La géolocalisation sert uniquement à te proposer des opportunités à proximité.
+         Rien n’est vendu ni partagé à des tiers publicitaires.</p>
+      <p>Tu peux activer/désactiver le suivi à tout moment depuis la carte.</p>
+      <img class="thumb" src="https://images.unsplash.com/photo-1484704849700-f032a568e944?w=1000&q=80&auto=format&fit=crop" alt="Téléphone tenu dans la rue" loading="lazy">
+    </div>
+    <div class="card">
+      <div class="icon">✨</div>
+      <h3>Contribuer</h3>
+      <p>Tu as une opportunité à valoriser ou une histoire à raconter ? Propose-la !</p>
+      <div class="cta">
+        <%= link_to "Proposer une opportunité", new_opportunity_path, class:"btn primary" %>
+        <%= link_to "Partager mon histoire", (respond_to?(:new_story_path) ? new_story_path : stories_path), class:"btn ghost" %>
+      </div>
+      <img class="thumb" src="https://images.unsplash.com/photo-1520975916090-3105956dac38?w=1000&q=80&auto=format&fit=crop" alt="Bénévole qui s’inscrit" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section class="ph-cta">
+  <div class="container">
+    <h2>Prêt·e pour ton déclic ?</h2>
+    <p>Parcours la carte et choisis une première action. Le reste suivra.</p>
+    <%= link_to "Voir la carte", root_path(anchor:"explorer"), class:"btn primary big" %>
+  </div>
+</section>
+
+<style>
+  .container{max-width:1180px;margin:0 auto;padding:0 24px;}
+
+  /* ---------- HERO ---------- */
+  .ph-hero{
+    background:linear-gradient(135deg,#7e5bef,#3b82f6);
+    color:#fff; padding:88px 0 64px; position:relative; overflow:hidden;
+  }
+  .ph-hero .kicker{opacity:.9;text-transform:uppercase;font:800 .95rem/1 "Inter";letter-spacing:.08em;margin:0 0 .25rem}
+  .ph-hero h1{font:900 clamp(2.6rem,5.2vw,3.8rem)/1.03 "Epilogue";margin:.25rem 0 .7rem}
+  .ph-hero h1 span{background:linear-gradient(90deg,#fce7f3,#c084fc,#93c5fd);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .ph-hero .lead{max-width:980px;font:700 clamp(1.18rem,1.25vw + .95rem,1.6rem)/1.6 "Inter";opacity:.98}
+  .ph-hero .cta{margin-top:18px;display:flex;gap:14px;flex-wrap:wrap}
+
+  /* Bandeau visuel */
+  .ph-hero .gallery{
+    display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:10px; margin-top:26px;
+    filter:drop-shadow(0 20px 32px rgba(0,0,0,.25));
+  }
+  .ph-hero .gallery img{width:100%; height:170px; object-fit:cover; border-radius:14px; opacity:.97}
+
+  /* ---------- BOUTONS ---------- */
+  .btn{display:inline-flex;align-items:center;gap:.6rem;border-radius:999px;padding:.95rem 1.35rem;
+       font:900 1.06rem/1 "Epilogue";text-decoration:none}
+  .btn.primary{background:#fff;color:#4f46e5;box-shadow:0 12px 26px rgba(0,0,0,.16)}
+  .btn.ghost{background:transparent;border:2px solid #fff;color:#fff}
+  .btn.big{padding:1.05rem 1.6rem;font-size:1.1rem}
+
+  /* ---------- SLICES ---------- */
+  .ph-slice{padding:56px 0}
+  .ph-slice.alt{background:#f8f7ff}
+
+  .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+  .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+  @media (max-width:980px){
+    .grid-3{grid-template-columns:1fr}
+    .grid-2{grid-template-columns:1fr}
+    .ph-hero .gallery{grid-template-columns:1fr}
+  }
+
+  .ph-slice h2{font:900 clamp(1.9rem,3.2vw,2.3rem)/1.08 "Epilogue";margin:0 0 14px}
+
+  /* ---------- CARDS ---------- */
+  .card{background:#fff;border:1px solid #e6e8ee;border-radius:18px;padding:18px;position:relative;
+        box-shadow:0 16px 40px rgba(15,23,42,.08); overflow:hidden}
+  .card .icon{position:absolute; top:12px; right:12px; font-size:1.4rem}
+  .card h3{font:900 1.3rem/1.1 "Epilogue";margin:0 0 .5rem}
+  .card p{color:#334155;margin:.35rem 0 0;font:500 1.05rem/1.6 "Inter"}
+  .card .thumb{width:100%; height:150px; object-fit:cover; border-radius:12px; margin-top:14px}
+
+  /* ---------- STEPS ---------- */
+  .steps{display:grid;gap:12px;margin:0 0 18px;padding:0;list-style:none}
+  .steps li{background:#fff;border:1px solid #e6e8ee;border-radius:14px;padding:13px 14px;
+            box-shadow:0 10px 24px rgba(15,23,42,.07);
+            font:600 1.05rem/1.55 "Inter"; color:#1f2937}
+  .steps li span{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:999px;background:#4f46e5;color:#fff;
+                 font:800 .95rem/1 "Inter";margin-right:.6rem}
+
+  /* ---------- ILLUSTRATION (pas de fond => plus de « rectangle blanc ») ---------- */
+  .illustr{margin:0}
+  .illustr img{width:100%; height:260px; object-fit:cover; border-radius:16px;
+               box-shadow:0 20px 44px rgba(0,0,0,.12); display:block}
+
+  /* ---------- CHIPS ---------- */
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin:0;padding:0;list-style:none}
+  .chips li{background:#fff;border:1px solid #e6e8ee;border-radius:999px;padding:.6rem .9rem;font:800 1rem/1 "Inter";
+            box-shadow:0 10px 22px rgba(15,23,42,.06); color:#0f172a}
+
+  /* ---------- CTA ---------- */
+  .ph-cta{background:linear-gradient(135deg,#7e5bef,#3b82f6);color:#fff;text-align:center;padding:64px 0}
+  .ph-cta h2{font:900 clamp(1.9rem,3.2vw,2.4rem)/1.08 "Epilogue";margin:0 0 .4rem}
+  .ph-cta p{margin:0 0 1rem;font:800 1.1rem/1.6 "Inter";opacity:.98}
+</style>

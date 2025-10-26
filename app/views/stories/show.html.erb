@@ -1,255 +1,199 @@
-<%# frozen_string_literal: true %>
-<%# ─────────────────────────────────────────────────────────────────────────────
-    Stories#show — “magazine d’engagement” + carte Leaflet intégrée localement
-    - On embarque Leaflet CSS/JS ici pour éviter les disparitions liées au chargement
-    - Tolérant si Story#category / Story#quote n’existent pas
-   ───────────────────────────────────────────────────────────────────────────── %>
-
-<%# —— Leaflet (CSS + JS) : inclus localement pour fiabiliser l’affichage —— %>
-<link rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-o9N1j7kGStb6m6qN2k3Z5U9G2VqE3zFE1f2l1hGg54Q="
-      crossorigin="anonymous">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-o8U9mQnQZkq1mYz5qJvZcXzWcQ2n6M0F6w8Z8R2D4nE="
-        crossorigin="anonymous"></script>
+<%# Stories#show — mise en page makesense avec dégradé violet/mauve Déclic %>
+<% content_for :main_classes, "pt-0" %>
 
 <%
-# Accent par catégorie si dispo
-cat = @story.respond_to?(:category) && @story.category.present? ? @story.category.to_s : ""
-accent =
-  case cat
-  when "benevolat"    then "#2E8B57"  # vert
-  when "formation"    then "#0069D9"  # bleu
-  when "rencontres"   then "#FF6F61"  # corail
-  when "entreprendre" then "#F6A623"  # orange
-  else "#4B5563"                     # neutre
-  end
+# Couleurs d’accent — violets Déclic (uniformise avec la home)
+accent1 = "#7e5bef"  # violet
+accent2 = "#3b82f6"  # mauve/bleu
 
-# Image héros (HTTP absolu ou asset pipeline)
+# Image héro
 img =
   if @story.image_url.present?
     (@story.image_url =~ /\Ahttp/i) ? @story.image_url : asset_path(@story.image_url)
   else
     "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1600&auto=format&fit=crop"
   end
+
+# Chapo (fallback sur description)
+chapo_text = @story.chapo.presence || @story.description.presence || "Une histoire d’engagement local qui donne envie d’agir."
 %>
 
+<%# SEO %>
+<% content_for :title, @story.title %>
+<% content_for :description, strip_tags(chapo_text).truncate(160) %>
+
 <style>
-  /* ============ Look & feel magazine d’engagement ============ */
-  .story-page { --accent:<%= accent %>; background:#fafafa; color:#1e1e1e; }
-  .story-page .container { max-width:1120px; margin:0 auto; padding:0 18px; }
-  .story-page .container.narrow { max-width:1100px; }
+  .story-ms{
+    --accent1:<%= accent1 %>;
+    --accent2:<%= accent2 %>;
+    color:#0f172a; background:#fff;
+    font-family:"Inter",system-ui,sans-serif;
+  }
+  .story-ms .container{ max-width:1140px; margin:0 auto; padding:0 24px; }
 
-  /* Hero */
-  .story-hero{
-    height:clamp(320px,40vh,460px);
-    background-image:url('<%= img %>');
-    background-size:cover; background-position:center;
-    border-radius:0 0 2rem 2rem; position:relative; overflow:hidden;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-  }
-  .story-hero .overlay{ position:absolute; inset:0;
-    background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15)); }
-  .story-hero .inner{ position:absolute; bottom:0; padding:2rem; }
-  .story-hero .kicker{
-    display:inline-block; padding:.3rem .75rem; border-radius:999px;
-    background: color-mix(in oklab, var(--accent) 85%, black); color:#fff;
-    font-weight:600; font-size:.75rem; letter-spacing:.4px;
-  }
-  .story-hero .title{
-    margin:.35rem 0 0; color:#fff; font-weight:800;
-    font-size: clamp(1.8rem, 3vw, 2.8rem);
-    font-family: "Newsreader", Georgia, serif;
-    text-shadow: 0 1px 10px rgba(0,0,0,.25);
-  }
+  /* Backline */
+  .ms-backline{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0 10px;}
+  .ms-back{color:var(--accent1);font-weight:800;text-decoration:none;}
+  .ms-back:hover{text-decoration:underline;}
+  .ms-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .ms-pill{display:inline-flex;align-items:center;gap:8px;padding:.55rem .9rem;border-radius:999px;text-decoration:none;font-weight:700;border:1px solid #e5e7eb;background:#fff;color:#0f172a;}
 
-  /* Top actions */
-  .backline{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:16px 0 12px; }
-  .backlink{ color:#374151; text-decoration:none; font-weight:600; }
-  .backlink:hover{ text-decoration:underline; }
-  .actions .pill{
-    display:inline-block; margin-left:8px; padding:.45rem .8rem; border-radius:999px;
-    background:#eef2ff; color:#1f2937; text-decoration:none; font-weight:600;
-  }
+  /* HERO */
+  .ms-hero{position:relative;background:linear-gradient(160deg,var(--accent1),var(--accent2));color:#fff;overflow:hidden;}
+  .ms-hero::before{content:"";position:absolute;inset:0;background:url('<%= img %>') center/cover no-repeat;opacity:.25;mix-blend:multiply;}
+  .ms-hero-inner{position:relative;padding:clamp(88px,11vw,160px) 0 clamp(56px,8vw,100px);}
+  .ms-kicker{display:inline-block;padding:.45rem .8rem;border-radius:999px;background:rgba(255,255,255,.22);font:700 .85rem/1 "Epilogue",Inter;}
+  .ms-title{font-family:"Epilogue",Inter; font-weight:900; line-height:1.03;
+           font-size:clamp(2.6rem,4.8vw,4rem); letter-spacing:-.02em; margin:.65rem 0 .45rem; text-wrap:balance;}
+  .ms-chapo{max-width:900px; font:600 clamp(1.2rem,1.1vw + .85rem,1.55rem)/1.65 "Inter"; opacity:.98;}
 
-  /* Grille */
-  .layout{ display:grid; grid-template-columns: 1fr; gap:18px; margin-bottom:42px; }
-  @media (min-width: 980px){
-    .layout{ grid-template-columns: minmax(0, 680px) 360px; align-items:start; }
-  }
-
-  /* Carte latérale (hauteur fixée !) */
-  .side .sidecard{ background:#fff; border-radius:1rem; box-shadow:0 8px 22px rgba(0,0,0,.06); padding:1rem; }
-  .side-title{ margin:.25rem 0 8px; font-weight:800; color:#111827; }
-  .meta{ list-style:none; padding:0; margin:0 0 .5rem; }
-  .meta li{ display:flex; gap:.5rem; margin:.35rem 0; }
-  .meta .meta-label{ min-width:84px; color:#6b7280; font-size:.9rem; }
-  #story-map{ height:220px; border-radius:.8rem; overflow:hidden; margin:.5rem 0 .25rem; }
-
-  /* Corps */
-  .main .chapo.card{
-    margin-top:-28px; background:#fff; border-radius:1rem;
-    box-shadow:0 12px 26px rgba(0,0,0,.06); padding:1rem 1.25rem;
-  }
-  .card{ background:#fff; border-radius:1rem; box-shadow:0 8px 22px rgba(0,0,0,.06); padding:1.25rem 1.35rem; }
-  .card.soft{ box-shadow:0 6px 14px rgba(0,0,0,.05); }
-  .story-section{ margin:12px 0; opacity:1; }
-  .story-section h3{
-    font-family:"Newsreader", Georgia, serif;
-    color:var(--accent); font-size:1.35rem; margin:.25rem 0 .5rem;
-  }
-  .prose p{ line-height:1.7; margin:0 0 .9rem; }
+  /* Sections */
+  .ms-slice{padding:clamp(3.2rem,6vw,5.4rem) 0; scroll-margin-top:96px;}
+  .ms-slice.bg-muted{background:#f8f9fb;}
+  .ms-slice h2{font-family:"Epilogue"; font-weight:900; font-size:clamp(2rem,3.1vw,2.6rem); color:#0f172a; margin:0 0 .9rem;}
+  .ms-slice h2::after{content:"";display:block;width:80px;height:6px;border-radius:999px;background:var(--accent1);margin:.6rem 0 .2rem;}
+  .ms-prose{font:500 1.22rem/1.95 "Inter"; color:#1f2937;}
+  .ms-prose p{margin:0 0 1.25rem;}
+  .ms-prose strong{font-weight:800; color:#0b1220;}
+  .ms-prose li::marker{color:var(--accent1); font-weight:900;}
 
   /* Citation (affichée seulement si présente) */
-  .quote.card{ background: color-mix(in oklab, var(--accent) 9%, white); text-align:center; }
-  .quote blockquote{ margin:0; font-family:"Newsreader", Georgia, serif; font-size:1.2rem; color:#111827; }
+  .ms-quote{background:color-mix(in srgb,var(--accent1) 10%,#fff); padding:clamp(2.6rem,6vw,3.6rem) 0; text-align:center;}
+  .ms-quote blockquote{margin:0 auto; max-width:920px; font:800 clamp(1.35rem,2.6vw,2rem)/1.32 "Epilogue"; color:#0f172a;}
+
+  /* Infos pratiques + carte */
+  .ms-infos h3{margin:0 0 .8rem; font:900 1.15rem/1.2 "Epilogue"; color:#0f172a; letter-spacing:.02em; text-transform:uppercase;}
+  .ms-meta{list-style:none; padding:0; margin:0 0 1.2rem; display:grid; gap:.65rem;}
+  .ms-meta label{display:block; font:700 .9rem/1 "Epilogue"; color:#64748b; text-transform:uppercase;}
+  .ms-meta .val{font:600 1.08rem/1.6 "Inter";}
+  .ms-meta .val a{color:#0b61ff; text-decoration:none; font-weight:700;}
+  .ms-meta .val a:hover{ text-decoration:underline; }
+  #story-map{height:300px; border-radius:18px; border:1px solid #e6e8ee; overflow:hidden; box-shadow:0 6px 24px rgba(15,23,42,.06);}
 
   /* CTA */
-  .story-cta{ margin-top:26px; text-align:center; }
-  .story-cta .cta-title{ margin:0; font-weight:800; font-size:1.15rem; color:#111827; }
-  .story-cta .cta-sub{ margin:.1rem 0 .8rem; color:#6b7280; }
-  .btn-cta{
-    background:var(--accent); color:#fff; text-decoration:none; font-weight:800;
-    padding:.85rem 1.35rem; border-radius:999px; display:inline-block;
-    box-shadow:0 8px 18px color-mix(in oklab, var(--accent) 25%, transparent);
-    transition: transform .08s ease, background .2s ease;
-  }
-  .btn-cta:hover{ transform: translateY(-1px); background: color-mix(in oklab, var(--accent) 85%, black); }
-
-  .muted{ color:#4b5563; font-size:.95rem; }
+  .ms-cta{background:linear-gradient(160deg,var(--accent1),var(--accent2)); color:#fff; text-align:center; padding:clamp(3.2rem,7vw,5.4rem) 0;}
+  .ms-cta h2{margin:0 0 .55rem; font:900 clamp(1.7rem,3.2vw,2.5rem)/1.1 "Epilogue"; letter-spacing:-.01em;}
+  .ms-cta p{margin:0 0 1.4rem; font:600 1.18rem/1.75 "Inter";}
+  .ms-cta .btn{display:inline-block; border-radius:999px; padding:1.05rem 1.7rem; text-decoration:none; font:800 1.05rem/1 "Epilogue"; margin:.35rem;}
+  .ms-cta .btn.primary{background:#fff; color:var(--accent1); box-shadow:0 8px 28px rgba(0,0,0,.08);}
+  .ms-cta .btn.secondary{background:transparent; border:2px solid #fff; color:#fff;}
 </style>
 
-<div class="story-page">
-  <div class="container narrow">
-
-    <div class="backline">
-      <%= link_to "← Retour aux belles histoires", stories_path, class: "backlink" %>
-      <div class="actions">
+<div class="story-ms">
+  <div class="container">
+    <div class="ms-backline">
+      <%= link_to "← Retour aux belles histoires", stories_path, class: "ms-back" %>
+      <div class="ms-actions">
         <% if @story.source_url.present? %>
-          <%= link_to "Article (PDF)", @story.source_url, class: "pill", target: "_blank", rel: "noopener" %>
+          <%= link_to "Source", @story.source_url, class: "ms-pill", target: "_blank", rel: "noopener" %>
         <% end %>
-        <%= link_to "Partager", request.original_url, class: "pill" %>
+        <%= link_to "Partager", request.original_url, class: "ms-pill", aria: { label: "Partager cette histoire" } %>
       </div>
-    </div>
-
-    <!-- HERO -->
-    <div class="story-hero">
-      <div class="overlay"></div>
-      <div class="inner">
-        <div class="kicker">Belle histoire</div>
-        <h1 class="title"><%= @story.title %></h1>
-      </div>
-    </div>
-
-    <div class="layout">
-      <!-- Colonne principale -->
-      <main class="main">
-        <% if @story.chapo.present? %>
-          <div class="chapo card soft">
-            <p><%= @story.chapo %></p>
-          </div>
-        <% end %>
-
-        <%# Découpe du body en sections à partir de "### " %>
-        <% raw_body = @story.body.to_s.strip %>
-        <% sections = raw_body.split(/^###\s+/).reject(&:blank?) %>
-
-        <% sections.each do |bloc| %>
-          <% lines = bloc.lines %>
-          <% heading = lines.first.to_s.strip %>
-          <% content_md = lines.drop(1).join.strip %>
-          <section class="story-section card">
-            <h3><%= heading %></h3>
-            <% if respond_to?(:markdown) %>
-              <div class="prose"><%= markdown(content_md) %></div>
-            <% else %>
-              <div class="prose"><%= simple_format(content_md) %></div>
-            <% end %>
-          </section>
-        <% end %>
-
-        <% if @story.respond_to?(:quote) && @story.quote.present? %>
-          <figure class="quote card">
-            <blockquote>« <%= @story.quote %> »</blockquote>
-          </figure>
-        <% end %>
-
-        <div class="story-cta">
-          <p class="cta-title">Envie d’agir à ton tour ?</p>
-          <p class="cta-sub">Découvre des opportunités concrètes près de chez toi.</p>
-          <%= link_to "Voir les actions autour de moi", opportunities_path, class: "btn-cta" %>
-        </div>
-      </main>
-
-      <!-- Colonne latérale (carte conservée) -->
-      <aside class="side">
-        <div class="card sidecard">
-          <h4 class="side-title">Infos pratiques</h4>
-          <ul class="meta">
-            <% if @story.location.present? %>
-              <li>
-                <span class="meta-label">📍 Adresse</span>
-                <span class="meta-value"><%= @story.location %></span>
-              </li>
-            <% end %>
-            <% if @story.source_name.present? %>
-              <li>
-                <span class="meta-label">📰 Source</span>
-                <% if @story.source_url.present? %>
-                  <span class="meta-value"><%= link_to @story.source_name, @story.source_url, target: "_blank", rel: "noopener" %></span>
-                <% else %>
-                  <span class="meta-value"><%= @story.source_name %></span>
-                <% end %>
-              </li>
-            <% end %>
-          </ul>
-
-          <% if @story.latitude.present? && @story.longitude.present? %>
-            <div id="story-map"
-                 data-lat="<%= @story.latitude %>"
-                 data-lon="<%= @story.longitude %>"></div>
-          <% end %>
-
-          <% if @story.description.present? %>
-            <div class="muted"><%= @story.description %></div>
-          <% end %>
-        </div>
-      </aside>
     </div>
   </div>
+
+  <!-- HERO -->
+  <header class="ms-hero" role="banner">
+    <div class="ms-hero-inner">
+      <div class="container">
+        <span class="ms-kicker">Belle histoire</span>
+        <h1 class="ms-title"><%= @story.title %></h1>
+        <p class="ms-chapo"><%= chapo_text %></p>
+      </div>
+    </div>
+  </header>
+
+  <% raw_body = @story.body.to_s.strip %>
+  <% sections = raw_body.present? ? raw_body.split(/^###\s+/).reject(&:blank?) : [] %>
+
+  <% sections.each_with_index do |bloc, i| %>
+    <% lines = bloc.lines %>
+    <% heading = lines.first.to_s.strip %>
+    <% content_md = lines.drop(1).join.strip %>
+    <section class="ms-slice <%= i.odd? ? 'bg-muted' : '' %>">
+      <div class="container">
+        <h2><%= heading %></h2>
+        <% if respond_to?(:markdown) %>
+          <div class="ms-prose"><%= markdown(content_md) %></div>
+        <% else %>
+          <div class="ms-prose"><%= simple_format(content_md) %></div>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <% if @story.respond_to?(:quote) && @story.quote.present? %>
+    <section class="ms-quote"><div class="container"><blockquote>« <%= @story.quote %> »</blockquote></div></section>
+  <% end %>
+
+  <% if @story.location.present? || (@story.latitude.present? && @story.longitude.present?) || @story.source_name.present? %>
+    <section class="ms-slice ms-infos bg-muted">
+      <div class="container">
+        <h3>Infos pratiques</h3>
+        <ul class="ms-meta">
+          <% if @story.location.present? %>
+            <li><label>📍 Adresse</label><div class="val"><%= @story.location %></div></li>
+          <% end %>
+          <% if @story.source_name.present? %>
+            <li><label>📰 Source</label>
+              <div class="val">
+                <% if @story.source_url.present? %>
+                  <%= link_to @story.source_name, @story.source_url, target: "_blank", rel: "noopener" %>
+                <% else %><%= @story.source_name %><% end %>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+        <% if @story.latitude.present? && @story.longitude.present? %>
+          <div id="story-map" data-lat="<%= @story.latitude %>" data-lon="<%= @story.longitude %>"></div>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <!-- CTA -->
+  <section class="ms-cta">
+    <div class="container">
+      <h2>Envie d’agir à ton tour ?</h2>
+      <p>Découvre des opportunités près de chez toi ou partage ta propre histoire pour inspirer d’autres personnes.</p>
+      <div>
+        <%= link_to "Voir les actions locales", opportunities_path, class: "btn primary" %>
+        <%= link_to "Partager mon histoire", (respond_to?(:new_story_path) ? new_story_path : stories_path), class: "btn secondary" %>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
-  // Apparition des sections
-  document.querySelectorAll('.story-section').forEach((el, i) => {
-    el.style.opacity = 0; el.style.transform = "translateY(6px)";
-    setTimeout(() => {
-      el.style.transition = "opacity .5s ease, transform .5s ease";
-      el.style.opacity = 1; el.style.transform = "translateY(0)";
-    }, 120 + i * 100);
-  });
+  (function () {
+    function initStoryMap() {
+      var el = document.getElementById('story-map');
+      if (!el || !window.L) return;                // pas de conteneur ou Leaflet pas chargé
+      if (el.dataset.mapInited === "1") return;    // évite double init
 
-  // Initialisation carte — robuste (DOMContentLoaded + Turbo)
-  function initStoryMap(){
-    var mapEl = document.getElementById('story-map');
-    if(!mapEl || !window.L) return;
+      var lat = parseFloat(el.dataset.lat), lon = parseFloat(el.dataset.lon);
+      if (isNaN(lat) || isNaN(lon)) return;        // coords manquantes
 
-    var lat = parseFloat(mapEl.dataset.lat), lon = parseFloat(mapEl.dataset.lon);
-    if(isNaN(lat) || isNaN(lon)) return;
+      // Assure une hauteur visible (certaines CSS peuvent l’écraser à 0)
+      if (el.clientHeight < 100) el.style.height = (el.dataset.height || 300) + "px";
 
-    // évite double init si navigation Turbo
-    if(mapEl.dataset.mapInited === "1") return;
+      // Création carte
+      var map = L.map(el, { zoomControl:false, attributionControl:false }).setView([lat, lon], 14);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+      L.marker([lat, lon]).addTo(map);
 
-    var map = L.map(mapEl, { zoomControl: false, attributionControl: false })
-               .setView([lat, lon], 14);
+      // Recalcule la taille quand le conteneur devient visible (Turbo, CSS, etc.)
+      requestAnimationFrame(function () { map.invalidateSize(); });
+      setTimeout(function(){ map.invalidateSize(); }, 250);
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
-    L.marker([lat, lon]).addTo(map);
+      el.dataset.mapInited = "1";
+    }
 
-    mapEl.dataset.mapInited = "1";
-  }
-
-  document.addEventListener('DOMContentLoaded', initStoryMap);
-  document.addEventListener('turbo:load', initStoryMap);
+    // Hooks robustes pour Turbo/Back-Forward cache
+    document.addEventListener('DOMContentLoaded', initStoryMap);
+    document.addEventListener('turbo:load', initStoryMap);
+    document.addEventListener('turbo:render', initStoryMap);
+    window.addEventListener('pageshow', function(e){ if (e.persisted) initStoryMap(); });
+    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') initStoryMap(); });
+  })();
 </script>
