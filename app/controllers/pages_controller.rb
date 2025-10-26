@@ -31,4 +31,5 @@ class PagesController < ApplicationController
   def confidentialite; end
   def presse; end
   def faq; end
+  def philosophie; end
 end

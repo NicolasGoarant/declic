@@ -1,4 +1,4 @@
-<%# app/views/shared/_navbar.html.erb — version corrigée (sans yield ni <main>) %>
+<%# app/views/shared/_navbar.html.erb — v8.1 : libellé "Pourquoi Déclic ?" %>
 
 <header class="fixed inset-x-0 top-0 z-[1000] bg-white border-b border-gray-200 shadow-sm">
   <div class="mx-auto max-w-6xl h-14 px-4 flex items-center justify-between">
@@ -12,9 +12,10 @@
 
     <!-- Liens desktop -->
     <nav class="hidden md:flex items-center gap-6 text-sm">
-      <%= link_to "Explorer",    root_path(anchor: "explorer"),    class: "hover:text-gray-900" %>
-      <%= link_to "Parcours",    root_path(anchor: "parcours"),    class: "hover:text-gray-900" %>
-      <%= link_to "Témoignages", root_path(anchor: "temoignages"), class: "hover:text-gray-900" %>
+      <%= link_to "Explorer",    root_path(anchor: "explorer"),    class: "text-slate-700 hover:text-slate-900" %>
+      <%= link_to "Parcours",    root_path(anchor: "parcours"),    class: "text-slate-700 hover:text-slate-900" %>
+      <%= link_to "Témoignages", root_path(anchor: "temoignages"), class: "text-slate-700 hover:text-slate-900" %>
+      <%= link_to "Pourquoi Déclic ?", philosophie_path,           class: "text-slate-700 hover:text-slate-900" %>
     </nav>
 
     <!-- CTA desktop -->
@@ -39,24 +40,20 @@
   </div>
 </header>
 
-<!-- Menu mobile (BLANC, opaque, au-dessus de Leaflet) -->
+<!-- Menu mobile -->
 <div id="mobile-menu" class="md:hidden hidden" aria-hidden="true">
-  <!-- Overlay -->
   <div id="mobile-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-[1px] z-[2000]"></div>
 
-  <!-- Panneau -->
   <div id="mobile-panel"
        class="fixed top-16 right-3 z-[2001] w-[320px] sm:w-[360px]
               rounded-2xl bg-white text-slate-900 shadow-2xl ring-1 ring-black/10
               p-4 pt-10 opacity-0 scale-95 -translate-y-2 transition">
 
-    <!-- Fermer -->
     <button id="btn-close-menu"
             class="absolute right-2 top-2 inline-flex items-center justify-center w-10 h-10 rounded-full
                    bg-gray-100 hover:bg-gray-200 ring-1 ring-gray-300 text-gray-700"
             aria-label="Fermer le menu">✕</button>
 
-    <!-- Liens -->
     <nav class="space-y-2 text-[15px] pt-6">
       <%= link_to root_path(anchor: "explorer"),
           class: "flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 ring-1 ring-black/5" do %>
@@ -71,6 +68,11 @@
       <%= link_to root_path(anchor: "temoignages"),
           class: "flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 ring-1 ring-black/5" do %>
         <span>💬</span><span>Témoignages</span>
+      <% end %>
+
+      <%= link_to philosophie_path,
+          class: "flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 ring-1 ring-black/5" do %>
+        <span>⚡️</span><span>Pourquoi Déclic ?</span>
       <% end %>
 
       <div class="pt-2">
@@ -89,7 +91,6 @@
 </div>
 
 <script>
-/* Menu mobile : compact, OPAQUE, z-index > Leaflet */
 (function(){
   const menu   = document.getElementById('mobile-menu');
   const panel  = document.getElementById('mobile-panel');

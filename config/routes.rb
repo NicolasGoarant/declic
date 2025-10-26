@@ -4,6 +4,9 @@ Rails.application.routes.draw do
 
   resources :opportunities, only: [:index, :show, :new, :create]
   get "/parcours/:category", to: "opportunities#index", as: :parcours
+  # config/routes.rb
+
+  get "philosophie", to: "pages#philosophie", as: :philosophie
 
   # NEW
   resources :stories, only: [:index, :show]
@@ -23,5 +26,3 @@ get "/presse",           to: "pages#presse",         as: :presse
 get "/faq",              to: "pages#faq",            as: :faq
 
 end
-
-

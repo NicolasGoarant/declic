@@ -1,8 +1,11 @@
-<%# app/views/pages/home.html.erb — v7.4 : geoloc clamp + smoothing, single scripts block %>
+<%# app/views/pages/home.html.erb — v8.1 : badge +desktop +libellé "Pourquoi Déclic ?" %>
 
 <div class="home-ms">
   <!-- HERO -->
   <header class="hm-hero" role="banner">
+    <!-- Macaron vers la page Pourquoi Déclic ? -->
+    <%= link_to "⚡️ Pourquoi Déclic ?", philosophie_path, class: "hm-badge", aria: { label: "Pourquoi Déclic ?" } %>
+
     <div class="hm-hero-inner">
       <div class="container">
         <h1 class="hm-title">
@@ -83,7 +86,7 @@
       <h2 class="hm-h2">Explorez les opportunités</h2>
       <p class="hm-sub">Découvre sur la carte toutes les possibilités d’engagement près de chez toi.</p>
 
-      <div class="hm-filterbar">
+    <div class="hm-filterbar">
         <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
         <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
         <button class="chip" data-cat="formation">📘 Formation</button>
@@ -192,6 +195,36 @@
   .hm-hero-inner{ position:relative; padding-top:clamp(72px,8vw,120px); padding-bottom:clamp(44px,6.5vw,84px); z-index:10; }
   .hm-hero::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(7,9,22,.62),rgba(7,9,22,.62)); mix-blend:multiply; z-index:2; }
   .hm-hero-img{ position:absolute; inset:0; background:var(--hero,none) center/cover no-repeat; filter:blur(2px) saturate(1.05) brightness(0.9); opacity:.85; z-index:1; }
+
+  /* Badge/macaron — agrandi sur desktop */
+  .hm-badge{
+    position:absolute;
+    top:14px;
+    right:calc(18px + env(safe-area-inset-right));
+    z-index:30;
+    display:inline-flex; align-items:center; gap:.55rem;
+    padding:.55rem .9rem;
+    border-radius:999px;
+    font:900 .95rem/1 "Epilogue";
+    color:#1e1b4b;
+    background:linear-gradient(135deg,#fef3c7,#fde68a,#fcd34d);
+    box-shadow:0 8px 20px rgba(0,0,0,.12);
+    border:1px solid rgba(17,24,39,.06);
+    text-decoration:none;
+  }
+  @media (min-width: 1024px){
+    .hm-badge{
+      padding:.7rem 1.1rem;
+      font-size:1.05rem;
+      box-shadow:0 10px 26px rgba(0,0,0,.14);
+      transform:translateY(0);
+    }
+    .hm-badge:hover{ transform:translateY(-1px); transition:transform .12s ease; }
+  }
+  @media (max-width:480px){
+    .hm-badge{ top:10px; right:10px; font-size:.88rem; padding:.45rem .7rem; }
+  }
+
   .hm-title{ font-family:"Epilogue",Inter; font-weight:900; letter-spacing:-.02em; line-height:1.03; font-size:clamp(2.8rem,5vw,4.6rem); margin:.2rem 0 .5rem; text-shadow:0 2px 16px rgba(0,0,0,.25); }
   .hm-title .grad{ background:linear-gradient(90deg,#f472b6,#a855f7,#6366f1); -webkit-background-clip:text; background-clip:text; color:transparent; }
   .hm-chapo{ max-width:980px; font:600 clamp(1.12rem,1.05vw + .9rem,1.5rem)/1.65 "Inter"; text-shadow:0 1px 8px rgba(0,0,0,.18); }
@@ -221,7 +254,7 @@
   .hm-h2::after{ content:""; display:block; width:100px; height:6px; border-radius:999px; background:var(--a1); margin:.55rem 0 .1rem; }
   .hm-sub{ margin:.2rem 0 1rem; color:#475569; font-size:1.05rem; }
 
-  /* ====== GROS BOUTONS (larges + centrage dernière ligne) ====== */
+  /* ====== GROS BOUTONS ====== */
   .hm-grid-cards{
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(min(100%, 380px), 1fr));
@@ -320,7 +353,7 @@ function bootHome(){
     requestAnimationFrame(()=> map.invalidateSize());
   }
 
-  // ---- 2) Couches données (opportunités + stories) : init 1x ----
+  // ---- 2) Données (opportunités + stories) ----
   if (!window._declicDataInit) {
     const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',histoires:'#a855f7',default:'#6366f1'};
     const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',histoires:'📖',default:'⭐'};
@@ -396,69 +429,37 @@ function bootHome(){
     window._declicPlot = plot;
   }
 
-  // ---- 3) Couche "moi" : POINT BLEU + cercle (pas d'épingle rouge) ----
+  // ---- 3) Couche "moi" : POINT BLEU + cercle réduit ----
   if (!window._declicMeLayer) window._declicMeLayer = L.layerGroup().addTo(map);
   window._declicMeLayer.clearLayers();
 
-  let meDot=null, meAcc=null, firstFix=true, _lastP=null;
-
-  // mise à jour avec lissage + cercle borné
+  let meDot=null, meAcc=null, firstFix=true;
   function updateMe(lat, lng, acc){
-    // lissage anti-jitter
-    const alpha = 0.35;
-    if (_lastP) {
-      lat = _lastP[0] + alpha * (lat - _lastP[0]);
-      lng = _lastP[1] + alpha * (lng - _lastP[1]);
-    }
-    _lastP = [lat, lng];
     const p=[lat,lng];
-
-    // point bleu
     if (!meDot) {
       meDot = L.circleMarker(p, { radius:7, color:'#2563eb', weight:2, fill:true, fillOpacity:1 })
               .addTo(window._declicMeLayer);
     } else {
       meDot.setLatLng(p);
     }
-
-    // cercle de précision (clamp + halo discret si très mauvais)
-    const hasAcc = acc && isFinite(acc);
-    const rClamped = hasAcc ? Math.min(Math.max(acc, 30), 1200) : null; // 30m..1200m
-    const isBad = hasAcc && acc > 3000;
-
-    if (isBad) {
-      if (meAcc) { window._declicMeLayer.removeLayer(meAcc); meAcc = null; }
-      const fauxRayon = 150;
-      meAcc = L.circle(p, {
-        radius: fauxRayon, color: '#93c5fd', weight: 1,
-        fill: true, fillOpacity: .10, dashArray: '4,4'
-      }).addTo(window._declicMeLayer);
-    } else if (rClamped) {
+    const r = (acc && isFinite(acc)) ? Math.min(Math.max(acc, 80), 1200) : 0; // 80–1200m
+    if (r) {
       if (!meAcc) {
-        meAcc = L.circle(p, { radius: rClamped, color:'#60a5fa', weight:1, fill:true, fillOpacity:.15 })
+        meAcc = L.circle(p, { radius:r, color:'#60a5fa', weight:1, fill:true, fillOpacity:.12 })
                 .addTo(window._declicMeLayer);
       } else {
-        meAcc.setLatLng(p); meAcc.setRadius(rClamped);
-        meAcc.setStyle({ color:'#60a5fa', fillOpacity:.15, dashArray:null });
+        meAcc.setLatLng(p); meAcc.setRadius(r);
       }
-    } else if (meAcc) {
-      window._declicMeLayer.removeLayer(meAcc); meAcc = null;
     }
-
-    // centrage/suivi
-    if (firstFix) {
-      map.setView(p, Math.max(map.getZoom(), 12), { animate:true });
-      firstFix=false;
-    } else if (window._declicFollow) {
-      map.panTo(p, { animate:true });
-    }
+    if (firstFix) { map.setView(p, Math.max(map.getZoom(), 12), { animate:true }); firstFix=false; }
+    else if (window._declicFollow) { map.panTo(p, { animate:true }); }
   }
 
-  // ---- 4) Watch geolocation : AUTO-START + bouton toggle ----
+  // ---- 4) Watch geolocation ----
   const btnEl = document.getElementById('btn-locate');
   function bindLocateButton(){
     if (!btnEl) return;
-    const btn = btnEl.cloneNode(true); btnEl.replaceWith(btn); // reset listeners
+    const btn = btnEl.cloneNode(true); btnEl.replaceWith(btn);
     btn.addEventListener('click', ()=> (window._declicWatchId ? stopFollow() : startFollow()));
     window._declicButton = btn;
   }
@@ -488,7 +489,7 @@ function bootHome(){
     if (window._declicButton) window._declicButton.innerHTML = '<span>📍</span> <span>Me localiser</span>';
   }
 
-  // ⚡️ AUTO-START : on lance tout de suite le suivi (même en état "prompt")
+  // Auto-start
   startFollow();
 }
 </script>
