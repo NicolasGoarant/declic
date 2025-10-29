@@ -11,22 +11,61 @@ def jitter(lat, lon, km_max = 3.0)
   [lat + dlat, lon + dlon]
 end
 
+# Banque d’images par catégorie (illustratives, libres/Unsplash)
+CAT_IMAGES = {
+  "benevolat"    => "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop",
+  "formation"    => "https://images.unsplash.com/photo-1513258496099-48168024aec0?q=80&w=1200&auto=format&fit=crop",
+  "rencontres"   => "https://images.unsplash.com/photo-1558222217-0d77a6d3b3d1?q=80&w=1200&auto=format&fit=crop",
+  "entreprendre" => "https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1200&auto=format&fit=crop",
+  "default"      => "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1200&auto=format&fit=crop"
+}.freeze
+
+def image_for(category)
+  CAT_IMAGES[category.to_s] || CAT_IMAGES["default"]
+end
+
+# Texte “quand ?” générique durable dans le temps
+def next_when_text(fallback: "Créneaux réguliers — inscription en ligne")
+  pool = [
+    "Prochaine session : **jeudi 13 novembre 2025, 14:00–17:00**",
+    "Tous les **mardis** à **18:30** (dès **novembre 2025**)",
+    "Un **samedi par mois**, 9:30–12:30 (nov.–déc. 2025)",
+    "Cycle **novembre–décembre 2025**, horaires communiqués après inscription",
+    "Créneau **hebdomadaire** : jeudi 18:30–20:00 (à partir de nov. 2025)",
+    "Format **2–4 h** : dates à venir (nov.–déc. 2025)"
+  ]
+  pool.sample || fallback
+end
+
 def mk(loc:, lat:, lon:, n:, category:, orgs:, titles:, city_label: nil)
   n.times.map do
     t = titles.sample
     o = orgs.sample
     la, lo = jitter(lat, lon, 2.5)
+    when_line = next_when_text
+    body = [
+      "![Illustration](#{image_for(category)})",
+      "",
+      "### À quoi ça ressemble ?",
+      "💡 **#{t}** près de chez toi. Ambiance conviviale, apprentissages concrets et impact local immédiat.",
+      "",
+      "🗓️ **Quand ?** #{when_line}",
+      "",
+      "👉 **Ce que tu feras** : participation active, accueil bienveillant, explications claires pas-à-pas."
+    ].join("\n")
+
     {
       title: t,
-      description: "💡 #{t}. Rejoins-nous pour une expérience concrète et utile. Encadrement bienveillant, matériel fourni selon besoin.",
+      description: body,
       category: category,
       organization: o,
       location: city_label || loc,
-      time_commitment: ["1–2 h", "2–4 h", "Ponctuel", "Hebdomadaire", "Mensuel"].sample,
+      time_commitment: ["Mardi 18:30–20:00", "Jeudi 14:00–17:00", "Samedi 9:30–12:30", "Ponctuel (2–3 h)", "Mensuel (soirée)"].sample,
       latitude: la.round(6),
       longitude: lo.round(6),
       is_active: true,
-      tags: %w[accueil débutant convivial réseau impact].sample(3).join(", ")
+      tags: %w[accueil débutant convivial réseau impact].sample(3).join(", "),
+      image_url: image_for(category)
     }
   end
 end
@@ -40,6 +79,21 @@ end
 
 def add_link(desc, url)
   [desc.to_s.strip, "\n\n🔗 En savoir plus : #{url}"].join
+end
+
+def with_illustration_and_when(category:, base_desc:, link: nil, when_line: nil)
+  parts = []
+  parts << "![Illustration](#{image_for(category)})"
+  parts << ""
+  parts << "### À quoi ça ressemble ?"
+  parts << base_desc.strip
+  parts << ""
+  parts << "🗓️ **Quand ?** #{(when_line || next_when_text)}"
+  parts << ""
+  parts << "👉 **Ce que tu feras** : participation active, accueil bienveillant, explications claires pas-à-pas."
+  parts << ""
+  parts << "🔗 **En savoir plus** : #{link}" if link.present?
+  parts.join("\n")
 end
 
 # =================== Données de base ===================
@@ -106,201 +160,286 @@ records += mk(loc: "Paris", lat: paris[:lat], lon: paris[:lon], n: 10, category:
 records += mk(loc: "Paris", lat: paris[:lat], lon: paris[:lon], n:  8, category: "rencontres",   orgs: orgs_paris, titles: rencontres_titles)
 records += mk(loc: "Paris", lat: paris[:lat], lon: paris[:lon], n:  6, category: "entreprendre", orgs: orgs_paris, titles: entreprendre_titles)
 
-# — Nancy : entrées réelles & actionnables
+# — Nancy : entrées réelles & actionnables (image + “quand ?” explicite)
 nancy_real = [
   # ===== ENTREPRENDRE (CCI…) =====
   {
     title: "Atelier — Construire son Business Plan",
-    description: add_link("CCI Grand Nancy : méthodologie, trame financière, hypothèses clés. Conseils personnalisés pour pitcher et convaincre.",
-                          "https://www.nancy.cci.fr/evenements"),
+    description: with_illustration_and_when(
+      category: "entreprendre",
+      base_desc: "CCI Grand Nancy : méthodologie, trame financière, hypothèses clés. Conseils personnalisés pour pitcher et convaincre.",
+      link: "https://www.nancy.cci.fr/evenements",
+      when_line: "Jeudi 13 novembre 2025, 14:00–17:00"
+    ),
     category: "entreprendre",
     organization: "CCI Grand Nancy",
     location: "53 Rue Stanislas, 54000 Nancy",
-    time_commitment: "Jeudi 10/10, 14:00–17:00",
+    time_commitment: "Jeudi 13/11/2025, 14:00–17:00",
     latitude: 48.6932, longitude: 6.1829,
-    is_active: true, tags: "business plan,financement,atelier"
+    is_active: true, tags: "business plan,financement,atelier",
+    image_url: "https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Permanence création d’entreprise (sur RDV)",
-    description: add_link("Entretien individuel : statut, aides, étapes de la création. Orientation vers partenaires (BPI, CMA, réseaux).",
-                          "https://www.nancy.cci.fr/evenements"),
+    description: with_illustration_and_when(
+      category: "entreprendre",
+      base_desc: "Entretien individuel : statut, aides, étapes de la création. Orientation vers partenaires (BPI, CMA, réseaux).",
+      link: "https://www.nancy.cci.fr/evenements",
+      when_line: "Chaque mardi (dès nov. 2025), 09:30–12:00 — sur rendez-vous"
+    ),
     category: "entreprendre",
     organization: "CCI Grand Nancy",
     location: "53 Rue Stanislas, 54000 Nancy",
     time_commitment: "Hebdomadaire — sur rendez-vous",
     latitude: 48.6932, longitude: 6.1829,
-    is_active: true, tags: "diagnostic,statuts,accompagnement"
+    is_active: true, tags: "diagnostic,statuts,accompagnement",
+    image_url: "https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Afterwork Entrepreneurs Nancy",
-    description: add_link("Rencontres entre porteurs de projet, mentors, experts locaux. Pitches libres, retours d’expérience, réseautage.",
-                          "https://www.nancy.cci.fr/evenements"),
+    description: with_illustration_and_when(
+      category: "entreprendre",
+      base_desc: "Rencontres entre porteurs de projet, mentors, experts locaux. Pitches libres, retours d’expérience, réseautage.",
+      link: "https://www.nancy.cci.fr/evenements",
+      when_line: "Jeudi 27 novembre 2025, 18:30–20:30"
+    ),
     category: "entreprendre",
     organization: "Réseau local (CCI & partenaires)",
     location: "Centre-ville, 54000 Nancy",
     time_commitment: "Mensuel, 18:30–20:30",
     latitude: 48.6918, longitude: 6.1837,
-    is_active: true, tags: "réseau,pitch,mentorat"
+    is_active: true, tags: "réseau,pitch,mentorat",
+    image_url: "https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Atelier — Financer son projet",
-    description: add_link("Panorama des financements : prêts, subventions, love money, dispositifs région. Préparer son dossier et son prévisionnel.",
-                          "https://www.nancy.cci.fr/evenements"),
+    description: with_illustration_and_when(
+      category: "entreprendre",
+      base_desc: "Panorama des financements : prêts, subventions, love money, dispositifs région. Préparer son dossier et son prévisionnel.",
+      link: "https://www.nancy.cci.fr/evenements",
+      when_line: "Vendredi 28 novembre 2025, 09:30–12:00"
+    ),
     category: "entreprendre",
     organization: "CCI Grand Nancy",
     location: "53 Rue Stanislas, 54000 Nancy",
-    time_commitment: "Vendredi 25/10, 09:30–12:00",
+    time_commitment: "Vendredi 28/11/2025, 09:30–12:00",
     latitude: 48.6932, longitude: 6.1829,
-    is_active: true, tags: "financement,bpi,subventions"
+    is_active: true, tags: "financement,bpi,subventions",
+    image_url: "https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Mentorat entrepreneur·e — rendez-vous découverte",
-    description: add_link("Matching avec mentors (stratégie, juridique, produit). Objectif : clarifier la feuille de route 90 jours.",
-                          "https://communs-entrepreneurs.fr"),
+    description: with_illustration_and_when(
+      category: "entreprendre",
+      base_desc: "Matching avec mentors (stratégie, juridique, produit). Objectif : clarifier la feuille de route 90 jours.",
+      link: "https://communs-entrepreneurs.fr",
+      when_line: "Entretiens continus — créneaux nov.–déc. 2025"
+    ),
     category: "entreprendre",
     organization: "Communs d’entrepreneurs Nancy",
     location: "Nancy & Métropole",
     time_commitment: "Sur candidature",
     latitude: 48.692, longitude: 6.184,
-    is_active: true, tags: "mentorat,roadmap,coaching"
+    is_active: true, tags: "mentorat,roadmap,coaching",
+    image_url: "https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1200&auto=format&fit=crop"
   },
 
   # ===== FORMATION (CCI & ICN) =====
   {
     title: "Atelier Pitch & Storytelling",
-    description: add_link("Structurer un pitch clair et mémorable : problème, solution, traction. Exercices filmés + feedback.",
-                          "https://www.nancy.cci.fr/evenements"),
+    description: with_illustration_and_when(
+      category: "formation",
+      base_desc: "Structurer un pitch clair et mémorable : problème, solution, traction. Exercices filmés + feedback.",
+      link: "https://www.nancy.cci.fr/evenements",
+      when_line: "Mercredi 19 novembre 2025, 14:00–17:00"
+    ),
     category: "formation",
     organization: "CCI Grand Nancy",
     location: "53 Rue Stanislas, 54000 Nancy",
-    time_commitment: "Mercredi 16/10, 14:00–17:00",
+    time_commitment: "Mercredi 19/11/2025, 14:00–17:00",
     latitude: 48.6932, longitude: 6.1829,
-    is_active: true, tags: "pitch,communication,atelier"
+    is_active: true, tags: "pitch,communication,atelier",
+    image_url: "https://images.unsplash.com/photo-1513258496099-48168024aec0?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Matinale Numérique — TPE/PME",
-    description: add_link("Référencement local, réseaux sociaux, outils no-code. Cas pratiques d’entreprises du territoire.",
-                          "https://www.nancy.cci.fr/evenements"),
+    description: with_illustration_and_when(
+      category: "formation",
+      base_desc: "Référencement local, réseaux sociaux, outils no-code. Cas pratiques d’entreprises du territoire.",
+      link: "https://www.nancy.cci.fr/evenements",
+      when_line: "Mardi 18 novembre 2025, 08:30–10:00"
+    ),
     category: "formation",
     organization: "CCI Grand Nancy",
     location: "53 Rue Stanislas, 54000 Nancy",
     time_commitment: "Mensuel, 08:30–10:00",
     latitude: 48.6932, longitude: 6.1829,
-    is_active: true, tags: "numérique,seo,no-code"
+    is_active: true, tags: "numérique,seo,no-code",
+    image_url: "https://images.unsplash.com/photo-1513258496099-48168024aec0?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Découvrir la méthodologie HACCP (restauration)",
-    description: add_link("Sensibilisation aux bonnes pratiques d’hygiène et aux points critiques — prérequis avant ouverture.",
-                          "https://www.nancy.cci.fr/evenements"),
+    description: with_illustration_and_when(
+      category: "formation",
+      base_desc: "Sensibilisation aux bonnes pratiques d’hygiène et aux points critiques — prérequis avant ouverture.",
+      link: "https://www.nancy.cci.fr/evenements",
+      when_line: "Sessions bimensuelles — prochains créneaux nov.–déc. 2025"
+    ),
     category: "formation",
     organization: "CCI Grand Nancy",
     location: "53 Rue Stanislas, 54000 Nancy",
     time_commitment: "Session bimensuelle",
     latitude: 48.6932, longitude: 6.1829,
-    is_active: true, tags: "haccp,restauration,hygiène"
+    is_active: true, tags: "haccp,restauration,hygiène",
+    image_url: "https://images.unsplash.com/photo-1513258496099-48168024aec0?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Executive MBA — se réinventer (ICN Business School)",
-    description: add_link("Parcours pour cadres/dirigeants : leadership, stratégie, innovation et soutenance d’un projet de transformation. Compatible activité pro.",
-                          "https://www.lasemaine.fr/enseignement-formation/executive-mba-quand-icn-aide-les-cadres-a-se-reinventer/"),
+    description: with_illustration_and_when(
+      category: "formation",
+      base_desc: "Parcours pour cadres/dirigeants : leadership, stratégie, innovation et soutenance d’un projet de transformation. Compatible activité pro.",
+      link: "https://www.lasemaine.fr/enseignement-formation/executive-mba-quand-icn-aide-les-cadres-a-se-reinventer/",
+      when_line: "Rentrée de printemps 2026 — candidatures ouvertes dès nov. 2025"
+    ),
     category: "formation",
     organization: "ICN Business School",
     location: "86 Rue Sergent Blandan, 54000 Nancy",
     time_commitment: "Part-time (18–24 mois)",
     latitude: 48.6829, longitude: 6.1766,
-    is_active: true, tags: "executive,mba,leadership,transformation"
+    is_active: true, tags: "executive,mba,leadership,transformation",
+    image_url: "https://images.unsplash.com/photo-1513258496099-48168024aec0?q=80&w=1200&auto=format&fit=crop"
   },
 
   # ===== RENCONTRES =====
   {
     title: "Café-projets — échanges entre pairs",
-    description: add_link("Partage d’avancées, obstacles et ressources. Format court, bienveillant, ouvert aux débutant·es.",
-                          "https://www.grandnancy.eu"),
+    description: with_illustration_and_when(
+      category: "rencontres",
+      base_desc: "Partage d’avancées, obstacles et ressources. Format court, bienveillant, ouvert aux débutant·es.",
+      link: "https://www.grandnancy.eu",
+      when_line: "Tous les 15 jours, jeudi 18:30 — prochain : 06 novembre 2025"
+    ),
     category: "rencontres",
     organization: "Communauté Déclic Nancy",
     location: "Place Stanislas, 54000 Nancy",
     time_commitment: "Tous les 15 jours, 18:30",
     latitude: 48.6937, longitude: 6.1834,
-    is_active: true, tags: "pair-à-pair,entraide,réseau"
+    is_active: true, tags: "pair-à-pair,entraide,réseau",
+    image_url: "https://images.unsplash.com/photo-1558222217-0d77a6d3b3d1?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Visite — Tiers-lieu & fablab",
-    description: add_link("Découverte des machines + ateliers à venir. Idéal pour prototyper et rencontrer des makers.",
-                          "https://lafabriquedespossibles.fr"),
+    description: with_illustration_and_when(
+      category: "rencontres",
+      base_desc: "Découverte des machines + ateliers à venir. Idéal pour prototyper et rencontrer des makers.",
+      link: "https://lafabriquedespossibles.fr",
+      when_line: "Samedi 22 novembre 2025, 10:00–12:00"
+    ),
     category: "rencontres",
     organization: "La Fabrique des Possibles",
     location: "Nancy",
     time_commitment: "Mensuel",
     latitude: 48.682, longitude: 6.186,
-    is_active: true, tags: "tiers-lieu,fablab,prototype"
+    is_active: true, tags: "tiers-lieu,fablab,prototype",
+    image_url: "https://images.unsplash.com/photo-1558222217-0d77a6d3b3d1?q=80&w=1200&auto=format&fit=crop"
   },
 
   # ===== BÉNÉVOLAT =====
   {
     title: "Repair Café — accueil & logistique",
-    description: add_link("Accueil du public, orientation, aide à la tenue du stand. Ambiance conviviale, sensibilisation anti-gaspillage.",
-                          "https://mjc-bazin.fr"),
+    description: with_illustration_and_when(
+      category: "benevolat",
+      base_desc: "Accueil du public, orientation, aide à la tenue du stand. Ambiance conviviale, sensibilisation anti-gaspillage.",
+      link: "https://mjc-bazin.fr",
+      when_line: "Samedi 15 novembre 2025, 09:30–12:30"
+    ),
     category: "benevolat",
     organization: "MJC Bazin",
     location: "47 Rue Henri Bazin, 54000 Nancy",
     time_commitment: "Mensuel, samedi matin",
     latitude: 48.6848, longitude: 6.1899,
-    is_active: true, tags: "réparation,accueil,convivial"
+    is_active: true, tags: "réparation,accueil,convivial",
+    image_url: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Atelier couture — coup de main",
-    description: add_link("Aider à l’atelier : prise de mesures, préparation du matériel, accompagnement débutant·es.",
-                          "https://mjc-bazin.fr"),
+    description: with_illustration_and_when(
+      category: "benevolat",
+      base_desc: "Aider à l’atelier : prise de mesures, préparation du matériel, accompagnement débutant·es.",
+      link: "https://mjc-bazin.fr",
+      when_line: "Chaque mercredi 17:30–19:30 (nov.–déc. 2025)"
+    ),
     category: "benevolat",
     organization: "MJC Bazin",
     location: "47 Rue Henri Bazin, 54000 Nancy",
     time_commitment: "Hebdomadaire",
     latitude: 48.6848, longitude: 6.1899,
-    is_active: true, tags: "couture,atelier,pédagogie"
+    is_active: true, tags: "couture,atelier,pédagogie",
+    image_url: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Distribution alimentaire",
-    description: add_link("Renfort sur la distribution, accueil et réassort. Esprit d’équipe, respect et confidentialité.",
-                          "https://www.restosducoeur.org/devenir-benevole/"),
+    description: with_illustration_and_when(
+      category: "benevolat",
+      base_desc: "Renfort sur la distribution, accueil et réassort. Esprit d’équipe, respect et confidentialité.",
+      link: "https://www.restosducoeur.org/devenir-benevole/",
+      when_line: "Créneaux hebdomadaires (2–3 h), dès novembre 2025"
+    ),
     category: "benevolat",
     organization: "Restos du Cœur — Nancy",
     location: "Centre-ville, 54000 Nancy",
     time_commitment: "Hebdomadaire (créneaux 2–3 h)",
     latitude: 48.689, longitude: 6.184,
-    is_active: true, tags: "solidarité,logistique,accueil"
+    is_active: true, tags: "solidarité,logistique,accueil",
+    image_url: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Tri de dons & mise en rayon",
-    description: add_link("Collecte, tri, étiquetage. Participer au circuit de revalorisation et à la boutique solidaire.",
-                          "https://www.secourspopulaire.fr"),
+    description: with_illustration_and_when(
+      category: "benevolat",
+      base_desc: "Collecte, tri, étiquetage. Participer au circuit de revalorisation et à la boutique solidaire.",
+      link: "https://www.secourspopulaire.fr",
+      when_line: "2–4 h / semaine — créneaux nov.–déc. 2025"
+    ),
     category: "benevolat",
     organization: "Secours Populaire — Nancy",
     location: "Nancy",
     time_commitment: "2–4 h / semaine",
     latitude: 48.69, longitude: 6.18,
-    is_active: true, tags: "tri,solidarité,boutique"
+    is_active: true, tags: "tri,solidarité,boutique",
+    image_url: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Bénévolat boutique & recyclerie",
-    description: add_link("Accueil, caisse, réassort, tri. Faire vivre une économie circulaire locale.",
-                          "https://emmaus-france.org"),
+    description: with_illustration_and_when(
+      category: "benevolat",
+      base_desc: "Accueil, caisse, réassort, tri. Faire vivre une économie circulaire locale.",
+      link: "https://emmaus-france.org",
+      when_line: "Créneaux ponctuels et réguliers — dès novembre 2025"
+    ),
     category: "benevolat",
     organization: "Emmaüs — Agglo de Nancy",
     location: "Heillecourt / agglomération nancéienne",
     time_commitment: "Ponctuel ou régulier",
     latitude: 48.654, longitude: 6.183,
-    is_active: true, tags: "recyclerie,réemploi,accueil"
+    is_active: true, tags: "recyclerie,réemploi,accueil",
+    image_url: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Maraude & lien social",
-    description: add_link("Aller à la rencontre, distribuer boissons chaudes, orienter vers partenaires. Travail en binôme.",
-                          "https://www.francebenevolat.org"),
+    description: with_illustration_and_when(
+      category: "benevolat",
+      base_desc: "Aller à la rencontre, distribuer boissons chaudes, orienter vers partenaires. Travail en binôme.",
+      link: "https://www.francebenevolat.org",
+      when_line: "Soirées (2–3 h) — tournées nov.–déc. 2025"
+    ),
     category: "benevolat",
     organization: "Réseau local (associatif)",
     location: "Nancy — différents quartiers",
     time_commitment: "Soirées (2–3 h)",
     latitude: 48.692, longitude: 6.184,
-    is_active: true, tags: "maraude,écoute,orientation"
+    is_active: true, tags: "maraude,écoute,orientation",
+    image_url: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop"
   }
 ]
 
@@ -310,135 +449,99 @@ records += nancy_real
 vosges_corridor = [
   {
     title: "SEVENTHÉEN Coffee — ateliers découverte",
-    description: <<~MD.strip,
-      ☕ Découvrir le café de spécialité à Lunéville.
-
-      Ce que tu peux faire
-      - Participer à un atelier : mouture, méthode douce (V60, Chemex), latte-art
-      - Donner un coup de main sur une soirée (service léger, accueil, encaissement simple)
-      - Proposer une rencontre pro : freelances, étudiants, créatifs (format 1 h)
-
-      Pourquoi c’est intéressant
-      - Apprendre un vrai savoir-faire sensoriel (fraîcheur, extraction)
-      - Rencontrer du monde et animer le centre-ville
-      - Format facile à répliquer (1–2 h), idéal pour se lancer dans l’événementiel
-    MD
+    description: with_illustration_and_when(
+      category: "rencontres",
+      base_desc: "Découvrir le café de spécialité à Lunéville : mouture, méthode douce (V60, Chemex), latte-art. Aide possible sur une soirée (accueil, encaissement simple) ou organisation de rencontres pros.",
+      link: "https://www.instagram.com/seventheen.coffee/",
+      when_line: "Ateliers 1–2 h ; soirées ponctuelles — novembre 2025"
+    ),
     category: "rencontres",
     organization: "SEVENTHÉEN Coffee",
     location: "Lunéville (rue de la République)",
     time_commitment: "Ateliers 1–2 h, soirées ponctuelles",
     latitude: 48.591, longitude: 6.496,
-    is_active: true, tags: "atelier,café,communauté"
+    is_active: true, tags: "atelier,café,communauté",
+    image_url: "https://images.unsplash.com/photo-1558222217-0d77a6d3b3d1?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Baccarat — Atelier vitrail & découverte du verre",
-    description: <<~MD.strip,
-      🧪 Initiation aux bases du vitrail et aux découpes de verre (sécurité + gestes).
-
-      Ce que tu peux faire
-      - Atelier d’initiation 2–3 h (découpe, sertissage, assemblage simple)
-      - Visite d’atelier, rencontre d’artisans du Pays du Cristal
-      - Proposer une animation jeunesse ou une mini portes ouvertes
-
-      Pourquoi c’est intéressant
-      - Ultra concret : on repart avec une petite pièce
-      - Réseau d’artisans emblématiques de la vallée
-      - Idéal pour tester un savoir-faire manuel avant une formation longue
-    MD
+    description: with_illustration_and_when(
+      category: "formation",
+      base_desc: "Initiation aux bases du vitrail et aux découpes de verre (sécurité + gestes). On repart avec une petite pièce et l’envie de recommencer.",
+      link: "https://www.ville-baccarat.com/",
+      when_line: "Samedi (2–3 h) — prochains créneaux nov.–déc. 2025"
+    ),
     category: "formation",
     organization: "Atelier associatif du Pays du Cristal",
     location: "Baccarat",
     time_commitment: "2–3 h (samedi AM/PM)",
     latitude: 48.450, longitude: 6.742,
-    is_active: true, tags: "artisanat,verre,initiation"
+    is_active: true, tags: "artisanat,verre,initiation",
+    image_url: "https://images.unsplash.com/photo-1513258496099-48168024aec0?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Raon-l’Étape — Repair & Low-tech au tiers-lieu",
-    description: <<~MD.strip,
-      🔧 Soirée réparation et démonstrations low-tech.
-
-      Ce que tu peux faire
-      - Tenir l’accueil et aiguiller les participants
-      - Apprendre les bases (petite électricité, affûtage, couture, colle/époxy)
-      - Animer un mini-atelier (entretien vélo, petites soudures, diagnostic)
-
-      Pourquoi c’est intéressant
-      - Apprendre en faisant, tout en rendant service
-      - Tisser un réseau local bricoleurs ↔︎ habitants
-      - Découvrir la sobriété pratique (réparer plutôt que jeter)
-    MD
+    description: with_illustration_and_when(
+      category: "benevolat",
+      base_desc: "Soirée réparation et démonstrations low-tech. Apprendre en faisant, tisser un réseau local bricoleurs ↔︎ habitants.",
+      link: "https://www.facebook.com/tierslieu.valleedelaplaine/",
+      when_line: "Mensuel (soirée 3 h) — prochain créneau : fin nov. 2025"
+    ),
     category: "benevolat",
     organization: "Tiers-lieu Vallée de la Plaine",
     location: "Raon-l’Étape",
     time_commitment: "Mensuel (soirée 3 h)",
     latitude: 48.404, longitude: 6.838,
-    is_active: true, tags: "repair,lowtech,entraide"
+    is_active: true, tags: "repair,lowtech,entraide",
+    image_url: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Étival-Clairefontaine — Atelier micro-entreprise express",
-    description: <<~MD.strip,
-      💼 Bases de la micro-entreprise : statuts, obligations, prix de revient, premiers clients.
-
-      Ce que tu peux faire
-      - Venir avec une idée et repartir avec un plan 30 jours
-      - Répartir les premières actions : facture/devis (modèles), script d’appel, mail de prospection
-      - Poser toutes tes questions (TVA, ARE/ACRE, plafond, compte pro…)
-
-      Pourquoi c’est intéressant
-      - Format très opérationnel pour déclencher un premier CA local
-      - Kit prêt-à-l’emploi (templates + check-list)
-      - Rencontres entre personnes au même stade
-    MD
+    description: with_illustration_and_when(
+      category: "entreprendre",
+      base_desc: "Bases de la micro-entreprise : statuts, obligations, prix de revient, premiers clients. Repars avec un plan 30 jours.",
+      link: "https://www.paysdesabers.fr/",
+      when_line: "Atelier 2 h — dates nov.–déc. 2025"
+    ),
     category: "entreprendre",
     organization: "Com’Com de la Plaine",
     location: "Étival-Clairefontaine",
     time_commitment: "Atelier 2 h",
     latitude: 48.407, longitude: 6.882,
-    is_active: true, tags: "création,pricing,prospection"
+    is_active: true, tags: "création,pricing,prospection",
+    image_url: "https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Saint-Dié-des-Vosges — Club projet (bénévolat utile)",
-    description: <<~MD.strip,
-      ❤️ Club d’entraide où chacun apporte 1 ressource (compétence, contact, temps) pour faire avancer les projets des autres.
-
-      Ce que tu peux faire
-      - Présenter ton besoin (5 min) : “je cherche 5 retours clients”, “je dois faire un devis…”
-      - Proposer un coup de main express (20–30 min) pendant la session
-      - Rejoindre un mini-commando : créer un formulaire, faire 10 appels, rédiger un mail-type
-
-      Pourquoi c’est intéressant
-      - Gagner en réseau (liens concrets)
-      - Avancer tout de suite (action pendant la séance)
-      - Aider des projets locaux qui ont du sens
-    MD
+    description: with_illustration_and_when(
+      category: "rencontres",
+      base_desc: "Club d’entraide où chacun apporte 1 ressource (compétence, contact, temps) pour faire avancer les projets des autres. Action immédiate pendant la session.",
+      link: "https://www.ca-saintdie.fr/",
+      when_line: "Toutes les 2 semaines, jeudi 18:30 — prochain : 13 novembre 2025"
+    ),
     category: "rencontres",
     organization: "Communauté Déclic Vosges",
     location: "Saint-Dié-des-Vosges",
     time_commitment: "Toutes les 2 semaines, 1 h 30",
     latitude: 48.285, longitude: 6.949,
-    is_active: true, tags: "entraide,réseau,accélération"
+    is_active: true, tags: "entraide,réseau,accélération",
+    image_url: "https://images.unsplash.com/photo-1558222217-0d77a6d3b3d1?q=80&w=1200&auto=format&fit=crop"
   },
   {
     title: "Saint-Nicolas-de-Port — Reprise de bar alternatif (diagnostic)",
-    description: <<~MD.strip,
-      🍻 Étude de reprise d’un petit bar alternatif (clientèle locale, mini-prog concerts/stand-up).
-
-      Ce que tu peux faire
-      - Visite + check-list : licences, voisinage, sécurité, accessibilité, travaux, assurances
-      - Tester une soirée pilote (format réduit) pour jauger le potentiel
-      - Chiffrer un P&L réaliste (loyer, marge, masse salariale, billetterie)
-
-      Pourquoi c’est intéressant
-      - Idéal si tu veux entreprendre avec un lieu vivant à taille humaine
-      - Apprendre à évaluer un fonds (risques/opportunités) avant de signer
-      - Repartir avec une feuille de route claire
-    MD
+    description: with_illustration_and_when(
+      category: "entreprendre",
+      base_desc: "Étude de reprise d’un petit bar alternatif : visite + check-list (licences, sécurité…), soirée pilote pour jauger le potentiel, P&L réaliste.",
+      link: "https://www.saintnicolasdeport.fr/",
+      when_line: "2 rendez-vous (2×2 h) + 1 soirée test — nov.–déc. 2025"
+    ),
     category: "entreprendre",
     organization: "Accompagnement Déclic",
     location: "Saint-Nicolas-de-Port",
     time_commitment: "2 rendez-vous (2×2 h) + 1 soirée test",
     latitude: 48.634, longitude: 6.300,
-    is_active: true, tags: "reprise,événementiel,gestion"
+    is_active: true, tags: "reprise,événementiel,gestion",
+    image_url: "https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1200&auto=format&fit=crop"
   }
 ]
 
@@ -454,7 +557,7 @@ created_opps = 0
 records.each do |h|
   next unless h[:latitude] && h[:longitude]
   found = Opportunity.find_or_initialize_by(title: h[:title], organization: h[:organization], location: h[:location])
-  allowed = h.slice(:title, :description, :category, :organization, :location, :time_commitment, :latitude, :longitude, :is_active, :tags)
+  allowed = h.slice(:title, :description, :category, :organization, :location, :time_commitment, :latitude, :longitude, :is_active, :tags, :image_url)
   found.assign_attributes(allowed)
   created_opps += 1 if found.new_record?
   found.save!
@@ -819,40 +922,40 @@ stories += [
 
 
   {
-  slug: "pierre-percee-plein-air-relance-er",
-  title: "Pierre-Percée (54) — Parier sur le plein air pour relancer un village",
-  category: "entreprendre",
-  chapo: "Au cœur du Pays du Cristal, Pierre-Percée mise sur la nature et les émotions à ciel ouvert pour faire revenir les visiteurs et redonner souffle à tout un territoire.",
-  description: "Hébergements légers, activités nautiques, sentiers et nouvelles expériences de plein air pour relancer un village et son économie locale.",
-  location: "Lac de Pierre-Percée, 54540 Pierre-Percée",
-  latitude: 48.498, longitude: 6.912,
-  source_name: "L’Est Républicain",
-  source_url: "https://www.estrepublicain.fr/economie/2025/01/24/pierre-percee-veut-monter-en-gamme-pour-seduir-les-visiteurs",
-  image_url: "https://images.unsplash.com/photo-1526483360412-f4dbaf036963?q=80&w=1600&auto=format&fit=crop",
-  body: <<~MD,
-    ### 🌿 Le projet
-    Dans les Vosges du Nord, le lac de Pierre-Percée a toujours eu un charme particulier : forêts profondes, reflets verts, silence. Mais les visiteurs se faisaient plus rares, les hébergements vieillissaient, les activités tournaient en rond. La commune et ses partenaires ont donc repensé le site comme un écosystème vivant, ouvert aux initiatives locales et à la nature sous toutes ses formes. Le pari : faire du plein air un moteur de relance durable.
+    slug: "pierre-percee-plein-air-relance-er",
+    title: "Pierre-Percée (54) — Parier sur le plein air pour relancer un village",
+    category: "entreprendre",
+    chapo: "Au cœur du Pays du Cristal, Pierre-Percée mise sur la nature et les émotions à ciel ouvert pour faire revenir les visiteurs et redonner souffle à tout un territoire.",
+    description: "Hébergements légers, activités nautiques, sentiers et nouvelles expériences de plein air pour relancer un village et son économie locale.",
+    location: "Lac de Pierre-Percée, 54540 Pierre-Percée",
+    latitude: 48.498, longitude: 6.912,
+    source_name: "L’Est Républicain",
+    source_url: "https://www.estrepublicain.fr/economie/2025/01/24/pierre-percee-veut-monter-en-gamme-pour-seduir-les-visiteurs",
+    image_url: "https://images.unsplash.com/photo-1526483360412-f4dbaf036963?q=80&w=1600&auto=format&fit=crop",
+    body: <<~MD,
+      ### 🌿 Le projet
+      Dans les Vosges du Nord, le lac de Pierre-Percée a toujours eu un charme particulier : forêts profondes, reflets verts, silence. Mais les visiteurs se faisaient plus rares, les hébergements vieillissaient, les activités tournaient en rond. La commune et ses partenaires ont donc repensé le site comme un écosystème vivant, ouvert aux initiatives locales et à la nature sous toutes ses formes. Le pari : faire du plein air un moteur de relance durable.
 
-    Autour du lac, les nouveaux aménagements misent sur la sobriété et le sens du lieu : hébergements légers en bois, espaces de bivouac, sentiers mieux balisés, zones de baignade surveillées et accueil repensé pour cyclistes et randonneurs. L’objectif est d’attirer sans dénaturer.
+      Autour du lac, les nouveaux aménagements misent sur la sobriété et le sens du lieu : hébergements légers en bois, espaces de bivouac, sentiers mieux balisés, zones de baignade surveillées et accueil repensé pour cyclistes et randonneurs. L’objectif est d’attirer sans dénaturer.
 
-    ### 🚶‍♀️ Parcours et méthode
-    Le projet réunit mairie, acteurs touristiques, associations sportives, hébergeurs et habitants. Chacun apporte sa contribution : logistique, communication, circuits courts, produits du terroir. Ensemble, ils ont posé un plan à cinq ans avec une idée centrale : remettre les habitants au cœur de la dynamique. Les jeunes participent via des chantiers, les artisans locaux interviennent sur les travaux, les associations sportives encadrent les activités nautiques.
+      ### 🚶‍♀️ Parcours et méthode
+      Le projet réunit mairie, acteurs touristiques, associations sportives, hébergeurs et habitants. Chacun apporte sa contribution : logistique, communication, circuits courts, produits du terroir. Ensemble, ils ont posé un plan à cinq ans avec une idée centrale : remettre les habitants au cœur de la dynamique. Les jeunes participent via des chantiers, les artisans locaux interviennent sur les travaux, les associations sportives encadrent les activités nautiques.
 
-    ### 🚣‍♂️ La vie du lieu
-    Les week-ends d’été, le lac retrouve son énergie. Paddle, escalade, randonnée, tyrolienne, marchés locaux, concerts au bord de l’eau : tout est pensé pour faire vivre la montagne autrement. L’hiver, le calme revient mais le travail continue : entretiens, bilans, préparation de la prochaine saison. Les commerçants sentent déjà la différence : plus de passage, plus de vitalité, et des visiteurs qui reviennent. Le lac n’est plus une parenthèse mais une destination.
+      ### 🚣‍♂️ La vie du lieu
+      Les week-ends d’été, le lac retrouve son énergie. Paddle, escalade, randonnée, tyrolienne, marchés locaux, concerts au bord de l’eau : tout est pensé pour faire vivre la montagne autrement. L’hiver, le calme revient mais le travail continue : entretiens, bilans, préparation de la prochaine saison. Les commerçants sentent déjà la différence : plus de passage, plus de vitalité, et des visiteurs qui reviennent. Le lac n’est plus une parenthèse mais une destination.
 
-    ### 💡 Pourquoi c’est inspirant
-    - Relance territoriale fondée sur la coopération 🏞️
-    - Emplois saisonniers et durables créés localement
-    - Transition touristique vers le sobre et le sensible 🌲
+      ### 💡 Pourquoi c’est inspirant
+      - Relance territoriale fondée sur la coopération 🏞️
+      - Emplois saisonniers et durables créés localement
+      - Transition touristique vers le sobre et le sensible 🌲
 
-    —
-    📍 Adresse : Lac de Pierre-Percée, 54540 Pierre-Percée
-    📸 Crédit photo : Office du Tourisme du Pays du Cristal
-    📰 Source : L’Est Républicain (24 janvier 2025)
-  MD
-  quote: "La nature n’est pas un décor : c’est un avenir à habiter ensemble."
-},
+      —
+      📍 Adresse : Lac de Pierre-Percée, 54540 Pierre-Percée
+      📸 Crédit photo : Office du Tourisme du Pays du Cristal
+      📰 Source : L’Est Républicain (24 janvier 2025)
+    MD
+    quote: "La nature n’est pas un décor : c’est un avenir à habiter ensemble."
+  },
 
   {
     slug: "le-lupin-atelier-ceramique-nancy",

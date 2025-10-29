@@ -1,213 +1,244 @@
-<%# app/views/opportunities/show.html.erb — robuste aux attributs manquants, style “story” %>
+<%# app/views/opportunities/show.html.erb — v5 (hero teinté catégorie, map + date/lien, markdown light sans gras) %>
 <% content_for :main_classes, "pt-0" %>
 
 <%
-# ---------- Helpers robustes ----------
-def pick_attr(record, *names)
-  names.find { |n| record.respond_to?(n) && record.public_send(n).present? }&.then { |n| record.public_send(n) }
+# ============== Helpers ==============
+def safe_attr(obj, *names)
+  names.each { |n| return obj.public_send(n) if obj.respond_to?(n) && obj.public_send(n).present? }
+  nil
 end
 
-def pick_number(record, *names)
-  names.find { |n| record.respond_to?(n) && !record.public_send(n).nil? }&.then { |n| record.public_send(n) }
+def plainify(text)
+  text.to_s
+      .gsub(/!\[[^\]]*\]\([^)]+\)/, "")      # images MD
+      .gsub(/\[([^\]]+)\]\((.*?)\)/, '\1')  # liens -> texte
+      .gsub(/[*_`>#]/, "")
+      .gsub(/\n+/, " ")
+      .squeeze(" ")
+      .strip
 end
 
-category = @opportunity.respond_to?(:category) ? @opportunity.category.to_s : ""
-
-# Couleurs d’accent selon la catégorie
-case category
-when "benevolat"    then accent1, accent2 = "#f43f5e", "#ec4899"   # rose
-when "formation"    then accent1, accent2 = "#3b82f6", "#38bdf8"   # bleu
-when "rencontres"   then accent1, accent2 = "#10b981", "#06b6d4"   # vert
-when "entreprendre" then accent1, accent2 = "#f59e0b", "#ef4444"   # orange
-else                    accent1, accent2 = "#7e5bef", "#3b82f6"    # violet défaut
+# Markdown « light » : h3 + paragraphes (PAS de gras)
+def render_md_light(text)
+  t = text.to_s.gsub("\r\n","\n")
+  t = t.lines.map { |l| l.sub(/^###\s*(.+)\s*$/, '<h3>\1</h3>') }.join
+  t = t.gsub(/\*\*(.+?)\*\*/, '\1') # enlever le gras
+  html = simple_format(t, {}, wrapper_tag: "p")
+  html = html.gsub(%r{<p>\s*(<h3>.*?</h3>)\s*</p>}m, '\1')
+  sanitize(html, tags: %w[p h3 br a ul ol li em], attributes: %w[href target rel])
 end
 
-title       = pick_attr(@opportunity, :title, :name, :label) || "Opportunité"
-desc_full   = pick_attr(@opportunity, :description, :summary, :details) || ""
-desc_chapo  = strip_tags(desc_full).presence || "Une opportunité concrète pour agir et s’impliquer localement."
+# URL explicite présente dans le body
+def extract_source_url(md)
+  return nil if md.blank?
+  if md =~ %r{https?://[^\s\)]+}
+    $&.strip
+  end
+end
 
-# Image de couverture — essaye plusieurs colonnes possibles
-img_src = pick_attr(@opportunity,
-  :image_url, :cover_url, :photo_url, :banner_url, :image, :cover, :photo, :banner
-)
+# Ligne « Quand ? » depuis le body (ou fallback)
+def extract_when_line(md)
+  return nil if md.blank?
+  md.each_line do |line|
+    s = line.strip
+    if s.start_with?("🗓️") || s =~ /\*\*Quand\s*\?\*\*/i || s =~ /Quand\s*\?/i
+      s = s.sub(/^🗓️\s*/, "")
+      s = s.sub(/\*\*Quand\s*\?\*\*\s*/i, "")
+      s = s.sub(/Quand\s*\?\s*/i, "")
+      return s.strip
+    end
+  end
+  if md =~ /(\b(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\b.*?\d{1,2}[:h]\d{2}.*?(?:[–-]\s*\d{1,2}[:h]\d{2})?)/i
+    return $1.strip
+  end
+  nil
+end
 
-img =
-  if img_src.present?
-    img_src.to_s =~ /\Ahttps?:\/\//i ? img_src : asset_path(img_src)
-  else
-    "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1600&auto=format&fit=crop"
+def when_text_for(op, desc_md)
+  from_md = extract_when_line(desc_md)
+  return from_md if from_md.present?
+
+  tc = safe_attr(op, :time_commitment).to_s.strip
+  if tc.present? && tc =~ /(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|[0-2]?\d[:h][0-5]\d)/i
+    return "Prochain créneau : #{tc}"
+  end
+  nil
+end
+
+cat      = safe_attr(@opportunity, :category).to_s
+accent1, accent2 =
+  case cat
+  when "benevolat"    then ["#f43f5e", "#ec4899"]
+  when "formation"    then ["#3b82f6", "#38bdf8"]
+  when "rencontres"   then ["#10b981", "#06b6d4"]
+  when "entreprendre" then ["#f59e0b", "#ef4444"]
+  else                     ["#7e5bef", "#3b82f6"]
   end
 
-# Infos pratiques
-website     = pick_attr(@opportunity, :website, :url, :link)
-org         = pick_attr(@opportunity, :organization, :organizer, :org_name, :host, :owner)
-location    = pick_attr(@opportunity, :location, :address, :place, :city)
-email       = pick_attr(@opportunity, :contact_email, :email)
-phone       = pick_attr(@opportunity, :contact_phone, :phone, :telephone, :mobile)
-time_need   = pick_attr(@opportunity, :time_commitment, :time_needed, :time_per_week, :workload)
+title     = safe_attr(@opportunity, :title, :name) || "Opportunité locale"
+org       = safe_attr(@opportunity, :organization, :organizer)
+loc       = safe_attr(@opportunity, :location, :address, :place)
+lat       = safe_attr(@opportunity, :latitude, :lat)
+lon       = safe_attr(@opportunity, :longitude, :lon)
+img       = safe_attr(@opportunity, :image_url, :cover_url) ||
+            "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1600&auto=format&fit=crop"
+desc_md   = safe_attr(@opportunity, :description, :details) || ""
+desc_plain= plainify(desc_md)
+when_line = when_text_for(@opportunity, desc_md)
+source_url= extract_source_url(desc_md)
 
-lat         = pick_number(@opportunity, :latitude, :lat)
-lon         = pick_number(@opportunity, :longitude, :lon, :lng)
+# Fallback lien : recherche utile
+search_q  = [title, org, loc].compact.join(" ")
+search_url= "https://www.google.com/search?q=#{ERB::Util.url_encode(search_q)}"
 
-rating      = pick_number(@opportunity, :rating, :score)
-org_line    = [org, (rating && "★ #{rating}")].compact.join(" • ")
+when_display =
+  if when_line.present?
+    when_line
+  else
+    "Créneaux réguliers — voir la page de l’organisateur"
+  end
 
+# Enrichissement si description courte (texte simple, pas de gras)
+if desc_plain.length < 400
+  desc_md += <<~MD
+
+  ### À quoi ça ressemble ?
+  Un temps pratique et bienveillant pour apprendre en faisant, poser tes questions et repartir avec des outils concrets.
+
+  ### Ce que tu feras
+  • Exercices guidés pas à pas
+  • Échanges entre pairs
+  • Retours personnalisés
+  Ambiance simple, matériel fourni si besoin.
+
+  ### Pour qui ?
+  Curieux·ses, débutant·es ou profils en reconversion — aucun prérequis technique, juste l’envie d’essayer.
+  MD
+end
 %>
 
 <% content_for :title, title %>
-<% content_for :description, strip_tags(desc_chapo).truncate(160) %>
+<% content_for :description, desc_plain.truncate(160) %>
 
 <style>
-  .op-ms{
-    --accent1:<%= accent1 %>;
-    --accent2:<%= accent2 %>;
-    color:#0f172a; background:#fff;
-    font-family:"Inter",system-ui,sans-serif;
+  .op{--a1:<%= accent1 %>;--a2:<%= accent2 %>;color:#0f172a;font-family:"Inter",system-ui,sans-serif;}
+  .op .container{max-width:1240px;margin:0 auto;padding:0 28px;}
+
+  /* --- HERO teinté par catégorie (antépénultième style, voile couleur léger) --- */
+  .op-hero{position:relative;overflow:hidden;}
+  .op-hero::before{
+    content:"";position:absolute;inset:0;
+    background:url('<%= img %>') center/cover no-repeat;
+    filter:saturate(1.05) contrast(1.02) brightness(1.02);
+    opacity:.38; /* image visible mais douce */
   }
-  .op-ms .container{ max-width:1140px; margin:0 auto; padding:0 24px; }
+  .op-hero::after{
+    content:"";position:absolute;inset:0;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.00) 35%, rgba(255,255,255,0.00) 100%),
+      linear-gradient(120deg, color-mix(in srgb, var(--a1) 35%, transparent) 0%, color-mix(in srgb, var(--a2) 35%, transparent) 100%);
+    /* voile coloré léger lié à la catégorie */
+  }
+  .op-hero-inner{position:relative;z-index:2;padding:108px 0 44px;}
+  .op-hero h1{font-family:"Epilogue";font-weight:900;letter-spacing:-.01em;
+              font-size:clamp(2.3rem,4.6vw,3.3rem);margin:0 0 .45rem;}
+  .op-hero .chapo{font-weight:600;font-size:1.04rem;max-width:920px;}
+  .meta{margin-top:.9rem;display:flex;gap:14px 16px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:.5rem;background:#ffffff;border:1px solid #e8e8ee;
+        color:#0f172a;padding:.5rem .85rem;border-radius:999px;font-weight:700;white-space:nowrap;}
 
-  .ms-backline{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0 10px;}
-  .ms-back{color:var(--accent1);font-weight:800;text-decoration:none;}
-  .ms-back:hover{text-decoration:underline;}
-  .ms-pill{display:inline-flex;align-items:center;gap:8px;padding:.55rem .9rem;border-radius:999px;text-decoration:none;font-weight:700;border:1px solid #e5e7eb;background:#fff;color:#0f172a;}
+  /* Illustration */
+  .op-illu{max-width:910px;margin:32px auto 42px;}
+  .op-illu img{width:100%;border-radius:18px;box-shadow:0 10px 28px rgba(0,0,0,.10);}
 
-  .ms-hero{position:relative;background:linear-gradient(160deg,var(--accent1),var(--accent2));color:#fff;overflow:hidden;}
-  .ms-hero::before{content:"";position:absolute;inset:0;background:url('<%= img %>') center/cover no-repeat;opacity:.25;mix-blend:multiply;}
-  .ms-hero-inner{position:relative;padding:clamp(88px,11vw,160px) 0 clamp(56px,8vw,100px);}
-  .ms-kicker{display:inline-block;padding:.45rem .8rem;border-radius:999px;background:rgba(255,255,255,.22);font:700 .85rem/1 "Epilogue",Inter;}
-  .ms-title{font-family:"Epilogue",Inter;font-weight:900;line-height:1.03;font-size:clamp(2.6rem,4.8vw,4rem);letter-spacing:-.02em;margin:.65rem 0 .45rem;text-wrap:balance;}
-  .ms-chapo{max-width:900px;font:600 clamp(1.2rem,1.1vw + .85rem,1.55rem)/1.65 "Inter";opacity:.98;}
+  /* Sections */
+  .op-section{padding:42px 0;}
+  .op-h2{font-family:"Epilogue";font-weight:900;font-size:1.9rem;margin:0 0 1rem;}
+  .op-prose h3{font-size:1.18rem;margin:1.1rem 0 .55rem;}
+  .op-prose p{line-height:1.72;margin:.7rem 0;}
 
-  .ms-slice{padding:clamp(3.2rem,6vw,5.4rem) 0;scroll-margin-top:96px;}
-  .ms-slice.bg-muted{background:#f8f9fb;}
-  .ms-slice h2{font-family:"Epilogue";font-weight:900;font-size:clamp(2rem,3.1vw,2.6rem);color:#0f172a;margin:0 0 .9rem;}
-  .ms-slice h2::after{content:"";display:block;width:80px;height:6px;border-radius:999px;background:var(--accent1);margin:.6rem 0 .2rem;}
-  .ms-prose{font:500 1.22rem/1.95 "Inter";color:#1f2937;}
-  .ms-prose p{margin:0 0 1.25rem;}
-
-  .ms-infos h3{margin:0 0 .8rem;font:900 1.15rem/1.2 "Epilogue";color:#0f172a;text-transform:uppercase;}
-  .ms-meta{list-style:none;padding:0;margin:0 0 1.2rem;display:grid;gap:.65rem;}
-  .ms-meta label{display:block;font:700 .9rem/1 "Epilogue";color:#64748b;text-transform:uppercase;}
-  .ms-meta .val{font:600 1.08rem/1.6 "Inter";}
-  .ms-meta .val a{color:var(--accent1);text-decoration:none;font-weight:700;}
-  .ms-meta .val a:hover{text-decoration:underline;}
-  #op-map{height:300px;border-radius:18px;border:1px solid #e6e8ee;overflow:hidden;box-shadow:0 6px 24px rgba(15,23,42,.06);}
-
-  .ms-cta{background:linear-gradient(160deg,var(--accent1),var(--accent2));color:#fff;text-align:center;padding:clamp(3.2rem,7vw,5.4rem) 0;}
-  .ms-cta h2{margin:0 0 .55rem;font:900 clamp(1.7rem,3.2vw,2.5rem)/1.1 "Epilogue";}
-  .ms-cta p{margin:0 0 1.4rem;font:600 1.18rem/1.75 "Inter";}
-  .ms-cta .btn{display:inline-block;border-radius:999px;padding:1.05rem 1.7rem;text-decoration:none;font:800 1.05rem/1 "Epilogue";margin:.35rem;}
-  .ms-cta .btn.primary{background:#fff;color:var(--accent1);box-shadow:0 8px 28px rgba(0,0,0,.08);}
-  .ms-cta .btn.secondary{background:transparent;border:2px solid #fff;color:#fff;}
+  /* Infos + map */
+  .op-infos{background:#f8f9fb;border:1px solid #e6e8ee;border-radius:14px;padding:22px;box-shadow:0 10px 24px rgba(15,23,42,.05);margin-top:22px;}
+  .op-infos label{display:block;font-weight:800;color:#64748b;text-transform:uppercase;font-size:.82rem;margin-bottom:.25rem;}
+  .op-infos .val{font-weight:700;margin-bottom:.7rem;}
+  #map{height:340px;border-radius:12px;margin-top:12px;}
 </style>
 
-<div class="op-ms">
-  <div class="container">
-    <div class="ms-backline">
-      <%= link_to "← Retour aux opportunités", (defined?(opportunities_path) ? opportunities_path : root_path), class: "ms-back" %>
-      <% if website.present? %>
-        <%= link_to "Source", website, class: "ms-pill", target: "_blank", rel: "noopener" %>
-      <% end %>
-    </div>
+<div class="op">
+  <div class="container" style="padding-top:10px;">
+    <%= link_to "← Retour aux opportunités", opportunities_path, style:"color:#{accent1};font-weight:800;text-decoration:none;" %>
   </div>
 
-  <!-- HERO -->
-  <header class="ms-hero">
-    <div class="ms-hero-inner">
-      <div class="container">
-        <span class="ms-kicker"><%= category.present? ? category.capitalize : "Opportunité" %></span>
-        <h1 class="ms-title"><%= title %></h1>
-        <p class="ms-chapo"><%= truncate(desc_chapo, length: 180) %></p>
-        <% if org_line.present? %>
-          <p class="ms-chapo" style="margin-top:.4rem;opacity:.9;font-weight:700;"><%= org_line %></p>
+  <header class="op-hero">
+    <div class="container op-hero-inner">
+      <span class="chip"> <%= cat.present? ? cat.capitalize : "Opportunité" %> </span>
+      <h1><%= title %></h1>
+      <p class="chapo"><%= desc_plain.truncate(220) %></p>
+
+      <div class="meta">
+        <span class="chip">🗓️ <%= when_display %></span>
+        <% if extract_when_line(desc_md).blank? && safe_attr(@opportunity,:time_commitment).present? %>
+          <span class="chip">Format : <%= safe_attr(@opportunity,:time_commitment) %></span>
+        <% end %>
+        <% if source_url.present? %>
+          <span class="chip">🔗 <a href="<%= source_url %>" target="_blank" rel="noreferrer">Voir la page de l’organisateur</a></span>
+        <% else %>
+          <span class="chip">🔎 <a href="<%= search_url %>" target="_blank" rel="noreferrer">Rechercher l’info</a></span>
         <% end %>
       </div>
     </div>
   </header>
 
-  <!-- Le projet -->
-  <section class="ms-slice">
+  <div class="op-illu">
+    <img src="<%= img %>" alt="">
+  </div>
+
+  <section class="op-section">
     <div class="container">
-      <h2>📋 Le projet</h2>
-      <div class="ms-prose">
-        <% if desc_full.present? %>
-          <%= simple_format(desc_full) %>
-        <% else %>
-          <p>Une expérience concrète, encadrée et utile — viens découvrir, apprendre et contribuer près de chez toi.</p>
-        <% end %>
-      </div>
-    </div>
-  </section>
+      <h2 class="op-h2">📋 Le projet</h2>
+      <div class="op-prose"><%= render_md_light(desc_md) %></div>
 
-  <!-- Infos pratiques -->
-  <% if [org, location, email, phone, time_need, lat && lon].any?(&:present?) %>
-    <section class="ms-slice bg-muted ms-infos">
-      <div class="container">
-        <h3>Infos pratiques</h3>
-        <ul class="ms-meta">
-          <% if org.present? %>
-            <li><label>🏛 Organisation</label><div class="val"><%= org %></div></li>
-          <% end %>
-          <% if location.present? %>
-            <li><label>📍 Adresse</label><div class="val"><%= location %></div></li>
-          <% end %>
-          <% if email.present? %>
-            <li><label>✉️ Contact</label><div class="val"><a href="mailto:<%= email %>"><%= email %></a></div></li>
-          <% end %>
-          <% if phone.present? %>
-            <li><label>📞 Téléphone</label><div class="val"><a href="tel:<%= phone %>"><%= phone %></a></div></li>
-          <% end %>
-          <% if time_need.present? %>
-            <li><label>⏱ Temps à prévoir</label><div class="val"><%= time_need %></div></li>
-          <% end %>
-        </ul>
-
-        <% if lat && lon %>
-          <div id="op-map" data-lat="<%= lat %>" data-lon="<%= lon %>"></div>
-        <% end %>
-      </div>
-    </section>
-  <% end %>
-
-  <!-- CTA -->
-  <section class="ms-cta">
-    <div class="container">
-      <h2>Envie d’agir à ton tour ?</h2>
-      <p>Découvre d’autres opportunités près de chez toi ou partage ta propre histoire pour inspirer d’autres personnes.</p>
-      <div>
-        <%= link_to "Voir les actions locales", (defined?(opportunities_path) ? opportunities_path : root_path), class: "btn primary" %>
-        <%= link_to "Partager mon histoire", (respond_to?(:new_story_path) ? new_story_path : (defined?(stories_path) ? stories_path : root_path)), class: "btn secondary" %>
-      </div>
+      <% if org.present? || loc.present? || (lat && lon) %>
+        <div class="op-infos">
+          <% if org.present? %><label>🏛 Organisation</label><div class="val"><%= org %></div><% end %>
+          <% if loc.present? %><label>📍 Adresse</label><div class="val"><%= loc %></div><% end %>
+          <label>🗓 Date & horaires</label><div class="val"><%= when_display %></div>
+          <label>🔗 Lien</label>
+          <div class="val">
+            <% if source_url.present? %>
+              <a href="<%= source_url %>" target="_blank" rel="noreferrer"><%= source_url %></a>
+            <% else %>
+              <a href="<%= search_url %>" target="_blank" rel="noreferrer">Chercher « <%= search_q %> »</a>
+            <% end %>
+          </div>
+          <% if lat && lon %><div id="map" data-lat="<%= lat %>" data-lon="<%= lon %>"></div><% end %>
+        </div>
+      <% end %>
     </div>
   </section>
 </div>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <% content_for :scripts do %>
 <script>
-(function () {
-  function initOpMap() {
-    var el = document.getElementById('op-map');
-    if (!el || !window.L) return;
-    if (el.dataset.mapInited === "1") return;
+document.addEventListener("turbo:load", initOppMap);
+document.addEventListener("DOMContentLoaded", initOppMap);
+function initOppMap(){
+  const el=document.getElementById("map");
+  if(!el||!window.L) return;
+  const lat=parseFloat(el.dataset.lat), lon=parseFloat(el.dataset.lon);
+  if(isNaN(lat)||isNaN(lon)) return;
 
-    var lat = parseFloat(el.dataset.lat), lon = parseFloat(el.dataset.lon);
-    if (isNaN(lat) || isNaN(lon)) return;
-
-    var map = L.map(el, { zoomControl:false, attributionControl:false }).setView([lat, lon], 13);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19 }).addTo(map);
-
-    var icon = L.divIcon({
-      className:'',
-      html:'<div style="width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:<%= accent1 %>">📍</div>',
-      iconSize:[26,32], iconAnchor:[13,28], popupAnchor:[0,-26]
-    });
-
-    L.marker([lat, lon], {icon:icon}).addTo(map);
-    setTimeout(() => map.invalidateSize(), 200);
-    el.dataset.mapInited = "1";
-  }
-  document.addEventListener("DOMContentLoaded", initOpMap);
-  document.addEventListener("turbo:load", initOpMap);
-})();
+  const map=L.map(el,{zoomControl:false,attributionControl:false}).setView([lat,lon],13);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19}).addTo(map);
+  const icon=L.divIcon({
+    html:'<div style="width:28px;height:28px;border-radius:999px;border:2px solid #fff;background:<%= accent1 %>;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 1px 6px rgba(0,0,0,.3);font-size:14px;">📍</div>',
+    className:'', iconSize:[28,32], iconAnchor:[14,28]
+  });
+  L.marker([lat,lon],{icon}).addTo(map);
+  setTimeout(()=>map.invalidateSize(),200);
+}
 </script>
 <% end %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_22_170357) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_28_080832) do
   create_table "friendly_id_slugs", force: :cascade do |t|
     t.string "slug", null: false
     t.integer "sluggable_id", null: false
@@ -80,6 +80,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_22_170357) do
     t.string "venue_name"
     t.string "organizer_name"
     t.string "url"
+    t.string "image_url"
     t.index ["city"], name: "index_opportunities_on_city"
     t.index ["ends_at"], name: "index_opportunities_on_ends_at"
     t.index ["slug"], name: "index_opportunities_on_slug", unique: true

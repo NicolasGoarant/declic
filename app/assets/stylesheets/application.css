@@ -1,27 +1,95 @@
-/*
- *= require stories
- *= require_self
- */
-
-/* --- Base globale --- */
-:root { color-scheme: light; }
-
-/* --- Wrapper home pour éviter les collisions de stories.css --- */
-body.home-ms,
-.home-ms {
-  background: radial-gradient(1400px 800px at 10% -10%, #efe8ff 0%, transparent 60%) no-repeat,
-              linear-gradient(180deg, #f8f5ff 0%, #f4f3ff 100%);
-  color: #111827;
+/* ========== Application global ========== */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+  color: #0f172a;
+  background: #fff;
 }
 
-/* assure qu'aucun body .story-page ne prenne la main sur la home */
-body.home-ms .story-page,
-.home-ms .story-page {
-  all: unset;
+/* Boutons génériques (utilisés dans la home) */
+.btn { display:inline-block; border-radius:999px; padding:.9rem 1.2rem; text-decoration:none; font-weight:800 }
+.btn.primary { background:#fff; color:#7e5bef; box-shadow:0 10px 28px rgba(0,0,0,.08) }
+.btn.secondary { background:transparent; border:2px solid #fff; color:#fff }
+
+/* Container utilitaire (si besoin dans la home) */
+.container { max-width:1140px; margin:0 auto; padding:0 24px; }
+
+/* ========== LEAFLET — POPUP “Déclic card” ========== */
+.leaflet-container a { color:#7e5bef; text-decoration:none; }
+.leaflet-container a:hover { text-decoration:underline; }
+
+.leaflet-popup-content-wrapper.dc-popup {
+  padding: 0;
+  border-radius: 16px;
+  box-shadow: 0 18px 40px rgba(15,23,42,.18);
+  border: 1px solid #eef2f7;
+}
+.leaflet-popup-tip.dc-popup { display:none; } /* sans petit triangle */
+
+.dcpp {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 12px;
+  padding: 12px;
+  min-width: 280px;
+  max-width: 320px;
 }
 
-/* général : adoucir les transitions de scroll, boutons, liens */
-html {
-  scroll-behavior: smooth;
+.dcpp-img {
+  width: 56px; height: 56px;
+  border-radius: 12px;
+  background:#f1f5f9 center/cover no-repeat;
+  border:1px solid #e2e8f0;
 }
-a { transition: color .2s, background .2s, box-shadow .2s; }
+
+.dcpp-head { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+.dcpp-pill {
+  font: 800 .72rem/1 "Epilogue", Inter, system-ui;
+  letter-spacing:.02em;
+  text-transform: uppercase;
+  padding:.42rem .6rem;
+  border-radius:999px;
+  background:#f1f5f9;
+  color:#0f172a;
+  border:1px solid #e5e7eb;
+}
+
+.dcpp-title {
+  font: 900 1rem/1.15 "Epilogue", Inter;
+  margin: 0 0 4px 0;
+  letter-spacing:-.01em;
+}
+.dcpp-org { font: 700 .9rem/1.3 "Inter"; color:#475569; margin:0; }
+.dcpp-addr { font: 500 .9rem/1.3 "Inter"; color:#6b7280; margin:.2rem 0 .5rem; }
+
+.dcpp-actions {
+  display:flex; justify-content:flex-start; gap:8px; margin-top:.25rem;
+}
+.dcpp-actions a {
+  display:inline-flex; align-items:center; gap:.4rem;
+  font: 800 .9rem/1 "Epilogue"; text-decoration:none;
+  background:#0ea5e9; color:#fff; padding:.6rem .8rem; border-radius:10px;
+}
+.dcpp-actions a:hover { filter: brightness(0.95); }
+
+/* Variantes de couleur selon catégorie */
+.dcpp-pill[data-cat="benevolat"]    { background:#fff1f2; color:#be123c; border-color:#fecdd3; }
+.dcpp-pill[data-cat="formation"]    { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
+.dcpp-pill[data-cat="rencontres"]   { background:#ecfdf5; color:#047857; border-color:#bbf7d0; }
+.dcpp-pill[data-cat="entreprendre"] { background:#fff7ed; color:#c2410c; border-color:#fed7aa; }
+
+/* ========== LEAFLET — marqueurs colorés (fallback classes si besoin) ========== */
+.dc-marker {
+  width:26px; height:26px; border-radius:9999px;
+  border:2px solid #fff; display:grid; place-items:center;
+  color:#fff; font-size:14px; box-shadow:0 1px 4px rgba(0,0,0,.25);
+}
+.dc-marker.benevolat    { background:#f43f5e; }
+.dc-marker.formation    { background:#3b82f6; }
+.dc-marker.rencontres   { background:#10b981; }
+.dc-marker.entreprendre { background:#f59e0b; }
+.dc-marker.default      { background:#7e5bef; }
+
+/* Accessibilité : focus dans le popup */
+.dcpp a:focus { outline: 2px solid #7c3aed; outline-offset: 2px; border-radius: 8px; }
