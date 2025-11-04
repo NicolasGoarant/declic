@@ -1,0 +1,137 @@
+<%# app/views/admin/opportunities/index.html.erb %>
+
+<div class="admin-wrap">
+  <h1>Opportunités — Admin</h1>
+
+  <div class="stats">
+    <span>Total: <strong><%= @counts[:total] %></strong></span>
+    <span>Actives: <strong><%= @counts[:active] %></strong></span>
+    <span>Sans coordonnées: <strong><%= @counts[:missing_coords] %></strong></span>
+  </div>
+
+  <!-- Filtres rapides -->
+  <div class="filters">
+    <%= form_with url: admin_opportunities_path, method: :get, local: true do |f| %>
+      <%= f.label :q, "Recherche" %>
+      <%= f.text_field :q, value: @q, placeholder: "mot-clé dans le titre" %>
+
+      <%= f.label :category, "Cat." %>
+      <%= select_tag :category,
+            options_for_select([["(toutes)", ""], ["Bénévolat", "benevolat"], ["Formation", "formation"], ["Rencontres", "rencontres"], ["Entreprendre", "entreprendre"]], @cat),
+            include_blank: false %>
+
+      <label>
+        <%= check_box_tag :only_inactive, "1", @only_in %> Uniquement inactives
+      </label>
+      <label>
+        <%= check_box_tag :missing_coords, "1", @missing %> Sans coordonnées
+      </label>
+
+      <%= f.submit "Filtrer", class: "btn" %>
+      <%= link_to "Réinitialiser", admin_opportunities_path, class: "btn ghost" %>
+    <% end %>
+  </div>
+
+  <!-- Formulaire d'actions groupées -->
+  <%= form_with url: bulk_admin_opportunities_path, method: :post, local: true do %>
+    <div class="bulk-bar">
+      <select name="bulk_action" required>
+        <option value="">— Action groupée —</option>
+        <option value="activate">Activer</option>
+        <option value="deactivate">Désactiver</option>
+        <option value="destroy">Supprimer</option>
+      </select>
+      <button class="btn">Appliquer</button>
+
+      <%= button_to "Géocoder les fiches sans coordonnées",
+                    geocode_missing_admin_opportunities_path,
+                    method: :post, form: { data: { turbo: false } }, class: "btn ghost",
+                    form_class: "inline-form" %>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="chk-all"></th>
+            <th>ID</th>
+            <th>Titre</th>
+            <th>Cat.</th>
+            <th>Active</th>
+            <th>Lieu</th>
+            <th>Début</th>
+            <th>Fin</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @opportunities.each do |o| %>
+            <tr>
+              <td><input type="checkbox" name="ids[]" value="<%= o.id %>"></td>
+              <td class="mono"><%= o.id %></td>
+              <td class="tight">
+                <div class="title"><%= o.title %></div>
+                <% if o.organization.present? %>
+                  <div class="muted"><%= o.organization %></div>
+                <% end %>
+              </td>
+              <td><%= o.category.presence || "—" %></td>
+              <td><%= o.is_active? ? "✅" : "—" %></td>
+              <td><%= o.location.presence || "—" %></td>
+              <td><%= o.starts_at ? l(o.starts_at, format: :short) : "—" %></td>
+              <td><%= o.ends_at ? l(o.ends_at, format: :short) : "—" %></td>
+              <td class="actions">
+                <%= link_to "Éditer", edit_admin_opportunity_path(o), class: "btn xs" %>
+                <%= link_to "Voir", opportunity_path(o), class: "btn xs ghost", target: "_blank" %>
+                <%= link_to "Supprimer",
+                            admin_opportunity_path(o),
+                            data: { turbo_method: :delete, turbo_confirm: "Supprimer cette opportunité ?" },
+                            class: "btn xs danger" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
+  <% if @opportunities.blank? %>
+    <p class="muted" style="margin-top:12px">Aucune opportunité avec ces critères.</p>
+  <% end %>
+</div>
+
+<style>
+.admin-wrap{font:14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif; color:#0f172a}
+.stats{display:flex;gap:16px;margin:.5rem 0 1rem}
+.stats span{background:#f1f5f9;border:1px solid #e2e8f0;padding:.35rem .6rem;border-radius:8px}
+.filters form{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.5rem 0 1rem}
+.filters input[type="text"], .filters select{padding:.4rem .55rem;border:1px solid #cbd5e1;border-radius:8px}
+.btn{display:inline-block;background:#4f46e5;color:#fff;border-radius:8px;padding:.45rem .7rem;text-decoration:none;border:0}
+.btn.ghost{background:#fff;color:#334155;border:1px solid #cbd5e1}
+.btn.danger{background:#dc2626}
+.btn.xs{font-size:.85rem;padding:.3rem .5rem;border-radius:6px}
+.bulk-bar{display:flex;gap:8px;align-items:center;margin:.25rem 0 .5rem}
+.bulk-bar select{padding:.4rem .55rem;border:1px solid #cbd5e1;border-radius:8px}
+.inline-form{display:inline}
+.table-wrap{overflow:auto;border:1px solid #e2e8f0;border-radius:10px}
+.table{width:100%;border-collapse:separate;border-spacing:0}
+.table th,.table td{padding:.5rem .6rem;border-bottom:1px solid #e2e8f0;vertical-align:top;white-space:nowrap}
+.table thead th{position:sticky;top:0;background:#f8fafc;z-index:1}
+.table td.tight .title{font-weight:600;white-space:normal}
+.table td.tight .muted{color:#64748b;font-size:.85em;white-space:normal}
+.table td.actions{display:flex;gap:6px;align-items:center}
+.mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+</style>
+
+<script>
+  // Sélection globale des cases à cocher
+  document.addEventListener('turbo:load', initAdminOps);
+  document.addEventListener('DOMContentLoaded', initAdminOps);
+  function initAdminOps(){
+    const all = document.getElementById('chk-all');
+    if(!all) return;
+    all.addEventListener('change', ()=>{
+      document.querySelectorAll('input[name="ids[]"]').forEach(c=> c.checked = all.checked);
+    });
+  }
+</script>

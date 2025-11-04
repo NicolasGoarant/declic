@@ -1,0 +1,18 @@
+# ————— Nancy & corridor Nancy ⇄ Saint-Dié (HTML par défaut) —————
+https://www.grandnancy.eu/
+html https://lafabriquedespossibles.fr
+html https://www.ca-saintdie.fr
+html https://www.mjcnancy.fr/
+html https://www.restosducoeur.org/devenir-benevole/
+html https://emmaus-france.org
+html https://www.secourspopulaire.fr/meurthe-et-moselle
+html https://www.nancy.fr/accueil
+html https://www.vosges.fr/
+html https://www.cci.fr/actualites  # si page locale Nancy accessible
+
+# ————— Flux RSS (si dispo) —————
+# rss https://www.vosges.fr/actualites.rss
+
+# ————— Bulletins / Magazines (PDF) —————
+# pdf https://www.ville-baccarat.com/bulletin_municipal.pdf
+# pdf https://www.saintdie.fr/medias/magazine_municipal.pdf

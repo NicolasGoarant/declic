@@ -1,49 +1,48 @@
 # app/controllers/opportunities_controller.rb
+# frozen_string_literal: true
+
 class OpportunitiesController < ApplicationController
-  layout "application"   # <— force l’usage du layout avec la navbar
+  # GET /opportunities
+  def index
+    @opportunities =
+      Opportunity.active
+                 .order(Arel.sql("COALESCE(starts_at, created_at) DESC"))
+                 .limit(1000)
+
+    respond_to do |format|
+      format.html # index.html.erb
+      format.json { render json: @opportunities.as_json(only: %i[id slug title description category organization location time_commitment latitude longitude image_url]) }
+    end
+  end
+
+  # GET /opportunities/:id
+  def show
+    @opportunity = Opportunity.friendly.find(params[:id])
+  end
+
+  # GET /opportunities/new
   def new
     @opportunity = Opportunity.new
   end
 
+  # POST /opportunities
   def create
     @opportunity = Opportunity.new(opportunity_params)
-    @opportunity.is_active = true if @opportunity.is_active.nil?
-
     if @opportunity.save
-      redirect_to @opportunity, notice: "Merci ! Votre opportunité a été proposée."
+      redirect_to @opportunity, notice: "Opportunité créée."
     else
+      flash.now[:alert] = @opportunity.errors.full_messages.to_sentence
       render :new, status: :unprocessable_entity
     end
   end
 
-  def index
-    @category = params[:category].presence
-    scope = Opportunity.active.order(created_at: :desc)
-    scope = scope.where(category: @category) if @category.in?(Opportunity::CATEGORIES)
-    @opportunities = scope.limit(60)
-  end
-
-  def show
-    @opportunity = Opportunity.find(params[:id])
-  end
-
-  
   private
 
   def opportunity_params
     params.require(:opportunity).permit(
       :title, :description, :category, :organization, :location,
-      :latitude, :longitude, :time_commitment, :effort_level,
-      :starts_at, :ends_at, :tags, :contact_email, :contact_phone, :website, :is_active,
-
-      # --- Nouveaux champs "virage" ---
-      :audience_level, :career_outcome, :skills, :credential,
-      :mentorship, :alumni_network, :hiring_partners,
-      :format, :schedule, :duration_weeks, :application_deadline,
-      :selectivity_level, :prerequisites,
-      :cost_eur, :is_free, :scholarship_available, :funding_options,
-      :accessibility, :impact_domains, :impact_metric_hint
+      :time_commitment, :starts_at, :ends_at, :latitude, :longitude,
+      :is_active, :image_url, :source_url, :tags
     )
   end
 end
-

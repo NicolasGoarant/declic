@@ -4,25 +4,31 @@ Rails.application.routes.draw do
 
   resources :opportunities, only: [:index, :show, :new, :create]
   get "/parcours/:category", to: "opportunities#index", as: :parcours
-  # config/routes.rb
 
   get "philosophie", to: "pages#philosophie", as: :philosophie
 
-  # NEW
-  resources :stories, only: [:index, :show]
+  resources :stories, only: %i[index show]
 
   namespace :api do
     namespace :v1 do
       resources :opportunities, only: %i[index show]
-      # NEW (pins « belles histoires » sur la carte)
       resources :stories, only: %i[index]
     end
   end
 
-  # Pages statiques (ressources)
-get "/mentions-legales", to: "pages#legal",          as: :mentions_legales
-get "/confidentialite",  to: "pages#confidentialite", as: :confidentialite
-get "/presse",           to: "pages#presse",         as: :presse
-get "/faq",              to: "pages#faq",            as: :faq
+  get "/mentions-legales", to: "pages#legal",           as: :mentions_legales
+  get "/confidentialite",  to: "pages#confidentialite", as: :confidentialite
+  get "/presse",           to: "pages#presse",          as: :presse
+  get "/faq",              to: "pages#faq",             as: :faq
 
+  # --- ADMIN ---
+  namespace :admin do
+    root to: "opportunities#index"
+    resources :opportunities, only: [:index, :edit, :update, :destroy] do
+      collection do
+        post :bulk      # actions groupées (activate/deactivate/destroy)
+        post :geocode_missing
+      end
+    end
+  end
 end

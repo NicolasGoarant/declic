@@ -1,0 +1,74 @@
+<!-- app/views/admin/opportunities/edit.html.erb -->
+<div class="admin-wrap">
+  <p><%= link_to "← Retour", admin_opportunities_path(request.query_parameters) %></p>
+  <h1>Éditer : <%= @opportunity.title %></h1>
+
+  <%= form_with model: [:admin, @opportunity], local: true do |f| %>
+    <div class="grid">
+      <div>
+        <label>Titre</label>
+        <%= f.text_field :title %>
+      </div>
+      <div>
+        <label>Catégorie</label>
+        <%= f.select :category, Opportunity::CATEGORIES %>
+      </div>
+      <div>
+        <label>Organisation</label>
+        <%= f.text_field :organization %>
+      </div>
+      <div>
+        <label>Lieu</label>
+        <%= f.text_field :location %>
+      </div>
+      <div class="full">
+        <label>Description</label>
+        <%= f.text_area :description, rows: 8 %>
+      </div>
+      <div>
+        <label>Time commitment</label>
+        <%= f.text_field :time_commitment %>
+      </div>
+      <div>
+        <label>Starts at</label>
+        <%= f.datetime_field :starts_at %>
+      </div>
+      <div>
+        <label>Ends at</label>
+        <%= f.datetime_field :ends_at %>
+      </div>
+      <div>
+        <label>Latitude</label>
+        <%= f.text_field :latitude %>
+      </div>
+      <div>
+        <label>Longitude</label>
+        <%= f.text_field :longitude %>
+      </div>
+      <div>
+        <label>Publié ?</label>
+        <%= f.check_box :is_active %>
+      </div>
+      <div class="full">
+        <label>Image URL</label>
+        <%= f.url_field :image_url %>
+      </div>
+      <div class="full">
+        <label>Source URL</label>
+        <%= f.url_field :source_url %>
+      </div>
+      <div class="full">
+        <label>Tags</label>
+        <%= f.text_field :tags, placeholder: "ex: réseau, mentorat" %>
+      </div>
+    </div>
+    <p><%= f.submit "Enregistrer", class: "btn small" %></p>
+  <% end %>
+</div>
+
+<style>
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.grid .full{grid-column:1/-1}
+.grid input,.grid textarea,.grid select{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px}
+.btn.small{display:inline-block;padding:.6rem 1rem;border-radius:8px;background:#111827;color:#fff;border:none;cursor:pointer}
+</style>

@@ -1,0 +1,7 @@
+requests
+beautifulsoup4
+lxml
+python-dateutil
+# Optionnels mais recommandés
+feedparser
+pdfminer.six

@@ -10,7 +10,7 @@
           <%= link_to "Proposer une opportunité", new_opportunity_path, class: "btn-cta" %>
         </div>
         <p class="ops-chapo">
-          Trouve une action concrète près de chez toi&nbsp;: bénévolat, formations, rencontres, ou entreprendre.
+          Trouve une action concrète près de chez toi : bénévolat, formations, rencontres, ou entreprendre.
         </p>
       </div>
     </div>
@@ -43,22 +43,22 @@
       <div id="ops-list" class="ops-grid">
         <% (@opportunities || []).each do |o| %>
           <% cover =
-              if o.respond_to?(:image_url) && o.image_url.present?
-                o.image_url
+            if o.respond_to?(:image_url) && o.image_url.present?
+              o.image_url
+            else
+              case (o.category || "").to_s.downcase
+              when "benevolat"
+                "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=800&auto=format&fit=crop"
+              when "formation"
+                "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=800&auto=format&fit=crop"
+              when "rencontres"
+                "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=800&auto=format&fit=crop"
+              when "entreprendre"
+                "https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=800&auto=format&fit=crop"
               else
-                case (o.category || "").to_s.downcase
-                when "benevolat"
-                  "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=800&auto=format&fit=crop"
-                when "formation"
-                  "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=800&auto=format&fit=crop"
-                when "rencontres"
-                  "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=800&auto=format&fit=crop"
-                when "entreprendre"
-                  "https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=800&auto=format&fit=crop"
-                else
-                  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800&auto=format&fit=crop"
-                end
+                "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800&auto=format&fit=crop"
               end
+            end
           %>
           <%= link_to opportunity_path(o), class: "op-card" do %>
             <div class="thumb">
@@ -84,7 +84,9 @@
 
 <style>
 /* ===== Thème de page (cohérent Home/Stories) ===== */
-.ops-ms{ --a1:#7e5bef; --a2:#3b82f6; --muted:#f4f2fb; color:#0f172a; font-family: "Inter", system-ui, sans-serif;
+.ops-ms{
+  --a1:#7e5bef; --a2:#3b82f6; --muted:#f4f2fb; color:#0f172a;
+  font-family:"Inter",system-ui,sans-serif;
   background:
     radial-gradient(1400px 800px at 10% -10%, #efe8ff 0%, transparent 60%) no-repeat,
     linear-gradient(180deg, #fbfaff 0%, #f6f3ff 60%, #f3f1ff 100%);
@@ -95,19 +97,24 @@
 /* ===== HERO ===== */
 .ops-hero{ position:relative; overflow:hidden; color:#fff; background:linear-gradient(160deg,var(--a1),var(--a2)); }
 .ops-hero-inner{ position:relative; padding:clamp(70px,8vw,120px) 0 clamp(34px,5.5vw,64px); z-index:2; }
-.ops-hero-bg{ position:absolute; inset:0; background:
-  linear-gradient(180deg,rgba(9,13,28,.62),rgba(9,13,28,.62)),
-  url("https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2400&auto=format&fit=crop") center/cover no-repeat;
+.ops-hero-bg{
+  position:absolute; inset:0;
+  background:
+    linear-gradient(180deg,rgba(9,13,28,.62),rgba(9,13,28,.62)),
+    url("https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2400&auto=format&fit=crop") center/cover no-repeat;
   filter:saturate(1.05) brightness(.9); z-index:1;
 }
 .ops-hero-head{ display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-.ops-title{ margin:0; font-family:"Epilogue",Inter; font-weight:900; letter-spacing:-.02em;
+.ops-title{
+  margin:0; font-family:"Epilogue",Inter; font-weight:900; letter-spacing:-.02em;
   font-size:clamp(2rem,3.6vw,2.8rem); text-shadow:0 2px 16px rgba(0,0,0,.25);
 }
-.ops-chapo{ margin:.5rem 0 0; max-width:980px; font:600 clamp(1rem,.9vw + .8rem,1.25rem)/1.65 "Inter";
+.ops-chapo{
+  margin:.5rem 0 0; max-width:980px; font:600 clamp(1rem,.9vw + .8rem,1.25rem)/1.65 "Inter";
   text-shadow:0 1px 8px rgba(0,0,0,.18);
 }
-.btn-cta{ display:inline-flex; align-items:center; gap:.5rem; padding:.75rem 1rem; border-radius:999px;
+.btn-cta{
+  display:inline-flex; align-items:center; gap:.5rem; padding:.75rem 1rem; border-radius:999px;
   background:#fff; color:#4f46e5; text-decoration:none; font:900 .98rem/1 "Epilogue";
   box-shadow:0 12px 34px rgba(0,0,0,.12); white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis;
 }
@@ -120,14 +127,22 @@
 /* ===== Slices / fonds ===== */
 .ops-slice{ padding:clamp(2rem,4.6vw,4rem) 0; }
 .bg-muted{ background:var(--muted); }
-.grad-soft{ background: radial-gradient(900px 420px at 85% -10%, #eee7ff 0%, transparent 66%),
-                       linear-gradient(180deg,#f9f7ff 0%, #f3f1ff 100%); }
-.grad-behind-map{ background: radial-gradient(980px 460px at 50% -14%, #e9e2ff 0%, transparent 70%), var(--muted); }
+.grad-soft{
+  background:
+    radial-gradient(900px 420px at 85% -10%, #eee7ff 0%, transparent 66%),
+    linear-gradient(180deg,#f9f7ff 0%, #f3f1ff 100%);
+}
+.grad-behind-map{
+  background:
+    radial-gradient(980px 460px at 50% -14%, #e9e2ff 0%, transparent 70%),
+    var(--muted);
+}
 
 /* ===== Filtres ===== */
 .ops-filters{ margin-bottom:12px; }
 .chips{ display:flex; flex-wrap:wrap; gap:10px; }
-.chip{ display:inline-flex; align-items:center; justify-content:center; flex-wrap:wrap;
+.chip{
+  display:inline-flex; align-items:center; justify-content:center; flex-wrap:wrap;
   padding:.6rem 1rem; border-radius:999px; background:#fff; border:1px solid #e6e8ee;
   font:800 .95rem/1.1 "Inter"; white-space:normal; word-break:break-word;
 }
@@ -135,10 +150,12 @@
 
 /* ===== Carte ===== */
 .ops-mapwrap{ position:relative; }
-.ops-map{ height:560px; width:100%; border-radius:20px; border:1px solid #e6e8ee; overflow:hidden;
+.ops-map{
+  height:560px; width:100%; border-radius:20px; border:1px solid #e6e8ee; overflow:hidden;
   box-shadow:0 10px 30px rgba(15,23,42,.10); background:#fff;
 }
-.ops-locate{ position:absolute; right:12px; top:12px; z-index:20; display:inline-flex; gap:8px; align-items:center;
+.ops-locate{
+  position:absolute; right:12px; top:12px; z-index:20; display:inline-flex; gap:8px; align-items:center;
   padding:.7rem 1rem; border-radius:12px; background:#fff; border:1px solid #e6e8ee; box-shadow:0 8px 22px rgba(15,23,42,.10);
 }
 
@@ -147,10 +164,11 @@
 @media (max-width:980px){ .ops-grid{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
 @media (max-width:640px){ .ops-grid{ grid-template-columns:1fr; } }
 
-.op-card{ display:block; border-radius:20px; overflow:hidden; background:#fff; border:1px solid #e6e8ee;
+.op-card{
+  display:block; border-radius:20px; overflow:hidden; background:#fff; border:1px solid #e6e8ee;
   box-shadow:0 10px 26px rgba(15,23,42,.08); text-decoration:none; color:#0f172a;
 }
-.op-card .thumb{ position:relative; aspect-ratio: 16/9; background:#f2f2f2; }
+.op-card .thumb{ position:relative; aspect-ratio:16/9; background:#f2f2f2; }
 .op-card .thumb img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
 .op-card .thumb .badge{
   position:absolute; left:10px; top:10px; padding:.3rem .55rem; border-radius:999px;
@@ -159,7 +177,8 @@
 .op-card .body{ padding:14px 16px 16px; }
 .op-card .title{ margin:0; font:900 1.05rem/1.2 "Epilogue"; }
 .op-card .org{ margin:.15rem 0 0; color:#64748b; font:.88rem/1.1 "Inter"; }
-.op-card .desc{ margin:.4rem 0; color:#475569; font:.98rem/1.55 "Inter";
+.op-card .desc{
+  margin:.4rem 0; color:#475569; font:.98rem/1.55 "Inter";
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
 .op-card .loc{ margin:0; color:#1f2937; font:.98rem/1.35 "Inter"; }
@@ -179,7 +198,7 @@ function bootOps(){
   if (mapEl.dataset.mapInited === "1") return;
 
   const map = L.map(mapEl, { zoomControl:true, attributionControl:false }).setView([46.6, 2.2], 6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom: 19 }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom:19 }).addTo(map);
   requestAnimationFrame(()=> map.invalidateSize());
   setTimeout(()=> map.invalidateSize(), 250);
   mapEl.dataset.mapInited = "1";
@@ -199,15 +218,15 @@ function bootOps(){
     const org = o.organization ? `${o.organization}` : '';
     const img = o.image_url || coverFor(o.category);
     return `
-      <div style="display:grid;grid-template-columns:72px 1fr;gap:10px;min-width:260px;align-items:start">
-        <img src="${img}" alt="" style="width:72px;height:72px;border-radius:10px;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,.2)"/>
-        <div>
-          <h4 style="margin:0;font-weight:700;font-size:14px;line-height:1.2">${o.title||''}</h4>
-          ${org?`<div style="color:#475569;font-size:12px">${org}</div>`:''}
-          ${loc?`<div style="color:#475569;font-size:12px">${loc}</div>`:''}
-          <div style="margin-top:6px"><a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a></div>
-        </div>
-      </div>`;
+<div style="display:grid;grid-template-columns:72px 1fr;gap:10px;min-width:260px;align-items:start">
+  <img src="${img}" alt="" style="width:72px;height:72px;border-radius:10px;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,.2)"/>
+  <div>
+    <h4 style="margin:0;font-weight:700;font-size:14px;line-height:1.2">${o.title||''}</h4>
+    ${org?`<div style="color:#475569;font-size:12px">${org}</div>`:''}
+    ${loc?`<div style="color:#475569;font-size:12px">${loc}</div>`:''}
+    <div style="margin-top:6px"><a href="${url}" class="text-indigo-600 underline text-sm">Voir la fiche</a></div>
+  </div>
+</div>`;
   }
   function coverFor(cat){
     const c=(cat||'').toLowerCase();
@@ -232,13 +251,13 @@ function bootOps(){
   }
 
   // Charge les opportunités depuis l'API
-  fetch('/api/v1/opportunities').then(r=>r.ok?r.json():[]).then(data=>{
-    dataset = data || [];
-    plot(dataset);
-  }).catch(()=>{});
+  fetch('/api/v1/opportunities')
+    .then(r=>r.ok?r.json():[])
+    .then(data=>{ dataset = data || []; plot(dataset); })
+    .catch(()=>{});
 
   // Filtres carte + liste
-  const chips = [...document.querySelectorAll('.chip')];
+  const chips = Array.from(document.querySelectorAll('.chip'));
   chips.forEach(chip=> chip.addEventListener('click', ()=>{
     chips.forEach(c=>c.classList.remove('is-active'));
     chip.classList.add('is-active');

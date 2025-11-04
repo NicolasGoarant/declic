@@ -1,8 +1,6 @@
-# app/models/opportunity.rb
 class Opportunity < ApplicationRecord
   # --- Stockage JSON (SQLite/Postgres) ---
   attribute :raw_payload, :json
-
 
   # --- Slug ---
   extend FriendlyId
@@ -12,12 +10,13 @@ class Opportunity < ApplicationRecord
   end
 
   # --- Scopes / constantes ---
-  scope :active, -> { where(is_active: true) }
   CATEGORIES = %w[benevolat formation rencontres entreprendre].freeze
+  scope :active, -> { where(is_active: true) }
+  scope :with_coords, -> { where.not(latitude: nil, longitude: nil) }
 
-  # --- Géocodage (adresse -> lat/lng) ---
-  reverse_geocoded_by :latitude, :longitude
-  before_validation :geocode_if_needed
+  # --- Géocodage (location -> lat/lng) ---
+  geocoded_by :location, latitude: :latitude, longitude: :longitude
+  before_validation :geocode_if_needed, if: -> { location.present? && (latitude.blank? || longitude.blank?) }
 
   # --- Anti-spam (honeypot) ---
   attr_accessor :honeypot_url
@@ -27,14 +26,20 @@ class Opportunity < ApplicationRecord
   validates :title,       presence: true, length: { maximum: 160 }
   validates :description, presence: true
   validates :category,    presence: true, inclusion: { in: CATEGORIES }
-  validates :website,        allow_blank: true, format: URI::DEFAULT_PARSER.make_regexp(%w[http https])
-  validates :contact_email,  allow_blank: true, format: URI::MailTo::EMAIL_REGEXP
+
+  # ⚠️ Ces deux validations supposent que tes colonnes existent :
+  validates :website,       allow_blank: true, format: URI::DEFAULT_PARSER.make_regexp(%w[http https]) if column_names.include?("website")
+  validates :contact_email, allow_blank: true, format: URI::MailTo::EMAIL_REGEXP                         if column_names.include?("contact_email")
+
+  # Coordonnées valides si présentes (on ne force pas la présence pour permettre l’import,
+  # mais on désactivera l’opportunité sans coords au moment de l’import / via tâche rake)
+  validates :latitude,  numericality: { greater_than_or_equal_to: -90,  less_than_or_equal_to: 90  }, allow_nil: true
+  validates :longitude, numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }, allow_nil: true
 
   # --- Défauts ---
   before_validation :apply_defaults
 
-  # =========== Ajouts “virage” ===========
-  # Helpers CSV -> Array
+  # =========== Helpers « virage » CSV ===========
   def skills_list
     skills.to_s.split(/[;,]/).map(&:strip).reject(&:blank?)
   end
@@ -43,16 +48,16 @@ class Opportunity < ApplicationRecord
     impact_domains.to_s.split(/[;,]/).map(&:strip).reject(&:blank?)
   end
 
-  # Score simple pour classer les offres qui “parlent” aux publics en reconversion/cadres
+  # Score indicatif
   def relevance_score
     score = 0
     score += 3 if career_outcome.to_s =~ /(reconversion|emploi)/i
-    score += 2 if credential.to_s =~ /(certificat|rncp)/i
-    score += 2 if schedule.to_s =~ /(soir|week)/i
+    score += 2 if credential.to_s     =~ /(certificat|rncp)/i
+    score += 2 if schedule.to_s       =~ /(soir|week)/i
     score += 2 if mentorship || alumni_network
-    score += 2 if format.to_s =~ /(distanciel|hybride)/i
+    score += 2 if format.to_s         =~ /(distanciel|hybride)/i
     score += 2 if selectivity_level.to_s =~ /(sélectif|entretien|dossier)/i
-    score += 1 if application_deadline.present? && application_deadline <= 45.days.from_now
+    score += 1 if respond_to?(:application_deadline) && application_deadline.present? && application_deadline <= 45.days.from_now
     score -= 3 if description.to_s.length < 140
     score
   end
@@ -61,30 +66,22 @@ class Opportunity < ApplicationRecord
   private
 
   def apply_defaults
-    self.source    ||= 'user'
+    self.source    ||= 'user' if respond_to?(:source)
     self.is_active = false if is_active.nil?
   end
 
   def geocode_if_needed
-    return unless latitude.blank? || longitude.blank?
-    q = [address, postcode, city].compact.join(', ').strip
-    return if q.blank?
-
-    if (res = Geocoder.search(q).first)
-      self.latitude  ||= res.latitude
-      self.longitude ||= res.longitude
-      self.location  ||= res.city.presence || city
+    # Utilise le geocoder configuré + remplit latitude/longitude
+    geocode
+    # Optionnel : si le géocodeur renvoie aussi une ville, on peut l’extraire
+    if self.location.blank? && defined?(address_components) && address_components.present?
+      self.location = address_components[:city] || address_components[:town] || address_components[:village]
     end
+  rescue => e
+    Rails.logger.warn("[geocode_if_needed] #{e.class}: #{e.message}")
   end
 
   def honeypot_must_be_blank
     errors.add(:base, 'Spam détecté') if honeypot_url.present?
   end
 end
-
-
-
-
-
-
-
