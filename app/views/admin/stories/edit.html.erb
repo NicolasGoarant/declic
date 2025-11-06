@@ -1,0 +1,77 @@
+<!-- app/views/admin/stories/edit.html.erb -->
+<div class="admin-wrap">
+  <p><%= link_to "← Retour", admin_stories_path(request.query_parameters) %></p>
+  <h1>Éditer la story #<%= @story.id %> : <%= @story.title %></h1>
+
+  <%= form_with model: [:admin, @story], local: true do |f| %>
+    <div class="grid">
+      <div class="full">
+        <label>Titre</label>
+        <%= f.text_field :title %>
+      </div>
+
+      <div class="full">
+        <label>Chapo</label>
+        <%= f.text_area :chapo, rows: 2 %>
+      </div>
+
+      <div class="full">
+        <label>Description (courte)</label>
+        <%= f.text_area :description, rows: 3 %>
+      </div>
+
+      <div class="full">
+        <label>Corps (Markdown autorisé)</label>
+        <%= f.text_area :body, rows: 12 %>
+      </div>
+
+      <div>
+        <label>Lieu</label>
+        <%= f.text_field :location %>
+      </div>
+      <div>
+        <label>Latitude</label>
+        <%= f.text_field :latitude %>
+      </div>
+      <div>
+        <label>Longitude</label>
+        <%= f.text_field :longitude %>
+      </div>
+
+      <div class="full">
+        <label>Image URL</label>
+        <%= f.url_field :image_url, placeholder: "https://…" %>
+      </div>
+
+      <div>
+        <label>Source (nom)</label>
+        <%= f.text_field :source_name %>
+      </div>
+      <div class="full">
+        <label>Source (URL)</label>
+        <%= f.url_field :source_url, placeholder: "https://…" %>
+      </div>
+
+      <div class="full">
+        <label>Tags</label>
+        <%= f.text_field :tags, placeholder: "ex: engagement, parcours" %>
+      </div>
+
+      <%# Affichage conditionnel si tu ajoutes is_active sur Story %>
+      <% if Story.column_names.include?("is_active") %>
+        <div>
+          <label>Active</label>
+          <%= f.check_box :is_active %>
+        </div>
+      <% end %>
+    </div>
+
+    <p><%= f.submit "Enregistrer", class: "btn small" %></p>
+  <% end %>
+</div>
+
+<style>
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.grid .full{grid-column:1/-1}
+.grid input, .grid textarea, .grid select{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px}
+</style>
