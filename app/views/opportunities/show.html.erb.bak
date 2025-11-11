@@ -8,52 +8,36 @@ def safe_attr(obj, *names)
   nil
 end
 
-# ⚠️ retire les images markdown, garde un HTML léger
-def render_md_light(text)
-  t = text.to_s.gsub("\r\n", "\n")
-  # 0) SUPPRIME les images Markdown pour éviter l’URL brut (![…](…))
-  t = t.gsub(/!\[[^\]]*\]\([^)]+\)/, "")
-  # 1) Titres de niveau 3
-  t = t.lines.map { |l| l.sub(/^###\s*(.+)\s*$/, '<h3>\1</h3>') }.join
-  # 2) Gras léger (on enlève juste les ** pour rester simple)
-  t = t.gsub(/\*\*(.+?)\*\*/, '\1')
-  # 3) Paragraphe simple
-  html = simple_format(t, {}, wrapper_tag: "p")
-  html = html.gsub(%r{<p>\s*(<h3>.*?</h3>)\s*</p>}m, '\1')
-  sanitize(html, tags: %w[p h3 br a ul ol li em], attributes: %w[href target rel])
-end
-
 def plainify(text)
-  text.to_s
-      .gsub(/!\[[^\]]*\]\([^)]+\)/, "")     # SUPPRIME les images
-      .gsub(/\[([^\]]+)\]\((.*?)\)/, '\1') # liens -> texte
-      .gsub(/[*_`>#]/, "")
+  text.to_s.gsub(/!\[[^\]]*\]\([^)]+\)/, "").gsub(/\[([^\]]+)\]\((.*?)\)/, '\1').gsub(/[*_`>#]/, "")
       .gsub(/\n+/, " ").squeeze(" ").strip
 end
 
-# ⚠️ « Lien organisateur » : on ignore Unsplash
-def extract_source_url(md)
-  return nil if md.blank?
-  text = md.to_s
+def render_md_light(text)
+  t = text.to_s.gsub("\r\n", "\n")
 
-  # 1) si on trouve "En savoir plus : <url>", on prend cette URL (sauf Unsplash)
-  if (m = text.match(/En\s*savoir\s*plus\s*[:：]\s*(https?:\/\/\S+)/i))
-    u = m[1]
-    return u unless u =~ %r{(^|\.)unsplash\.com}i
-  end
+  # 1) SUPPRIMER les images Markdown (évite l'affichage de "![...](...)")
+  t = t.gsub(/!\[[^\]]*\]\((https?:\/\/[^\)]+)\)/i, "")
 
-  # 2) supprimer les images markdown (![...](...)) pour éviter les URLs brutes
-  text = text.gsub(/!\[[^\]]*\]\([^)]+\)/, " ")
+  # 2) (optionnel mais utile) retirer les URLs Unsplash isolées
+  t = t.gsub(%r{https?://images\.unsplash\.com/\S+}i, "")
 
-  # 3) lister les URLs restantes
-  urls = text.scan(%r{https?://[^\s)]+})
+  # 3) Titres "###"
+  t = t.lines.map { |l| l.sub(/^###\s*(.+)\s*$/, '<h3>\1</h3>') }.join
 
-  # 4) ignorer Unsplash + liens d'images
-  urls.reject! { |u| u =~ %r{(^|\.)unsplash\.com}i }
-  urls.reject! { |u| u =~ /\.(?:jpe?g|png|webp|gif)(?:\?|#|$)/i }
+  # 4) Retirer le gras **...** pour un rendu sobre
+  t = t.gsub(/\*\*(.+?)\*\*/, '\1')
 
-  urls.first
+  html = simple_format(t, {}, wrapper_tag: "p")
+  html = html.gsub(%r{<p>\s*(<h3>.*?</h3>)\s*</p>}m, '\1')
+
+  sanitize(html, tags: %w[p h3 br a ul ol li em], attributes: %w[href target rel])
 end
+
+def extract_source_url(md)
+  md[/https?:\/\/[^\s\)]+/]&.strip
+end
+
 def extract_when_line(md)
   return nil if md.blank?
   md.each_line do |line|
@@ -75,21 +59,21 @@ end
 # --- Données ---
 cat = safe_attr(@opportunity, :category).to_s
 accent1, accent2 = case cat
-when "benevolat"   then ["#f43f5e","#ec4899"]
-when "formation"   then ["#3b82f6","#38bdf8"]
-when "rencontres"  then ["#10b981","#06b6d4"]
-when "entreprendre"then ["#f59e0b","#ef4444"]
-else                   ["#7e5bef","#3b82f6"]
+  when "benevolat" then ["#f43f5e","#ec4899"]
+  when "formation" then ["#3b82f6","#38bdf8"]
+  when "rencontres" then ["#10b981","#06b6d4"]
+  when "entreprendre" then ["#f59e0b","#ef4444"]
+  else ["#7e5bef","#3b82f6"]
 end
 
-title = safe_attr(@opportunity, :title, :name) || "Opportunité locale"
-org   = safe_attr(@opportunity, :organization, :organizer)
-loc   = safe_attr(@opportunity, :location, :address, :place)
-lat   = safe_attr(@opportunity, :latitude, :lat)
-lon   = safe_attr(@opportunity, :longitude, :lon)
-img   = safe_attr(@opportunity, :image_url, :cover_url) ||
-        "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1600&auto=format&fit=crop"
-desc_md    = safe_attr(@opportunity, :description, :details) || ""
+title   = safe_attr(@opportunity, :title, :name) || "Opportunité locale"
+org     = safe_attr(@opportunity, :organization, :organizer)
+loc     = safe_attr(@opportunity, :location, :address, :place)
+lat     = safe_attr(@opportunity, :latitude, :lat)
+lon     = safe_attr(@opportunity, :longitude, :lon)
+img     = safe_attr(@opportunity, :image_url, :cover_url) ||
+          "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1600&auto=format&fit=crop"
+desc_md = safe_attr(@opportunity, :description, :details) || ""
 desc_plain = plainify(desc_md)
 when_line  = when_text_for(@opportunity, desc_md)
 source_url = extract_source_url(desc_md)
@@ -97,7 +81,6 @@ search_q   = [title, org, loc].compact.join(" ")
 search_url = "https://www.google.com/search?q=#{ERB::Util.url_encode(search_q)}"
 when_display = when_line.presence || "Créneaux réguliers — voir la page de l’organisateur"
 
-# petit fallback descriptif si trop court
 if desc_plain.length < 400
   desc_md += <<~MD
 
@@ -120,29 +103,56 @@ end
 <% content_for :description, desc_plain.truncate(160) %>
 
 <style>
-.op{--a1:<%= accent1 %>;--a2:<%= accent2 %>;color:#0f172a;font-family:"Inter",system-ui,sans-serif;}
-.op .container{max-width:1240px;margin:0 auto;padding:0 28px;}
-/* HERO */
-.op-hero{position:relative;overflow:hidden;}
-.op-hero::before{content:"";position:absolute;inset:0;background:url('<%= img %>') center/cover no-repeat;filter:saturate(1.05) contrast(1.02) brightness(1.02);opacity:.38;}
-.op-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,color-mix(in srgb,var(--a1) 35%,transparent) 0%,color-mix(in srgb,var(--a2) 35%,transparent) 100%);}
-.op-hero-inner{position:relative;z-index:2;padding:108px 0 44px;}
-/* Chips */
-.chip{display:inline-flex;align-items:center;gap:.5rem;background:#fff;border:1px solid #e8e8ee;color:#0f172a;padding:.55rem .95rem;border-radius:999px;font-weight:700;margin:6px;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.25;}
-.meta{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;margin-bottom:12px;}
-@media (max-width:640px){.meta{flex-direction:column;align-items:flex-start;}}
-/* Image */
-.op-illu{max-width:910px;margin:32px auto 42px;}
-.op-illu img{width:100%;border-radius:18px;box-shadow:0 10px 28px rgba(0,0,0,.10);}
-.op-section{padding:42px 0;}
-.op-h2{font-family:"Epilogue";font-weight:900;font-size:1.9rem;margin:0 0 1rem;}
-.op-prose h3{font-size:1.18rem;margin:1.1rem 0 .55rem;}
-.op-prose p{line-height:1.72;margin:.7rem 0;}
-/* Infos */
-.op-infos{background:#f8f9fb;border:1px solid #e6e8ee;border-radius:14px;padding:22px;box-shadow:0 10px 24px rgba(15,23,42,.05);margin-top:22px;}
-.op-infos label{display:block;font-weight:800;color:#64748b;text-transform:uppercase;font-size:.82rem;margin-bottom:.25rem;}
-.op-infos .val{font-weight:700;margin-bottom:.7rem;}
-#map{height:340px;border-radius:12px;margin-top:12px;}
+  .op{--a1:<%= accent1 %>;--a2:<%= accent2 %>;color:#0f172a;font-family:"Inter",system-ui,sans-serif;}
+  .op .container{max-width:1240px;margin:0 auto;padding:0 28px;}
+
+  /* --- HERO --- */
+  .op-hero{position:relative;overflow:hidden;}
+  .op-hero::before{
+    content:"";position:absolute;inset:0;
+    background:url('<%= img %>') center/cover no-repeat;
+    filter:saturate(1.05) contrast(1.02) brightness(1.02);
+    opacity:.38;
+  }
+  .op-hero::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(120deg,color-mix(in srgb,var(--a1) 35%,transparent) 0%,color-mix(in srgb,var(--a2) 35%,transparent) 100%);
+  }
+  .op-hero-inner{position:relative;z-index:2;padding:108px 0 44px;}
+
+  /* --- BOUTONS/CHIPS --- */
+  .chip{
+    display:inline-flex;align-items:center;gap:.5rem;
+    background:#fff;border:1px solid #e8e8ee;color:#0f172a;
+    padding:.55rem .95rem;border-radius:999px;font-weight:700;
+    margin:6px;max-width:100%;white-space:normal;
+    overflow-wrap:anywhere;line-height:1.25;
+  }
+  .meta{
+    display:flex;flex-wrap:wrap;gap:12px;
+    margin-top:14px;margin-bottom:12px;
+  }
+  @media (max-width:640px){
+    .meta{flex-direction:column;align-items:flex-start;}
+  }
+
+  /* --- IMAGE --- */
+  .op-illu{max-width:910px;margin:32px auto 42px;}
+  .op-illu img{width:100%;border-radius:18px;box-shadow:0 10px 28px rgba(0,0,0,.10);}
+
+  /* --- BODY --- */
+  .op-section{padding:42px 0;}
+  .op-h2{font-family:"Epilogue";font-weight:900;font-size:1.9rem;margin:0 0 1rem;}
+  .op-prose h3{font-size:1.18rem;margin:1.1rem 0 .55rem;}
+  .op-prose p{line-height:1.72;margin:.7rem 0;}
+
+  /* --- INFOS --- */
+  .op-infos{background:#f8f9fb;border:1px solid #e6e8ee;border-radius:14px;padding:22px;
+            box-shadow:0 10px 24px rgba(15,23,42,.05);margin-top:22px;}
+  .op-infos label{display:block;font-weight:800;color:#64748b;text-transform:uppercase;
+                  font-size:.82rem;margin-bottom:.25rem;}
+  .op-infos .val{font-weight:700;margin-bottom:.7rem;}
+  #map{height:340px;border-radius:12px;margin-top:12px;}
 </style>
 
 <div class="op">
@@ -153,7 +163,9 @@ end
   <header class="op-hero">
     <div class="container op-hero-inner">
       <span class="chip"><%= cat.present? ? cat.capitalize : "Opportunité" %></span>
-      <h1 style="font-family:'Epilogue';font-weight:900;font-size:clamp(2.3rem,4.6vw,3.3rem);margin:.3rem 0 .6rem;"><%= title %></h1>
+      <h1 style="font-family:'Epilogue';font-weight:900;font-size:clamp(2.3rem,4.6vw,3.3rem);margin:.3rem 0 .6rem;">
+        <%= title %>
+      </h1>
       <p class="chapo" style="font-weight:600;font-size:1.04rem;max-width:920px;"><%= desc_plain.truncate(220) %></p>
 
       <div class="meta">
