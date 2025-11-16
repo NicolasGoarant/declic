@@ -1,5 +1,23 @@
 <%# app/views/pages/home.html.erb — v9.5 : fix témoignages (grille + cartes + avatars) %>
 
+<%#
+  Nettoyage léger Markdown côté ERB pour éviter que les images Unsplash s'affichent en texte
+%>
+<%
+def strip_unsplash_md(txt)
+  s = txt.to_s.dup
+  # supprime images Markdown ![...](url)
+  s.gsub!(/!\[[^\]]*\]\([^)]+\)/, " ")
+  # remplace liens Markdown [texte](url) -> texte
+  s.gsub!(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/, '')
+  # supprime toute URL brute restante
+  s.gsub!(%r{https?://\S+}, ' ')
+  # nettoie espaces
+  s.gsub!(/\s+/, ' ')
+  s.strip
+end
+%>
+
 <div class="home-ms">
 <!-- HERO -->
 <header class="hm-hero" role="banner">
@@ -110,7 +128,7 @@ hero_src ||= "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&
 <%= link_to opportunity_path(o), class: "hm-card-op" do %>
 <p class="k"><%= o.category.to_s.capitalize %></p>
 <p class="t"><%= o.title %></p>
-<p class="d"><%= o.description %></p>
+<p class="d"><%= strip_unsplash_md(o.description) %></p>
 <p class="l">📍 <%= o.location %></p>
 <% end %>
 <% end %>
@@ -307,6 +325,13 @@ display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow
 .dcpp-actions a{ display:inline-flex; align-items:center; gap:.4rem; font:800 .9rem/1 "Epilogue"; text-decoration:none; color:#fff; padding:.6rem .8rem; border-radius:10px; background:var(--cat, #7e5bef); }
 .dcpp a:focus{ outline:2px solid #7c3aed; outline-offset:2px; border-radius:8px; }
 
+
+@media (max-width:480px){
+  .leaflet-popup-content-wrapper.dc-popup{ max-width:92vw; border-radius:12px; }
+  .dcpp{ width:min(92vw,320px); min-width:0; max-width:320px; grid-template-columns:44px 1fr; gap:10px; }
+  .dcpp-img{ width:44px; height:44px; }
+  .dcpp-blurb{ overflow-wrap:anywhere; word-break:break-word; }
+}
 /* ====== CTA ====== */
 .hm-cta{ text-align:center; color:#fff; background: linear-gradient(160deg, var(--a1), color-mix(in oklab, var(--a1), var(--a2) 40%)); padding:clamp(2.4rem,5vw,4.2rem) 0; }
 .hm-cta h2{ margin:0 0 .6rem; font:900 clamp(1.6rem,3vw,2.2rem)/1.1 "Epilogue"; }
@@ -323,6 +348,17 @@ display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow
 
 
 <% content_for :scripts do %>
+<script>
+// Nettoyage Markdown (supprime images ![...](...) et transforme [txt](url) -> txt)
+window.DeclicCleanMd = function(md){
+  return (md || "")
+    .replace(/!\[[^\]]*\]\([^\)]+\)/g, "")     // images
+    .replace(/\[([^\]]+)\]\((.*?)\)/g, "$1")     // liens
+    .replace(/[*_`>#]/g, "")                          // emphases
+    .replace(/\s+/g, " ")                            // espaces multiples
+    .trim();
+};
+</script>
 <script>
 document.addEventListener('turbo:load', bootHome);
 document.addEventListener('DOMContentLoaded', bootHome);
@@ -386,7 +422,37 @@ if(cat==='histoires') return 'https://images.unsplash.com/photo-1500648767791-00
 return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
 }
 
+function mdPlain(s){
+  return (s||'')
+    .replace(/!\[[^\]]*\]\([^\)]+\)/g,' ')                    // images ![...](...)
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'$1')    // [texte](url) -> texte
+    .replace(/https?:\/\/\S+/g,' ')                            // URL brutes
+    .replace(/[\*_`>#]/g,'')                                   // emphases MD
+    .replace(/\s+/g,' ')                                       // espaces multiples
+    .trim();
+}
 function popupHtml(o){
+  // Nettoyage Markdown (évite URLs/Unsplash en brut dans l'extrait)
+  function stripMd(md){
+    return (md||"")
+      .replace(/!\[[^\]]*\]\([^\)]+\)/g,"")   // supprime images ![...](...)
+      .replace(/\[([^\]]+)\]\((.*?)\)/g,"$1") // [txt](url) -> txt
+      .replace(/[*_`>#]/g,"")                // emphases Markdown
+      .replace(/\s+/g," ")                   // espaces multiples
+      .trim();
+  }
+  const excerpt = mdPlain(o && o.description ? o.description : '').slice(0,140);
+
+// Nettoyage Markdown (évite URLs/Unsplash en brut)
+  function cleanMd(md){
+    return (md||'')
+      .replace(/!\[[^\]]*\]\([^\)]+\)/g, '')     // supprime images ![...](...)
+      .replace(/\[([^\]]+)\]\((.*?)\)/g, '$1')    // [txt](url) -> txt
+      .replace(/[*_`>#]/g, '')                         // enlève la mise en forme
+      .replace(/\s+/g, ' ')                           // espaces multiples
+      .trim();
+  }
+
   function cleanMd(md){
     return (md||"")
       .replace(/!\[[^\]]*\]\([^\)]+\)/g, "")
@@ -407,9 +473,7 @@ const when = isNaN(st) ? (o.schedule_text||'') : `📅 ${st.toLocaleDateString('
 const addr = o.location ? `📍 ${o.location}` : '';
 const img = thumbFor(o);
   const extract = cleanMd(o.description).slice(0, 140);
-const blurbSrc = o.summary || o.description || o.chapo || '';
-const blurb = blurbSrc ? trunc(blurbSrc, 120) : "Une opportunité concrète près de chez toi : découvre, apprends et passe à l’action.";
-
+const blurb = mdPlain(o.summary || o.description || o.chapo || '').slice(0,140);
 return `
 <div class="dcpp" style="--cat:${ciColor}" role="dialog" aria-label="Opportunité">
 <div class="dcpp-img" style="background-image:url('${img}')"></div>

@@ -15,25 +15,34 @@ body {
 /* Container utilitaire (si besoin dans la home) */
 .container { max-width:1140px; margin:0 auto; padding:0 24px; }
 
-/* ========== LEAFLET — POPUP “Déclic card” ========== */
+/* ========== LEAFLET — POPUP "Déclic card" ========== */
 .leaflet-container a { color:#7e5bef; text-decoration:none; }
 .leaflet-container a:hover { text-decoration:underline; }
 
-.leaflet-popup-content-wrapper.dc-popup {
+/* Configuration globale du popup Leaflet avec le bon sélecteur */
+.leaflet-popup.dc-popup {
+  max-width: none !important;
+}
+
+.leaflet-popup.dc-popup .leaflet-popup-content-wrapper {
   padding: 0;
   border-radius: 16px;
   box-shadow: 0 18px 40px rgba(15,23,42,.18);
   border: 1px solid #eef2f7;
 }
-.leaflet-popup-tip.dc-popup { display:none; } /* sans petit triangle */
 
-.dcpp {
+.leaflet-popup.dc-popup .leaflet-popup-tip {
+  display:none;
+}
+
+.leaflet-popup.dc-popup .dcpp {
   display: grid;
   grid-template-columns: 56px 1fr;
   gap: 12px;
   padding: 12px;
-  min-width: 280px;
-  max-width: 320px;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  width: 100%;
 }
 
 .dcpp-img {
@@ -41,6 +50,7 @@ body {
   border-radius: 12px;
   background:#f1f5f9 center/cover no-repeat;
   border:1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 .dcpp-head { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
@@ -59,9 +69,31 @@ body {
   font: 900 1rem/1.15 "Epilogue", Inter;
   margin: 0 0 4px 0;
   letter-spacing:-.01em;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
-.dcpp-org { font: 700 .9rem/1.3 "Inter"; color:#475569; margin:0; }
-.dcpp-addr { font: 500 .9rem/1.3 "Inter"; color:#6b7280; margin:.2rem 0 .5rem; }
+.dcpp-org {
+  font: 700 .9rem/1.3 "Inter";
+  color:#475569;
+  margin:0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.dcpp-addr {
+  font: 500 .9rem/1.3 "Inter";
+  color:#6b7280;
+  margin:.2rem 0 .5rem;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.dcpp-blurb {
+  font: 500 .9rem/1.35 "Inter";
+  color: #334155;
+  margin: .1rem 0 .5rem;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
 
 .dcpp-actions {
   display:flex; justify-content:flex-start; gap:8px; margin-top:.25rem;
@@ -70,6 +102,7 @@ body {
   display:inline-flex; align-items:center; gap:.4rem;
   font: 800 .9rem/1 "Epilogue"; text-decoration:none;
   background:#0ea5e9; color:#fff; padding:.6rem .8rem; border-radius:10px;
+  transition: filter 0.2s ease;
 }
 .dcpp-actions a:hover { filter: brightness(0.95); }
 
@@ -92,4 +125,103 @@ body {
 .dc-marker.default      { background:#7e5bef; }
 
 /* Accessibilité : focus dans le popup */
-.dcpp a:focus { outline: 2px solid #7c3aed; outline-offset: 2px; border-radius: 8px; }
+.leaflet-popup.dc-popup .dcpp a:focus {
+  outline: 2px solid #7c3aed;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ========== RESPONSIVE — FIX POPUP MOBILE ========== */
+
+/* Tablettes et écrans moyens */
+@media (max-width: 768px) {
+  .leaflet-popup.dc-popup .dcpp {
+    grid-template-columns: 48px 1fr;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .dcpp-img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .dcpp-title {
+    font-size: 0.95rem;
+  }
+
+  .dcpp-org, .dcpp-addr, .dcpp-blurb {
+    font-size: 0.85rem;
+  }
+
+  .dcpp-actions a {
+    font-size: 0.85rem;
+    padding: .55rem .7rem;
+  }
+}
+
+/* Smartphones */
+@media (max-width: 520px) {
+  .leaflet-popup.dc-popup .leaflet-popup-content-wrapper {
+    border-radius: 14px;
+  }
+
+  .leaflet-popup.dc-popup .dcpp {
+    grid-template-columns: 44px 1fr;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .dcpp-img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .dcpp-title {
+    font-size: 0.9rem;
+  }
+
+  .dcpp-org, .dcpp-addr, .dcpp-blurb {
+    font-size: 0.82rem;
+  }
+
+  .dcpp-pill {
+    font-size: 0.68rem;
+    padding: .35rem .5rem;
+  }
+
+  .dcpp-actions {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .dcpp-actions a {
+    width: 100%;
+    justify-content: center;
+    font-size: 0.82rem;
+    padding: .5rem .6rem;
+    min-height: 44px;
+  }
+}
+
+/* Très petits écrans */
+@media (max-width: 380px) {
+  .leaflet-popup.dc-popup .dcpp {
+    grid-template-columns: 40px 1fr;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .dcpp-img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .dcpp-title {
+    font-size: 0.85rem;
+  }
+
+  .dcpp-org, .dcpp-addr, .dcpp-blurb {
+    font-size: 0.78rem;
+  }
+}
