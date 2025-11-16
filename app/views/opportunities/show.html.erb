@@ -1,4 +1,4 @@
-<%# app/views/opportunities/show.html.erb — version stable (fix marges & responsive chips) %>
+<%# app/views/opportunities/show.html.erb — v5 : Photo au bon endroit + texte redondant supprimé %>
 <% content_for :main_classes, "pt-0" %>
 
 <%
@@ -8,68 +8,112 @@ def safe_attr(obj, *names)
   nil
 end
 
-# ⚠️ retire les images markdown, garde un HTML léger
+# Nettoie TOUS les artefacts Markdown d'une chaîne
+def clean_markdown_artifacts(text)
+  return "" if text.blank?
+  text.to_s
+      .gsub(/\*\*(.+?)\*\*/, '\1')  # **gras** → gras
+      .gsub(/\*(.+?)\*/, '\1')       # *italique* → italique
+      .gsub(/_(.+?)_/, '\1')         # _italique_ → italique
+      .strip
+end
+
+# ✅ Rendu Markdown amélioré - gère correctement le gras, italique, listes
 def render_md_light(text)
+  return "" if text.blank?
   t = text.to_s.gsub("\r\n", "\n")
-  # 0) SUPPRIME les images Markdown pour éviter l’URL brut (![…](…))
+
+  # 0) SUPPRIME les images Markdown pour éviter l'URL brut (![…](…))
   t = t.gsub(/!\[[^\]]*\]\([^)]+\)/, "")
+
   # 1) Titres de niveau 3
   t = t.lines.map { |l| l.sub(/^###\s*(.+)\s*$/, '<h3>\1</h3>') }.join
-  # 2) Gras léger (on enlève juste les ** pour rester simple)
-  t = t.gsub(/\*\*(.+?)\*\*/, '\1')
-  # 3) Paragraphe simple
+
+  # 2) GRAS : **texte** → <strong>texte</strong>
+  t = t.gsub(/\*\*(.+?)\*\*/, '<strong>\1</strong>')
+
+  # 3) ITALIQUE : *texte* ou _texte_ → <em>texte</em>
+  t = t.gsub(/\*(.+?)\*/, '<em>\1</em>')
+  t = t.gsub(/_(.+?)_/, '<em>\1</em>')
+
+  # 4) Listes à puces
+  lines = t.split("\n")
+  in_list = false
+  result = []
+
+  lines.each do |line|
+    if line.strip.start_with?("•", "-", "*")
+      result << "<ul>" unless in_list
+      in_list = true
+      item = line.strip.sub(/^[•\-\*]\s*/, '')
+      result << "<li>#{item}</li>"
+    else
+      result << "</ul>" if in_list
+      in_list = false
+      result << line
+    end
+  end
+  result << "</ul>" if in_list
+
+  t = result.join("\n")
+
+  # 5) Paragraphes simples
   html = simple_format(t, {}, wrapper_tag: "p")
   html = html.gsub(%r{<p>\s*(<h3>.*?</h3>)\s*</p>}m, '\1')
-  sanitize(html, tags: %w[p h3 br a ul ol li em], attributes: %w[href target rel])
+  html = html.gsub(%r{<p>\s*(<ul>.*?</ul>)\s*</p>}m, '\1')
+
+  sanitize(html, tags: %w[p h3 br a ul ol li em strong], attributes: %w[href target rel])
 end
 
 def plainify(text)
   text.to_s
-      .gsub(/!\[[^\]]*\]\([^)]+\)/, "")     # SUPPRIME les images
-      .gsub(/\[([^\]]+)\]\((.*?)\)/, '\1') # liens -> texte
+      .gsub(/!\[[^\]]*\]\([^)]+\)/, "")
+      .gsub(/\[([^\]]+)\]\((.*?)\)/, '\1')
       .gsub(/[*_`>#]/, "")
       .gsub(/\n+/, " ").squeeze(" ").strip
 end
 
-# ⚠️ « Lien organisateur » : on ignore Unsplash
 def extract_source_url(md)
   return nil if md.blank?
   text = md.to_s
 
-  # 1) si on trouve "En savoir plus : <url>", on prend cette URL (sauf Unsplash)
   if (m = text.match(/En\s*savoir\s*plus\s*[:：]\s*(https?:\/\/\S+)/i))
     u = m[1]
     return u unless u =~ %r{(^|\.)unsplash\.com}i
   end
 
-  # 2) supprimer les images markdown (![...](...)) pour éviter les URLs brutes
   text = text.gsub(/!\[[^\]]*\]\([^)]+\)/, " ")
-
-  # 3) lister les URLs restantes
   urls = text.scan(%r{https?://[^\s)]+})
-
-  # 4) ignorer Unsplash + liens d'images
   urls.reject! { |u| u =~ %r{(^|\.)unsplash\.com}i }
   urls.reject! { |u| u =~ /\.(?:jpe?g|png|webp|gif)(?:\?|#|$)/i }
-
   urls.first
 end
+
 def extract_when_line(md)
   return nil if md.blank?
   md.each_line do |line|
     s = line.strip
     if s.start_with?("🗓️") || s =~ /\*\*Quand\s*\?\*\*/i || s =~ /Quand\s*\?/i
-      return s.sub(/^🗓️\s*/,"").sub(/\*\*Quand\s*\?\*\*\s*/i,"").sub(/Quand\s*\?\s*/i,"").strip
+      cleaned = s.sub(/^🗓️\s*/,"")
+                 .sub(/\*\*Quand\s*\?\*\*\s*/i,"")
+                 .sub(/Quand\s*\?\s*/i,"")
+                 .strip
+      return clean_markdown_artifacts(cleaned)
     end
   end
-  md[/(\b(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\b.*?\d{1,2}[:h]\d{2}.*?(?:[–-]\s*\d{1,2}[:h]\d{2})?)/i]&.strip
+
+  match = md[/(\b(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\b.*?\d{1,2}[:h]\d{2}.*?(?:[–-]\s*\d{1,2}[:h]\d{2})?)/i]
+  match ? clean_markdown_artifacts(match.strip) : nil
 end
 
 def when_text_for(op, desc_md)
   from_md = extract_when_line(desc_md)
   return from_md if from_md.present?
   tc = safe_attr(op, :time_commitment).to_s.strip
-  return "Prochain créneau : #{tc}" if tc =~ /(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|[0-2]?\d[:h][0-5]\d)/i
+  if tc =~ /(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|[0-2]?\d[:h][0-5]\d)/i
+    return clean_markdown_artifacts("Prochain créneau : #{tc}")
+  end
+  nil
 end
 
 # --- Données ---
@@ -95,9 +139,23 @@ when_line  = when_text_for(@opportunity, desc_md)
 source_url = extract_source_url(desc_md)
 search_q   = [title, org, loc].compact.join(" ")
 search_url = "https://www.google.com/search?q=#{ERB::Util.url_encode(search_q)}"
-when_display = when_line.presence || "Créneaux réguliers — voir la page de l’organisateur"
+when_display = when_line.presence || "Créneaux réguliers — voir la page de l'organisateur"
 
-# petit fallback descriptif si trop court
+# Images contextuelles selon la catégorie
+contextual_img = case cat
+when "rencontres"
+  "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&q=80&auto=format&fit=crop"
+when "formation"
+  "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1200&q=80&auto=format&fit=crop"
+when "benevolat"
+  "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1200&q=80&auto=format&fit=crop"
+when "entreprendre"
+  "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=80&auto=format&fit=crop"
+else
+  "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=1200&q=80&auto=format&fit=crop"
+end
+
+# Petit fallback descriptif si trop court
 if desc_plain.length < 400
   desc_md += <<~MD
 
@@ -108,10 +166,11 @@ if desc_plain.length < 400
   • Exercices guidés pas à pas
   • Échanges entre pairs
   • Retours personnalisés
+
   Ambiance simple, matériel fourni si besoin.
 
   ### Pour qui ?
-  Curieux·ses, débutant·es ou profils en reconversion — aucun prérequis technique, juste l’envie d’essayer.
+  Curieux·ses, débutant·es ou profils en reconversion — aucun prérequis technique, juste l'envie d'essayer.
   MD
 end
 %>
@@ -122,68 +181,128 @@ end
 <style>
 .op{--a1:<%= accent1 %>;--a2:<%= accent2 %>;color:#0f172a;font-family:"Inter",system-ui,sans-serif;}
 .op .container{max-width:1240px;margin:0 auto;padding:0 28px;}
+
 /* HERO */
-.op-hero{position:relative;overflow:hidden;}
+.op-hero{position:relative;overflow:hidden;min-height:280px;padding-bottom:80px;}
 .op-hero::before{content:"";position:absolute;inset:0;background:url('<%= img %>') center/cover no-repeat;filter:saturate(1.05) contrast(1.02) brightness(1.02);opacity:.38;}
 .op-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,color-mix(in srgb,var(--a1) 35%,transparent) 0%,color-mix(in srgb,var(--a2) 35%,transparent) 100%);}
-.op-hero-inner{position:relative;z-index:2;padding:108px 0 44px;}
+.op-hero-inner{position:relative;z-index:2;padding:clamp(60px, 8vw, 80px) 0 20px;}
+
 /* Chips */
-.chip{display:inline-flex;align-items:center;gap:.5rem;background:#fff;border:1px solid #e8e8ee;color:#0f172a;padding:.55rem .95rem;border-radius:999px;font-weight:700;margin:6px;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.25;}
-.meta{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;margin-bottom:12px;}
-@media (max-width:640px){.meta{flex-direction:column;align-items:flex-start;}}
-/* Image */
-.op-illu{max-width:910px;margin:32px auto 42px;}
-.op-illu img{width:100%;border-radius:18px;box-shadow:0 10px 28px rgba(0,0,0,.10);}
-.op-section{padding:42px 0;}
-.op-h2{font-family:"Epilogue";font-weight:900;font-size:1.9rem;margin:0 0 1rem;}
-.op-prose h3{font-size:1.18rem;margin:1.1rem 0 .55rem;}
-.op-prose p{line-height:1.72;margin:.7rem 0;}
+.chip{
+  display:inline-flex;align-items:center;gap:.5rem;background:#fff;border:1px solid #e8e8ee;
+  color:#0f172a;padding:.6rem 1rem;border-radius:999px;font-weight:700;font-size:.9rem;
+  margin:6px 6px 6px 0;line-height:1.2;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.chip:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.12);}
+.chip a{color:inherit;text-decoration:none;}
+
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;margin-bottom:0;align-items:flex-start;}
+@media (max-width:640px){.meta{gap:6px;}}
+
+/* Image principale - AU-DESSUS DE "LE PROJET" */
+.op-photo{max-width:1020px;margin:40px auto 32px;padding:0 28px;}
+.op-photo img{width:100%;border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.12);display:block;}
+
+/* Image contextuelle supplémentaire */
+.op-context-img{max-width:820px;margin:28px auto;}
+.op-context-img img{width:100%;height:280px;object-fit:cover;border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.12);}
+
+/* Sections */
+.op-section{padding:0 0 48px;}
+.op-h2{font-family:"Epilogue";font-weight:900;font-size:clamp(1.7rem,2.8vw,2.1rem);margin:0 0 1.2rem;color:#0f172a;}
+.op-h2::before{content:attr(data-icon);margin-right:.5rem;}
+
+/* Prose améliorée */
+.op-prose{max-width:880px;font-size:1.05rem;line-height:1.75;color:#1e293b;}
+.op-prose h3{font-family:"Epilogue";font-weight:900;font-size:1.35rem;margin:1.6rem 0 .7rem;color:#0f172a;}
+.op-prose p{margin:.85rem 0;}
+.op-prose strong{font-weight:800;color:#0f172a;}
+.op-prose em{font-style:italic;color:#475569;}
+.op-prose ul{margin:1rem 0;padding-left:1.5rem;}
+.op-prose li{margin:.5rem 0;line-height:1.65;}
+
 /* Infos */
-.op-infos{background:#f8f9fb;border:1px solid #e6e8ee;border-radius:14px;padding:22px;box-shadow:0 10px 24px rgba(15,23,42,.05);margin-top:22px;}
-.op-infos label{display:block;font-weight:800;color:#64748b;text-transform:uppercase;font-size:.82rem;margin-bottom:.25rem;}
-.op-infos .val{font-weight:700;margin-bottom:.7rem;}
-#map{height:340px;border-radius:12px;margin-top:12px;}
+.op-infos{
+  background:linear-gradient(135deg,#f8f9fb 0%,#fafbfd 100%);
+  border:1px solid #e6e8ee;border-radius:18px;padding:28px;
+  box-shadow:0 16px 40px rgba(15,23,42,.08);margin-top:32px;
+}
+.op-infos label{display:block;font-weight:800;color:#64748b;text-transform:uppercase;font-size:.82rem;margin-bottom:.35rem;letter-spacing:.04em;}
+.op-infos .val{font-weight:600;margin-bottom:1rem;color:#0f172a;font-size:1.02rem;}
+.op-infos .val a{color:var(--a1);text-decoration:none;font-weight:700;}
+.op-infos .val a:hover{text-decoration:underline;}
+
+#map{height:360px;border-radius:14px;margin-top:16px;box-shadow:0 12px 28px rgba(0,0,0,.10);}
+
+/* Retour */
+.back-link{color:var(--a1);font-weight:800;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem;transition:gap 0.2s ease;}
+.back-link:hover{gap:.7rem;}
 </style>
 
 <div class="op">
-  <div class="container" style="padding-top:10px;">
-    <%= link_to "← Retour aux opportunités", opportunities_path, style:"color:#{accent1};font-weight:800;text-decoration:none;" %>
+  <div class="container" style="padding-top:14px;">
+    <%= link_to opportunities_path, class:"back-link" do %>
+      <span>←</span><span>Retour aux opportunités</span>
+    <% end %>
   </div>
 
   <header class="op-hero">
     <div class="container op-hero-inner">
       <span class="chip"><%= cat.present? ? cat.capitalize : "Opportunité" %></span>
-      <h1 style="font-family:'Epilogue';font-weight:900;font-size:clamp(2.3rem,4.6vw,3.3rem);margin:.3rem 0 .6rem;"><%= title %></h1>
-      <p class="chapo" style="font-weight:600;font-size:1.04rem;max-width:920px;"><%= desc_plain.truncate(220) %></p>
+      <h1 style="font-family:'Epilogue';font-weight:900;font-size:clamp(2.2rem,4.4vw,3.2rem);line-height:1.1;margin:.4rem 0 .6rem;"><%= title %></h1>
+      <p class="chapo" style="font-weight:600;font-size:1.05rem;line-height:1.6;max-width:920px;margin-bottom:16px;"><%= desc_plain.truncate(200) %></p>
 
       <div class="meta">
         <span class="chip">🗓️ <%= when_display %></span>
         <% if extract_when_line(desc_md).blank? && safe_attr(@opportunity,:time_commitment).present? %>
-          <span class="chip">Format : <%= safe_attr(@opportunity,:time_commitment) %></span>
+          <span class="chip">⏱️ <%= clean_markdown_artifacts(safe_attr(@opportunity,:time_commitment)) %></span>
         <% end %>
         <% if source_url.present? %>
-          <span class="chip"><a href="<%= source_url %>" target="_blank" rel="noreferrer">🔗 Voir la page de l’organisateur</a></span>
+          <span class="chip">
+            <a href="<%= source_url %>" target="_blank" rel="noreferrer">🔗 Page de l'organisateur</a>
+          </span>
         <% else %>
-          <span class="chip"><a href="<%= search_url %>" target="_blank" rel="noreferrer">🔎 Rechercher l’info</a></span>
+          <span class="chip">
+            <a href="<%= search_url %>" target="_blank" rel="noreferrer">🔎 Rechercher l'info</a>
+          </span>
         <% end %>
       </div>
     </div>
   </header>
 
-  <div class="op-illu">
-    <img src="<%= img %>" alt="">
-  </div>
-
   <section class="op-section">
     <div class="container">
-      <h2 class="op-h2">📋 Le projet</h2>
+      <!-- ✅ PHOTO AU-DESSUS DE "LE PROJET" -->
+      <div class="op-photo">
+        <img src="<%= img %>" alt="<%= title %>" loading="lazy">
+      </div>
+
+      <h2 class="op-h2" data-icon="📋">Le projet</h2>
       <div class="op-prose"><%= render_md_light(desc_md) %></div>
+
+      <!-- Image contextuelle selon la catégorie -->
+      <div class="op-context-img">
+        <img src="<%= contextual_img %>" alt="Illustration <%= cat %>" loading="lazy">
+      </div>
 
       <% if org.present? || loc.present? || (lat && lon) %>
         <div class="op-infos">
-          <% if org.present? %><label>🏛 Organisation</label><div class="val"><%= org %></div><% end %>
-          <% if loc.present? %><label>📍 Adresse</label><div class="val"><%= loc %></div><% end %>
-          <label>🗓 Date & horaires</label><div class="val"><%= when_display %></div>
+          <% if org.present? %>
+            <label>🏛 Organisation</label>
+            <div class="val"><%= org %></div>
+          <% end %>
+
+          <% if loc.present? %>
+            <label>📍 Adresse</label>
+            <div class="val"><%= loc %></div>
+          <% end %>
+
+          <label>🗓 Date & horaires</label>
+          <div class="val"><%= when_display %></div>
+
           <label>🔗 Lien</label>
           <div class="val">
             <% if source_url.present? %>
@@ -192,7 +311,11 @@ end
               <a href="<%= search_url %>" target="_blank" rel="noreferrer">Chercher « <%= search_q %> »</a>
             <% end %>
           </div>
-          <% if lat && lon %><div id="map" data-lat="<%= lat %>" data-lon="<%= lon %>"></div><% end %>
+
+          <% if lat && lon %>
+            <label>🗺️ Localisation</label>
+            <div id="map" data-lat="<%= lat %>" data-lon="<%= lon %>"></div>
+          <% end %>
         </div>
       <% end %>
     </div>
@@ -211,11 +334,11 @@ function initOppMap(){
   if(!el||!window.L) return;
   const lat=parseFloat(el.dataset.lat), lon=parseFloat(el.dataset.lon);
   if(isNaN(lat)||isNaN(lon)) return;
-  const map=L.map(el,{zoomControl:false,attributionControl:false}).setView([lat,lon],13);
+  const map=L.map(el,{zoomControl:false,attributionControl:false}).setView([lat,lon],14);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19}).addTo(map);
   const icon=L.divIcon({
-    html:'<div style="width:28px;height:28px;border-radius:999px;border:2px solid #fff;background:<%= accent1 %>;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 1px 6px rgba(0,0,0,.3);font-size:14px;">📍</div>',
-    className:'', iconSize:[28,32], iconAnchor:[14,28]
+    html:'<div style="width:32px;height:32px;border-radius:999px;border:3px solid #fff;background:<%= accent1 %>;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.3);font-size:16px;">📍</div>',
+    className:'', iconSize:[32,36], iconAnchor:[16,32]
   });
   L.marker([lat,lon],{icon}).addTo(map);
   setTimeout(()=>map.invalidateSize(),200);

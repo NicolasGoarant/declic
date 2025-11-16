@@ -3,16 +3,28 @@
 <%#
   Nettoyage léger Markdown côté ERB pour éviter que les images Unsplash s'affichent en texte
 %>
+
 <%
 def strip_unsplash_md(txt)
   s = txt.to_s.dup
-  # supprime images Markdown ![...](url)
+  # Supprime images Markdown ![...](url)
   s.gsub!(/!\[[^\]]*\]\([^)]+\)/, " ")
-  # remplace liens Markdown [texte](url) -> texte
-  s.gsub!(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/, '')
-  # supprime toute URL brute restante
+  # Remplace liens Markdown [texte](url) -> texte
+  s.gsub!(/\[([^\]]+)\]\([^\)]+\)/, '\1')
+  # Supprime toutes les URLs brutes
   s.gsub!(%r{https?://\S+}, ' ')
-  # nettoie espaces
+  # Supprime les titres Markdown (###, ##, #) - ÉCHAPPÉ correctement
+  s.gsub!(/^\#{1,6}\s+/, '')
+  s.gsub!(/\s\#{1,6}\s+/, ' ')
+  # Supprime le gras/italique (**texte**, *texte*, __texte__, _texte_)
+  s.gsub!(/\*\*([^\*]+)\*\*/, '\1')
+  s.gsub!(/\*([^\*]+)\*/, '\1')
+  s.gsub!(/__([^_]+)__/, '\1')
+  s.gsub!(/_([^_]+)_/, '\1')
+  # Supprime autres marqueurs Markdown
+  s.gsub!(/`([^`]+)`/, '\1')  # code inline
+  s.gsub!(/[>\-\+]{1,}\s*/, '')  # listes, citations (sans # qui pose problème)
+  # Nettoie espaces multiples
   s.gsub!(/\s+/, ' ')
   s.strip
 end
@@ -141,40 +153,32 @@ hero_src ||= "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&
 <div class="container">
 <h2 class="hm-h2">Ils/elles ont trouvé leur déclic</h2>
 
-<% fallback = [
-"https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=360&q=80&auto=format&fit=crop",
-"https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=360&q=80&auto=format&fit=crop",
-"https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=360&q=80&auto=format&fit=crop",
-"https://images.unsplash.com/photo-1545558014-8692077e86b6?w=360&q=80&auto=format&fit=crop",
-"https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=360&q=80&auto=format&fit=crop",
-"https://images.unsplash.com/photo-1552053831-71594a27632d?w=360&q=80&auto=format&fit=crop",
-"https://images.unsplash.com/photo-1541216970279-affbfdd55aa8?w=360&q=80&auto=format&fit=crop",
-"https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=360&q=80&auto=format&fit=crop"
-] %>
+<%
+# Portraits pour les témoignages (dans app/assets/images/avatars)
+# Mapping basé sur le nom du témoignage
+avatar_mapping = {
+  'Marie' => asset_path('avatars/Marie.jpeg'),
+  'Thomas' => asset_path('avatars/Thomas.jpeg'),
+  'Emma' => asset_path('avatars/Emma.jpeg'),
+  'Julien' => asset_path('avatars/Julien.jpeg')
+}
+
+# Fallback générique
+default_avatar = asset_path('avatars/default-avatar.png')
+%>
 
 <div class="hm-testis">
-<% (@testimonials || []).each_with_index do |t, idx| %>
-<% img =
-if t.image_url.present?
-if t.image_url.starts_with?('/assets/')
-logical = t.image_url.sub(%r{\A/assets/}, '')
-logical = logical.sub(/-[0-9a-f]{32,64}(?=\.)/, '')
-asset_path(logical)
-elsif t.image_url =~ %r{\A(https?:)?//}
-t.image_url
-else
-asset_path(t.image_url)
-end
-else
-fallback[idx % fallback.size]
-end
+<% (@testimonials || []).each do |t| %>
+<%
+# Utilise l'avatar basé sur le nom, sinon le default
+img = avatar_mapping[t.name] || default_avatar
 %>
 
 <article class="hm-testi">
 <div class="who">
 <img src="<%= img %>" alt="<%= t.name %>" width="64" height="64"
-class="hm-avatar" loading="lazy" referrerpolicy="no-referrer"
-onerror="this.src='<%= fallback[idx % fallback.size] %>'">
+class="hm-avatar" loading="lazy"
+onerror="this.src='<%= default_avatar %>'">
 <div class="id">
 <p class="name"><%= t.name %></p>
 <p class="role"><%= t.role %></p>
@@ -186,6 +190,8 @@ onerror="this.src='<%= fallback[idx % fallback.size] %>'">
 </div>
 </div>
 </section>
+
+
 
 <!-- CTA -->
 <section class="hm-cta">
@@ -248,9 +254,33 @@ linear-gradient(180deg,#f9f7ff 0%, #f3f1ff 100%); }
 .hm-h2::after{ content:""; display:block; width:100px; height:6px; border-radius:999px; background:var(--a1); margin:.55rem 0 .1rem; }
 .hm-sub{ margin:.2rem 0 1rem; color:#475569; font-size:1.05rem; }
 
+
 /* ====== GROS BOUTONS ====== */
-.hm-grid-cards{ display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap:28px; max-width:1220px; margin-inline:auto; }
-.hm-card{ display:grid; grid-template-columns:110px 1fr; gap:22px; align-items:center; padding:36px 30px; border-radius:30px; color:#fff; text-decoration:none; box-shadow:0 18px 44px rgba(0,0,0,.16); min-height:240px; transition:transform .15s ease, box-shadow .15s ease; }
+.hm-grid-cards{
+  display:flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap:28px;
+  max-width:1220px;
+  margin-inline:auto;
+}
+
+.hm-card{
+  display:grid;
+  grid-template-columns:110px 1fr;
+  gap:22px;
+  align-items:center;
+  padding:36px 30px;
+  border-radius:30px;
+  color:#fff;
+  text-decoration:none;
+  box-shadow:0 18px 44px rgba(0,0,0,.16);
+  min-height:240px;
+  flex: 1 1 calc(33.333% - 19px);
+  max-width: 400px;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+
 .hm-card:hover{ transform:translateY(-6px); box-shadow:0 22px 62px rgba(0,0,0,.20); }
 .hm-emoji{ width:100px; height:100px; border-radius:24px; background:rgba(255,255,255,.22); font-size:50px; display:grid; place-items:center; }
 .hm-card-txt .t1{ font:900 clamp(1.2rem,1vw + 1rem,1.6rem)/1.15 "Epilogue"; margin:0; }
@@ -260,7 +290,28 @@ linear-gradient(180deg,#f9f7ff 0%, #f3f1ff 100%); }
 .hm-card.-benevolat{ background:linear-gradient(135deg,#f43f5e,#ec4899); }
 .hm-card.-rencontres{ background:linear-gradient(135deg,#10b981,#06b6d4); }
 .hm-card.-histoires{ background:linear-gradient(135deg,#6d28d9,#a855f7,#d946ef); }
-@media (max-width:560px){ .hm-card{ grid-template-columns:80px 1fr; padding:22px 18px; min-height:192px; border-radius:22px; } .hm-emoji{ width:72px; height:72px; border-radius:18px; font-size:36px; } }
+
+@media (max-width:900px){
+  .hm-card{
+    flex: 1 1 calc(50% - 14px);
+  }
+}
+
+@media (max-width:560px){
+  .hm-card{
+    grid-template-columns:80px 1fr;
+    padding:22px 18px;
+    min-height:192px;
+    border-radius:22px;
+    flex: 1 1 100%;
+  }
+  .hm-emoji{
+    width:72px;
+    height:72px;
+    border-radius:18px;
+    font-size:36px;
+  }
+}
 
 /* ====== Carte & filtres ====== */
 .hm-filterbar{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
