@@ -7,26 +7,51 @@
 <%
 def strip_unsplash_md(txt)
   s = txt.to_s.dup
+  # Supprime "À quoi ça ressemble ?" avec variations
+  s.gsub!(/###\s*À quoi ça ressemble\s*\?/i, '')
+  s.gsub!(/À quoi ça ressemble\s*\?/i, '')
+  # Supprime les emojis courants
+  s.gsub!(/💡|🗓️|👉|🔗/, '')
   # Supprime images Markdown ![...](url)
   s.gsub!(/!\[[^\]]*\]\([^)]+\)/, " ")
   # Remplace liens Markdown [texte](url) -> texte
   s.gsub!(/\[([^\]]+)\]\([^\)]+\)/, '\1')
   # Supprime toutes les URLs brutes
   s.gsub!(%r{https?://\S+}, ' ')
-  # Supprime les titres Markdown (###, ##, #) - ÉCHAPPÉ correctement
+  # Supprime les titres Markdown (###, ##, #)
   s.gsub!(/^\#{1,6}\s+/, '')
   s.gsub!(/\s\#{1,6}\s+/, ' ')
-  # Supprime le gras/italique (**texte**, *texte*, __texte__, _texte_)
+  # Supprime le gras/italique
   s.gsub!(/\*\*([^\*]+)\*\*/, '\1')
   s.gsub!(/\*([^\*]+)\*/, '\1')
   s.gsub!(/__([^_]+)__/, '\1')
   s.gsub!(/_([^_]+)_/, '\1')
   # Supprime autres marqueurs Markdown
-  s.gsub!(/`([^`]+)`/, '\1')  # code inline
-  s.gsub!(/[>\-\+]{1,}\s*/, '')  # listes, citations (sans # qui pose problème)
+  s.gsub!(/`([^`]+)`/, '\1')
+  s.gsub!(/[>\-\+]{1,}\s*/, '')
   # Nettoie espaces multiples
   s.gsub!(/\s+/, ' ')
   s.strip
+end
+
+def thumb_for(o)
+  return o.image_url if o.image_url.present?
+
+  cat = (o.category || '').downcase
+  case cat
+  when 'benevolat'
+    'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=400&q=80&auto=format&fit=crop'
+  when 'formation'
+    'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&q=80&auto=format&fit=crop'
+  when 'rencontres'
+    'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&q=80&auto=format&fit=crop'
+  when 'entreprendre'
+    'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&q=80&auto=format&fit=crop'
+  when 'histoires'
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80&auto=format&fit=crop'
+  else
+    'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400&q=80&auto=format&fit=crop'
+  end
 end
 %>
 
@@ -138,12 +163,17 @@ hero_src ||= "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&
 <div class="hm-cards">
 <% (@opportunities || []).first(6).each do |o| %>
 <%= link_to opportunity_path(o), class: "hm-card-op" do %>
+<div class="op-img" style="background-image:url('<%= thumb_for(o) %>')"></div>
+<div class="op-content">
 <p class="k"><%= o.category.to_s.capitalize %></p>
 <p class="t"><%= o.title %></p>
 <p class="d"><%= strip_unsplash_md(o.description) %></p>
 <p class="l">📍 <%= o.location %></p>
+</div>
 <% end %>
 <% end %>
+
+
 </div>
 </div>
 </section>
@@ -474,15 +504,44 @@ linear-gradient(180deg,#f9f7ff 0%, #f3f1ff 100%); }
 
 
 
-/* ====== Cards opportunités ====== */
+/* ====== Cards opportunités AVEC IMAGES ====== */
 .hm-cards{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
 @media (max-width:980px){ .hm-cards{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:640px){ .hm-cards{ grid-template-columns:1fr; } }
-.hm-card-op{ display:block; padding:18px; border-radius:20px; background:#fff; border:1px solid #e6e8ee; box-shadow:0 10px 26px rgba(15,23,42,.08); text-decoration:none; color:#0f172a; }
-.hm-card-op .k{ color:#64748b; font-size:.82rem; margin:0 0 .4rem; }
-.hm-card-op .t{ font:900 1.16rem/1.2 "Epilogue"; margin:0; }
-.hm-card-op .d{ font:1rem/1.55 "Inter"; color:#475569; margin:.4rem 0 .35rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+
+.hm-card-op{
+  display:block;
+  border-radius:20px;
+  background:#fff;
+  border:1px solid #e6e8ee;
+  box-shadow:0 10px 26px rgba(15,23,42,.08);
+  text-decoration:none;
+  color:#0f172a;
+  overflow:hidden;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.hm-card-op:hover{
+  transform:translateY(-4px);
+  box-shadow:0 16px 38px rgba(15,23,42,.14);
+}
+
+.hm-card-op .op-img{
+  width:100%;
+  height:180px;
+  background:#f1f5f9 center/cover no-repeat;
+  border-bottom:1px solid #e6e8ee;
+}
+
+.hm-card-op .op-content{
+  padding:16px 18px;
+}
+
+.hm-card-op .k{ color:#64748b; font-size:.82rem; margin:0 0 .4rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+.hm-card-op .t{ font:900 1.16rem/1.2 "Epilogue"; margin:0 0 .3rem; }
+.hm-card-op .d{ font:1rem/1.55 "Inter"; color:#475569; margin:.3rem 0 .5rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 .hm-card-op .l{ font:1rem/1.4 "Inter"; color:#1f2937; margin:0; }
+
+
 
 /* ====== TÉMOIGNAGES (fix) ====== */
 .hm-testis{
