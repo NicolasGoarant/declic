@@ -66,7 +66,7 @@
         </thead>
         <tbody>
           <% @opportunities.each do |o| %>
-            <tr>
+            <tr data-opportunity-id="<%= o.id %>">
               <td><input type="checkbox" name="ids[]" value="<%= o.id %>"></td>
               <td class="mono"><%= o.id %></td>
               <td class="tight">
@@ -76,7 +76,17 @@
                 <% end %>
               </td>
               <td><%= o.category.presence || "—" %></td>
-              <td><%= o.is_active? ? "✅" : "—" %></td>
+              <td class="active-toggle">
+                <label class="toggle-switch">
+                  <input
+                    type="checkbox"
+                    class="toggle-active"
+                    data-opportunity-id="<%= o.id %>"
+                    <%= 'checked' if o.is_active? %>
+                  >
+                  <span class="toggle-slider"></span>
+                </label>
+              </td>
               <td><%= o.location.presence || "—" %></td>
               <td><%= o.starts_at ? l(o.starts_at, format: :short) : "—" %></td>
               <td><%= o.ends_at ? l(o.ends_at, format: :short) : "—" %></td>
@@ -106,7 +116,7 @@
 .stats span{background:#f1f5f9;border:1px solid #e2e8f0;padding:.35rem .6rem;border-radius:8px}
 .filters form{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.5rem 0 1rem}
 .filters input[type="text"], .filters select{padding:.4rem .55rem;border:1px solid #cbd5e1;border-radius:8px}
-.btn{display:inline-block;background:#4f46e5;color:#fff;border-radius:8px;padding:.45rem .7rem;text-decoration:none;border:0}
+.btn{display:inline-block;background:#4f46e5;color:#fff;border-radius:8px;padding:.45rem .7rem;text-decoration:none;border:0;cursor:pointer}
 .btn.ghost{background:#fff;color:#334155;border:1px solid #cbd5e1}
 .btn.danger{background:#dc2626}
 .btn.xs{font-size:.85rem;padding:.3rem .5rem;border-radius:6px}
@@ -121,17 +131,117 @@
 .table td.tight .muted{color:#64748b;font-size:.85em;white-space:normal}
 .table td.actions{display:flex;gap:6px;align-items:center}
 .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+
+/* Toggle Switch Styles */
+.active-toggle{text-align:center}
+.toggle-switch{position:relative;display:inline-block;width:44px;height:24px}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{
+  position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;
+  background:#cbd5e1;border-radius:24px;transition:.3s;
+}
+.toggle-slider:before{
+  position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;
+  background:#fff;border-radius:50%;transition:.3s;
+}
+.toggle-switch input:checked + .toggle-slider{background:#10b981}
+.toggle-switch input:checked + .toggle-slider:before{transform:translateX(20px)}
+.toggle-switch input:disabled + .toggle-slider{opacity:0.5;cursor:not-allowed}
+
+/* Loading state */
+tr.toggling .toggle-switch{opacity:0.6;pointer-events:none}
 </style>
 
 <script>
-  // Sélection globale des cases à cocher
   document.addEventListener('turbo:load', initAdminOps);
   document.addEventListener('DOMContentLoaded', initAdminOps);
+
   function initAdminOps(){
     const all = document.getElementById('chk-all');
     if(!all) return;
     all.addEventListener('change', ()=>{
       document.querySelectorAll('input[name="ids[]"]').forEach(c=> c.checked = all.checked);
     });
+
+    initActiveToggles();
+  }
+
+  function initActiveToggles() {
+    document.querySelectorAll('.toggle-active').forEach(checkbox => {
+      checkbox.addEventListener('change', async function(e) {
+        const opportunityId = this.dataset.opportunityId;
+        const isActive = this.checked;
+        const row = this.closest('tr');
+
+        row.classList.add('toggling');
+
+        try {
+          const response = await fetch(`/admin/opportunities/${opportunityId}/toggle_active`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': getCsrfToken()
+            },
+            body: JSON.stringify({ is_active: isActive })
+          });
+
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+
+          const data = await response.json();
+          showNotification(data.message || 'Statut mis à jour', 'success');
+
+        } catch (error) {
+          console.error('Error:', error);
+          this.checked = !isActive;
+          showNotification('Erreur lors de la mise à jour', 'error');
+        } finally {
+          row.classList.remove('toggling');
+        }
+      });
+    });
+  }
+
+  function getCsrfToken() {
+    const token = document.querySelector('meta[name="csrf-token"]');
+    return token ? token.content : '';
+  }
+
+  function showNotification(message, type = 'success') {
+    const notif = document.createElement('div');
+    notif.className = `notification notification-${type}`;
+    notif.textContent = message;
+    notif.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      background: ${type === 'success' ? '#10b981' : '#dc2626'};
+      color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 9999;
+      font-weight: 500;
+      animation: slideIn 0.3s ease;
+    `;
+
+    document.body.appendChild(notif);
+
+    setTimeout(() => {
+      notif.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => notif.remove(), 300);
+    }, 3000);
   }
 </script>
+
+<style>
+@keyframes slideIn {
+  from { transform: translateX(400px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOut {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(400px); opacity: 0; }
+}
+</style>

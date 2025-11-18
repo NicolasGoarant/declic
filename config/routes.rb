@@ -25,18 +25,18 @@ Rails.application.routes.draw do
   namespace :admin do
     root to: "opportunities#index"
     resources :opportunities, only: [:index, :edit, :update, :destroy] do
+      member do
+        patch :toggle_active  # ← AJOUT : toggle actif/inactif via AJAX
+      end
       collection do
-        post :bulk      # actions groupées (activate/deactivate/destroy)
+        post :bulk            # actions groupées (activate/deactivate/destroy)
         post :geocode_missing
       end
     end
-  end
 
-  # config/routes.rb (ajouts)
-  namespace :admin do
     resources :stories, only: %i[index edit update destroy] do
       collection do
-        post :bulk         # actions groupées (supprimer, activer… si tu ajoutes un booléen plus tard)
+        post :bulk            # actions groupées (supprimer, activer… si tu ajoutes un booléen plus tard)
         post :geocode_missing
       end
     end

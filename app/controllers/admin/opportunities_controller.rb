@@ -1,5 +1,5 @@
 class Admin::OpportunitiesController < Admin::BaseController
-  before_action :set_opportunity, only: [:edit, :update, :destroy]
+  before_action :set_opportunity, only: [:edit, :update, :destroy, :toggle_active]
 
   def index
     @q         = params[:q].to_s.strip
@@ -37,6 +37,25 @@ class Admin::OpportunitiesController < Admin::BaseController
   def destroy
     @opportunity.destroy
     redirect_to admin_opportunities_path, notice: "Supprimée."
+  end
+
+  # ← AJOUT : Toggle actif/inactif via AJAX
+  def toggle_active
+    new_state = ActiveModel::Type::Boolean.new.cast(params[:is_active])
+
+    if @opportunity.update(is_active: new_state)
+      render json: {
+        success: true,
+        message: "Opportunité #{new_state ? 'activée' : 'désactivée'}",
+        is_active: @opportunity.is_active
+      }
+    else
+      render json: {
+        success: false,
+        message: "Erreur lors de la mise à jour",
+        errors: @opportunity.errors.full_messages
+      }, status: :unprocessable_entity
+    end
   end
 
   # --- actions groupées ---

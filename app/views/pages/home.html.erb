@@ -622,15 +622,19 @@ if(cat==='histoires') return 'https://images.unsplash.com/photo-1500648767791-00
 return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
 }
 
+
 function mdPlain(s){
   return (s||'')
-    .replace(/!\[[^\]]*\]\([^\)]+\)/g,' ')                    // images ![...](...)
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'$1')    // [texte](url) -> texte
-    .replace(/https?:\/\/\S+/g,' ')                            // URL brutes
-    .replace(/[\*_`>#]/g,'')                                   // emphases MD
-    .replace(/\s+/g,' ')                                       // espaces multiples
+    .replace(/### À quoi ça ressemble \?/gi, '')      // ← AJOUTER CETTE LIGNE
+    .replace(/💡/g, '')                                // ← ET CELLE-CI
+    .replace(/!\[[^\]]*\]\([^\)]+\)/g,' ')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'$1')
+    .replace(/https?:\/\/\S+/g,' ')
+    .replace(/[\*_`>#]/g,'')
+    .replace(/\s+/g,' ')
     .trim();
 }
+
 function popupHtml(o){
   // Nettoyage Markdown (évite URLs/Unsplash en brut dans l'extrait)
   function stripMd(md){
