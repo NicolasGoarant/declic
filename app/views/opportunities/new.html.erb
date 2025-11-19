@@ -1,8 +1,8 @@
-<%# app/views/opportunities/new.html.erb — Formulaire harmonisé (sans navbar doublon) %>
+<%# app/views/opportunities/new.html.erb — Formulaire + prévisualisation + upload photos %>
 
 <div class="bg-gray-50 min-h-screen">
   <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-    <!-- En-tête de page (pas de navbar locale : on s’appuie sur le layout global) -->
+    <!-- En-tête de page -->
     <div class="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
       <div class="min-w-0">
         <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">
@@ -34,10 +34,10 @@
     <% end %>
 
     <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-8">
-      <!-- FORM -->
+      <!-- FORMULAIRE -->
       <section class="min-w-0">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <%= form_with model: @opportunity, local: true do |f| %>
+          <%= form_with model: @opportunity, local: true, html: { multipart: true } do |f| %>
             <!-- Titre -->
             <div class="mb-6">
               <%= f.label :title, "Titre", class: "block text-sm font-medium text-gray-900" %>
@@ -52,7 +52,9 @@
               <%= f.text_area :description, rows: 6, required: true,
                     placeholder: "Décrivez l’opportunité, les missions, le public visé, les prérequis, le lieu…",
                     class: "mt-2 w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" %>
-              <p class="mt-2 text-xs text-gray-500">Astuce : précisez les modalités (jours/horaires) et l’impact attendu.</p>
+              <p class="mt-2 text-xs text-gray-500">
+                Astuce : précisez les modalités (jours/horaires) et l’impact attendu.
+              </p>
             </div>
 
             <!-- Catégorie (segmented buttons) -->
@@ -60,10 +62,10 @@
               <span class="block text-sm font-medium text-gray-900 mb-2">Catégorie</span>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <% [
-                  ["benevolat",     "❤️", "Bénévolat",     "bg-rose-50",    "text-rose-700",    "ring-rose-300"],
-                  ["formation",     "📘", "Formation",     "bg-blue-50",    "text-blue-700",    "ring-blue-300"],
-                  ["rencontres",    "👥", "Rencontres",    "bg-emerald-50", "text-emerald-700", "ring-emerald-300"],
-                  ["entreprendre",  "💼", "Entreprendre",  "bg-orange-50",  "text-orange-700",  "ring-orange-300"]
+                  ["benevolat",    "❤️", "Bénévolat",    "bg-rose-50",    "text-rose-700",    "ring-rose-300"],
+                  ["formation",    "📘", "Formation",    "bg-blue-50",    "text-blue-700",    "ring-blue-300"],
+                  ["rencontres",   "👥", "Rencontres",   "bg-emerald-50", "text-emerald-700", "ring-emerald-300"],
+                  ["entreprendre", "💼", "Entreprendre", "bg-orange-50",  "text-orange-700",  "ring-orange-300"]
                 ].each do |val, emoji, label, bg, fg, ring| %>
                   <div>
                     <%= f.radio_button :category, val, id: "cat_#{val}", class: "peer sr-only", required: true %>
@@ -106,6 +108,7 @@
                       class: "mt-2 w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" %>
               </div>
             </div>
+
             <div class="grid sm:grid-cols-3 gap-6 mb-6">
               <div>
                 <%= f.label :city, "Ville", class: "block text-sm font-medium text-gray-900" %>
@@ -145,12 +148,76 @@
               </div>
             </div>
 
+            <!-- Photos -->
+            <div class="mb-8">
+              <%= f.label :photos, "Photos (facultatif)", class: "block text-sm font-medium text-gray-900" %>
+              <%= f.file_field :photos,
+                    multiple: true,
+                    accept: "image/*",
+                    class: "mt-2 block w-full text-sm text-gray-700
+                            file:mr-4 file:py-2 file:px-3
+                            file:rounded-md file:border-0
+                            file:text-sm file:font-semibold
+                            file:bg-indigo-50 file:text-indigo-700
+                            hover:file:bg-indigo-100" %>
+              <p class="mt-2 text-xs text-gray-500">
+                Vous pouvez ajouter une ou plusieurs photos (JPG ou PNG, taille raisonnable).
+              </p>
+            </div>
+
+            <!-- Prévisualisation -->
+            <% if defined?(@preview) && @preview && @opportunity.errors.empty? %>
+              <div class="mb-8 border border-indigo-100 rounded-2xl bg-indigo-50/40 p-4">
+                <h2 class="text-sm font-semibold text-indigo-700 mb-3 flex items-center gap-2">
+                  <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-white text-xs">1</span>
+                  Prévisualisation de votre fiche (tel qu’elle apparaîtra sur Déclic)
+                </h2>
+
+                <article class="rounded-xl overflow-hidden bg-white border border-gray-100 shadow-sm">
+                  <div class="h-32 bg-gradient-to-r from-indigo-500 to-fuchsia-500"></div>
+                  <div class="p-4">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                      <%= @opportunity.category.to_s.present? ? @opportunity.category.to_s.capitalize : "Catégorie" %>
+                    </p>
+                    <h3 class="text-lg font-bold text-gray-900">
+                      <%= @opportunity.title.presence || "Titre de l’opportunité" %>
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-600">
+                      <%= @opportunity.location.presence || @opportunity.city.presence || "Ville / lieu" %>
+                    </p>
+                    <p class="mt-3 text-sm text-gray-700 leading-relaxed">
+                      <%= simple_format(@opportunity.description.presence || "Votre description s’affichera ici.") %>
+                    </p>
+                  </div>
+                </article>
+
+                <p class="mt-3 text-xs text-gray-600">
+                  Vous pouvez encore modifier les informations ci-dessus avant d’envoyer définitivement votre proposition.
+                </p>
+              </div>
+            <% end %>
+
             <!-- CTA -->
             <div class="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center">
-              <%= f.submit "Envoyer ma proposition",
-                    class: "inline-flex items-center justify-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700" %>
-              <%= link_to "Annuler", root_path,
-                    class: "inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50" %>
+              <% if defined?(@preview) && @preview && @opportunity.errors.empty? %>
+                <%= f.submit "Valider et envoyer à Déclic",
+                      name: "confirm",
+                      class: "inline-flex items-center justify-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700" %>
+
+                <%= f.submit "Mettre à jour la prévisualisation",
+                      name: "preview",
+                      value: "1",
+                      class: "inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50" %>
+              <% else %>
+                <%= f.submit "Prévisualiser ma fiche",
+                      name: "preview",
+                      value: "1",
+                      class: "inline-flex items-center justify-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700" %>
+
+                <%= link_to "Annuler", root_path,
+                      class: "inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50" %>
+              <% end %>
+
               <p class="text-xs text-gray-500 sm:ml-2">
                 En envoyant, vous acceptez que votre proposition soit modérée avant publication.
               </p>
@@ -159,7 +226,7 @@
         </div>
       </section>
 
-      <!-- SIDE: aide & critères -->
+      <!-- Colonne aide -->
       <aside class="lg:sticky lg:top-6 space-y-6">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 class="font-semibold text-gray-900">Conseils pour une fiche efficace</h2>

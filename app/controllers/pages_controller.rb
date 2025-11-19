@@ -30,6 +30,7 @@ class PagesController < ApplicationController
   def legal; end
   def confidentialite; end
   def presse; end
+  def sponsors; end
   def faq; end
   def philosophie; end
 end

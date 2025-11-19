@@ -2,6 +2,8 @@ class Opportunity < ApplicationRecord
   # --- Stockage JSON (SQLite/Postgres) ---
   attribute :raw_payload, :json
 
+  has_many_attached :photos
+
   # --- Slug ---
   extend FriendlyId
   friendly_id :title, use: %i[slugged finders]
@@ -84,4 +86,6 @@ class Opportunity < ApplicationRecord
   def honeypot_must_be_blank
     errors.add(:base, 'Spam détecté') if honeypot_url.present?
   end
+
+
 end

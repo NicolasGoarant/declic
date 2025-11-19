@@ -1,33 +1,63 @@
-<%# app/views/shared/_navbar.html.erb — v8.1 : libellé "Pourquoi Déclic ?" %>
+<%# app/views/shared/_navbar.html.erb — v9 : état actif + UX mobile améliorée %>
 
-<header class="fixed inset-x-0 top-0 z-[1000] bg-white border-b border-gray-200 shadow-sm">
+<%
+  # Helper local pour gérer l’état "actif" des liens desktop
+  def nav_link_classes(path, extra_classes: "")
+    base = "text-sm transition-colors #{extra_classes}"
+    if current_page?(path)
+      "#{base} text-slate-900 font-semibold"
+    else
+      "#{base} text-slate-700 hover:text-slate-900"
+    end
+  end
+%>
+
+<header class="fixed inset-x-0 top-0 z-[1000] bg-white/90 backdrop-blur border-b border-gray-200 shadow-sm">
   <div class="mx-auto max-w-6xl h-14 px-4 flex items-center justify-between">
     <!-- Logo -->
     <%= link_to root_path, class: "flex items-center gap-2" do %>
       <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center shadow-sm">
         <span class="text-white font-bold text-xs">D</span>
       </div>
-      <span class="font-semibold">Déclic</span>
+      <div class="flex flex-col leading-tight">
+        <span class="font-semibold text-sm">Déclic</span>
+      </div>
     <% end %>
 
     <!-- Liens desktop -->
-    <nav class="hidden md:flex items-center gap-6 text-sm">
-      <%= link_to "Explorer",    root_path(anchor: "explorer"),    class: "text-slate-700 hover:text-slate-900" %>
-      <%= link_to "Parcours",    root_path(anchor: "parcours"),    class: "text-slate-700 hover:text-slate-900" %>
-      <%= link_to "Témoignages", root_path(anchor: "temoignages"), class: "text-slate-700 hover:text-slate-900" %>
-      <%= link_to "Pourquoi Déclic ?", philosophie_path,           class: "text-slate-700 hover:text-slate-900" %>
+    <nav class="hidden md:flex items-center gap-6" aria-label="Navigation principale">
+      <%= link_to "Explorer",
+          root_path(anchor: "explorer"),
+          class: nav_link_classes(root_path, extra_classes: "") %>
+
+      <%= link_to "Parcours",
+          root_path(anchor: "parcours"),
+          class: nav_link_classes(root_path, extra_classes: "") %>
+
+      <%= link_to "Témoignages",
+          root_path(anchor: "temoignages"),
+          class: nav_link_classes(root_path, extra_classes: "") %>
+
+      <%= link_to "Pourquoi Déclic ?",
+          philosophie_path,
+          class: nav_link_classes(philosophie_path, extra_classes: "") %>
     </nav>
 
     <!-- CTA desktop -->
     <div class="hidden md:flex items-center">
-      <%= link_to "Proposer", new_opportunity_path,
-            class: "inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm text-sm font-medium" %>
+      <%= link_to new_opportunity_path,
+            class: "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm text-sm font-semibold transition-colors" do %>
+        <span class="text-base">✨</span>
+        <span>Proposer une opportunité</span>
+      <% end %>
     </div>
 
     <!-- Burger mobile -->
     <button id="btn-open-menu"
             class="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white shadow ring-1 ring-violet-200 hover:ring-violet-300 hover:shadow-md transition"
-            aria-controls="mobile-menu" aria-expanded="false" aria-label="Ouvrir le menu">
+            aria-controls="mobile-menu"
+            aria-expanded="false"
+            aria-label="Ouvrir le menu principal">
       <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke-width="2" aria-hidden="true">
         <defs>
           <linearGradient id="burgGrad" x1="0" y1="0" x2="1" y2="1">
@@ -54,7 +84,7 @@
                    bg-gray-100 hover:bg-gray-200 ring-1 ring-gray-300 text-gray-700"
             aria-label="Fermer le menu">✕</button>
 
-    <nav class="space-y-2 text-[15px] pt-6">
+    <nav class="space-y-2 text-[15px] pt-6" aria-label="Navigation mobile">
       <%= link_to root_path(anchor: "explorer"),
           class: "flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 ring-1 ring-black/5" do %>
         <span>🗺️</span><span>Explorer</span>
@@ -92,39 +122,62 @@
 
 <script>
 (function(){
-  const menu   = document.getElementById('mobile-menu');
-  const panel  = document.getElementById('mobile-panel');
-  const overlay= document.getElementById('mobile-overlay');
-  const openB  = document.getElementById('btn-open-menu');
-  const closeB = document.getElementById('btn-close-menu');
-  if(!menu || !panel || !overlay || !openB || !closeB) return;
+  const menu    = document.getElementById('mobile-menu');
+  const panel   = document.getElementById('mobile-panel');
+  const overlay = document.getElementById('mobile-overlay');
+  const openB   = document.getElementById('btn-open-menu');
+  const closeB  = document.getElementById('btn-close-menu');
 
-  const lock = () => document.documentElement.classList.add('overflow-hidden');
+  if (!menu || !panel || !overlay || !openB || !closeB) return;
+
+  const lock   = () => document.documentElement.classList.add('overflow-hidden');
   const unlock = () => document.documentElement.classList.remove('overflow-hidden');
 
   function open(){
-    if(!menu.classList.contains('hidden')) return;
-    menu.classList.remove('hidden'); menu.removeAttribute('aria-hidden');
+    if (!menu.classList.contains('hidden')) return;
+
+    menu.classList.remove('hidden');
+    menu.removeAttribute('aria-hidden');
     openB.setAttribute('aria-expanded','true');
-    requestAnimationFrame(()=>{ panel.classList.remove('opacity-0','scale-95','-translate-y-2'); });
+
+    requestAnimationFrame(()=>{
+      panel.classList.remove('opacity-0','scale-95','-translate-y-2');
+    });
+
     document.addEventListener('keydown', onKey);
     overlay.addEventListener('click', close, { once:false });
+
+    // Ferme le menu quand on clique sur un lien du panel
+    panel.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', close, { once:false });
+    });
+
     lock();
   }
+
   function close(){
-    if(menu.classList.contains('hidden')) return;
+    if (menu.classList.contains('hidden')) return;
+
     panel.classList.add('opacity-0','scale-95','-translate-y-2');
+
     const onEnd = () => {
-      menu.classList.add('hidden'); menu.setAttribute('aria-hidden','true');
+      menu.classList.add('hidden');
+      menu.setAttribute('aria-hidden','true');
       panel.removeEventListener('transitionend', onEnd);
     };
+
     panel.addEventListener('transitionend', onEnd, { once:true });
+
     openB.setAttribute('aria-expanded','false');
     document.removeEventListener('keydown', onKey);
     overlay.removeEventListener('click', close);
+
     unlock();
   }
-  function onKey(e){ if(e.key === 'Escape') close(); }
+
+  function onKey(e){
+    if (e.key === 'Escape') close();
+  }
 
   openB.addEventListener('click', open);
   closeB.addEventListener('click', close);

@@ -1,0 +1,35 @@
+<h1>Nouvelle proposition d’opportunité</h1>
+
+<p><strong>Titre :</strong> <%= @opportunity.title.presence || "(sans titre)" %></p>
+
+<p><strong>Catégorie :</strong> <%= @opportunity.category.presence || "-" %></p>
+
+<p><strong>Description :</strong></p>
+<p>
+  <%= simple_format(@opportunity.description.presence || "(pas de description)") %>
+</p>
+
+<hr>
+
+<p><strong>Organisation :</strong> <%= @opportunity.organization.presence || "-" %></p>
+<p><strong>Site web :</strong> <%= @opportunity.website.presence || "-" %></p>
+
+<p><strong>Lieu :</strong>
+  <%= [
+        @opportunity.address.presence,
+        @opportunity.postcode.presence,
+        @opportunity.city.presence || @opportunity.location.presence
+      ].compact.join(" ") %>
+</p>
+
+<p><strong>Temps à prévoir :</strong> <%= @opportunity.time_commitment.presence || "-" %></p>
+<p><strong>Niveau d’engagement :</strong> <%= @opportunity.effort_level.presence || "-" %></p>
+
+<p><strong>Contact :</strong>
+  <%= @opportunity.contact_email.presence || "-" %>
+  <% if @opportunity.contact_phone.present? %>
+    – <%= @opportunity.contact_phone %>
+  <% end %>
+</p>
+
+<p><strong>Tags :</strong> <%= @opportunity.tags.presence || "-" %></p>

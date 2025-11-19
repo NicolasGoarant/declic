@@ -1,0 +1,437 @@
+<%# app/views/pages/sponsors.html.erb — Page partenaires / sponsors Déclic %>
+
+<section class="sp-hero">
+  <div class="container">
+    <p class="sp-kicker">Partenaires</p>
+    <h1>Ils soutiennent <span>Déclic</span></h1>
+    <p class="sp-lead">
+      Déclic existe grâce à des organisations qui croient à l’engagement local, à l’inclusion et aux
+      <strong>“belles histoires”</strong> qui commencent près de chez soi. <br>
+      Ensemble, nous rendons visibles les initiatives qui changent des vies.
+    </p>
+
+    <div class="sp-cta">
+      <%= link_to "Devenir partenaire", "#devenir-partenaire", class: "btn primary" %>
+      <%= link_to "Voir la carte des opportunités", root_path(anchor: "explorer"), class: "btn ghost" %>
+    </div>
+
+    <p class="sp-note">
+      Entreprises, collectivités, fondations, tiers-lieux… vous pouvez soutenir Déclic et
+      <b>associer votre image à une plateforme inclusive et positive</b>.
+    </p>
+  </div>
+</section>
+
+<section class="sp-slice">
+  <div class="container">
+    <h2>Pourquoi devenir partenaire&nbsp;?</h2>
+
+    <div class="sp-grid-3">
+      <article class="sp-card">
+        <div class="sp-icon">🤝</div>
+        <h3>Impact local réel</h3>
+        <p>Vous soutenez une plateforme qui aide des habitants à trouver des opportunités près de chez eux :
+           bénévolat, formation, rencontres, projets…</p>
+      </article>
+
+      <article class="sp-card">
+        <div class="sp-icon">💜</div>
+        <h3>Image inclusive & positive</h3>
+        <p>Votre marque est associée à un projet non partisan, bienveillant, centré sur les personnes
+           et les liens humains plutôt que sur la publicité.</p>
+      </article>
+
+      <article class="sp-card">
+        <div class="sp-icon">📍</div>
+        <h3>Ancrage territorial</h3>
+        <p>Vous valorisez vos actions sur un territoire précis (ville, métropole, bassin de vie),
+           avec des retombées concrètes pour les habitants.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="sp-slice alt">
+  <div class="container">
+    <h2>Nos partenaires engagés</h2>
+    <p class="sp-sub">
+      Voici quelques exemples de structures qui pourraient ou peuvent soutenir Déclic. <br>
+      Vous souhaitez rejoindre cette liste&nbsp;? Parlons-en&nbsp;!
+    </p>
+
+    <% if defined?(@sponsors) && @sponsors.present? %>
+      <div class="sp-logos">
+        <% @sponsors.each do |sponsor| %>
+          <article class="sp-logo-card">
+            <% if sponsor.logo_url.present? %>
+              <div class="sp-logo-wrap">
+                <img src="<%= sponsor.logo_url %>" alt="<%= sponsor.name %>" loading="lazy">
+              </div>
+            <% else %>
+              <div class="sp-logo-placeholder"><%= sponsor.name.first&.upcase %></div>
+            <% end %>
+
+            <div class="sp-logo-body">
+              <p class="sp-logo-name"><%= sponsor.name %></p>
+              <% if sponsor.city.present? %>
+                <p class="sp-logo-meta">📍 <%= sponsor.city %></p>
+              <% end %>
+              <% if sponsor.kind.present? %>
+                <p class="sp-logo-tag"><%= sponsor.kind %></p>
+              <% end %>
+              <% if sponsor.link_url.present? %>
+                <p class="sp-logo-link">
+                  <a href="<%= sponsor.link_url %>" target="_blank" rel="noreferrer">
+                    Visiter le site
+                  </a>
+                </p>
+              <% end %>
+            </div>
+          </article>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="sp-logos sp-logos--example">
+        <article class="sp-logo-card">
+          <div class="sp-logo-wrap">
+            <span class="sp-logo-placeholder">🏛️</span>
+          </div>
+          <div class="sp-logo-body">
+            <p class="sp-logo-name">Ville de Nancy</p>
+            <p class="sp-logo-meta">📍 Métropole du Grand Nancy</p>
+            <p class="sp-logo-tag">Collectivité partenaire</p>
+          </div>
+        </article>
+
+        <article class="sp-logo-card">
+          <div class="sp-logo-wrap">
+            <span class="sp-logo-placeholder">🏢</span>
+          </div>
+          <div class="sp-logo-body">
+            <p class="sp-logo-name">Mutuelle Solidaire</p>
+            <p class="sp-logo-meta">📍 Grand Est</p>
+            <p class="sp-logo-tag">Entreprise engagée</p>
+          </div>
+        </article>
+
+        <article class="sp-logo-card">
+          <div class="sp-logo-wrap">
+            <span class="sp-logo-placeholder">🏬</span>
+          </div>
+          <div class="sp-logo-body">
+            <p class="sp-logo-name">Tiers-lieu “Le Déclic”</p>
+            <p class="sp-logo-meta">📍 Quartier Saint-Nicolas</p>
+            <p class="sp-logo-tag">Tiers-lieu partenaire</p>
+          </div>
+        </article>
+      </div>
+    <% end %>
+  </div>
+</section>
+
+<section id="devenir-partenaire" class="sp-slice">
+  <div class="container sp-grid-2">
+    <div>
+      <h2>Devenir partenaire de Déclic</h2>
+      <p class="sp-lead-small">
+        Vous souhaitez soutenir Déclic, associer votre image à une plateforme inclusive et
+        encourager les habitants à passer du “un jour” au “jour 1”&nbsp;?
+      </p>
+
+      <ul class="sp-list">
+        <li>🏷 Mention de votre logo en tant que “Partenaire engagé”.</li>
+        <li>📍 Possibilité de cibler un territoire (ville, métropole, campus…).</li>
+        <li>📊 Accès à des indicateurs d’usage (vues, thématiques les plus consultées).</li>
+        <li>💌 Visibilité dans les communications Déclic (newsletter, pages clés).</li>
+      </ul>
+    </div>
+
+    <div class="sp-contact">
+      <h3>Contact & informations</h3>
+      <p>
+        Pour discuter d’un partenariat (entreprise, collectivité, fondation, tiers-lieu…),
+        vous pouvez nous écrire :
+      </p>
+      <p class="sp-mail">
+        📧 <a href="mailto:contact@declic.local">contact@declic.local</a>
+      </p>
+      <p class="sp-note-small">
+        Indiquez votre structure, votre territoire et vos attentes principales : nous reviendrons vers vous
+        avec une proposition simple et transparente.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="sp-cta">
+  <div class="container">
+    <h2>Envie de faire partie de l’aventure&nbsp;?</h2>
+    <p>
+      Déclic se construit avec celles et ceux qui croient à la force de l’engagement local.
+      Votre soutien permet de faire émerger toujours plus de belles histoires.
+    </p>
+    <%= link_to "Parler partenariat", "mailto:contact@declic.local?subject=Partenariat%20Déclic",
+          class: "btn primary big" %>
+  </div>
+</section>
+
+<style>
+  .sp-hero{
+    background:linear-gradient(135deg,#7e5bef,#3b82f6);
+    color:#fff;
+    padding:clamp(64px, 8vw, 88px) 0 clamp(48px, 6vw, 64px);
+  }
+  .sp-hero .container{max-width:1180px;margin:0 auto;padding:0 24px;}
+  .sp-kicker{
+    opacity:.9;
+    text-transform:uppercase;
+    font:800 .9rem/1 "Inter";
+    letter-spacing:.08em;
+    margin:0 0 .25rem;
+  }
+  .sp-hero h1{
+    font:900 clamp(2.4rem,5vw,3.6rem)/1.03 "Epilogue";
+    margin:.25rem 0 .7rem;
+  }
+  .sp-hero h1 span{
+    background:linear-gradient(90deg,#fce7f3,#c084fc,#93c5fd);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .sp-lead{
+    max-width:900px;
+    font:700 clamp(1.1rem,1.2vw + .9rem,1.5rem)/1.6 "Inter";
+    opacity:.98;
+  }
+  .sp-cta{
+    margin-top:18px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .sp-note{
+    margin-top:18px;
+    max-width:720px;
+    font-size:.95rem;
+    opacity:.95;
+  }
+
+  .sp-slice{
+    padding:clamp(2.8rem,5vw,4rem) 0;
+  }
+  .sp-slice.alt{
+    background:#f8f9fb;
+  }
+  .sp-slice .container{max-width:1180px;margin:0 auto;padding:0 24px;}
+  .sp-slice h2{
+    font-family:"Epilogue";
+    font-weight:900;
+    font-size:clamp(2rem,3.2vw,2.6rem);
+    margin:0 0 1rem;
+    color:#0f172a;
+  }
+  .sp-slice h2::after{
+    content:"";
+    display:block;
+    width:90px;
+    height:5px;
+    border-radius:999px;
+    background:#7e5bef;
+    margin:.55rem 0 .1rem;
+  }
+  .sp-sub{
+    margin:0 0 1.5rem;
+    color:#4b5563;
+    font-size:1rem;
+  }
+
+  .sp-grid-3{
+    display:grid;
+    gap:18px;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  .sp-card{
+    background:#fff;
+    border-radius:20px;
+    padding:20px 18px 18px;
+    box-shadow:0 10px 30px rgba(15,23,42,.08);
+    border:1px solid #e5e7eb;
+  }
+  .sp-icon{
+    width:40px;height:40px;
+    border-radius:999px;
+    display:grid;
+    place-items:center;
+    background:#f3e8ff;
+    margin-bottom:.6rem;
+    font-size:1.4rem;
+  }
+  .sp-card h3{
+    margin:0 0 .3rem;
+    font:800 1.1rem/1.2 "Epilogue";
+    color:#111827;
+  }
+  .sp-card p{
+    margin:0;
+    font:500 .98rem/1.7 "Inter";
+    color:#4b5563;
+  }
+
+  .sp-logos{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:18px;
+  }
+  .sp-logo-card{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    padding:14px 16px;
+    border-radius:18px;
+    background:#fff;
+    border:1px solid #e5e7eb;
+    box-shadow:0 8px 22px rgba(15,23,42,.06);
+  }
+  .sp-logo-wrap{
+    width:60px;
+    height:60px;
+    border-radius:16px;
+    background:#f9fafb;
+    display:grid;
+    place-items:center;
+    border:1px solid #e5e7eb;
+    overflow:hidden;
+  }
+  .sp-logo-wrap img{
+    width:100%;height:100%;object-fit:contain;
+  }
+  .sp-logo-placeholder{
+    font-size:1.5rem;
+  }
+  .sp-logo-body{
+    flex:1;
+  }
+  .sp-logo-name{
+    margin:0;
+    font:800 1rem/1.2 "Inter";
+    color:#111827;
+  }
+  .sp-logo-meta{
+    margin:.1rem 0;
+    font-size:.9rem;
+    color:#6b7280;
+  }
+  .sp-logo-tag{
+    margin:.1rem 0 0;
+    font-size:.85rem;
+    font-weight:600;
+    color:#7c3aed;
+  }
+  .sp-logo-link a{
+    font-size:.86rem;
+    color:#2563eb;
+    text-decoration:none;
+    font-weight:600;
+  }
+  .sp-logo-link a:hover{
+    text-decoration:underline;
+  }
+
+  .sp-grid-2{
+    display:grid;
+    gap:28px;
+    grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);
+    align-items:flex-start;
+  }
+  .sp-lead-small{
+    font:500 1rem/1.8 "Inter";
+    color:#374151;
+    max-width:640px;
+  }
+  .sp-list{
+    margin:1rem 0 0;
+    padding-left:1.1rem;
+    color:#374151;
+    font:500 .98rem/1.7 "Inter";
+  }
+  .sp-list li::marker{
+    color:#7e5bef;
+    font-weight:900;
+  }
+
+  .sp-contact{
+    background:#f9fafb;
+    border-radius:18px;
+    padding:18px 18px 16px;
+    border:1px solid #e5e7eb;
+  }
+  .sp-contact h3{
+    margin:0 0 .4rem;
+    font:800 1.05rem/1.2 "Epilogue";
+    color:#111827;
+  }
+  .sp-contact p{
+    margin:.1rem 0;
+    font:500 .95rem/1.6 "Inter";
+    color:#4b5563;
+  }
+  .sp-mail a{
+    color:#2563eb;
+    text-decoration:none;
+    font-weight:700;
+  }
+  .sp-mail a:hover{
+    text-decoration:underline;
+  }
+  .sp-note-small{
+    margin-top:.6rem;
+    font-size:.88rem;
+    color:#6b7280;
+  }
+
+  .sp-cta{
+    background:linear-gradient(135deg,#7e5bef,#3b82f6);
+    color:#fff;
+    text-align:center;
+    padding:clamp(2.8rem,5vw,4rem) 0;
+  }
+  .sp-cta .container{max-width:900px;margin:0 auto;padding:0 24px;}
+  .sp-cta h2{
+    margin:0 0 .5rem;
+    font:900 clamp(1.7rem,3vw,2.4rem)/1.1 "Epilogue";
+  }
+  .sp-cta p{
+    margin:0 0 1.3rem;
+    font:500 1.02rem/1.7 "Inter";
+  }
+
+  .btn{
+    display:inline-block;
+    border-radius:999px;
+    padding:.9rem 1.3rem;
+    text-decoration:none;
+    font:800 .98rem/1 "Epilogue";
+  }
+  .btn.primary{
+    background:#fff;
+    color:#7e5bef;
+    box-shadow:0 10px 28px rgba(0,0,0,.18);
+  }
+  .btn.ghost{
+    border:2px solid rgba(255,255,255,.8);
+    color:#fff;
+    background:transparent;
+  }
+  .btn.big{
+    padding:1.1rem 1.7rem;
+  }
+
+  @media (max-width:900px){
+    .sp-grid-3{grid-template-columns:1fr 1fr;}
+  }
+  @media (max-width:720px){
+    .sp-grid-3{grid-template-columns:1fr;}
+    .sp-grid-2{grid-template-columns:1fr;}
+  }
+</style>
