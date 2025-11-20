@@ -9,7 +9,7 @@ class OpportunityProposalMailer < ApplicationMailer
 
 mail(
   to: "nicolas.goarant@hotmail.fr", # ou l’adresse destinataire que tu veux
-  from: ENV.fetch("DEFAULT_FROM_EMAIL", "ton.email.verifie@exemple.com"),
+  from: ENV.fetch("DEFAULT_FROM_EMAIL", "nicolas.goarant@hotmail.fr"),
   subject: "Nouvelle opportunité proposée"
 )
 
