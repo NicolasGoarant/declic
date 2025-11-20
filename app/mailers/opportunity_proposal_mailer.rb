@@ -8,10 +8,10 @@ class OpportunityProposalMailer < ApplicationMailer
     @opportunity = params[:opportunity]
 
 mail(
-  to: "nicolas.goarant@hotmail.fr", # ou l’adresse destinataire que tu veux
-  from: ENV.fetch("DEFAULT_FROM_EMAIL", "nicolas.goarant@hotmail.fr"),
+  to: ["nicolas.goarant@hotmail.fr", "nicolas.goarant35@gmail.com"],
   subject: "Nouvelle opportunité proposée"
 )
+
 
   end
 end
