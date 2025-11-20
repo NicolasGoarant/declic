@@ -38,6 +38,10 @@ Rails.application.routes.draw do
     end
   end
 
+  if Rails.env.development?
+  mount LetterOpenerWeb::Engine, at: "/letter_opener"
+end
+
   # --- ADMIN ---
 
   namespace :admin do

@@ -197,31 +197,32 @@
               </div>
             <% end %>
 
+
             <!-- CTA -->
-            <div class="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center">
-              <% if defined?(@preview) && @preview && @opportunity.errors.empty? %>
-                <%= f.submit "Valider et envoyer à Déclic",
-                      name: "confirm",
-                      class: "inline-flex items-center justify-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700" %>
+<div class="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center">
+  <% if defined?(@preview) && @preview && @opportunity.errors.empty? %>
+    <%= f.submit "Valider et envoyer à Déclic",
+          name: "confirm",
+          class: "inline-flex items-center justify-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700" %>
 
-                <%= f.submit "Mettre à jour la prévisualisation",
-                      name: "preview",
-                      value: "1",
-                      class: "inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50" %>
-              <% else %>
-                <%= f.submit "Prévisualiser ma fiche",
-                      name: "preview",
-                      value: "1",
-                      class: "inline-flex items-center justify-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700" %>
+    <%= f.submit "Modifier avant envoi",
+          name: "preview",
+          class: "inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50" %>
+  <% else %>
+    <%= f.submit "J’envoie",
+          name: "preview",
+          class: "inline-flex items-center justify-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700" %>
 
-                <%= link_to "Annuler", root_path,
-                      class: "inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50" %>
-              <% end %>
+    <%= link_to "Annuler", root_path,
+          class: "inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50" %>
+  <% end %>
 
-              <p class="text-xs text-gray-500 sm:ml-2">
-                En envoyant, vous acceptez que votre proposition soit modérée avant publication.
-              </p>
-            </div>
+  <p class="text-xs text-gray-500 sm:ml-2">
+    En envoyant, vous acceptez que votre proposition soit modérée avant publication.
+  </p>
+</div>
+
+
           <% end %>
         </div>
       </section>
