@@ -7,9 +7,11 @@ class OpportunityProposalMailer < ApplicationMailer
   def proposal_email
     @opportunity = params[:opportunity]
 
-    mail(
-      subject: "Nouvelle proposition d’opportunité — #{@opportunity.title.presence || 'Sans titre'}"
-    )
+mail(
+  to: "nicolas.goarant@hotmail.fr", # ou l’adresse destinataire que tu veux
+  from: ENV.fetch("DEFAULT_FROM_EMAIL", "ton.email.verifie@exemple.com"),
+  subject: "Nouvelle opportunité proposée"
+)
+
   end
 end
-
