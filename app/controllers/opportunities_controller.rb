@@ -36,15 +36,21 @@ class OpportunitiesController < ApplicationController
   #
   # - bouton "Prévisualiser ma fiche" -> params[:preview] présent
   # - bouton "Valider et envoyer à Déclic" -> pas de :preview -> on enregistre + on envoie le mail
-  def create
-    @opportunity = Opportunity.new(opportunity_params)
+def create
+  @opportunity = Opportunity.new(opportunity_params)
 
-    if params[:preview].present?
-      handle_preview
-    else
-      handle_final_submit
-    end
+  if @opportunity.save
+    OpportunityProposalMailer.with(opportunity: @opportunity)
+                             .proposal_email
+                             .deliver_later
+
+    redirect_to @opportunity,
+      notice: "Merci ! Votre proposition a bien été envoyée à l’équipe Déclic. Elle sera relue avant publication."
+  else
+    render :new, status: :unprocessable_entity
   end
+end
+
 
   private
 
