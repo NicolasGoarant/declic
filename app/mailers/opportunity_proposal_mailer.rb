@@ -6,20 +6,20 @@ class OpportunityProposalMailer < ApplicationMailer
   def proposal_email
     @opportunity = params[:opportunity]
 
-    Rails.logger.info "[MAILER] Opportunity #{@opportunity.id} – photos.attached?=#{@opportunity.photos.attached?} count=#{@opportunity.photos.size}"
+    Rails.logger.info "[MAILER] OpportunityProposalMailer#proposal_email for opportunity #{@opportunity.id}"
+    Rails.logger.info "[MAILER] photos.attached?=#{@opportunity.photos.attached?} count=#{@opportunity.photos.size}"
 
     if @opportunity.photos.attached?
       @opportunity.photos.each_with_index do |photo, index|
-        Rails.logger.info "[MAILER] Attaching photo #{index + 1}: #{photo.filename} (#{photo.blob.byte_size} bytes, #{photo.blob.content_type})"
+        Rails.logger.info "[MAILER] Attaching photo #{index + 1}: #{photo.filename} " \
+                          "(#{photo.blob.byte_size} bytes, #{photo.blob.content_type})"
 
-        attachments["photo_#{index + 1}_#{photo.filename}"] = {
-          mime_type: photo.blob.content_type,
-          content:   photo.download
-        }
+        # version ultra simple : juste le contenu du fichier
+        attachments["photo_#{index + 1}_#{photo.filename}"] = photo.download
       end
     end
 
-    Rails.logger.info "[MAILER] Attachments keys in mailer: #{attachments.keys.inspect}"
+    Rails.logger.info "[MAILER] Final attachments keys: #{attachments.keys.inspect}"
 
     mail(
       subject: "Nouvelle opportunité proposée – #{@opportunity.title.presence || 'Sans titre'}"
