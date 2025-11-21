@@ -68,9 +68,28 @@
                 <p class="mt-3 text-xs text-gray-600">
                   Vous pouvez encore modifier les informations ci-dessus avant d’envoyer définitivement votre proposition.
                 </p>
+
+                <!-- Boutons sous la prévisualisation (étape 2) -->
+                <div class="mt-4 flex flex-col sm:flex-row gap-3 sm:items-center">
+                  <!-- Bouton final : envoi à Déclic (PAS de param preview) -->
+                  <%= f.submit "Valider et envoyer à Déclic",
+                        class: "inline-flex items-center justify-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700",
+                        data: { disable_with: "Envoi en cours…" } %>
+
+                  <!-- Revenir au formulaire tout en restant sur la page -->
+                  <%= button_tag type: "submit",
+                        name: "preview",
+                        value: "1",
+                        class: "inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50" do %>
+                    Modifier le formulaire
+                  <% end %>
+
+                  <p class="text-xs text-gray-500 sm:ml-2 mt-2 sm:mt-0">
+                    En envoyant, vous acceptez que votre proposition soit modérée avant publication.
+                  </p>
+                </div>
               </div>
             <% end %>
-
 
             <!-- Titre -->
             <div class="mb-6">
@@ -199,51 +218,27 @@
               </p>
             </div>
 
+            <!-- CTA (hors mode prévisualisation) -->
+            <% unless defined?(@preview) && @preview && @opportunity.errors.empty? %>
+              <div class="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center">
+                <!-- Étape 1 : on demande une prévisualisation -->
+                <%= button_tag type: "submit",
+                      name: "preview",
+                      value: "1",
+                      class: "inline-flex items-center justify-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700" do %>
+                  Prévisualiser ma fiche
+                <% end %>
 
+                <%= link_to "Annuler", root_path,
+                      class: "inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50" %>
 
+                <p class="text-xs text-gray-500 sm:ml-2">
+                  En envoyant, vous acceptez que votre proposition soit modérée avant publication.
+                </p>
+              </div>
+            <% end %>
 
-<!-- CTA -->
-<% unless defined?(@preview) && @preview && @opportunity.errors.empty? %>
-  <div class="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center">
-    <!-- Étape 1 : on demande une prévisualisation -->
-    <%= button_tag type: "submit",
-          name: "preview",
-          value: "1",
-          class: "inline-flex items-center justify-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700" do %>
-      Prévisualiser ma fiche
-    <% end %>
-
-    <%= link_to "Annuler", root_path,
-          class: "inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50" %>
-
-    <p class="text-xs text-gray-500 sm:ml-2">
-      En envoyant, vous acceptez que votre proposition soit modérée avant publication.
-    </p>
-  </div>
-<% end %>
-
-
-
-
-    <%= f.submit "Modifier avant envoi",
-          name: "preview",
-          class: "inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50" %>
-  <% else %>
-    <%= f.submit "J’envoie",
-          name: "preview",
-          class: "inline-flex items-center justify-center px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700" %>
-
-    <%= link_to "Annuler", root_path,
-          class: "inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50" %>
-  <% end %>
-
-  <p class="text-xs text-gray-500 sm:ml-2">
-    En envoyant, vous acceptez que votre proposition soit modérée avant publication.
-  </p>
-</div>
-
-
-          <% end %>
+          <% end %> <!-- fin du form_with -->
         </div>
       </section>
 
