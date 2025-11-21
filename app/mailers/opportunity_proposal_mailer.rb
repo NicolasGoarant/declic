@@ -1,23 +1,23 @@
 # app/mailers/opportunity_proposal_mailer.rb
 class OpportunityProposalMailer < ApplicationMailer
-  # où tu veux recevoir les mails
-  default to: "nicolas.goarant@hotmail.fr"
+  default to:   "nicolas.goarant@hotmail.fr",
+          from: ENV.fetch("DEFAULT_FROM_EMAIL", "nicolas.goarant@hotmail.fr")
 
-  # Mail envoyé quand quelqu’un valide sa fiche "Proposer une opportunité"
   def proposal_email
     @opportunity = params[:opportunity]
 
-    # Joindre les photos de l’opportunité (s’il y en a)
+    # === Ajout des pièces jointes ===
     if @opportunity.photos.attached?
       @opportunity.photos.each_with_index do |photo, index|
-        # photo.download lit le fichier depuis Active Storage
-        attachments["photo_#{index + 1}#{File.extname(photo.filename.to_s)}"] = photo.download
+        attachments["photo_#{index + 1}_#{photo.filename}"] = {
+          mime_type: photo.blob.content_type,
+          content:   photo.download
+        }
       end
     end
 
     mail(
-      subject: "Nouvelle opportunité proposée",
-      from: ENV.fetch("DEFAULT_FROM_EMAIL", "nicolas.goarant@hotmail.fr")
+      subject: "Nouvelle opportunité proposée – #{@opportunity.title.presence || 'Sans titre'}"
     )
   end
 end
