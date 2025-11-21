@@ -1,23 +1,19 @@
 class OpportunityProposalMailer < ApplicationMailer
-  default to:   "nicolas.goarant@hotmail.fr",
-          from: ENV.fetch("DEFAULT_FROM_EMAIL", "declic.application@gmail.com")
+  default to: "nicolas.goarant@hotmail.fr"
 
   def proposal_email
     @opportunity = params[:opportunity]
 
-    # Joindre les photos si présentes
+    # Pièces jointes
     if @opportunity.photos.attached?
-      @opportunity.photos.each do |photo|
-        attachments[photo.filename.to_s] = {
-          mime_type: photo.content_type,
-          content:   photo.download
-        }
+      @opportunity.photos.each_with_index do |photo, index|
+        attachments["photo_#{index + 1}#{File.extname(photo.filename.to_s)}"] = photo.download
       end
     end
 
     mail(
-      to:      "nicolas.goarant@hotmail.fr",
-      subject: "Nouvelle opportunité proposée"
+      subject: "Nouvelle opportunité proposée",
+      from: ENV.fetch("DEFAULT_FROM_EMAIL", "nicolas.goarant@hotmail.fr")
     )
   end
 end
