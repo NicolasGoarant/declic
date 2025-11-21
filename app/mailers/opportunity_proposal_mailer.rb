@@ -1,17 +1,23 @@
-# app/mailers/opportunity_proposal_mailer.rb
 class OpportunityProposalMailer < ApplicationMailer
-  default to: "nicolas.goarant@hotmail.fr",
-          from: "Déclic <no-reply@declic.local>"
+  default to:   "nicolas.goarant@hotmail.fr",
+          from: ENV.fetch("DEFAULT_FROM_EMAIL", "declic.application@gmail.com")
 
-  # Mail envoyé quand quelqu'un valide sa fiche "Proposer une opportunité"
   def proposal_email
     @opportunity = params[:opportunity]
 
-mail(
-  to: ["nicolas.goarant@hotmail.fr", "nicolas.goarant35@gmail.com"],
-  subject: "Nouvelle opportunité proposée"
-)
+    # Joindre les photos si présentes
+    if @opportunity.photos.attached?
+      @opportunity.photos.each do |photo|
+        attachments[photo.filename.to_s] = {
+          mime_type: photo.content_type,
+          content:   photo.download
+        }
+      end
+    end
 
-
+    mail(
+      to:      "nicolas.goarant@hotmail.fr",
+      subject: "Nouvelle opportunité proposée"
+    )
   end
 end
