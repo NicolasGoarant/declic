@@ -3,6 +3,8 @@ class OpportunityProposalMailer < ApplicationMailer
           from: ENV.fetch("DEFAULT_FROM_EMAIL", "noreply@declic.app")
 
   def proposal_email
+      raise "[DEBUG] I'm in OpportunityProposalMailer#proposal_email"
+
     @opportunity = params[:opportunity]
 
     Rails.logger.info "[MAILER] OpportunityProposalMailer#proposal_email for opportunity #{@opportunity.id}"
