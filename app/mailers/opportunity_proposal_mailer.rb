@@ -39,5 +39,3 @@ class OpportunityProposalMailer < ApplicationMailer
     end
   end
 end
-
-end
