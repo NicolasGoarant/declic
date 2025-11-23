@@ -1,24 +1,21 @@
 class OpportunityProposalMailer < ApplicationMailer
+  # Adapte si besoin, mais ce from/to est celui qui apparaît déjà dans tes logs
   default to:   "nicolas.goarant@hotmail.fr",
-          from: ENV.fetch("DEFAULT_FROM_EMAIL", "noreply@declic.app")
+          from: "nicolas.goarant@hotmail.fr"
 
   def proposal_email
     @opportunity = params[:opportunity]
 
-    Rails.logger.info("MAILER DEBUG: entering proposal_email")
-    Rails.logger.info("MAILER DEBUG: opportunity id=#{@opportunity&.id.inspect} class=#{@opportunity.class.name}")
-
-    if @opportunity.respond_to?(:photos)
-      Rails.logger.info("MAILER DEBUG: @opportunity.photos.attached?=#{@opportunity.photos.attached?.inspect}")
-      Rails.logger.info("MAILER DEBUG: @opportunity.photos.size=#{@opportunity.photos.size}")
-    else
-      Rails.logger.info("MAILER DEBUG: @opportunity does not respond_to? :photos")
-    end
+    # Petit log pour vérifier ce que voit le mailer
+    Rails.logger.info("[OPP MAILER] opportunity id=#{@opportunity&.id} " \
+                      "photos_attached?=#{@opportunity.photos.attached?} " \
+                      "photos_size=#{@opportunity.photos.size}")
 
     if @opportunity.photos.attached?
       @opportunity.photos.each_with_index do |photo, index|
-        Rails.logger.info("MAILER DEBUG: attaching photo ##{index + 1} - " \
-                          "filename=#{photo.filename}, content_type=#{photo.blob.content_type}, " \
+        Rails.logger.info("[OPP MAILER] attaching photo ##{index + 1} " \
+                          "filename=#{photo.filename} " \
+                          "content_type=#{photo.blob.content_type} " \
                           "byte_size=#{photo.blob.byte_size}")
 
         attachments["opportunity_#{@opportunity.id}_photo_#{index + 1}_#{photo.filename}"] = {
@@ -27,10 +24,10 @@ class OpportunityProposalMailer < ApplicationMailer
         }
       end
     else
-      Rails.logger.info("MAILER DEBUG: no photos attached to opportunity")
+      Rails.logger.info("[OPP MAILER] no photos attached to opportunity")
     end
 
-    Rails.logger.info("MAILER DEBUG: attachments keys before mail: #{attachments.keys}")
+    Rails.logger.info("[OPP MAILER] attachments keys before mail: #{attachments.keys.inspect}")
 
     mail(
       subject: "Nouvelle opportunité proposée – #{@opportunity.title.presence || 'Sans titre'}"
