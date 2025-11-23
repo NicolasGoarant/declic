@@ -26,7 +26,8 @@ class OpportunityProposalMailer < ApplicationMailer
       Rails.logger.info("[OPP MAILER] no photos attached to opportunity")
     end
 
-    Rails.logger.info("[OPP MAILER] attachments keys before mail: #{attachments.keys.inspect}")
+    Rails.logger.info("[OPP MAILER] attachments count before mail: #{attachments.size}")
+
 
     mail(
       subject: "Nouvelle opportunité proposée – #{@opportunity.title.presence || 'Sans titre'}"
