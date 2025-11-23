@@ -1,5 +1,5 @@
 class OpportunityProposalMailer < ApplicationMailer
-  # Adapte si besoin, mais c'est ce qui apparaît déjà dans tes logs
+  # Tu peux changer le `to:` si besoin
   default to:   "nicolas.goarant@hotmail.fr",
           from: "nicolas.goarant@hotmail.fr"
 
