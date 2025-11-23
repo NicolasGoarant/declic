@@ -39,5 +39,5 @@ class OpportunityProposalMailer < ApplicationMailer
     end
   end
 end
-d
+
 end
