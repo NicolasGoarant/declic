@@ -1,12 +1,11 @@
 class OpportunityProposalMailer < ApplicationMailer
-  # Adapte si besoin, mais ce from/to est celui qui apparaît déjà dans tes logs
+  # Adapte si besoin, mais c'est ce qui apparaît déjà dans tes logs
   default to:   "nicolas.goarant@hotmail.fr",
           from: "nicolas.goarant@hotmail.fr"
 
   def proposal_email
     @opportunity = params[:opportunity]
 
-    # Petit log pour vérifier ce que voit le mailer
     Rails.logger.info("[OPP MAILER] opportunity id=#{@opportunity&.id} " \
                       "photos_attached?=#{@opportunity.photos.attached?} " \
                       "photos_size=#{@opportunity.photos.size}")
