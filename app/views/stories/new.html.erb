@@ -1,0 +1,61 @@
+<%# app/views/stories/new.html.erb %>
+<div class="max-w-5xl mx-auto py-10">
+  <h1 class="text-2xl font-semibold mb-6">Proposer un témoignage</h1>
+
+  <% if @story.errors.any? %>
+    <div class="rounded-xl border border-rose-200 bg-rose-50 px-6 py-4 mb-6 text-sm text-rose-800">
+      <div class="font-semibold mb-1">⚠️ Merci de corriger les champs ci-dessous.</div>
+      <ul class="list-disc list-inside space-y-1">
+        <% @story.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-8">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-4">
+      <%= form_with model: @story, url: stories_path, local: true do |f| %>
+        <div>
+          <%= f.label :title, "Titre du témoignage", class: "block text-sm font-medium text-slate-800" %>
+          <%= f.text_field :title, class: "mt-1 w-full rounded-lg border-slate-200" %>
+        </div>
+
+        <div>
+          <%= f.label :excerpt, "Résumé (facultatif)", class: "block text-sm font-medium text-slate-800" %>
+          <%= f.text_area :excerpt, rows: 2, class: "mt-1 w-full rounded-lg border-slate-200" %>
+        </div>
+
+        <div>
+          <%= f.label :body, "Racontez votre histoire", class: "block text-sm font-medium text-slate-800" %>
+          <%= f.text_area :body, rows: 8, class: "mt-1 w-full rounded-lg border-slate-200" %>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <%= f.label :author_name, "Votre prénom (publié)", class: "block text-sm font-medium text-slate-800" %>
+            <%= f.text_field :author_name, class: "mt-1 w-full rounded-lg border-slate-200" %>
+          </div>
+          <div>
+            <%= f.label :city, "Ville (facultatif)", class: "block text-sm font-medium text-slate-800" %>
+            <%= f.text_field :city, class: "mt-1 w-full rounded-lg border-slate-200" %>
+          </div>
+        </div>
+
+        <div>
+          <%= f.label :photos, "Photo (facultatif)", class: "block text-sm font-medium text-slate-800" %>
+          <%= f.file_field :photos, multiple: true, direct_upload: true, class: "mt-1 block w-full text-sm" %>
+        </div>
+
+        <div class="mt-6 flex justify-end">
+          <%= f.submit "Envoyer à Déclic",
+                class: "inline-flex items-center rounded-full bg-violet-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-violet-700" %>
+        </div>
+      <% end %>
+    </div>
+
+    <aside class="space-y-4">
+      <!-- bloc conseils, comme pour les opportunités -->
+    </aside>
+  </div>
+</div>

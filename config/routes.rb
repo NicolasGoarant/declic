@@ -21,7 +21,7 @@ Rails.application.routes.draw do
   get "sponsors",    to: "pages#sponsors",    as: :sponsors
 
   # Histoires
-  resources :stories, only: %i[index show]
+  resources :stories, only: %i[index show new create]
 
   # Mentions légales / infos
   get "/mentions-legales", to: "pages#legal",           as: :mentions_legales
