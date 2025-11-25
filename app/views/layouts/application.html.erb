@@ -65,6 +65,13 @@
     <%= javascript_include_tag "leaflet_tiles_fallback", defer: true, skip_pipeline: true rescue nil %>
     <%= javascript_include_tag "geo_watch", defer: true, skip_pipeline: true rescue nil %>
 
+    <%= render 'shared/footer' %>
+
+    <!-- JS maison nécessaires aux cartes (si présents) -->
+    <%= javascript_include_tag "leaflet_tiles_fallback", defer: true, skip_pipeline: true rescue nil %>
+    <%= javascript_include_tag "geo_watch", defer: true, skip_pipeline: true rescue nil %>
+
+
     <!-- Scripts spécifiques injectés par les vues -->
     <%= yield :scripts %>
   </body>

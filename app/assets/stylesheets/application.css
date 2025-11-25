@@ -118,11 +118,15 @@ body {
   border:2px solid #fff; display:grid; place-items:center;
   color:#fff; font-size:14px; box-shadow:0 1px 4px rgba(0,0,0,.25);
 }
+
 .dc-marker.benevolat    { background:#f43f5e; }
+.dc-marker.ecologiser   { background:#16a34a; } /* vert */
 .dc-marker.formation    { background:#3b82f6; }
-.dc-marker.rencontres   { background:#10b981; }
+.dc-marker.rencontres   { background:#facc15; } /* jaune */
 .dc-marker.entreprendre { background:#f59e0b; }
+.dc-marker.histoires    { background:#a855f7; }
 .dc-marker.default      { background:#7e5bef; }
+
 
 /* Accessibilité : focus dans le popup */
 .leaflet-popup.dc-popup .dcpp a:focus {

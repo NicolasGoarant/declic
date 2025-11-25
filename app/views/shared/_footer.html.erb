@@ -1,0 +1,29 @@
+<!-- app/views/shared/_footer.html.erb -->
+<footer class="mt-16 border-t border-gray-200 bg-white">
+  <div class="mx-auto max-w-6xl px-4 py-8 md:py-10 flex flex-col md:flex-row gap-6 md:items-center md:justify-between">
+    <!-- Bloc gauche : logo + baseline -->
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center shadow-sm">
+        <span class="text-white font-bold text-sm">D</span>
+      </div>
+      <div class="flex flex-col">
+        <span class="font-semibold text-sm text-gray-900">Déclic</span>
+        <span class="text-xs text-gray-500">Des opportunités près de chez toi.</span>
+      </div>
+    </div>
+
+    <!-- Liens milieu -->
+    <div class="flex flex-wrap gap-4 text-xs text-gray-600">
+      <%= link_to "FAQ", faq_path, class: "hover:text-gray-900" %>
+      <%= link_to "Confidentialité", confidentialite_path, class: "hover:text-gray-900" %>
+      <%= link_to "Mentions légales", mentions_legales_path, class: "hover:text-gray-900" %>
+      <%= link_to "Presse", presse_path, class: "hover:text-gray-900" %>
+    </div>
+
+    <!-- Bloc droit : petite phrase -->
+    <div class="text-xs text-gray-500 text-left md:text-right">
+      <p>© <%= Time.current.year %> Déclic — Nancy et sa métropole.</p>
+      <p class="mt-1">Un projet pour aider à entreprendre, se former, rencontrer, aider.</p>
+    </div>
+  </div>
+</footer>

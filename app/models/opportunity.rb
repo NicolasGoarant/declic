@@ -12,7 +12,7 @@ class Opportunity < ApplicationRecord
   end
 
   # --- Scopes / constantes ---
-  CATEGORIES = %w[benevolat formation rencontres entreprendre].freeze
+  CATEGORIES = %w[benevolat formation rencontres entreprendre ecologiser].freeze
   scope :active, -> { where(is_active: true) }
   scope :with_coords, -> { where.not(latitude: nil, longitude: nil) }
 
