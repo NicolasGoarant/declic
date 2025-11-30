@@ -20,8 +20,10 @@ CAT_IMAGES = {
   "formation"    => "https://images.unsplash.com/photo-1513258496099-48168024aec0?q=80&w=1200&auto=format&fit=crop",
   "rencontres"   => "https://images.unsplash.com/photo-1558222217-0d77a6d3b3d1?q=80&w=1200&auto=format&fit=crop",
   "entreprendre" => "https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1200&auto=format&fit=crop",
+  "ecologiser"   => "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200&auto=format&fit=crop",
   "default"      => "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1200&auto=format&fit=crop"
 }.freeze
+
 
 def image_for(category)
   CAT_IMAGES[category.to_s] || CAT_IMAGES["default"]
@@ -364,6 +366,656 @@ nancy_opportunities = [
     image_url: image_for("benevolat")
   }
 ]
+
+# ===== LIEUX & STRUCTURES ENGAGÉES / BELLES HISTOIRES =====
+nancy_opportunities += [
+  {
+    title: "Grande épicerie générale Nancy",
+    description: build_description(
+      category: "entreprendre",
+      base_desc: <<~MD,
+        La Grande Épicerie Générale, c’est un supermarché participatif où les coopératrices et coopérateurs décident ensemble de ce qu’on met dans les rayons.
+
+        Pour faire ses courses, il faut :
+        • participer **3 heures toutes les 4 semaines** aux tâches du magasin
+        • prendre au moins **une part sociale** : tu deviens copropriétaire de la coopérative 🧑‍🤝‍🧑
+
+        Ici, on privilégie :
+        • des produits **locaux, bio, éthiques** chaque fois que possible
+        • une **marge unique et transparente** (25 % sur tous les produits)
+        • une gouvernance démocratique : **une personne = une voix**, pas de logique purement financière
+
+        Tu peux t’y investir progressivement : d’abord comme coopérateur·rice qui assure ses créneaux, puis en rejoignant un **groupe de travail** pour faire grandir le projet (achats, communication, animation…). C’est un lieu de consommation, mais aussi un espace de lien social et d’apprentissage de la coopération.
+      MD
+      link: "https://www.grandeepiceriegenerale.fr",
+      when_line: "Engagement régulier — 3 h toutes les 4 semaines"
+    ),
+    category: "entreprendre",
+    organization: "Grande Épicerie Générale",
+    location: "88 avenue du XXème Corps, 54000 Nancy",
+    time_commitment: "3 h toutes les 4 semaines + implication possible en groupes de travail",
+    is_active: true,
+    tags: "coopérative,alimentation,supermarché participatif",
+    image_url: image_for("entreprendre"),
+    website: "https://www.grandeepiceriegenerale.fr",
+    contact_email: "contact@grandeepiceriegenerale.fr"
+  },
+  {
+    title: "Garage Solidaire de Lorraine",
+    description: build_description(
+      category: "benevolat",
+      base_desc: <<~MD,
+        Le Garage Solidaire de Lorraine, c’est **bien plus qu’un garage** : c’est un chantier d’insertion qui aide des personnes éloignées de l’emploi à retrouver un projet professionnel et une place dans la société.
+
+        Sur place :
+        • des salarié·es en insertion, accompagnés pendant **jusqu’à 2 ans**
+        • un encadrement par une équipe pluridisciplinaire
+        • un vrai parcours d’accompagnement social et professionnel
+
+        Côté services, le Garage Solidaire :
+        • répare et entretient des véhicules à **prix accessibles**
+        • vend ou loue des voitures à des publics pour qui la mobilité est un frein à l’emploi
+        • permet à chacun, quels que soient ses revenus, de contribuer à une mobilité **plus solidaire et plus écologique**.
+
+        S’engager avec le Garage Solidaire, c’est soutenir à la fois l’insertion, la mobilité et l’économie circulaire.
+      MD
+      link: "https://garagesolidairelorraine.fr",
+      when_line: "Accompagnement et services toute l’année — parcours d’insertion sur 24 mois"
+    ),
+    category: "benevolat",
+    organization: "Garage Solidaire de Lorraine",
+    location: "33 avenue de la Meurthe, 54320 Maxéville",
+    time_commitment: "Engagement régulier possible (bénévolat, partenariats, accompagnement)",
+    is_active: true,
+    tags: "mobilité,insertion,solidarité,économie circulaire",
+    image_url: image_for("benevolat"),
+    website: "https://garagesolidairelorraine.fr",
+    contact_email: "accueil@garagesolidairelorraine.fr"
+  },
+  {
+    title: "Tricot Couture Service (TCS)",
+    description: build_description(
+      category: "benevolat",
+      base_desc: <<~MD,
+        Tricot Couture Service (TCS), c’est une association d’économie sociale et solidaire qui utilise la couture, le tricot, la broderie et le patchwork comme **support d’insertion et de lien social**.
+
+        Sur ses chantiers d’insertion, TCS :
+        • propose des **emplois et un cadre de travail** à des personnes éloignées de l’emploi
+        • accompagne les salarié·es sur leurs projets de vie et de formation
+        • crée des articles textiles sur commande pour des collectivités ou des structures locales
+
+        TCS, c’est aussi :
+        • un **laboratoire de cohésion sociale**
+        • un fonds d’innovation sociale pour financer des projets à impact
+        • des ateliers où se croisent habitants de tous âges autour des activités créatives
+
+        En donnant du temps, des compétences ou en travaillant avec TCS, tu contribues à une **inclusion très concrète** et à une économie circulaire locale.
+      MD
+      link: "https://www.tricotcoutureservice.org/",
+      when_line: "Ateliers et chantiers d’insertion en continu — toute l’année"
+    ),
+    category: "benevolat",
+    organization: "Tricot Couture Service",
+    location: "17 Rue de Bavière, 54500 Vandœuvre-lès-Nancy",
+    time_commitment: "Engagement régulier ou ponctuel selon les ateliers et projets",
+    is_active: true,
+    tags: "insertion,couture,économie sociale,cohésion sociale",
+    image_url: image_for("benevolat"),
+    website: "https://www.tricotcoutureservice.org/",
+    contact_email: "tricot_couture_services@orange.fr"
+  },
+  {
+    title: "Le Relais — Friperie Ding Fring Laxou",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        Le Relais collecte des tonnes de textiles usagés via un réseau de bornes, puis les trie dans son centre proche de Nancy. Les vêtements en bon état alimentent les boutiques Ding Fring, comme celle de Laxou ; les autres sont **recyclés** (isolant Métisse, chiffons, combustible…).
+
+        Dans la boutique de Laxou, tu trouves :
+        • des vêtements seconde main en très bon état, parfois neufs
+        • des pièces vintage, des marques recherchées, des accessoires
+        • des prix accessibles pour étudiants, familles, amateurs de fripes
+
+        Acheter au Relais, c’est :
+        • réduire drastiquement les déchets textiles
+        • financer des **emplois en insertion**
+        • soutenir une coopérative où les salarié·es peuvent devenir sociétaires
+
+        C’est une **opportunité concrète d’écologiser ses achats**, tout en soutenant un modèle d’économie circulaire et solidaire.
+      MD
+      link: "https://www.lerelais.org",
+      when_line: "Boutique ouverte toute l’année — horaires variables selon le magasin"
+    ),
+    category: "ecologiser",
+    organization: "Le Relais / Ding Fring Laxou",
+    location: "6 Rue de la Mortagne, 54520 Laxou",
+    time_commitment: "Courses solidaires et engagées à ta convenance",
+    is_active: true,
+    tags: "seconde main,textile,réemploi,insertion,friperie",
+    image_url: image_for("ecologiser"),
+    website: "https://www.lerelais.org"
+  },
+  {
+    title: "Le Noël vert du Grand Nancy",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        Le Noël vert du Grand Nancy, c’est un marché de Noël **écoresponsable** qui rassemble une soixantaine de créateurs, artisans et producteurs locaux.
+
+        Sur place :
+        • des idées cadeaux durables : artisanat, produits locaux, objets réemployés
+        • des animations pour découvrir d’autres façons de consommer
+        • une ambiance festive, mais avec une vraie attention à l’empreinte écologique
+
+        C’est l’endroit idéal pour préparer les fêtes en accord avec tes valeurs : soutenir l’économie locale, réduire les déchets et faire découvrir des alternatives à ton entourage.
+      MD
+      link: nil,
+      when_line: "29–30 novembre 2025, 10h–18h (Salle Gentilly, Nancy)"
+    ),
+    category: "ecologiser",
+    organization: "Métropole du Grand Nancy",
+    location: "Salle Gentilly, 11 avenue du Rhin, 54000 Nancy",
+    time_commitment: "Événement sur 2 jours — 29 et 30 novembre 2025, 10h–18h",
+    starts_at: Time.zone.parse("2025-11-29 10:00"),
+    ends_at:   Time.zone.parse("2025-11-30 18:00"),
+    is_active: true,
+    tags: "noël,écoresponsable,artisanat local,économie circulaire",
+    image_url: image_for("ecologiser")
+  },
+  {
+    title: "Le Fourgon — Courses consignées à domicile",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        Le Fourgon remet la **consigne** au goût du jour : tu fais tes courses en ligne, tout arrive en contenants en verre réutilisables, livrés en véhicule électrique… et les contenants repartent lors de la tournée suivante.
+
+        Concrètement :
+        • plus de 700 références (boissons, épicerie, hygiène, entretien…)
+        • des produits majoritairement locaux quand c’est possible
+        • des bouteilles et bocaux en verre **réemployés jusqu’à 40 fois**
+
+        Les impacts :
+        • jusqu’à **79 % de CO₂ en moins** par rapport au tout-jetable
+        • réduction massive des déchets d’emballages
+        • tournées optimisées en véhicule électrique
+
+        Tu commandes, tu remplis une caisse, tu te fais livrer à Pulnoy et dans un large rayon autour de Nancy. C’est un excellent moyen d’écologiser ton quotidien sans ajouter une charge mentale énorme.
+      MD
+      link: "https://www.lefourgon.com/fr",
+      when_line: "Livraison régulière à domicile — selon tes commandes"
+    ),
+    category: "ecologiser",
+    organization: "Le Fourgon",
+    location: "10 Allée des Noires Terres, 54425 Pulnoy",
+    time_commitment: "Courses consignées à la demande",
+    is_active: true,
+    tags: "consigne,zéro déchet,livraison,verre réemployable",
+    image_url: image_for("ecologiser"),
+    website: "https://www.lefourgon.com/fr"
+  },
+  {
+    title: "Don de sang — Maison du Don Nancy",
+    description: build_description(
+      category: "benevolat",
+      base_desc: <<~MD,
+        La Maison du Don de Nancy accueille les donneurs de sang, de plasma et de plaquettes. **Aucun produit artificiel** ne peut remplacer ces dons : ils sont indispensables au quotidien pour soigner de nombreux patients.
+
+        Sur place :
+        • un parcours simple : inscription, entretien médical, prélèvement, collation
+        • une équipe qui t’accompagne et répond à toutes tes questions
+        • un accueil du lundi au vendredi, et même le samedi
+
+        Il suffit :
+        • d’être en bonne santé
+        • d’avoir plus de 18 ans
+        • de venir avec une pièce d’identité
+
+        La durée de vie des produits sanguins est courte : la **régularité des dons** est essentielle. Ton don peut littéralement sauver des vies.
+      MD
+      link: "https://dondesang.efs.sante.fr/grand-est/maison-du-don-de-nancy",
+      when_line: "Du lundi au vendredi 8h–19h, samedi 8h–16h"
+    ),
+    category: "benevolat",
+    organization: "Établissement Français du Sang — Maison du Don de Nancy",
+    location: "85–87 Boulevard Lobau, 54000 Nancy",
+    time_commitment: "Don ponctuel (45–60 min) — possibilité de dons réguliers",
+    is_active: true,
+    tags: "santé,don de sang,solidarité",
+    image_url: image_for("benevolat"),
+    website: "https://dondesang.efs.sante.fr/grand-est/maison-du-don-de-nancy",
+    contact_phone: "0 800 10 99 00"
+  },
+  {
+    title: "Réunion « Prêt à vous lancer ? » — CCI",
+    description: build_description(
+      category: "entreprendre",
+      base_desc: <<~MD,
+        Tu as une idée de création d’entreprise mais tu ne sais pas par où commencer ? La CCI Meurthe-et-Moselle anime une réunion d’information « Prêt à vous lancer ? » pour t’aider à clarifier les étapes.
+
+        Au programme :
+        • les grandes étapes pour transformer ton idée en projet rentable
+        • les différentes formes juridiques possibles
+        • les aides et dispositifs existants
+        • le processus concret d’immatriculation
+
+        On parle aussi des **facteurs-clés de réussite** et de ce que signifie réellement « devenir chef d’entreprise ». C’est une excellente porte d’entrée pour passer de l’intention à l’action.
+      MD
+      link: "https://www.nancy.cci.fr/evenement/reunion-dinformation-pret-vous-lancer-0",
+      when_line: "Mardi 9 décembre 2025, 9h30"
+    ),
+    category: "entreprendre",
+    organization: "CCI Meurthe-et-Moselle",
+    location: "51–53 Rue Stanislas, 54000 Nancy",
+    time_commitment: "Réunion d’information — 1/2 journée",
+    starts_at: Time.zone.parse("2025-12-09 09:30"),
+    ends_at:   Time.zone.parse("2025-12-09 12:00"),
+    is_active: true,
+    tags: "création d’entreprise,information,CCI",
+    image_url: image_for("entreprendre"),
+    website: "https://www.nancy.cci.fr/evenement/reunion-dinformation-pret-vous-lancer-0",
+    contact_email: "creation@nancy.cci.fr"
+  },
+  {
+    title: "Jimily — La box anniversaire qui aide les parents",
+    description: build_description(
+      category: "entreprendre",
+      base_desc: <<~MD,
+        Jimily, c’est une box anniversaire clé en main imaginée par Charline Didrat pour **simplifier la vie des parents** qui organisent un anniversaire à la maison.
+
+        Le concept :
+        • tu choisis une thématique (pirates, dinosaures, magie, licorne, safari, etc.)
+        • tu sélectionnes l’âge (4–7 ans ou 7–11 ans) et le nombre d’invité·es
+        • tu reçois une box avec décorations, vaisselle, activités, cadeaux invités et un guide pour animer la fête
+
+        Les plus :
+        • production locale ou française : boîtes et imprimés fabriqués à Nancy, articles sourcés en Alsace
+        • supports réutilisables (à colorier, à garder)
+        • une entrepreneure locale lauréate du concours « 101 femmes entrepreneures »
+
+        C’est une belle histoire d’entrepreneuriat local, avec un projet qui allie **praticité pour les parents** et **ancrage territorial**.
+      MD
+      link: "https://jimily.fr/",
+      when_line: "Box disponibles toute l’année — commande en ligne"
+    ),
+    category: "entreprendre",
+    organization: "Jimily",
+    location: "7 Rue Louis Pasteur, 54770 Dommartin-sous-Amance",
+    time_commitment: "Commande en ligne — Livraison en quelques jours",
+    is_active: true,
+    tags: "belle histoire,entrepreneuriat,famille,anniversaire",
+    image_url: image_for("entreprendre"),
+    website: "https://jimily.fr/"
+  },
+  {
+    title: "Soirée métiers dans la cité — APEC",
+    description: build_description(
+      category: "formation",
+      base_desc: <<~MD,
+        L’APEC organise une soirée « découverte métiers » pour cadres et jeunes diplômés qui envisagent une **reconversion ou un changement de trajectoire**.
+
+        Le principe :
+        • une trentaine « d’ambassadeurs métiers » sur place
+        • des échanges libres pour découvrir des secteurs : formation, immobilier, commerce, environnement, etc.
+        • un temps dédié pour poser toutes tes questions à celles et ceux qui font déjà ces métiers
+
+        L’idée : passer de l’intention (« j’aimerais peut-être changer ») à une vision plus concrète des options possibles, en s’appuyant sur l’expertise de l’APEC pour lever les blocages.
+
+        C’est un excellent point d’entrée si tu envisages une reconversion mais que tu te sens un peu perdu·e sur la suite.
+      MD
+      link: "https://www.apec.fr",
+      when_line: "Mercredi 10 décembre 2025, en soirée (CCI Nancy)"
+    ),
+    category: "formation",
+    organization: "APEC / CCI Meurthe-et-Moselle",
+    location: "51–53 Rue Stanislas, 54000 Nancy",
+    time_commitment: "Soirée unique — environ 3 heures",
+    starts_at: Time.zone.parse("2025-12-10 18:00"),
+    ends_at:   Time.zone.parse("2025-12-10 21:00"),
+    is_active: true,
+    tags: "reconversion,métiers,orientation,apec",
+    image_url: image_for("formation"),
+    website: "https://www.apec.fr"
+  },
+  {
+    title: "MJC Lillebonne — Une fourmilière d’activités",
+    description: build_description(
+      category: "rencontres",
+      base_desc: <<~MD,
+        La MJC Lillebonne, implantée dans un bâtiment historique du centre de Nancy, est une **véritable fourmilière d’activités culturelles et de loisirs**.
+
+        Elle propose :
+        • plus d’une centaine d’activités pour enfants, ados et adultes
+        • des expositions, conférences, spectacles, festivals… tout au long de l’année
+        • un accueil de nombreuses associations et collectifs
+
+        Au-delà des activités, Lillebonne porte un projet d’**éducation populaire** :
+        • permettre aux jeunes et aux adultes de développer leur personnalité
+        • prendre conscience de leurs aptitudes
+        • se préparer à devenir des citoyens actifs et responsables
+
+        C’est un lieu où l’on peut pratiquer, rencontrer, s’engager, et où naissent beaucoup de projets collectifs.
+      MD
+      link: "https://mjclillebonne.fr/activites-som/",
+      when_line: "Activités et événements toute l’année"
+    ),
+    category: "rencontres",
+    organization: "MJC Lillebonne",
+    location: "14 Rue du Cheval Blanc, 54000 Nancy",
+    time_commitment: "Activités régulières + événements ponctuels",
+    is_active: true,
+    tags: "mjc,culture,éducation populaire,loisirs",
+    image_url: image_for("rencontres"),
+    website: "https://mjclillebonne.fr/activites-som/",
+    contact_phone: "03 83 36 82 82"
+  }
+]
+
+# ===== REPAIR CAFÉS DU GRAND NANCY =====
+nancy_opportunities += [
+  {
+    title: "Repair Café à Villers-lès-Nancy",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        Un aspirateur à bout de souffle ? Une cafetière en carafe ? Un grille-pain cuit ? Le réseau des Repair Cafés du Grand Nancy est là pour ça.
+
+        À la MJC Savine, des bricoleurs et bricoleuses bénévoles t’aident à réparer tes objets du quotidien, **avec toi**, pas à ta place. L’objectif : apprendre ensemble, échanger des savoir-faire, éviter de jeter ce qui peut encore servir.
+
+        Ambiance conviviale, entrée libre, et satisfaction immense quand ton appareil repart pour quelques années.
+      MD
+      link: "https://mhdd.grandnancy.eu/actus-agenda/agenda/details-agenda?uuid=9cf27b54-4bfb-11ee-a51a-2dc944ed9ece",
+      when_line: "Mercredis 26 novembre, 17 décembre, 28 janvier 2025"
+    ),
+    category: "ecologiser",
+    organization: "MJC Savine",
+    location: "3 Bd des Essarts, 54600 Villers-lès-Nancy",
+    time_commitment: "Sessions ponctuelles — mercredis 26/11, 17/12, 28/01",
+    is_active: true,
+    tags: "repair café,réparation,anti-gaspi,convivialité",
+    image_url: image_for("ecologiser")
+  },
+  {
+    title: "Repair Café à Essey-lès-Nancy",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        Un atelier chaleureux au Foyer Foch où habitants et bénévoles se retrouvent pour réparer électroménager, objets du quotidien et luminaires.
+
+        Ici, on apprend par la pratique : guidé par des bricoleurs passionnés, tu découvres comment diagnostiquer une panne, démonter un appareil et lui offrir une seconde vie. L’ambiance est simple, conviviale, centrée sur l’entraide et la réduction des déchets.
+      MD
+      link: "https://mhdd.grandnancy.eu",
+      when_line: "Jeudis 11 décembre, 8 janvier, 12 février"
+    ),
+    category: "ecologiser",
+    organization: "Foyer Foch",
+    location: "Foyer Foch, 74 Avenue Foch, 54270 Essey-lès-Nancy",
+    time_commitment: "Jeudis 11/12, 08/01, 12/02",
+    is_active: true,
+    tags: "repair café,électroménager,économie circulaire",
+    image_url: image_for("ecologiser")
+  },
+  {
+    title: "Repair Café à Tomblaine",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        Tous les mardis, l’Espace Jean Jaurès se transforme en atelier collaboratif : tournevis, lampes, radios, vélos… chacun vient avec ce qu’il souhaite sauver.
+
+        Le Repair Café rassemble habitants, étudiants et bénévoles autour de la réparation d’objets du quotidien. Les bénévoles prennent le temps d’expliquer, de montrer les gestes et de transmettre leur savoir-faire dans une ambiance détendue.
+      MD
+      link: "https://mhdd.grandnancy.eu",
+      when_line: "Chaque mardi de 17h à 19h"
+    ),
+    category: "ecologiser",
+    organization: "Espace Jean Jaurès",
+    location: "Espace Jean Jaurès, Tomblaine",
+    time_commitment: "Tous les mardis, 17h–19h",
+    is_active: true,
+    tags: "repair café,réparation,vélos,convivialité",
+    image_url: image_for("ecologiser")
+  },
+  {
+    title: "Repair Café Nancy — Résidence Les Abeilles",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        Un Repair Café urbain et dynamique au sein de la Résidence Habitat Jeunes Les Abeilles.
+
+        Les ateliers en soirée attirent beaucoup de jeunes, curieux d’apprendre à réparer eux-mêmes leurs objets : petit électroménager, lampes, déco, petits appareils… C’est un lieu idéal pour s’initier au bricolage, comprendre les bases de l’électronique et rencontrer d’autres habitants dans une ambiance conviviale.
+      MD
+      link: "https://www.nancy.fr",
+      when_line: "Jeudis 23 jan, 27 fév, 27 mars, 24 avr, 22 mai, 26 juin"
+    ),
+    category: "ecologiser",
+    organization: "Résidence Habitat Jeunes Les Abeilles",
+    location: "Résidence Les Abeilles, 58 rue de la République, 54000 Nancy",
+    time_commitment: "Jeudis en soirée — plusieurs dates dans l’année",
+    is_active: true,
+    tags: "repair café,jeunesse,bricolage,électronique",
+    image_url: image_for("ecologiser")
+  },
+  {
+    title: "Repair Café à Saint-Max",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        Un Repair Café familial accueilli au Centre Social Saint-Michel-Jéricho (espace Champlain).
+
+        Les samedis matins, habitants du quartier et bénévoles se retrouvent pour remettre en état de petits appareils, outils ou objets cassés. L’objectif : apprendre ensemble, transmettre des compétences et éviter que des objets encore réparables ne finissent à la poubelle.
+      MD
+      link: "https://mhdd.grandnancy.eu",
+      when_line: "Samedis 20 déc, 17 jan, 21 fév"
+    ),
+    category: "ecologiser",
+    organization: "Centre Social Saint-Michel-Jéricho",
+    location: "Centre Social Saint-Michel-Jéricho, 75 rue Alexandre 1er, Saint-Max",
+    time_commitment: "Samedis matin — plusieurs dates",
+    is_active: true,
+    tags: "repair café,quartier,entraide",
+    image_url: image_for("ecologiser")
+  },
+  {
+    title: "Repair Café à Heillecourt",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        À la Maison du Temps Libre, le Repair Café rassemble régulièrement des habitants désireux d’apprendre à réparer leurs objets.
+
+        On y répare grille-pain, lampes, perceuses, mixers… avec l’aide de bénévoles expérimentés. C’est aussi un lieu d’échange où les participants prennent confiance en leurs capacités et découvrent l’importance du réemploi.
+      MD
+      link: "https://mhdd.grandnancy.eu",
+      when_line: "Mercredis 10 déc, 14 jan, 11 fév"
+    ),
+    category: "ecologiser",
+    organization: "Maison du Temps Libre",
+    location: "Maison du Temps Libre, 11 rue Gustave Lemaire, Heillecourt",
+    time_commitment: "Mercredis — plusieurs sessions",
+    is_active: true,
+    tags: "repair café,réemploi,bricolage",
+    image_url: image_for("ecologiser")
+  },
+  {
+    title: "Repair Café à Houdemont",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        Au Pôle Associatif de Houdemont, le Repair Café donne une seconde chance aux petits appareils, jouets et objets électriques.
+
+        Les bénévoles accompagnent chaque réparation pas à pas et expliquent les bons gestes. C’est une initiative locale forte qui sensibilise au réemploi et à la lutte contre le gaspillage.
+      MD
+      link: "https://mhdd.grandnancy.eu",
+      when_line: "Mardis 16 déc, 20 jan"
+    ),
+    category: "ecologiser",
+    organization: "Pôle Associatif de Houdemont",
+    location: "Pôle Associatif, 12 bis rue des Saules, Houdemont",
+    time_commitment: "Mardis — quelques dates",
+    is_active: true,
+    tags: "repair café,anti-gaspi,quartier",
+    image_url: image_for("ecologiser")
+  },
+  {
+    title: "Repair Café à Jarville-la-Malgrange",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        Un Repair Café de quartier où habitants et bénévoles s’entraident pour prolonger la vie des objets.
+
+        L’ambiance est détendue et pédagogique : chacun peut venir avec un appareil en panne, apprendre à l’ouvrir, comprendre ce qui ne va pas et tenter une réparation guidée. Un moment utile et convivial.
+      MD
+      link: "https://mhdd.grandnancy.eu",
+      when_line: "Mercredis 17 déc, 21 jan"
+    ),
+    category: "ecologiser",
+    organization: "Réseau Repair Cafés du Grand Nancy",
+    location: "Jarville-la-Malgrange",
+    time_commitment: "Mercredis — quelques dates",
+    is_active: true,
+    tags: "repair café,quartier,apprentissage",
+    image_url: image_for("ecologiser")
+  },
+  {
+    title: "Repair Café à Laneuveville-devant-Nancy",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        Le Repair Café local accueille régulièrement les habitants pour réparer ensemble leurs objets du quotidien.
+
+        On y apprend à diagnostiquer une panne simple, manipuler des outils en sécurité et adopter les bons réflexes pour offrir une seconde vie à ce qui semblait perdu. Un geste écologique et collectif apprécié dans la commune.
+      MD
+      link: "https://mhdd.grandnancy.eu",
+      when_line: "Jeudis 4 déc, 8 jan, 5 fév"
+    ),
+    category: "ecologiser",
+    organization: "Réseau Repair Cafés du Grand Nancy",
+    location: "Laneuveville-devant-Nancy",
+    time_commitment: "Jeudis — plusieurs dates",
+    is_active: true,
+    tags: "repair café,écologie,collectif",
+    image_url: image_for("ecologiser")
+  },
+  {
+    title: "Repair Café à Ludres",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        Un Repair Café convivial où les bénévoles accompagnent les habitants dans la réparation de petits équipements domestiques.
+
+        Les ateliers permettent à chacun de se familiariser avec les bases du bricolage et de l’électricité, dans un esprit de partage et de réduction des déchets.
+      MD
+      link: "https://mhdd.grandnancy.eu",
+      when_line: "Mardi 2 déc"
+    ),
+    category: "ecologiser",
+    organization: "Réseau Repair Cafés du Grand Nancy",
+    location: "Ludres",
+    time_commitment: "Mardi 2 décembre",
+    is_active: true,
+    tags: "repair café,électricité,bricolage",
+    image_url: image_for("ecologiser")
+  },
+  {
+    title: "Repair Café à Pulnoy",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        Au Centre de Rencontre de Pulnoy, le Repair Café propose des ateliers ouverts à tous : réparation d’appareils, petit bricolage, couture légère.
+
+        Les participants viennent avec leurs objets cassés et repartent avec de nouvelles compétences et la satisfaction d’avoir évité un déchet supplémentaire.
+      MD
+      link: "https://mhdd.grandnancy.eu",
+      when_line: "Lundis 1 déc, 2 mars, 1er juin"
+    ),
+    category: "ecologiser",
+    organization: "Centre de Rencontre de Pulnoy",
+    location: "Centre de rencontre, avenue Léonard de Vinci (Résidences Vertes), Pulnoy",
+    time_commitment: "Lundis — plusieurs dates dans l’année",
+    is_active: true,
+    tags: "repair café,couture,réparation",
+    image_url: image_for("ecologiser")
+  },
+  {
+    title: "Repair Café à Saulxures-lès-Nancy",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        Organisé à la Mairie, le Repair Café de Saulxures accueille habitants et bénévoles pour réparer ensemble toutes sortes d’objets.
+
+        De la bouilloire à la lampe en passant par les jouets, chaque séance est une occasion d’apprendre, de transmettre et de réduire notre impact environnemental.
+      MD
+      link: "https://mhdd.grandnancy.eu",
+      when_line: "Lundis 6 fév, 4 mai, 5 oct"
+    ),
+    category: "ecologiser",
+    organization: "Mairie de Saulxures-lès-Nancy",
+    location: "Mairie de Saulxures-lès-Nancy, 2 rue de Tomblaine",
+    time_commitment: "Lundis — plusieurs dates",
+    is_active: true,
+    tags: "repair café,mairie,écoresponsable",
+    image_url: image_for("ecologiser")
+  },
+  {
+    title: "Repair Café à Seichamps",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        Un Repair Café de proximité où l’on apprend à réparer au lieu de jeter : petit électroménager, éclairage, petits appareils domestiques.
+
+        Les bénévoles partagent leurs compétences, expliquent les gestes simples et encouragent chacun à devenir plus autonome face aux objets du quotidien.
+      MD
+      link: "https://mhdd.grandnancy.eu",
+      when_line: "Lundi 5 jan, mardi 7 avr, lundi 7 sept"
+    ),
+    category: "ecologiser",
+    organization: "Réseau Repair Cafés du Grand Nancy",
+    location: "Seichamps",
+    time_commitment: "Plusieurs dates entre janvier et septembre",
+    is_active: true,
+    tags: "repair café,autonomie,électroménager",
+    image_url: image_for("ecologiser")
+  },
+  {
+    title: "Repair Café à Vandœuvre-lès-Nancy",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        À la MJC Lorraine, le Repair Café attire bricoleurs confirmés et habitants curieux.
+
+        Les ateliers sont rythmés et très vivants : un mélange de partage de compétences, de dépannage pratique et d’apprentissage collectif. On y traite une grande variété d’objets dans une ambiance chaleureuse.
+      MD
+      link: "https://mhdd.grandnancy.eu",
+      when_line: "Lundis mensuels"
+    ),
+    category: "ecologiser",
+    organization: "MJC Lorraine",
+    location: "MJC Lorraine, 1 rue de Lorraine, Vandœuvre-lès-Nancy",
+    time_commitment: "Lundis — ateliers mensuels",
+    is_active: true,
+    tags: "repair café,mjc,collectif",
+    image_url: image_for("ecologiser")
+  },
+  {
+    title: "Repair Café du quartier 3B à Nancy",
+    description: build_description(
+      category: "ecologiser",
+      base_desc: <<~MD,
+        À la MJC Beauregard, le Repair Café du quartier 3B est un rendez-vous local apprécié.
+
+        Les habitants y amènent appareils en panne, outils, lampes ou objets divers. Soutenu par des bénévoles compétents, l’atelier met l’accent sur la transmission de savoir-faire et la réduction des déchets.
+      MD
+      link: "https://www.nancy.fr",
+      when_line: "Samedis 6 déc, 10 jan, 7 fév"
+    ),
+    category: "ecologiser",
+    organization: "MJC Beauregard",
+    location: "MJC Beauregard, Place Maurice Ravel, 54000 Nancy",
+    time_commitment: "Samedis — plusieurs dates",
+    is_active: true,
+    tags: "repair café,quartier,savoir-faire",
+    image_url: image_for("ecologiser")
+  }
+]
+
 
 # =================== Import en base ===================
 

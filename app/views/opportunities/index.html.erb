@@ -24,6 +24,7 @@
         <div class="chips">
           <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
           <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
+          <button class="chip" data-cat="ecologiser">🌱 Écologiser</button>
           <button class="chip" data-cat="formation">📘 Formation</button>
           <button class="chip" data-cat="rencontres">👥 Rencontres</button>
           <button class="chip" data-cat="entreprendre">💼 Entreprendre</button>
@@ -193,6 +194,7 @@ document.addEventListener('turbo:load', bootOps, { once:true });
 document.addEventListener('DOMContentLoaded', bootOps, { once:true });
 
 function bootOps(){
+  const chips = Array.from(document.querySelectorAll('.chip'));
   const mapEl = document.getElementById('map');
   if(!mapEl || !window.L) return;
   if (mapEl.dataset.mapInited === "1") return;
@@ -203,8 +205,25 @@ function bootOps(){
   setTimeout(()=> map.invalidateSize(), 250);
   mapEl.dataset.mapInited = "1";
 
-  const colors={benevolat:'#ef4444',formation:'#3b82f6',rencontres:'#10b981',entreprendre:'#f59e0b',default:'#6366f1'};
-  const emojis={benevolat:'❤️',formation:'📘',rencontres:'👥',entreprendre:'💼',default:'⭐'};
+    const colors={
+  benevolat:'#ef4444',
+  formation:'#3b82f6',
+  rencontres:'#10b981',
+  entreprendre:'#f59e0b',
+  ecologiser:'#22c55e',   // 💚 écolo
+  default:'#6366f1'
+};
+const emojis={
+  benevolat:'❤️',
+  formation:'📘',
+  rencontres:'👥',
+  entreprendre:'💼',
+  ecologiser:'🌱',        // même emoji que sur la Home
+  default:'⭐'
+};
+
+
+
   const iconFor = (c)=> L.divIcon({
     className:'',
     html:`<div style="width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:${colors[c]||colors.default}"><span>${emojis[c]||emojis.default}</span></div>`,
@@ -228,14 +247,17 @@ function bootOps(){
   </div>
 </div>`;
   }
+
   function coverFor(cat){
-    const c=(cat||'').toLowerCase();
-    if(c==='benevolat') return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=300&auto=format&fit=crop';
-    if(c==='formation') return 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=300&auto=format&fit=crop';
-    if(c==='rencontres') return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=300&auto=format&fit=crop';
-    if(c==='entreprendre') return 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=300&auto=format&fit=crop';
-    return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
-  }
+  const c=(cat||'').toLowerCase();
+  if(c==='benevolat')    return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=300&auto=format&fit=crop';
+  if(c==='formation')    return 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=300&auto=format&fit=crop';
+  if(c==='rencontres')   return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=300&auto=format&fit=crop';
+  if(c==='entreprendre') return 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=300&auto=format&fit=crop';
+  if(c==='ecologiser')   return 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=300&auto=format&fit=crop'; // illustration verte
+  return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
+}
+
 
   let dataset = [];
   function plot(items){
@@ -251,21 +273,52 @@ function bootOps(){
   }
 
   // Charge les opportunités depuis l'API
-  fetch('/api/v1/opportunities')
-    .then(r=>r.ok?r.json():[])
-    .then(data=>{ dataset = data || []; plot(dataset); })
-    .catch(()=>{});
+fetch('/api/v1/opportunities')
+  .then(r => r.ok ? r.json() : [])
+  .then(data => {
+    dataset = data || [];
+
+    const params   = new URLSearchParams(window.location.search);
+    const initial  = (params.get('category') || 'toutes').toLowerCase();
+
+    let items = dataset;
+    if (initial && initial !== 'toutes') {
+      items = dataset.filter(o => (o.category || '').toLowerCase() === initial);
+    }
+
+    // Affiche les bons points sur la carte
+    plot(items);
+
+    // Met à jour l’état visuel des chips
+    if (initial && initial !== 'toutes') {
+      chips.forEach(c => c.classList.toggle('is-active', c.dataset.cat === initial));
+      filterList(initial);
+    }
+  })
+  .catch(() => {});
+
+
 
   // Filtres carte + liste
-  const chips = Array.from(document.querySelectorAll('.chip'));
-  chips.forEach(chip=> chip.addEventListener('click', ()=>{
-    chips.forEach(c=>c.classList.remove('is-active'));
-    chip.classList.add('is-active');
-    const cat = chip.dataset.cat;
-    if(cat==='toutes'){ plot(dataset); filterList(null); return; }
-    plot((dataset||[]).filter(o=> (o.category||'').toLowerCase()===cat));
-    filterList(cat);
-  }));
+// Filtres carte + liste
+chips.forEach(chip => chip.addEventListener('click', () => {
+  chips.forEach(c => c.classList.remove('is-active'));
+  chip.classList.add('is-active');
+
+  const cat = chip.dataset.cat;
+  if (cat === 'toutes') {
+    plot(dataset);
+    filterList(null);
+    return;
+  }
+
+  const filtered = (dataset || []).filter(
+    o => (o.category || '').toLowerCase() === cat
+  );
+  plot(filtered);
+  filterList(cat);
+}));
+
 
   function filterList(cat){
     const cards = document.querySelectorAll('.op-card');

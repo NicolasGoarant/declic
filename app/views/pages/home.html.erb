@@ -87,62 +87,68 @@ end
 
   <!-- PARCOURS -->
   <section id="parcours" class="hm-slice alt">
-    <div class="container">
-      <h2 class="hm-h2">Choisis ton Déclic</h2>
+  <div class="container">
+    <h2 class="hm-h2">Choisis ton Déclic</h2>
 
-      <div class="hm-grid-cards">
-        <% btn_base = "hm-card" %>
+    <div class="hm-grid-cards">
+      <% btn_base = "hm-card" %>
 
-        <%= link_to parcours_path(category: "entreprendre"), class: "#{btn_base} -entreprendre" do %>
-          <span class="hm-emoji">🚀</span>
-          <div class="hm-card-txt">
-            <p class="t1">Je veux entreprendre</p>
-            <p class="t2">Lance ton projet avec des mentors</p>
-          </div>
-        <% end %>
+      <%= link_to opportunities_path(category: "entreprendre"),
+                  class: "#{btn_base} -entreprendre" do %>
+        <span class="hm-emoji">🚀</span>
+        <div class="hm-card-txt">
+          <p class="t1">Je veux entreprendre</p>
+          <p class="t2">Lance ton projet avec des mentors</p>
+        </div>
+      <% end %>
 
-        <%= link_to parcours_path(category: "ecologiser"), class: "#{btn_base} -ecologiser" do %>
-          <span class="hm-emoji">🌱</span>
-          <div class="hm-card-txt">
-            <p class="t1">Je veux écologiser</p>
-            <p class="t2">Des actions pour la planète</p>
-          </div>
-        <% end %>
+      <%= link_to opportunities_path(category: "ecologiser"),
+                  class: "#{btn_base} -ecologiser" do %>
+        <span class="hm-emoji">🌱</span>
+        <div class="hm-card-txt">
+          <p class="t1">Je veux écologiser</p>
+          <p class="t2">Des actions pour la planète</p>
+        </div>
+      <% end %>
 
-        <%= link_to parcours_path(category: "formation"), class: "#{btn_base} -formation" do %>
-          <span class="hm-emoji">📘</span>
-          <div class="hm-card-txt">
-            <p class="t1">Je veux me former</p>
-            <p class="t2">Des formations pour progresser</p>
-          </div>
-        <% end %>
+      <%= link_to opportunities_path(category: "formation"),
+                  class: "#{btn_base} -formation" do %>
+        <span class="hm-emoji">📘</span>
+        <div class="hm-card-txt">
+          <p class="t1">Je veux me former</p>
+          <p class="t2">Des formations pour progresser</p>
+        </div>
+      <% end %>
 
-        <%= link_to parcours_path(category: "benevolat"), class: "#{btn_base} -benevolat" do %>
-          <span class="hm-emoji">❤️</span>
-          <div class="hm-card-txt">
-            <p class="t1">Je veux aider</p>
-            <p class="t2">Des missions utiles et humaines</p>
-          </div>
-        <% end %>
+      <%= link_to opportunities_path(category: "benevolat"),
+                  class: "#{btn_base} -benevolat" do %>
+        <span class="hm-emoji">❤️</span>
+        <div class="hm-card-txt">
+          <p class="t1">Je veux aider</p>
+          <p class="t2">Des missions utiles et humaines</p>
+        </div>
+      <% end %>
 
-        <%= link_to parcours_path(category: "rencontres"), class: "#{btn_base} -rencontres" do %>
-          <span class="hm-emoji">🤝</span>
-          <div class="hm-card-txt">
-            <p class="t1">Je veux rencontrer</p>
-            <p class="t2">Des communautés près de chez toi</p>
-          </div>
-        <% end %>
+      <%= link_to opportunities_path(category: "rencontres"),
+                  class: "#{btn_base} -rencontres" do %>
+        <span class="hm-emoji">🤝</span>
+        <div class="hm-card-txt">
+          <p class="t1">Je veux rencontrer</p>
+          <p class="t2">Des communautés près de chez toi</p>
+        </div>
+      <% end %>
 
-        <%= link_to stories_path, class: "#{btn_base} -histoires" do %>
-          <span class="hm-emoji">📖</span>
-          <div class="hm-card-txt">
-            <p class="t1">“Belles histoires !”</p>
-            <p class="t2">Déclics, reconversions, prises de risque</p>
-          </div>
-        <% end %>
-      </div>
+      <%= link_to stories_path, class: "#{btn_base} -histoires" do %>
+        <span class="hm-emoji">📖</span>
+        <div class="hm-card-txt">
+          <p class="t1">“Belles histoires !”</p>
+          <p class="t2">Déclics, reconversions, prises de risque</p>
+        </div>
+      <% end %>
     </div>
-  </section>
+  </div>
+</section>
+
 
   <!-- CARTE -->
   <section id="explorer" class="hm-slice bg-muted grad-behind-map">
