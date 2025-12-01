@@ -405,7 +405,22 @@ end
 .hm-card.-formation{   background:linear-gradient(135deg,#6366f1,#38bdf8); }
 .hm-card.-benevolat{   background:linear-gradient(135deg,#f43f5e,#ec4899); }
 .hm-card.-rencontres{  background:linear-gradient(135deg,#facc15,#f97316,#fb923c); }
-.hm-card.-histoires{   background:linear-gradient(135deg,#6d28d9,#a855f7,#d946ef); }
+.hm-card.-histoires{
+  background: linear-gradient(
+    135deg,
+    #ef4444,  /* rouge - Aider */
+    #3b82f6,  /* bleu - Se former */
+    #f59e0b,  /* orange - Entreprendre */
+    #10b981,  /* vert turquoise - Rencontrer */
+    #fb7185,  /* rose chaud - storytelling */
+    #22c55e   /* vert - Écologiser */
+  );
+  background-size: 350% 350%;
+  animation: gradientShift 12s ease infinite;
+}
+
+
+
 
 /* 2 colonnes sur tablette */
 @media (max-width:900px){
@@ -493,6 +508,23 @@ end
 }
 
 .hm-mapwrap{ position:relative; }
+
+/* Chip "Belles histoires" multicolore quand active */
+.chip[data-cat="histoires"].is-active{
+  background: linear-gradient(
+    135deg,
+    #ef4444,  /* rouge - Aider */
+    #3b82f6,  /* bleu - Se former */
+    #f59e0b,  /* orange - Entreprendre */
+    #10b981,  /* vert turquoise - Rencontrer */
+    #fb7185,  /* rose chaud - storytelling */
+    #22c55e   /* vert - Écologiser */
+  );
+  background-size: 350% 350%;
+  animation: gradientShift 12s ease infinite; /* réutilise l’anim du gros bouton */
+  color:#fff;
+  border-color: transparent;
+}
 
 /* Carte */
 .hm-map{
@@ -744,6 +776,12 @@ end
   border:2px solid #fff;
   color:#fff;
 }
+@keyframes gradientShift {
+  0%{ background-position: 0% 50%; }
+  50%{ background-position: 100% 50%; }
+  100%{ background-position: 0% 50%; }
+}
+
 </style>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -809,15 +847,36 @@ function bootHome(){
       default:     '📍'
     };
 
-    const iconFor = (c)=>{
-      const bg = colors[c] || colors.default;
-      const em = emojis[c] || emojis.default;
-      return L.divIcon({
-        className:'',
-        html:`<div style="width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);background:${bg}">${em}</div>`,
-        iconSize:[26,32], iconAnchor:[13,28], popupAnchor:[0,-16]
-      });
-    };
+const iconFor = (c) => {
+  const em = emojis[c] || emojis.default;
+  const baseStyle =
+    "width:26px;height:26px;border-radius:9999px;border:2px solid #fff;" +
+    "display:grid;place-items:center;color:#fff;font-size:14px;" +
+    "box-shadow:0 1px 4px rgba(0,0,0,.25);";
+
+  let extraStyle;
+
+  if (c === 'histoires') {
+    // Marker multicolore animé pour les Belles histoires
+    extraStyle =
+      "background:linear-gradient(135deg," +
+      "#f97316,#ec4899,#3b82f6,#22c55e,#f59e0b);" +
+      "background-size:320% 320%;" +
+      "animation:gradientShift 8s ease infinite;";
+  } else {
+    const bg = colors[c] || colors.default;
+    extraStyle = `background:${bg};`;
+  }
+
+  return L.divIcon({
+    className: '',
+    html: `<div style="${baseStyle}${extraStyle}"><span>${em}</span></div>`,
+    iconSize: [26, 32],
+    iconAnchor: [13, 28],
+    popupAnchor: [0, -16]
+  });
+};
+
 
     const esc = s => (s || '').toString()
       .replace(/&/g,'&amp;')

@@ -14,6 +14,25 @@
 # =====================================================
 
 # =================== Helpers simplifiés ===================
+Opportunity.destroy_all
+Story.destroy_all
+
+# db/seeds.rb — Données de départ pour Déclic
+# =====================================================
+#
+# PHILOSOPHIE :
+# - Ce fichier contient UNIQUEMENT des opportunités RÉELLES et vérifiées
+# - Coordonnées GPS fixes et précises (pas de randomisation)
+# - Textes engageants qui donnent vraiment envie de participer
+# - Idempotent : peut être exécuté plusieurs fois sans créer de doublons
+#
+# SOURCE DE VÉRITÉ :
+# Pour ajouter/modifier des opportunités en production, préférez :
+# - L'interface admin (/admin/opportunities)
+# - L'import CSV depuis opps_corridor_active.csv
+# =====================================================
+
+# =================== Helpers simplifiés ===================
 
 CAT_IMAGES = {
   "benevolat"    => "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop",
@@ -1016,13 +1035,94 @@ nancy_opportunities += [
   }
 ]
 
+# =================== Belles histoires (Stories) ===================
 
-# =================== Import en base ===================
+nancy_stories = [
+  {
+    title: "Aurélie ouvre L’Écrin à Damelevières",
+    chapo: "Aurélie a quitté la fonction publique pour créer L’Écrin, un bar lounge chaleureux à Damelevières. Une histoire de courage, de doutes… et de rencontres. ✨",
+    description: "Aurélie, ex-fonctionnaire, a osé tout quitter pour ouvrir L’Écrin, un bar lounge convivial à Damelevières. Son histoire montre qu’on peut réinventer son quotidien, même loin des grandes villes.",
+    body: <<~MD,
+      ### Quand l’envie de changer devient trop forte
+
+      Pendant des années, Aurélie a travaillé dans la fonction publique. Un emploi stable, rassurant, mais qui la laissait de plus en plus sur sa faim. L’idée de créer un lieu à elle, où les gens viendraient se détendre et se retrouver, revenait régulièrement. Peu à peu, ce n’était plus juste un rêve, mais un besoin : avoir un projet qui lui ressemble vraiment. 💭
+
+      Elle commence à imaginer un bar lounge cosy, avec une ambiance feutrée, des lumières douces, des planches à partager et une carte qui donne envie de prendre le temps.
+
+      ### De la sécurité au grand saut
+
+      Quitter un poste stable pour ouvrir un commerce dans une petite ville, ce n’est pas anodin. Aurélie se forme, se fait accompagner, travaille son dossier et son prévisionnel. Elle passe des soirées à comparer les banques, à chercher le bon local, à comprendre les normes, les licences, les travaux.
+
+      Les doutes sont là : est-ce que les habitants répondront présent ? Est-ce que le projet tiendra dans la durée ? Mais à un moment, il faut trancher : elle signe. Les travaux commencent, et L’Écrin commence enfin à exister ailleurs que dans sa tête. 🔨
+
+      ### Un lieu pour faire une pause… et se rencontrer
+
+      Quand on pousse la porte de L’Écrin, on découvre un bar à l’atmosphère chaleureuse : banquettes confortables, déco travaillée, lumières tamisées. On y vient pour prendre un verre, grignoter, fêter un anniversaire ou juste décompresser après le travail.
+
+      Au fil des semaines, Aurélie voit se créer ce qu’elle avait imaginé : des habitués qui reviennent, des groupes d’amis qui se retrouvent, des gens qui ne se seraient peut-être jamais rencontrés ailleurs. Son bar devient un petit repère dans la ville, un endroit où l’on sait qu’on sera accueilli.
+
+      ### Ce que tu peux en retenir
+
+      • partir d’un emploi très sécurisé pour construire un projet plus aligné avec ses envies
+      • créer un lieu de vie même en dehors des grandes métropoles
+      • s’appuyer sur l’accompagnement (banque, réseaux locaux, proches) pour franchir les étapes une par une
+
+      Si tu rêves d’ouvrir un café, un bar, un commerce de proximité, son parcours rappelle que ce n’est jamais « trop tard » pour se lancer — à condition d’accepter un peu d’incertitude et beaucoup d’apprentissage en route. 🌟
+    MD
+    quote: "J’avais envie de créer quelque chose de différent du simple bistrot.",
+    location: "L’Écrin — Damelevières (54)",
+    latitude: 48.5568,
+    longitude: 6.3860,
+    image_url: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1600&auto=format&fit=crop",
+    source_name: "Est Républicain",
+    source_url: nil
+  },
+
+  {
+    title: "Laure crée Galapaga, concept store éthique à Villers-lès-Nancy",
+    chapo: "Après plusieurs années dans un parcours plus classique, Laure a ouvert Galapaga, un concept store éthique et éco-responsable à Villers-lès-Nancy. Un lieu qui raconte une autre façon de consommer. 🌱",
+    description: "Avec Galapaga, Laure propose un concept store éthique à Villers-lès-Nancy : marques engagées, sélection exigeante et envie de montrer qu’on peut consommer autrement, sans renoncer au plaisir.",
+    body: <<~MD,
+      ### L’envie de donner du sens à son travail
+
+      Laure a longtemps travaillé dans un univers plus traditionnel, avec des journées bien remplies mais un sentiment qui revenait souvent : « Est-ce que ce que je fais a vraiment du sens pour moi ? ». Peu à peu, elle s’intéresse aux marques responsables, à la consommation éthique, aux alternatives plus respectueuses de l’environnement et des personnes.
+
+      Elle se met à suivre des créateurs, des petites marques engagées, des projets qui allient esthétique et impact positif. L’idée d’un concept store commence à germer : un lieu où rassembler ces marques, les rendre visibles, et donner aux habitants des options concrètes pour consommer autrement.
+
+      ### Trois ans pour faire mûrir un projet
+
+      Laure a travaillé son concept, son positionnement, la sélection de marques, les prix… Elle a aussi dû apprendre un nouveau métier : négocier avec des fournisseurs, chercher un local, construire une identité visuelle, imaginer l’expérience client en boutique.
+
+      Elle résume ce chemin en une phrase : beaucoup de patience, de travail en coulisses et la conviction que le projet en vaut la peine. ✨
+
+      ### Un concept store engagé, sans être culpabilisant
+
+      Galapaga propose :
+      • des vêtements et accessoires responsables
+      • des objets du quotidien durables
+      • des produits transparents sur leur fabrication
+
+      Laure prend le temps de raconter l’histoire derrière chaque marque. Le but : proposer des alternatives concrètes, sans culpabiliser.
+
+      ### Ce que tu peux en retenir
+
+      • un projet peut naître d’un malaise diffus puis se préciser
+      • le commerce peut mêler esthétique, impact écologique et engagement social
+      • un lieu engagé peut devenir un repère local
+
+      Un projet construit avec patience, conviction et sens. 🌈
+    MD
+    quote: "Il m’a fallu trois ans pour concrétiser ce projet qui a mûri en moi.",
+    location: "Galapaga — Villers-lès-Nancy (54)",
+    latitude: 48.6733,
+    longitude: 6.1532,
+    image_url: "https://images.unsplash.com/photo-1526481280695-3c687fd543c0?q=80&w=1600&auto=format&fit=crop",
+    source_name: "Est Républicain",
+    source_url: nil
+  }
+]
 
 puts "🌱 Nettoyage et import des opportunités Nancy..."
-
-# Option : supprimer les anciennes opportunités (décommenter si besoin)
-# Opportunity.destroy_all
 
 nancy_opportunities.each do |attrs|
   Opportunity.find_or_create_by!(
@@ -1033,9 +1133,25 @@ nancy_opportunities.each do |attrs|
   end
 end
 
-puts "✅ Seeds chargés avec succès !"
+puts "✅ Opportunités seedées"
 puts "📍 #{Opportunity.count} opportunités dans la base"
 puts "   - Bénévolat : #{Opportunity.where(category: 'benevolat').count}"
 puts "   - Formation : #{Opportunity.where(category: 'formation').count}"
 puts "   - Rencontres : #{Opportunity.where(category: 'rencontres').count}"
 puts "   - Entreprendre : #{Opportunity.where(category: 'entreprendre').count}"
+puts "   - Écologiser : #{Opportunity.where(category: 'ecologiser').count}"
+
+# ===== Import des belles histoires =====
+puts "📖 Import des belles histoires..."
+
+nancy_stories.each do |attrs|
+  Story.find_or_create_by!(
+    title: attrs[:title],
+    location: attrs[:location]
+  ) do |story|
+    story.assign_attributes(attrs)
+  end
+end
+
+puts "✅ Stories seedées"
+puts "📖 #{Story.count} belles histoires dans la base"

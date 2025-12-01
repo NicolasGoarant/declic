@@ -125,6 +125,12 @@
   }
   .st-btn:hover{ background:#6d28d9; }
 
+    @keyframes gradientShift {
+    0%   { background-position: 0%   50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0%   50%; }
+  }
+
   @media(max-width:560px){
     .st-map{ height:320px; }
     .st-card-text{ -webkit-line-clamp:2; }
@@ -145,9 +151,30 @@ function bootStories(){
   if(el.dataset.mapInited==="1") return;
   const map=L.map(el,{zoomControl:true,attributionControl:false}).setView([46.6,2.2],6);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
-  const layer=L.layerGroup().addTo(map);
-  const VIOLET='#7e5bef';
-  const icon=()=>L.divIcon({className:'',html:`<div style="width:26px;height:26px;border-radius:9999px;border:2px solid #fff;display:grid;place-items:center;color:#fff;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;background:${VIOLET}"><span>📖</span></div>`,iconSize:[26,32],iconAnchor:[13,28],popupAnchor:[0,-26]});
+  const layer = L.layerGroup().addTo(map);
+
+const icon = () => L.divIcon({
+  className: '',
+  html: `<div style="
+    width:26px;
+    height:26px;
+    border-radius:9999px;
+    border:2px solid #fff;
+    display:grid;
+    place-items:center;
+    color:#fff;
+    font-size:14px;
+    box-shadow:0 1px 4px rgba(0,0,0,.25);
+    position:relative;
+    background:linear-gradient(135deg,#f97316,#ec4899,#3b82f6,#22c55e,#f59e0b);
+    background-size:320% 320%;
+    animation:gradientShift 8s ease infinite;
+  "><span>📖</span></div>`,
+  iconSize: [26, 32],
+  iconAnchor: [13, 28],
+  popupAnchor: [0, -26]
+});
+
   const bounds=[];
   fetch('/api/v1/stories').then(r=>r.ok?r.json():[]).then(data=>{
     (data||[]).forEach(s=>{
