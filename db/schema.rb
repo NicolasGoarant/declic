@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_01_142647) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_01_165706) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -101,47 +101,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_01_142647) do
     t.text "impact_metric_hint"
     t.string "schedule_text"
     t.string "external_url"
-    t.text "summary"
-    t.string "intensity"
-    t.string "mode"
-    t.string "timezone"
-    t.string "venue_name"
-    t.string "organizer_name"
-    t.string "url"
     t.string "image_url"
-    t.index ["city"], name: "index_opportunities_on_city"
     t.index ["ends_at"], name: "index_opportunities_on_ends_at"
     t.index ["slug"], name: "index_opportunities_on_slug", unique: true
     t.index ["source", "external_id"], name: "index_opportunities_on_source_and_external_id", unique: true
     t.index ["starts_at"], name: "index_opportunities_on_starts_at"
-    t.index ["url"], name: "index_opportunities_on_url", unique: true
-  end
-
-  create_table "raw_ingestions", force: :cascade do |t|
-    t.integer "source_id", null: false
-    t.string "external_id"
-    t.json "payload"
-    t.datetime "ingested_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["source_id", "external_id"], name: "index_raw_ingestions_on_source_id_and_external_id", unique: true
-    t.index ["source_id"], name: "index_raw_ingestions_on_source_id"
-  end
-
-  create_table "sources", force: :cascade do |t|
-    t.string "name", null: false
-    t.string "kind", null: false
-    t.text "url", null: false
-    t.boolean "enabled", default: true, null: false
-    t.datetime "last_run_at"
-    t.text "last_error"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.boolean "active", default: true
-    t.datetime "last_fetched_at"
-    t.float "success_rate"
-    t.index ["kind", "enabled"], name: "index_sources_on_kind_and_enabled"
-    t.index ["url"], name: "index_sources_on_url", unique: true
   end
 
   create_table "stories", force: :cascade do |t|
@@ -160,6 +124,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_01_142647) do
     t.datetime "updated_at", null: false
     t.boolean "is_active"
     t.text "quote"
+    t.date "happened_on"
   end
 
   create_table "testimonials", force: :cascade do |t|
@@ -174,5 +139,4 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_01_142647) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "raw_ingestions", "sources"
 end

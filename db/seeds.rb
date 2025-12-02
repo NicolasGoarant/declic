@@ -24,7 +24,7 @@ Story.destroy_all
 # - Ce fichier contient UNIQUEMENT des opportunités RÉELLES et vérifiées
 # - Coordonnées GPS fixes et précises (pas de randomisation)
 # - Textes engageants qui donnent vraiment envie de participer
-# - Idempotent : peut être exécuté plusieurs fois sans créer de doublons
+# - Idempotent : peut être exécuté plusieurs fois sans créer de doublonsfaurélie
 #
 # SOURCE DE VÉRITÉ :
 # Pour ajouter/modifier des opportunités en production, préférez :
@@ -1061,21 +1061,23 @@ nancy_stories = [
 
       Au fil des semaines, Aurélie voit se créer ce qu’elle avait imaginé : des habitués qui reviennent, des groupes d’amis qui se retrouvent, des gens qui ne se seraient peut-être jamais rencontrés ailleurs. Son bar devient un petit repère dans la ville, un endroit où l’on sait qu’on sera accueilli.
 
-      ### Ce que tu peux en retenir
+       ### Ce que tu peux en retenir 💡
 
-      • partir d’un emploi très sécurisé pour construire un projet plus aligné avec ses envies
-      • créer un lieu de vie même en dehors des grandes métropoles
-      • s’appuyer sur l’accompagnement (banque, réseaux locaux, proches) pour franchir les étapes une par une
+      • 🌱 Partir d’un emploi très sécurisé pour construire un projet plus aligné avec ses envies.
+      • 📍 Créer un lieu de vie même en dehors des grandes métropoles.
+      • 🤝 S’appuyer sur l’accompagnement (banque, réseaux locaux, proches) pour franchir les étapes une par une.
+
 
       Si tu rêves d’ouvrir un café, un bar, un commerce de proximité, son parcours rappelle que ce n’est jamais « trop tard » pour se lancer — à condition d’accepter un peu d’incertitude et beaucoup d’apprentissage en route. 🌟
     MD
-    quote: "J’avais envie de créer quelque chose de différent du simple bistrot.",
+     quote: "J’avais envie de créer quelque chose de différent du simple bistrot.",
     location: "L’Écrin — Damelevières (54)",
     latitude: 48.5568,
     longitude: 6.3860,
     image_url: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1600&auto=format&fit=crop",
     source_name: "Est Républicain",
-    source_url: nil
+    source_url: nil,
+    happened_on: Date.new(2023, 10, 1) # ≈ octobre 2023
   },
 
   {
@@ -1104,11 +1106,12 @@ nancy_stories = [
 
       Laure prend le temps de raconter l’histoire derrière chaque marque. Le but : proposer des alternatives concrètes, sans culpabiliser.
 
-      ### Ce que tu peux en retenir
+      ### Ce que tu peux en retenir 💡
 
-      • un projet peut naître d’un malaise diffus puis se préciser
-      • le commerce peut mêler esthétique, impact écologique et engagement social
-      • un lieu engagé peut devenir un repère local
+      • 🔍 Un projet peut naître d’un malaise diffus puis se préciser.
+      • 🌍 Le commerce peut mêler esthétique, impact écologique et engagement social.
+      • 📌 Un lieu engagé peut devenir un repère local.
+
 
       Un projet construit avec patience, conviction et sens. 🌈
     MD
@@ -1118,7 +1121,8 @@ nancy_stories = [
     longitude: 6.1532,
     image_url: "https://images.unsplash.com/photo-1526481280695-3c687fd543c0?q=80&w=1600&auto=format&fit=crop",
     source_name: "Est Républicain",
-    source_url: nil
+    source_url: nil,
+    happened_on: Date.new(2022, 5, 1) # ≈ mai 2022
   }
 ]
 

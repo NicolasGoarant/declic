@@ -1,7 +1,7 @@
 # app/controllers/pages_controller.rb
 class PagesController < ApplicationController
   # Home rendue sans Turbo Drive via un layout dédié (évite tout doublon)
-  layout "application_noturbo", only: :home
+  # layout "application_noturbo", only: :home
 
   def home
     # Ce header complète la désactivation des previews si un proxy/cdn est devant

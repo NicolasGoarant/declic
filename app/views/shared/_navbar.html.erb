@@ -46,17 +46,23 @@
     <!-- CTA desktop -->
     <div class="hidden md:flex items-center gap-3">
       <%= link_to new_story_path,
-            class: "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-700 hover:bg-indigo-50 text-sm font-semibold transition-colors" do %>
-        <span>💬</span>
+            class: "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full
+                    bg-indigo-50/80 border border-indigo-100/70
+                    text-indigo-700 hover:bg-indigo-100 hover:border-indigo-200
+                    text-sm font-semibold shadow-sm transition-colors" do %>
+        <span class="text-base">💬</span>
         <span>Partager un témoignage</span>
       <% end %>
 
       <%= link_to new_opportunity_path,
-            class: "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm text-sm font-semibold transition-colors" do %>
+            class: "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full
+                    bg-indigo-600 text-white hover:bg-indigo-700
+                    shadow-sm text-sm font-semibold transition-colors" do %>
         <span class="text-base">✨</span>
         <span>Proposer une opportunité</span>
       <% end %>
     </div>
+
 
 
     <!-- Burger mobile -->
@@ -120,10 +126,12 @@
         <% end %>
 
         <%= link_to new_story_path,
-            class: "w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl
-                    bg-white text-indigo-700 font-semibold ring-1 ring-indigo-200 hover:bg-indigo-50" do %>
+            class: "w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full
+                    bg-indigo-50 text-indigo-700 font-semibold
+                    ring-1 ring-indigo-100 hover:bg-indigo-100" do %>
           <span>💬</span><span>Partager un témoignage</span>
         <% end %>
+
       </div>
 
     </nav>

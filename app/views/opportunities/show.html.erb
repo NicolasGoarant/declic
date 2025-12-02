@@ -1,4 +1,4 @@
-<%# app/views/opportunities/show.html.erb — v7 : UX améliorée, structure clarifiée %>
+<%# app/views/opportunities/show.html.erb — v8 : UX + dates FR complètes %>
 <% content_for :main_classes, "pt-0" %>
 
 <%
@@ -84,7 +84,7 @@ def extract_source_url(md)
     return u unless u =~ %r{(^|\.)unsplash\.com}i
   end
 
-  text = text.gsub(/!$begin:math:display$\[\^$end:math:display$]*\]$begin:math:text$\[\^\)\]\+$end:math:text$/, " ")
+  text = text.gsub(/!$begin:math:display$$begin:math:display$\\\^\$end\:math\:display\$\]\*$end:math:display$$begin:math:text$$begin:math:display$\\\^\\\)$end:math:display$\+$end:math:text$/, " ")
   urls = text.scan(%r{https?://[^\s)]+})
   urls.reject! { |u| u =~ %r{(^|\.)unsplash\.com}i }
   urls.reject! { |u| u =~ /\.(?:jpe?g|png|webp|gif)(?:\?|#|$)/i }
@@ -109,16 +109,31 @@ def extract_when_line(md)
   match ? clean_markdown_artifacts(match.strip) : nil
 end
 
+# Choisit la meilleure phrase pour la date / les créneaux
 def when_text_for(op, desc_md)
   from_md = extract_when_line(desc_md)
-  return from_md if from_md.present?
+  tc      = safe_attr(op, :time_commitment).to_s.strip
 
-  tc = safe_attr(op, :time_commitment).to_s.strip
-  if tc =~ /(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|[0-2]?\d[:h][0-5]\d)/i
-    return clean_markdown_artifacts("Prochain créneau : #{tc}")
+  candidate = nil
+
+  if from_md.present? && tc.present?
+    richness_pattern = /(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre|\b20\d{2}\b)/i
+    md_rich = from_md =~ richness_pattern
+    tc_rich = tc =~ richness_pattern
+
+    candidate =
+      if tc_rich && !md_rich
+        tc
+      else
+        from_md
+      end
+  elsif from_md.present?
+    candidate = from_md
+  elsif tc.present? && tc =~ /(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|[0-2]?\d[:h][0-5]\d)/i
+    candidate = "Prochain créneau : #{tc}"
   end
 
-  nil
+  candidate.present? ? clean_markdown_artifacts(candidate) : nil
 end
 
 # ---------- Données d’affichage ----------
@@ -129,6 +144,7 @@ accent1, accent2 = case cat
   when "formation"    then ["#3b82f6", "#38bdf8"]
   when "rencontres"   then ["#10b981", "#06b6d4"]
   when "entreprendre" then ["#f59e0b", "#ef4444"]
+  when "ecologiser"   then ["#22c55e", "#16a34a"]
   else                    ["#7e5bef", "#3b82f6"]
 end
 
@@ -144,8 +160,32 @@ img = safe_attr(@opportunity, :image_url, :cover_url) ||
 desc_md    = safe_attr(@opportunity, :description, :details) || ""
 desc_plain = plainify(desc_md)
 
-when_line    = when_text_for(@opportunity, desc_md)
-when_display = when_line.presence || "Créneaux réguliers — voir la page de l’organisateur"
+raw_when_line = when_text_for(@opportunity, desc_md)
+
+# Essaie de produire une date longue FR si on a un starts_at
+starts_at = safe_attr(@opportunity, :starts_at, :begin_at, :start_time)
+full_date =
+  if starts_at.present?
+    begin
+      I18n.l(starts_at.to_date, format: "%A %-d %B %Y", locale: :fr)
+    rescue
+      nil
+    end
+  end
+
+when_display =
+  if full_date.present?
+    if raw_when_line.present? && raw_when_line =~ /(\d{1,2}[:h]\d{2}.*)$/
+      time_part = Regexp.last_match(1)
+      "#{full_date} — #{time_part}"
+    else
+      full_date
+    end
+  else
+    raw_when_line
+  end
+
+when_display ||= "Créneaux réguliers — voir la page de l’organisateur"
 
 source_url = extract_source_url(desc_md)
 search_q   = [title, org, loc].compact.join(" ")
@@ -183,6 +223,24 @@ end
     padding:0 28px;
   }
 
+  /* Lien retour */
+  .back-link {
+    display:inline-flex;
+    align-items:center;
+    gap:.4rem;
+    margin:18px 0 6px;
+    font-weight:600;
+    font-size:.9rem;
+    color:#4b5563;
+    text-decoration:none;
+  }
+  .back-link span[aria-hidden="true"] {
+    font-size:1.1rem;
+  }
+  .back-link:hover {
+    color:var(--a1);
+  }
+
   /* Hero */
   .op-hero {
     position:relative;
@@ -201,7 +259,7 @@ end
   .op-hero-inner {
     position:relative;
     z-index:2;
-    padding:clamp(70px,9vw,100px) 0 clamp(50px,6vw,70px);
+    padding:clamp(70px,9vw,100px) 0 clamp(80px,7vw,110px);
   }
   .op-hero h1 {
     font-family:"Epilogue";
@@ -216,109 +274,90 @@ end
     font-weight:600;
     font-size:clamp(1.04rem,1.15vw,1.18rem);
     line-height:1.65;
-    max-width:780px;
+    max-width:820px;
     color:rgba(255,255,255,.96);
-    text-shadow:0 1px 6px rgba(0,0,0,.18);
-    margin-bottom:1.8rem;
   }
-
-  /* Chips & méta */
+  .op-hero .meta {
+    margin-top:1.1rem;
+    display:flex;
+    flex-wrap:wrap;
+    gap:.55rem;
+  }
   .chip {
     display:inline-flex;
     align-items:center;
-    gap:.55rem;
-    background:rgba(255,255,255,.93);
-    color:#0f172a;
-    padding:.7rem 1.15rem;
+    padding:.4rem .9rem;
     border-radius:999px;
-    font-weight:800;
-    font-size:.92rem;
-    margin:6px 8px 6px 0;
-    line-height:1.25;
-    box-shadow:0 5px 16px rgba(0,0,0,.14);
-    border:1px solid rgba(255,255,255,.4);
+    background:rgba(15,23,42,.18);
+    color:#fff;
+    font-weight:700;
+    font-size:.88rem;
+    backdrop-filter:blur(12px);
   }
-  .chip a {
-    color:inherit;
-    text-decoration:none;
-  }
-  .chip a:hover {
-    text-decoration:underline;
-  }
-
-  .meta {
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    margin-top:18px;
-    align-items:flex-start;
-  }
-
-  /* Retour */
-  .back-link {
-    color:var(--a1);
-    font-weight:800;
-    text-decoration:none;
+  .op .chip a {
     display:inline-flex;
     align-items:center;
-    gap:.5rem;
-    transition:gap .22s ease,color .22s ease;
-    padding:16px 0 4px;
+    gap:.35rem;
+    text-decoration:none;
   }
-  .back-link:hover {
-    gap:.75rem;
-    color:var(--a2);
+  .op .chip a::after {
+    content:"↗";
+    font-size:.9rem;
+    opacity:.85;
+    transition:transform .18s ease, opacity .18s ease;
+  }
+  .op .chip a:hover,
+  .op .chip a:focus {
+    text-decoration:none;
+  }
+  .op .chip a:hover::after,
+  .op .chip a:focus::after {
+    transform:translateY(-1px);
+    opacity:1;
   }
 
-  /* Corps de page */
+  /* Section principale */
   .op-section {
-    padding:clamp(2.6rem,5vw,3.6rem) 0 clamp(3rem,5.5vw,4rem);
+    padding:clamp(2.4rem,4.5vw,3.4rem) 0 clamp(2.8rem,5vw,3.8rem);
   }
   .op-photo img {
     width:100%;
     border-radius:18px;
-    border:1px solid #e5e7eb;
-    box-shadow:0 14px 34px rgba(15,23,42,.12);
-    margin-bottom:clamp(1.8rem,3.5vw,2.3rem);
+    box-shadow:0 18px 40px rgba(15,23,42,.18);
     object-fit:cover;
   }
-
   .op-h2 {
+    margin:clamp(2.2rem,4vw,3rem) 0 .9rem;
+    font-family:"Epilogue";
+    font-weight:900;
+    font-size:1.6rem;
     display:flex;
     align-items:center;
     gap:.55rem;
-    font-family:"Epilogue";
-    font-weight:900;
-    font-size:clamp(2rem,3.1vw,2.6rem);
-    margin:0 0 1rem;
-    color:#0f172a;
   }
   .op-h2 span {
-    font-size:1.4rem;
+    font-size:1.3rem;
   }
-
   .op-prose {
-    font:500 1.1rem/1.9 "Inter";
-    color:#1f2937;
-    max-width:780px;
-  }
-  .op-prose p {
-    margin:0 0 1.15rem;
+    font:500 1.02rem/1.9 "Inter";
+    color:#111827;
+    max-width:760px;
   }
   .op-prose h3 {
     font-family:"Epilogue";
     font-weight:800;
-    font-size:1.1rem;
-    margin:1.4rem 0 .4rem;
-    color:#111827;
+    font-size:1.25rem;
+    margin:1.8rem 0 .7rem;
+  }
+  .op-prose p {
+    margin:0 0 1rem;
   }
   .op-prose ul {
     padding-left:1.1rem;
     margin:0 0 1rem;
   }
-  .op-prose li::marker {
-    color:var(--a1);
-    font-weight:900;
+  .op-prose li {
+    margin:.15rem 0;
   }
 
   .op-context-img img {
@@ -425,14 +464,13 @@ end
     <% end %>
   </div>
 
-    <% if flash[:notice].present? %>
+  <% if flash[:notice].present? %>
     <div class="container">
       <div class="mt-3 mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
         <%= flash[:notice] %>
       </div>
     </div>
   <% end %>
-
 
   <!-- HERO -->
   <header class="op-hero" role="banner">
@@ -441,7 +479,7 @@ end
 
       <h1><%= title %></h1>
 
-      <p class="chapo"><%= desc_plain.truncate(210) %></p>
+      <p class="chapo"><%= desc_plain.truncate(260) %></p>
 
       <div class="meta">
         <% if when_display.present? %>
@@ -504,27 +542,21 @@ end
           <% end %>
 
           <% if loc.present? %>
-            <label><span>📍</span> Adresse</label>
+            <label><span>📍</span> Adresse / lieu</label>
             <div class="val"><%= loc %></div>
           <% end %>
 
           <% if when_display.present? %>
-            <label><span>🗓</span> Date & horaires</label>
+            <label><span>🗓️</span> Date & horaires</label>
             <div class="val"><%= when_display %></div>
           <% end %>
 
-          <% if source_url.present? || search_url.present? %>
+          <% if source_url.present? %>
             <label><span>🔗</span> Infos en ligne</label>
             <div class="val">
-              <% if source_url.present? %>
-                <a href="<%= source_url %>" target="_blank" rel="noreferrer">
-                  <%= source_url.truncate(60) %>
-                </a>
-              <% else %>
-                <a href="<%= search_url %>" target="_blank" rel="noreferrer">
-                  Rechercher « <%= search_q %> »
-                </a>
-              <% end %>
+              <a href="<%= source_url %>" target="_blank" rel="noreferrer">
+                Consulter la page officielle
+              </a>
             </div>
           <% end %>
 
@@ -537,60 +569,128 @@ end
     </div>
   </section>
 
-  <!-- CTA FINAL -->
-  <section class="op-cta" aria-label="Passer à l’action">
+  <!-- CTA -->
+  <section class="op-cta">
     <div class="container">
       <h2>Envie de tenter cette opportunité&nbsp;?</h2>
       <p>Rapproche-toi de l’organisateur pour t’inscrire, poser tes questions ou connaître les prochains créneaux.</p>
-
       <% if source_url.present? %>
         <a href="<%= source_url %>" target="_blank" rel="noreferrer" class="btn">
-          <span>👉</span><span>Voir la page de l’événement</span>
+          <span>↗</span>
+          Voir la page de l’événement
         </a>
       <% else %>
         <a href="<%= search_url %>" target="_blank" rel="noreferrer" class="btn">
-          <span>🔎</span><span>Rechercher plus d’infos</span>
+          <span>🔎</span>
+          Chercher les infos en ligne
         </a>
       <% end %>
     </div>
   </section>
 </div>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet pour la carte -->
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      crossorigin="anonymous" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        crossorigin="anonymous"></script>
 
-<% content_for :scripts do %>
-  <script>
-    document.addEventListener("turbo:load", initOppMap);
-    document.addEventListener("DOMContentLoaded", initOppMap);
-
-    function initOppMap() {
-      const el = document.getElementById("map");
+<script>
+  (function () {
+    function initOpMap() {
+      var el = document.getElementById('map');
       if (!el || !window.L) return;
+      if (el.dataset.mapInited === "1") return;
 
-      const lat = parseFloat(el.dataset.lat);
-      const lon = parseFloat(el.dataset.lon);
+      var lat = parseFloat(el.dataset.lat);
+      var lon = parseFloat(el.dataset.lon);
       if (isNaN(lat) || isNaN(lon)) return;
 
-      const map = L.map(el, {
+      if (el.clientHeight < 120) {
+        el.style.height = (el.dataset.height || 300) + "px";
+      }
+
+      var map = L.map(el, {
         zoomControl: false,
         attributionControl: false
       }).setView([lat, lon], 14);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19
-      }).addTo(map);
+      var tileCandidates = [
+        {
+          name: "OSM",
+          url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          opts: { maxZoom: 19, crossOrigin: true }
+        },
+        {
+          name: "Carto Light",
+          url: "https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png",
+          opts: { maxZoom: 19, subdomains: "abcd", crossOrigin: true }
+        },
+        {
+          name: "Stadia Alidade",
+          url: "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}.png",
+          opts: { maxZoom: 19, crossOrigin: true }
+        },
+        {
+          name: "OSM France",
+          url: "https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png",
+          opts: { maxZoom: 19, crossOrigin: true }
+        }
+      ];
 
-      const icon = L.divIcon({
-        html:
-          '<div style="width:36px;height:36px;border-radius:999px;border:3px solid #fff;background:<%= accent1 %>;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 6px 16px rgba(0,0,0,.32);font-size:18px;">📍</div>',
-        className: "",
-        iconSize: [36, 40],
-        iconAnchor: [18, 36]
+      var baseLayer = null;
+      var tried = 0;
+
+      function onTileError() {
+        tryNextTileLayer();
+      }
+
+      function onTileLoad() {
+        el.style.background = "transparent";
+        if (baseLayer && baseLayer.getContainer) {
+          var cont = baseLayer.getContainer();
+          if (cont) cont.style.opacity = "1";
+        }
+      }
+
+      function tryNextTileLayer() {
+        if (baseLayer) {
+          baseLayer.off("tileerror", onTileError);
+          baseLayer.off("load", onTileLoad);
+          map.removeLayer(baseLayer);
+        }
+        if (tried >= tileCandidates.length) return;
+
+        var cand = tileCandidates[tried++];
+        baseLayer = L.tileLayer(cand.url, cand.opts).addTo(map);
+        baseLayer.on("tileerror", onTileError);
+        baseLayer.on("load", onTileLoad);
+      }
+
+      tryNextTileLayer();
+
+      var marker = L.marker([lat, lon]).addTo(map);
+      marker.bindPopup("<b><%= j(title) %></b><br><%= j(loc.to_s) %>");
+
+      requestAnimationFrame(function () { map.invalidateSize(); });
+      setTimeout(function () { map.invalidateSize(); }, 250);
+
+      el.dataset.mapInited = "1";
+
+      document.addEventListener('turbo:render', function () {
+        map.invalidateSize();
       });
 
-      L.marker([lat, lon], { icon }).addTo(map);
-      setTimeout(() => map.invalidateSize(), 200);
+      window.addEventListener('pageshow', function (e) {
+        if (e.persisted) map.invalidateSize();
+      });
     }
-  </script>
-<% end %>
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initOpMap, { once: true });
+    } else {
+      initOpMap();
+    }
+  })();
+</script>

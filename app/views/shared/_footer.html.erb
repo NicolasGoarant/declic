@@ -1,29 +1,128 @@
-<!-- app/views/shared/_footer.html.erb -->
-<footer class="mt-16 border-t border-gray-200 bg-white">
-  <div class="mx-auto max-w-6xl px-4 py-8 md:py-10 flex flex-col md:flex-row gap-6 md:items-center md:justify-between">
-    <!-- Bloc gauche : logo + baseline -->
-    <div class="flex items-center gap-3">
-      <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center shadow-sm">
-        <span class="text-white font-bold text-sm">D</span>
-      </div>
-      <div class="flex flex-col">
-        <span class="font-semibold text-sm text-gray-900">Déclic</span>
-        <span class="text-xs text-gray-500">Des opportunités près de chez toi.</span>
+<footer class="declic-footer">
+  <div class="declic-footer__inner">
+    <div class="declic-footer__brand">
+      <div class="declic-footer__logo">D</div>
+      <div>
+        <div class="declic-footer__title">Déclic</div>
+        <div class="declic-footer__baseline">
+          Des opportunités près de chez toi.
+        </div>
       </div>
     </div>
 
-    <!-- Liens milieu -->
-    <div class="flex flex-wrap gap-4 text-xs text-gray-600">
-      <%= link_to "FAQ", faq_path, class: "hover:text-gray-900" %>
-      <%= link_to "Confidentialité", confidentialite_path, class: "hover:text-gray-900" %>
-      <%= link_to "Mentions légales", mentions_legales_path, class: "hover:text-gray-900" %>
-      <%= link_to "Presse", presse_path, class: "hover:text-gray-900" %>
-    </div>
+    <nav class="declic-footer__links">
+      <%= link_to "FAQ", "#" %>
+      <%= link_to "Confidentialité", "#" %>
+      <%= link_to "Mentions légales", "#" %>
+      <%= link_to "Presse", "#" %>
+    </nav>
 
-    <!-- Bloc droit : petite phrase -->
-    <div class="text-xs text-gray-500 text-left md:text-right">
-      <p>© <%= Time.current.year %> Déclic — Nancy et sa métropole.</p>
-      <p class="mt-1">Un projet pour aider à entreprendre, se former, rencontrer, aider.</p>
+    <div class="declic-footer__socials">
+      <a href="#" aria-label="Déclic sur Facebook" class="declic-footer__social">
+        <span></span>
+      </a>
+      <a href="#" aria-label="Déclic sur Instagram" class="declic-footer__social">
+        <span></span>
+      </a>
+      <a href="#" aria-label="Déclic sur LinkedIn" class="declic-footer__social">
+        <span></span>
+      </a>
     </div>
   </div>
+
+  <div class="declic-footer__bottom">
+    <span>© <%= Time.current.year %> Déclic — Nancy et sa métropole.</span>
+    <span>Un projet pour aider à entreprendre, écologiser, se former, rencontrer, aider.</span>
+  </div>
 </footer>
+
+<style>
+.declic-footer{
+  margin-top:0;
+  background:#020617;
+  color:#e5e7eb;
+  font-family:"Inter",system-ui,sans-serif;
+  padding:1.8rem 0 1.4rem;
+}
+.declic-footer__inner{
+  max-width:1140px;
+  margin:0 auto;
+  padding:0 24px 1.2rem;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:1rem 2rem;
+}
+.declic-footer__brand{
+  display:flex;
+  align-items:center;
+  gap:.7rem;
+}
+.declic-footer__logo{
+  width:32px;height:32px;
+  border-radius:999px;
+  background:#7c3aed;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  color:#fff;
+}
+.declic-footer__title{
+  font-weight:800;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  font-size:.85rem;
+}
+.declic-footer__baseline{
+  font-size:.78rem;
+  color:#9ca3af;
+}
+.declic-footer__links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.8rem 1.2rem;
+  font-size:.85rem;
+}
+.declic-footer__links a{
+  color:#e5e7eb;
+  text-decoration:none;
+}
+.declic-footer__links a:hover{
+  text-decoration:underline;
+}
+.declic-footer__socials{
+  display:flex;
+  gap:.5rem;
+}
+.declic-footer__social{
+  width:32px;height:32px;
+  border-radius:999px;
+  border:1px solid rgba(148,163,184,.6);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  font-size:.9rem;
+}
+.declic-footer__social:hover{
+  background:#0f172a;
+}
+.declic-footer__bottom{
+  max-width:1140px;
+  margin:0 auto;
+  padding:0 24px;
+  border-top:1px solid rgba(148,163,184,.4);
+  padding-top:.9rem;
+  font-size:.78rem;
+  color:#9ca3af;
+  display:flex;
+  flex-wrap:wrap;
+  gap:.3rem 1.4rem;
+}
+@media (min-width:900px){
+  .declic-footer__inner{ padding:0 32px 1.2rem; }
+  .declic-footer__bottom{ padding:0 32px; }
+}
+</style>
