@@ -5,7 +5,7 @@ Rails.application.routes.draw do
   # Page d’accueil
   root "pages#home"
 
-  # Opportunités
+  # Opportunités publiques
   resources :opportunities, only: %i[index show new create] do
     collection do
       # Page de remerciement après validation d’une proposition
@@ -20,7 +20,7 @@ Rails.application.routes.draw do
   get "philosophie", to: "pages#philosophie", as: :philosophie
   get "sponsors",    to: "pages#sponsors",    as: :sponsors
 
-  # Histoires
+  # Belles histoires publiques
   resources :stories, only: %i[index show new create]
 
   # Mentions légales / infos
@@ -38,30 +38,33 @@ Rails.application.routes.draw do
     end
   end
 
+  # Lettre Opener en dev
   if Rails.env.development?
-  mount LetterOpenerWeb::Engine, at: "/letter_opener"
-end
+    mount LetterOpenerWeb::Engine, at: "/letter_opener"
+  end
 
   # --- ADMIN ---
 
   namespace :admin do
+    # tableau de bord par défaut : index des opportunités
     root to: "opportunities#index"
 
-    resources :opportunities, only: %i[index edit update destroy] do
-      member do
-        patch :toggle_active      # Activer / désactiver une opportunité
-      end
-      collection do
-        post :bulk                # Actions groupées (activate/deactivate/destroy)
-        post :geocode_missing     # Géocodage des opportunités sans coordonnées
-      end
+  resources :opportunities, except: [:show] do
+    member do
+      patch :toggle_active
     end
-
-    resources :stories, only: %i[index edit update destroy] do
-      collection do
-        post :bulk                # Actions groupées sur les stories
-        post :geocode_missing
-      end
+    collection do
+      post :bulk
+      post :geocode_missing
     end
   end
+
+
+  resources :stories, except: [:show] do
+    collection do
+      post :bulk
+      post :geocode_missing
+    end
+  end
+end
 end

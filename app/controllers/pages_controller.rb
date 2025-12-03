@@ -1,8 +1,5 @@
 # app/controllers/pages_controller.rb
 class PagesController < ApplicationController
-  # Home rendue sans Turbo Drive via un layout dédié (évite tout doublon)
-  # layout "application_noturbo", only: :home
-
   def home
     # Ce header complète la désactivation des previews si un proxy/cdn est devant
     response.set_header("Turbo-Visit-Control", "reload")
@@ -23,7 +20,6 @@ class PagesController < ApplicationController
     ]
 
     @opportunities = Opportunity.where(is_active: true)
-    @testimonials  = Testimonial.order(created_at: :desc).limit(4)
     @latest        = Opportunity.active.order(published_at: :desc).limit(3)
   end
 

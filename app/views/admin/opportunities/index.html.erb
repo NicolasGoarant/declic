@@ -1,7 +1,13 @@
 <%# app/views/admin/opportunities/index.html.erb %>
 
 <div class="admin-wrap">
-  <h1>Opportunités — Admin</h1>
+  <div class="admin-header">
+    <h1>Opportunités — Admin</h1>
+
+    <%= link_to "➕ Nouvelle opportunité",
+                new_admin_opportunity_path,
+                class: "btn" %>
+  </div>
 
   <div class="stats">
     <span>Total: <strong><%= @counts[:total] %></strong></span>
@@ -17,7 +23,17 @@
 
       <%= f.label :category, "Cat." %>
       <%= select_tag :category,
-            options_for_select([["(toutes)", ""], ["Bénévolat", "benevolat"], ["Formation", "formation"], ["Rencontres", "rencontres"], ["Entreprendre", "entreprendre"]], @cat),
+            options_for_select(
+              [
+                ["(toutes)", ""],
+                ["Bénévolat", "benevolat"],
+                ["Formation", "formation"],
+                ["Rencontres", "rencontres"],
+                ["Entreprendre", "entreprendre"],
+                ["Écologiser", "ecologiser"]
+              ],
+              @cat
+            ),
             include_blank: false %>
 
       <label>
@@ -45,7 +61,9 @@
 
       <%= button_to "Géocoder les fiches sans coordonnées",
                     geocode_missing_admin_opportunities_path,
-                    method: :post, form: { data: { turbo: false } }, class: "btn ghost",
+                    method: :post,
+                    form: { data: { turbo: false } },
+                    class: "btn ghost",
                     form_class: "inline-form" %>
     </div>
 
@@ -93,10 +111,11 @@
               <td class="actions">
                 <%= link_to "Éditer", edit_admin_opportunity_path(o), class: "btn xs" %>
                 <%= link_to "Voir", opportunity_path(o), class: "btn xs ghost", target: "_blank" %>
-                <%= link_to "Supprimer",
-                            admin_opportunity_path(o),
-                            data: { turbo_method: :delete, turbo_confirm: "Supprimer cette opportunité ?" },
-                            class: "btn xs danger" %>
+                <%= button_to "Supprimer",
+                              admin_opportunity_path(o),
+                              method: :delete,
+                              form: { data: { turbo_confirm: "Supprimer cette opportunité ?" }, class: "inline-form" },
+                              class: "btn xs danger" %>
               </td>
             </tr>
           <% end %>
@@ -111,12 +130,13 @@
 </div>
 
 <style>
-.admin-wrap{font:14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif; color:#0f172a}
+.admin-wrap{font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;color:#0f172a}
+.admin-header{display:flex;align-items:center;justify-content:space-between;margin:0 0 .5rem}
 .stats{display:flex;gap:16px;margin:.5rem 0 1rem}
 .stats span{background:#f1f5f9;border:1px solid #e2e8f0;padding:.35rem .6rem;border-radius:8px}
 .filters form{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.5rem 0 1rem}
 .filters input[type="text"], .filters select{padding:.4rem .55rem;border:1px solid #cbd5e1;border-radius:8px}
-.btn{display:inline-block;background:#4f46e5;color:#fff;border-radius:8px;padding:.45rem .7rem;text-decoration:none;border:0;cursor:pointer}
+.btn{display:inline-block;background:#4f46e5;color:#fff;border-radius:8px;padding:.45rem .7rem;text-decoration:none;border:0;cursor:pointer;font-weight:600}
 .btn.ghost{background:#fff;color:#334155;border:1px solid #cbd5e1}
 .btn.danger{background:#dc2626}
 .btn.xs{font-size:.85rem;padding:.3rem .5rem;border-radius:6px}
@@ -130,7 +150,7 @@
 .table td.tight .title{font-weight:600;white-space:normal}
 .table td.tight .muted{color:#64748b;font-size:.85em;white-space:normal}
 .table td.actions{display:flex;gap:6px;align-items:center}
-.mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
 
 /* Toggle Switch Styles */
 .active-toggle{text-align:center}
@@ -238,10 +258,10 @@ tr.toggling .toggle-switch{opacity:0.6;pointer-events:none}
 <style>
 @keyframes slideIn {
   from { transform: translateX(400px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(0);     opacity: 1; }
 }
 @keyframes slideOut {
-  from { transform: translateX(0); opacity: 1; }
-  to { transform: translateX(400px); opacity: 0; }
+  from { transform: translateX(0);     opacity: 1; }
+  to   { transform: translateX(400px); opacity: 0; }
 }
 </style>

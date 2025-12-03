@@ -1,11 +1,10 @@
-# app/controllers/admin/stories_controller.rb
 class Admin::StoriesController < Admin::BaseController
   before_action :set_story, only: [:edit, :update, :destroy]
 
   # GET /admin/stories
   def index
-    @q        = params[:q].to_s.strip
-    @missing  = ActiveModel::Type::Boolean.new.cast(params[:missing_coords])
+    @q       = params[:q].to_s.strip
+    @missing = ActiveModel::Type::Boolean.new.cast(params[:missing_coords])
 
     scope = Story.all
     if @q.present?
@@ -15,16 +14,32 @@ class Admin::StoriesController < Admin::BaseController
         q: q_like
       )
     end
-    if @missing
-      scope = scope.where(latitude: nil).or(scope.where(longitude: nil))
-    end
+    scope = scope.where(latitude: nil).or(scope.where(longitude: nil)) if @missing
 
-    @stories = scope.order(Arel.sql("COALESCE(updated_at, created_at) DESC")).limit(500)
+    @stories = scope
+      .order(Arel.sql("COALESCE(updated_at, created_at) DESC"))
+      .limit(500)
 
     @counts = {
-      total: Story.count,
+      total:          Story.count,
       missing_coords: Story.where(latitude: nil).or(Story.where(longitude: nil)).count
     }
+  end
+
+  # GET /admin/stories/new
+  def new
+    @story = Story.new
+  end
+
+  # POST /admin/stories
+  def create
+    @story = Story.new(story_params)
+    if @story.save
+      redirect_to admin_stories_path, notice: "Histoire créée."
+    else
+      flash.now[:alert] = @story.errors.full_messages.to_sentence
+      render :new, status: :unprocessable_entity
+    end
   end
 
   # GET /admin/stories/:id/edit
@@ -56,29 +71,30 @@ class Admin::StoriesController < Admin::BaseController
     end
 
     scope = Story.where(id: ids)
-    case action
-    when "destroy"
-      count = scope.count
-      scope.find_each(&:destroy!)
-      msg = "Supprimées : #{count}"
-    when "activate"
-      # Seulement si tu ajoutes is_active:boolean sur Story
-      if Story.column_names.include?("is_active")
-        scope.update_all(is_active: true)
-        msg = "Activées : #{scope.count}"
+
+    msg =
+      case action
+      when "destroy"
+        count = scope.count
+        scope.find_each(&:destroy!)
+        "Supprimées : #{count}"
+      when "activate"
+        if Story.column_names.include?("is_active")
+          scope.update_all(is_active: true)
+          "Activées : #{scope.count}"
+        else
+          "Action 'activate' indisponible (colonne is_active absente)."
+        end
+      when "deactivate"
+        if Story.column_names.include?("is_active")
+          scope.update_all(is_active: false)
+          "Désactivées : #{scope.count}"
+        else
+          "Action 'deactivate' indisponible (colonne is_active absente)."
+        end
       else
-        msg = "Action 'activate' indisponible (colonne is_active absente)."
+        "Action inconnue."
       end
-    when "deactivate"
-      if Story.column_names.include?("is_active")
-        scope.update_all(is_active: false)
-        msg = "Désactivées : #{scope.count}"
-      else
-        msg = "Action 'deactivate' indisponible (colonne is_active absente)."
-      end
-    else
-      msg = "Action inconnue."
-    end
 
     redirect_to admin_stories_path(request.query_parameters), notice: msg
   end
@@ -86,29 +102,40 @@ class Admin::StoriesController < Admin::BaseController
   # POST /admin/stories/geocode_missing
   def geocode_missing
     scope = Story.where(latitude: nil).or(Story.where(longitude: nil))
-    done = 0
+    done  = 0
+
     scope.find_each do |s|
       if s.location.present? || [s.try(:address), s.try(:city), s.try(:postcode)].any?(&:present?)
-        done += 1 if s.save # déclenche éventuellement before_validation si tu en ajoutes un
+        done += 1 if s.save
       end
     end
-    redirect_to admin_stories_path(request.query_parameters), notice: "Géocodage tenté sur #{done} élément(s)."
+
+    redirect_to admin_stories_path(request.query_parameters),
+                notice: "Géocodage tenté sur #{done} élément(s)."
   end
 
-private
+  private
 
   def set_story
-  # Essaie d'abord l'ID numérique, puis le slug
-      @story = Story.find_by(id: params[:id]) || Story.find_by!(slug: params[:id])
+    @story = Story.find_by(id: params[:id]) || Story.find_by!(slug: params[:id])
   end
 
   def story_params
     params.require(:story).permit(
-      :title, :chapo, :description, :body,
-      :location, :latitude, :longitude,
-      :source_name, :source_url, :image_url,
-      :tags, :slug # si friendly_id
-      # :is_active # <- seulement si tu l'ajoutes au modèle
+      :title,
+      :chapo,
+      :description,
+      :body,
+      :location,
+      :latitude,
+      :longitude,
+      :source_name,
+      :source_url,
+      :image_url,  # URL éventuelle
+      :image,      # upload Active Storage
+      :tags,
+      :slug,
+      :happened_on
     )
   end
 end

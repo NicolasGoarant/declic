@@ -1,0 +1,116 @@
+<%= form_with model: [:admin, @story],
+              local: true,
+              html: { multipart: true } do |f| %>
+
+  <% if @story.errors.any? %>
+    <div class="form-errors">
+      <h2><%= pluralize(@story.errors.count, "erreur") %> :</h2>
+      <ul>
+        <% @story.errors.full_messages.each do |m| %>
+          <li><%= m %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-grid">
+    <div class="field">
+      <%= f.label :title, "Titre" %>
+      <%= f.text_field :title %>
+    </div>
+
+    <div class="field">
+      <%= f.label :chapo, "Chapô (résumé court)" %>
+      <%= f.text_area :chapo, rows: 3 %>
+    </div>
+
+    <div class="field">
+      <%= f.label :description, "Description (SEO / listing)" %>
+      <%= f.text_area :description, rows: 3 %>
+    </div>
+
+    <div class="field full">
+      <%= f.label :body, "Texte complet (markdown)" %>
+      <%= f.text_area :body, rows: 14 %>
+    </div>
+
+    <div class="field">
+      <%= f.label :happened_on, "Date de l’histoire (mois / année)" %>
+      <%= f.date_select :happened_on,
+            include_blank: true,
+            discard_day: true,
+            start_year: 2010,
+            end_year: Date.today.year + 1 %>
+    </div>
+
+    <div class="field">
+      <%= f.label :location, "Lieu" %>
+      <%= f.text_field :location %>
+    </div>
+
+    <!-- Image upload / URL -->
+    <div class="field">
+      <%= f.label :image, "Image (upload)" %>
+      <%= f.file_field :image, direct_upload: true %>
+      <% if @story.image.attached? %>
+        <p class="preview-label">Image actuelle :</p>
+        <%= image_tag @story.image.variant(resize_to_limit: [300, 180]),
+                      class: "preview-img" rescue nil %>
+      <% end %>
+    </div>
+
+    <div class="field">
+      <%= f.label :image_url, "Image (URL externe)" %>
+      <%= f.text_field :image_url, placeholder: "https://…" %>
+    </div>
+
+    <div class="field">
+      <%= f.label :source_name, "Source (nom)" %>
+      <%= f.text_field :source_name %>
+    </div>
+
+    <div class="field">
+      <%= f.label :source_url, "Source (URL)" %>
+      <%= f.text_field :source_url %>
+    </div>
+
+    <div class="field">
+      <%= f.label :tags, "Tags (séparés par des virgules)" %>
+      <%= f.text_field :tags %>
+    </div>
+
+    <div class="field">
+      <%= f.label :slug, "Slug (URL)" %>
+      <%= f.text_field :slug %>
+    </div>
+
+    <div class="field">
+      <%= f.label :latitude %>
+      <%= f.text_field :latitude %>
+    </div>
+
+    <div class="field">
+      <%= f.label :longitude %>
+      <%= f.text_field :longitude %>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <%= f.submit class: "btn" %>
+    <%= link_to "Annuler", admin_stories_path, class: "btn ghost" %>
+  </div>
+<% end %>
+
+<style>
+.form-errors{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem}
+.form-errors h2{margin:0 0 .5rem;font-weight:700;font-size:.95rem}
+.form-errors ul{margin:0;padding-left:1.1rem}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:.5rem}
+.field{display:flex;flex-direction:column;gap:.25rem}
+.field.full{grid-column:1/-1}
+.field label{font-weight:600;font-size:.9rem;color:#334155}
+.field input,.field textarea,.field select{border:1px solid #cbd5e1;border-radius:8px;padding:.4rem .55rem;font:inherit}
+.form-actions{margin-top:1.2rem;display:flex;gap:.5rem}
+.preview-label{margin-top:.4rem;font-size:.85rem;color:#64748b}
+.preview-img{margin-top:.25rem;border-radius:8px;border:1px solid #e5e7eb;max-width:100%;height:auto}
+</style>
