@@ -1,696 +1,236 @@
-<%# app/views/opportunities/show.html.erb — v8 : UX + dates FR complètes %>
+<%# app/views/opportunities/show.html.erb %>
 <% content_for :main_classes, "pt-0" %>
 
 <%
-# ---------- Helpers Ruby ----------
+# ---------- 1. CONFIGURATION DU THÈME ----------
+# On définit les couleurs en fonction de la catégorie
+# "Ecologiser" a droit à un traitement de faveur (Vert)
+is_eco = @opportunity.category.to_s.downcase == 'ecologiser'
 
-def safe_attr(obj, *names)
-  names.each { |n| return obj.public_send(n) if obj.respond_to?(n) && obj.public_send(n).present? }
-  nil
+theme = if is_eco
+  {
+    badge: "bg-emerald-600 text-white",
+    title: "text-emerald-700",
+    prose_strong: "text-emerald-800",
+    btn_gradient: "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700",
+    icon: "text-emerald-600",
+    bg_light: "bg-emerald-50",
+    border: "border-emerald-100"
+  }
+else
+  # Thème par défaut (Indigo/Violet)
+  {
+    badge: "bg-indigo-600 text-white",
+    title: "text-indigo-700",
+    prose_strong: "text-indigo-800",
+    btn_gradient: "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700",
+    icon: "text-indigo-600",
+    bg_light: "bg-indigo-50",
+    border: "border-indigo-50"
+  }
 end
 
-# Nettoie les artefacts Markdown simples pour usage en texte brut
-def clean_markdown_artifacts(text)
-  return "" if text.blank?
-  text.to_s
-      .gsub(/\*\*(.+?)\*\*/, '\1')  # **gras** → gras
-      .gsub(/\*(.+?)\*/, '\1')      # *italique* → italique
-      .gsub(/_(.+?)_/, '\1')        # _italique_ → italique
-      .strip
-end
-
-# Rendu Markdown léger pour le corps de la fiche
-def render_md_light(text)
-  return "" if text.blank?
-  t = text.to_s.gsub("\r\n", "\n")
-
-  # 0) Supprime les images Markdown pour éviter les URL brutes
-  t = t.gsub(/!\[[^\]]*\]\([^)]+\)/, "")
-
-  # 1) Titres de niveau 3
-  t = t.lines.map { |l| l.sub(/^###\s*(.+)\s*$/, '<h3>\1</h3>') }.join
-
-  # 2) Gras
-  t = t.gsub(/\*\*(.+?)\*\*/, '<strong>\1</strong>')
-
-  # 3) Italique
-  t = t.gsub(/\*(.+?)\*/, '<em>\1</em>')
-  t = t.gsub(/_(.+?)_/, '<em>\1</em>')
-
-  # 4) Listes à puces
-  lines   = t.split("\n")
-  in_list = false
-  result  = []
-
-  lines.each do |line|
-    if line.strip.start_with?("•", "-", "*")
-      result << "<ul>" unless in_list
-      in_list = true
-      item = line.strip.sub(/^[•\-\*]\s*/, '')
-      result << "<li>#{item}</li>"
-    else
-      result << "</ul>" if in_list
-      in_list = false
-      result << line
-    end
+# Image de couverture (Fallback)
+hero_img = if @opportunity.image_url.present?
+   (@opportunity.image_url =~ /\Ahttp/i) ? @opportunity.image_url : asset_path(@opportunity.image_url)
+else
+  case @opportunity.category.to_s.downcase
+  when 'bénévolat' then "https://images.unsplash.com/photo-1559027615-cd4628902d4a?q=80&w=1600&auto=format&fit=crop"
+  when 'ecologiser' then "https://images.unsplash.com/photo-1542601906990-b4d3fb7d5fa5?q=80&w=1600&auto=format&fit=crop" # Nature / Réparation
+  when 'emploi/formation' then "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1600&auto=format&fit=crop"
+  else "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1600&auto=format&fit=crop"
   end
-  result << "</ul>" if in_list
-
-  t = result.join("\n")
-
-  # 5) Paragraphes
-  html = simple_format(t, {}, wrapper_tag: "p")
-  html = html.gsub(%r{<p>\s*(<h3>.*?</h3>)\s*</p>}m, '\1')
-  html = html.gsub(%r{<p>\s*(<ul>.*?</ul>)\s*</p>}m, '\1')
-
-  sanitize(html, tags: %w[p h3 br a ul ol li em strong], attributes: %w[href target rel])
-end
-
-def plainify(text)
-  text.to_s
-      .gsub(/!\[[^\]]*\]\([^)]+\)/, "")
-      .gsub(/\[([^\]]+)\]\((.*?)\)/, '\1')
-      .gsub(/[*_`>#]/, "")
-      .gsub(/\n+/, " ").squeeze(" ").strip
-end
-
-# Extrait un lien "source" depuis le Markdown, en évitant Unsplash & les images
-def extract_source_url(md)
-  return nil if md.blank?
-  text = md.to_s
-
-  if (m = text.match(/En\s*savoir\s*plus\s*[:：]\s*(https?:\/\/\S+)/i))
-    u = m[1]
-    return u unless u =~ %r{(^|\.)unsplash\.com}i
-  end
-
-  text = text.gsub(/!$begin:math:display$$begin:math:display$\\\^\$end\:math\:display\$\]\*$end:math:display$$begin:math:text$$begin:math:display$\\\^\\\)$end:math:display$\+$end:math:text$/, " ")
-  urls = text.scan(%r{https?://[^\s)]+})
-  urls.reject! { |u| u =~ %r{(^|\.)unsplash\.com}i }
-  urls.reject! { |u| u =~ /\.(?:jpe?g|png|webp|gif)(?:\?|#|$)/i }
-  urls.first
-end
-
-# Repère une ligne "Quand ?" dans le Markdown
-def extract_when_line(md)
-  return nil if md.blank?
-  md.each_line do |line|
-    s = line.strip
-    if s.start_with?("🗓️") || s =~ /\*\*Quand\s*\?\*\*/i || s =~ /Quand\s*\?/i
-      cleaned = s.sub(/^🗓️\s*/, "")
-                 .sub(/\*\*Quand\s*\?\*\*\s*/i, "")
-                 .sub(/Quand\s*\?\s*/i, "")
-                 .strip
-      return clean_markdown_artifacts(cleaned)
-    end
-  end
-
-  match = md[/(\b(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\b.*?\d{1,2}[:h]\d{2}.*?(?:[–-]\s*\d{1,2}[:h]\d{2})?)/i]
-  match ? clean_markdown_artifacts(match.strip) : nil
-end
-
-# Choisit la meilleure phrase pour la date / les créneaux
-def when_text_for(op, desc_md)
-  from_md = extract_when_line(desc_md)
-  tc      = safe_attr(op, :time_commitment).to_s.strip
-
-  candidate = nil
-
-  if from_md.present? && tc.present?
-    richness_pattern = /(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre|\b20\d{2}\b)/i
-    md_rich = from_md =~ richness_pattern
-    tc_rich = tc =~ richness_pattern
-
-    candidate =
-      if tc_rich && !md_rich
-        tc
-      else
-        from_md
-      end
-  elsif from_md.present?
-    candidate = from_md
-  elsif tc.present? && tc =~ /(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|[0-2]?\d[:h][0-5]\d)/i
-    candidate = "Prochain créneau : #{tc}"
-  end
-
-  candidate.present? ? clean_markdown_artifacts(candidate) : nil
-end
-
-# ---------- Données d’affichage ----------
-
-cat = safe_attr(@opportunity, :category).to_s
-accent1, accent2 = case cat
-  when "benevolat"    then ["#f43f5e", "#ec4899"]
-  when "formation"    then ["#3b82f6", "#38bdf8"]
-  when "rencontres"   then ["#10b981", "#06b6d4"]
-  when "entreprendre" then ["#f59e0b", "#ef4444"]
-  when "ecologiser"   then ["#22c55e", "#16a34a"]
-  else                    ["#7e5bef", "#3b82f6"]
-end
-
-title = safe_attr(@opportunity, :title, :name) || "Opportunité locale"
-org   = safe_attr(@opportunity, :organization, :organizer)
-loc   = safe_attr(@opportunity, :location, :address, :place)
-lat   = safe_attr(@opportunity, :latitude, :lat)
-lon   = safe_attr(@opportunity, :longitude, :lon)
-
-img = safe_attr(@opportunity, :image_url, :cover_url) ||
-      "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1600&auto=format&fit=crop"
-
-desc_md    = safe_attr(@opportunity, :description, :details) || ""
-desc_plain = plainify(desc_md)
-
-raw_when_line = when_text_for(@opportunity, desc_md)
-
-# Essaie de produire une date longue FR si on a un starts_at
-starts_at = safe_attr(@opportunity, :starts_at, :begin_at, :start_time)
-full_date =
-  if starts_at.present?
-    begin
-      I18n.l(starts_at.to_date, format: "%A %-d %B %Y", locale: :fr)
-    rescue
-      nil
-    end
-  end
-
-when_display =
-  if full_date.present?
-    if raw_when_line.present? && raw_when_line =~ /(\d{1,2}[:h]\d{2}.*)$/
-      time_part = Regexp.last_match(1)
-      "#{full_date} — #{time_part}"
-    else
-      full_date
-    end
-  else
-    raw_when_line
-  end
-
-when_display ||= "Créneaux réguliers — voir la page de l’organisateur"
-
-source_url = extract_source_url(desc_md)
-search_q   = [title, org, loc].compact.join(" ")
-search_url = "https://www.google.com/search?q=#{ERB::Util.url_encode(search_q)}"
-
-# Images contextuelles selon la catégorie
-contextual_img = case cat
-  when "rencontres"
-    "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&q=80&auto=format&fit=crop"
-  when "formation"
-    "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1200&q=80&auto=format&fit=crop"
-  when "benevolat"
-    "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1200&q=80&auto=format&fit=crop"
-  when "entreprendre"
-    "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=80&auto=format&fit=crop"
-  else
-    "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=1200&q=80&auto=format&fit=crop"
 end
 %>
 
-<% content_for :title,       title %>
-<% content_for :description, desc_plain.truncate(160) %>
-
-<style>
-  .op {
-    --a1:<%= accent1 %>;
-    --a2:<%= accent2 %>;
-    color:#0f172a;
-    font-family:"Inter",system-ui,sans-serif;
-    background:#fafbfc;
-  }
-  .op .container {
-    max-width:1140px;
-    margin:0 auto;
-    padding:0 28px;
-  }
-
-  /* Lien retour */
-  .back-link {
-    display:inline-flex;
-    align-items:center;
-    gap:.4rem;
-    margin:18px 0 6px;
-    font-weight:600;
-    font-size:.9rem;
-    color:#4b5563;
-    text-decoration:none;
-  }
-  .back-link span[aria-hidden="true"] {
-    font-size:1.1rem;
-  }
-  .back-link:hover {
-    color:var(--a1);
-  }
-
-  /* Hero */
-  .op-hero {
-    position:relative;
-    overflow:hidden;
-    min-height:320px;
-    background:linear-gradient(135deg,var(--a1) 0%,var(--a2) 100%);
-  }
-  .op-hero::before {
-    content:"";
-    position:absolute;
-    inset:0;
-    background:url('<%= img %>') center/cover no-repeat;
-    filter:saturate(1.05) contrast(1.02) brightness(0.96);
-    opacity:.32;
-  }
-  .op-hero-inner {
-    position:relative;
-    z-index:2;
-    padding:clamp(70px,9vw,100px) 0 clamp(80px,7vw,110px);
-  }
-  .op-hero h1 {
-    font-family:"Epilogue";
-    font-weight:900;
-    font-size:clamp(2.3rem,4.8vw,3.4rem);
-    line-height:1.08;
-    margin:.5rem 0 1rem;
-    color:#fff;
-    text-shadow:0 2px 18px rgba(0,0,0,.28);
-  }
-  .op-hero .chapo {
-    font-weight:600;
-    font-size:clamp(1.04rem,1.15vw,1.18rem);
-    line-height:1.65;
-    max-width:820px;
-    color:rgba(255,255,255,.96);
-  }
-  .op-hero .meta {
-    margin-top:1.1rem;
-    display:flex;
-    flex-wrap:wrap;
-    gap:.55rem;
-  }
-  .chip {
-    display:inline-flex;
-    align-items:center;
-    padding:.4rem .9rem;
-    border-radius:999px;
-    background:rgba(15,23,42,.18);
-    color:#fff;
-    font-weight:700;
-    font-size:.88rem;
-    backdrop-filter:blur(12px);
-  }
-  .op .chip a {
-    display:inline-flex;
-    align-items:center;
-    gap:.35rem;
-    text-decoration:none;
-  }
-  .op .chip a::after {
-    content:"↗";
-    font-size:.9rem;
-    opacity:.85;
-    transition:transform .18s ease, opacity .18s ease;
-  }
-  .op .chip a:hover,
-  .op .chip a:focus {
-    text-decoration:none;
-  }
-  .op .chip a:hover::after,
-  .op .chip a:focus::after {
-    transform:translateY(-1px);
-    opacity:1;
-  }
-
-  /* Section principale */
-  .op-section {
-    padding:clamp(2.4rem,4.5vw,3.4rem) 0 clamp(2.8rem,5vw,3.8rem);
-  }
-  .op-photo img {
-    width:100%;
-    border-radius:18px;
-    box-shadow:0 18px 40px rgba(15,23,42,.18);
-    object-fit:cover;
-  }
-  .op-h2 {
-    margin:clamp(2.2rem,4vw,3rem) 0 .9rem;
-    font-family:"Epilogue";
-    font-weight:900;
-    font-size:1.6rem;
-    display:flex;
-    align-items:center;
-    gap:.55rem;
-  }
-  .op-h2 span {
-    font-size:1.3rem;
-  }
-  .op-prose {
-    font:500 1.02rem/1.9 "Inter";
-    color:#111827;
-    max-width:760px;
-  }
-  .op-prose h3 {
-    font-family:"Epilogue";
-    font-weight:800;
-    font-size:1.25rem;
-    margin:1.8rem 0 .7rem;
-  }
-  .op-prose p {
-    margin:0 0 1rem;
-  }
-  .op-prose ul {
-    padding-left:1.1rem;
-    margin:0 0 1rem;
-  }
-  .op-prose li {
-    margin:.15rem 0;
-  }
-
-  .op-context-img img {
-    width:100%;
-    margin:clamp(2rem,4vw,3rem) 0 0;
-    border-radius:18px;
-    border:1px solid #e5e7eb;
-    box-shadow:0 10px 26px rgba(15,23,42,.08);
-    object-fit:cover;
-  }
-
-  /* Encadré infos pratiques */
-  .op-infos {
-    margin-top:clamp(2.2rem,4vw,3rem);
-    padding:1.6rem 1.4rem 1.6rem;
-    border-radius:18px;
-    border:1px solid #e5e7eb;
-    background:#fff;
-    box-shadow:0 8px 26px rgba(15,23,42,.06);
-  }
-  .op-infos label {
-    display:flex;
-    align-items:center;
-    gap:.4rem;
-    font:800 .9rem/1 "Epilogue";
-    text-transform:uppercase;
-    color:#6b7280;
-    letter-spacing:.06em;
-    margin-top:1rem;
-  }
-  .op-infos label:first-of-type {
-    margin-top:0;
-  }
-  .op-infos label span {
-    font-size:1.1rem;
-  }
-  .op-infos .val {
-    margin-top:.25rem;
-    font:600 1.02rem/1.6 "Inter";
-    color:#111827;
-  }
-  .op-infos .val a {
-    color:#0b61ff;
-    text-decoration:none;
-    font-weight:700;
-  }
-  .op-infos .val a:hover {
-    text-decoration:underline;
-  }
-
-  #map {
-    height:380px;
-    width:100%;
-    border-radius:16px;
-    margin-top:14px;
-    box-shadow:0 14px 32px rgba(0,0,0,.12);
-  }
-
-  /* CTA final */
-  .op-cta {
-    background:linear-gradient(135deg,var(--a1),var(--a2));
-    color:#fff;
-    text-align:center;
-    padding:clamp(2.6rem,5vw,3.6rem) 0;
-  }
-  .op-cta h2 {
-    margin:0 0 .6rem;
-    font:900 clamp(1.7rem,3vw,2.3rem)/1.1 "Epilogue";
-    letter-spacing:-.01em;
-  }
-  .op-cta p {
-    margin:0 0 1.3rem;
-    font:600 1.08rem/1.7 "Inter";
-  }
-  .op-cta .btn {
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:.45rem;
-    padding:.95rem 1.5rem;
-    border-radius:999px;
-    font:800 1rem/1 "Epilogue";
-    text-decoration:none;
-    background:#fff;
-    color:var(--a1);
-    box-shadow:0 8px 26px rgba(0,0,0,.16);
-  }
-  .op-cta .btn span {
-    font-size:1.1rem;
-  }
-
-  @media (max-width:640px){
-    .op .container { padding:0 18px; }
-    .op-hero-inner { padding-top:64px; padding-bottom:52px; }
-    .op-infos { padding:1.3rem 1.1rem; }
-  }
-</style>
-
-<div class="op">
-  <div class="container">
-    <%= link_to opportunities_path, class: "back-link" do %>
-      <span aria-hidden="true">←</span>
-      <span>Retour aux opportunités</span>
-    <% end %>
+<div class="relative w-full h-72 md:h-96 overflow-hidden bg-slate-900">
+  <div class="absolute inset-0 bg-cover bg-center opacity-70 transition-transform duration-700 hover:scale-105"
+       style="background-image: url('<%= hero_img %>');">
   </div>
+  <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
 
-  <% if flash[:notice].present? %>
-    <div class="container">
-      <div class="mt-3 mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-        <%= flash[:notice] %>
+  <div class="absolute inset-0 flex flex-col justify-end pb-12">
+    <div class="container mx-auto px-4">
+      <div class="max-w-4xl">
+        <% if @opportunity.category.present? %>
+          <span class="inline-block py-1.5 px-4 rounded-full text-sm font-bold uppercase tracking-wider shadow-sm mb-4 <%= theme[:badge] %>">
+            <%= @opportunity.category %>
+          </span>
+        <% end %>
+
+        <h1 class="text-3xl md:text-5xl font-extrabold text-white leading-tight drop-shadow-lg font-serif">
+          <%= @opportunity.title %>
+        </h1>
+
+        <% if @opportunity.location.present? %>
+          <div class="flex items-center text-white/90 mt-4 font-medium">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <%= @opportunity.location %>
+          </div>
+        <% end %>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="container mx-auto px-4 -mt-8 relative z-10 pb-24">
+  <% if notice.present? %>
+    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-8 rounded shadow-sm">
+      <p class="font-bold">Succès</p>
+      <p><%= notice %></p>
     </div>
   <% end %>
 
-  <!-- HERO -->
-  <header class="op-hero" role="banner">
-    <div class="container op-hero-inner">
-      <span class="chip"><%= cat.present? ? cat.capitalize : "Opportunité" %></span>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-      <h1><%= title %></h1>
+    <div class="lg:col-span-2 space-y-8">
+      <div class="bg-white rounded-3xl shadow-xl p-6 md:p-10">
 
-      <p class="chapo"><%= desc_plain.truncate(260) %></p>
+        <h2 class="text-2xl font-bold text-slate-800 mb-6 font-serif flex items-center">
+          <span class="text-3xl mr-3">📄</span> De quoi s'agit-il ?
+        </h2>
 
-      <div class="meta">
-        <% if when_display.present? %>
-          <span class="chip">🗓️ <%= when_display %></span>
-        <% end %>
+        <div class="prose prose-lg prose-slate max-w-none text-slate-700">
+          <%
+             raw_desc = @opportunity.description.to_s
 
-        <% if loc.present? %>
-          <span class="chip">📍 <%= loc %></span>
-        <% end %>
+             # 1. Suppression des images Markdown ![Alt](url)
+             raw_desc = raw_desc.gsub(/!\[[^\]]*\]\([^)]+\)/, '')
 
-        <% if org.present? %>
-          <span class="chip">🏛 <%= org %></span>
-        <% end %>
+             # 2. Découpage par titres '###'
+             # On split sur le motif "### Titre"
+             # Cela crée un tableau : [Intro, Titre1, Contenu1, Titre2, Contenu2...]
+             parts = raw_desc.split(/^###\s+(.+)$/)
 
-        <% if source_url.present? %>
-          <span class="chip">
-            <a href="<%= source_url %>" target="_blank" rel="noreferrer">
-              👉 Voir les infos en ligne
-            </a>
-          </span>
-        <% else %>
-          <span class="chip">
-            <a href="<%= search_url %>" target="_blank" rel="noreferrer">
-              🔎 Rechercher « <%= search_q %> »
-            </a>
-          </span>
-        <% end %>
-      </div>
-    </div>
-  </header>
+             # Le premier élément est l'intro (texte avant le premier titre)
+             intro = parts.shift
+          %>
 
-  <!-- CONTENU PRINCIPAL -->
-  <section class="op-section">
-    <div class="container">
-      <!-- Photo principale -->
-      <div class="op-photo">
-        <img src="<%= img %>" alt="<%= title %>" loading="lazy">
-      </div>
-
-      <!-- Le projet -->
-      <h2 class="op-h2"><span>📋</span> Le projet</h2>
-
-      <div class="op-prose">
-        <%= render_md_light(desc_md) %>
-      </div>
-
-      <!-- Illustration contextuelle -->
-      <% if contextual_img.present? %>
-        <div class="op-context-img">
-          <img src="<%= contextual_img %>" alt="Illustration <%= cat.presence || 'opportunité' %>" loading="lazy">
-        </div>
-      <% end %>
-
-      <!-- Infos pratiques -->
-      <% if org.present? || loc.present? || (lat && lon) || when_display.present? || source_url.present? %>
-        <div class="op-infos">
-          <% if org.present? %>
-            <label><span>🏛</span> Organisation</label>
-            <div class="val"><%= org %></div>
+          <%# Affichage de l'intro %>
+          <% if intro.present? %>
+            <%= simple_format(intro) %>
           <% end %>
 
-          <% if loc.present? %>
-            <label><span>📍</span> Adresse / lieu</label>
-            <div class="val"><%= loc %></div>
-          <% end %>
-
-          <% if when_display.present? %>
-            <label><span>🗓️</span> Date & horaires</label>
-            <div class="val"><%= when_display %></div>
-          <% end %>
-
-          <% if source_url.present? %>
-            <label><span>🔗</span> Infos en ligne</label>
-            <div class="val">
-              <a href="<%= source_url %>" target="_blank" rel="noreferrer">
-                Consulter la page officielle
-              </a>
+          <%# Boucle sur les paires Titre / Contenu %>
+          <% parts.each_slice(2) do |title, content| %>
+            <div class="mt-8">
+              <h3 class="text-xl font-bold mb-3 font-serif <%= theme[:title] %>">
+                <%= title %>
+              </h3>
+              <%= simple_format(content) %>
             </div>
           <% end %>
 
-          <% if lat && lon %>
-            <label><span>🗺️</span> Localisation</label>
-            <div id="map" data-lat="<%= lat %>" data-lon="<%= lon %>"></div>
+          <% if raw_desc.blank? %>
+            <p class="italic text-slate-400">Aucune description détaillée fournie.</p>
           <% end %>
         </div>
-      <% end %>
-    </div>
-  </section>
+      </div>
 
-  <!-- CTA -->
-  <section class="op-cta">
-    <div class="container">
-      <h2>Envie de tenter cette opportunité&nbsp;?</h2>
-      <p>Rapproche-toi de l’organisateur pour t’inscrire, poser tes questions ou connaître les prochains créneaux.</p>
-      <% if source_url.present? %>
-        <a href="<%= source_url %>" target="_blank" rel="noreferrer" class="btn">
-          <span>↗</span>
-          Voir la page de l’événement
-        </a>
-      <% else %>
-        <a href="<%= search_url %>" target="_blank" rel="noreferrer" class="btn">
-          <span>🔎</span>
-          Chercher les infos en ligne
-        </a>
-      <% end %>
+      <div class="mt-8">
+        <%= link_to opportunities_path, class: "inline-flex items-center font-semibold hover:underline transition #{theme[:title]}" do %>
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18"></path></svg>
+          Retour aux opportunités
+        <% end %>
+      </div>
     </div>
-  </section>
+
+    <div class="lg:col-span-1 space-y-8">
+
+      <div class="bg-white rounded-3xl shadow-lg p-6 border sticky top-24 z-20 <%= theme[:border] %>">
+        <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
+          🚀 Passez à l'action !
+        </h3>
+        <p class="text-slate-600 mb-6 text-sm">
+          Cette opportunité vous intéresse ? Ne la laissez pas passer.
+        </p>
+
+        <% if @opportunity.external_url.present? %>
+          <%= link_to @opportunity.external_url, target: "_blank", rel: "noopener", class: "block w-full text-center text-white font-bold text-lg py-4 px-6 rounded-xl shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 #{theme[:btn_gradient]}" do %>
+            Je participe   →
+          <% end %>
+          <p class="text-xs text-center text-slate-400 mt-3">
+            Lien externe vers le site partenaire
+          </p>
+        <% else %>
+          <div class="bg-slate-100 text-slate-500 p-4 rounded-xl text-center text-sm italic">
+            Aucun lien d'inscription direct.
+          </div>
+        <% end %>
+      </div>
+
+      <% if @opportunity.latitude.present? && @opportunity.longitude.present? %>
+        <div class="bg-white rounded-3xl shadow-lg overflow-hidden border border-slate-100 z-10">
+          <div class="p-5 border-b border-slate-50 bg-slate-50/50">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+              <span>📍</span> C'est où ?
+            </h3>
+            <p class="text-sm text-slate-500 mt-1 break-words"><%= @opportunity.location %></p>
+          </div>
+
+          <div class="relative w-full bg-slate-100" style="height: 250px;">
+            <div id="opportunity-map"
+                 class="h-full w-full z-0"
+                 data-lat="<%= @opportunity.latitude %>"
+                 data-lon="<%= @opportunity.longitude %>">
+            </div>
+          </div>
+           <a href="http://googleusercontent.com/maps.google.com/?q=<%= @opportunity.latitude %>,<%= @opportunity.longitude %>" target="_blank" class="block p-3 text-center bg-slate-50 text-sm font-medium hover:bg-slate-100 transition <%= theme[:title] %>">
+            Ouvrir l'itinéraire dans Google Maps
+          </a>
+        </div>
+      <% end %>
+
+    </div>
+  </div>
 </div>
 
-<!-- Leaflet pour la carte -->
-<link rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      crossorigin="anonymous" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        crossorigin="anonymous"></script>
-
+<%# SCRIPT CARTE %>
+<% if @opportunity.latitude.present? && @opportunity.longitude.present? %>
 <script>
-  (function () {
-    function initOpMap() {
-      var el = document.getElementById('map');
-      if (!el || !window.L) return;
-      if (el.dataset.mapInited === "1") return;
+  function initOppMap() {
+    var el = document.getElementById('opportunity-map');
+    if (!el) return;
+    if (el.dataset.mapInited === "1") return;
 
-      var lat = parseFloat(el.dataset.lat);
-      var lon = parseFloat(el.dataset.lon);
-      if (isNaN(lat) || isNaN(lon)) return;
+    var lat = parseFloat(el.dataset.lat);
+    var lon = parseFloat(el.dataset.lon);
 
-      if (el.clientHeight < 120) {
-        el.style.height = (el.dataset.height || 300) + "px";
-      }
+    if (!lat || !lon) return;
 
-      var map = L.map(el, {
-        zoomControl: false,
-        attributionControl: false
-      }).setView([lat, lon], 14);
+    var map = L.map(el, { scrollWheelZoom: false }).setView([lat, lon], 15);
 
-      var tileCandidates = [
-        {
-          name: "OSM",
-          url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          opts: { maxZoom: 19, crossOrigin: true }
-        },
-        {
-          name: "Carto Light",
-          url: "https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png",
-          opts: { maxZoom: 19, subdomains: "abcd", crossOrigin: true }
-        },
-        {
-          name: "Stadia Alidade",
-          url: "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}.png",
-          opts: { maxZoom: 19, crossOrigin: true }
-        },
-        {
-          name: "OSM France",
-          url: "https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png",
-          opts: { maxZoom: 19, crossOrigin: true }
-        }
-      ];
+    L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+      maxZoom: 20,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
 
-      var baseLayer = null;
-      var tried = 0;
+    // Marqueur : Couleur adaptée au thème si possible, sinon rouge par défaut
+    // Ici on garde le rouge pour le contraste de l'action
+    var redIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
 
-      function onTileError() {
-        tryNextTileLayer();
-      }
+    L.marker([lat, lon], {icon: redIcon}).addTo(map)
+      .bindPopup("<b><%= j(@opportunity.title) %></b>");
 
-      function onTileLoad() {
-        el.style.background = "transparent";
-        if (baseLayer && baseLayer.getContainer) {
-          var cont = baseLayer.getContainer();
-          if (cont) cont.style.opacity = "1";
-        }
-      }
+    el.dataset.mapInited = "1";
 
-      function tryNextTileLayer() {
-        if (baseLayer) {
-          baseLayer.off("tileerror", onTileError);
-          baseLayer.off("load", onTileLoad);
-          map.removeLayer(baseLayer);
-        }
-        if (tried >= tileCandidates.length) return;
+    setTimeout(function() { map.invalidateSize(); }, 200);
+    requestAnimationFrame(function() { map.invalidateSize(); });
+  }
 
-        var cand = tileCandidates[tried++];
-        baseLayer = L.tileLayer(cand.url, cand.opts).addTo(map);
-        baseLayer.on("tileerror", onTileError);
-        baseLayer.on("load", onTileLoad);
-      }
-
-      tryNextTileLayer();
-
-      var marker = L.marker([lat, lon]).addTo(map);
-      marker.bindPopup("<b><%= j(title) %></b><br><%= j(loc.to_s) %>");
-
-      requestAnimationFrame(function () { map.invalidateSize(); });
-      setTimeout(function () { map.invalidateSize(); }, 250);
-
-      el.dataset.mapInited = "1";
-
-      document.addEventListener('turbo:render', function () {
-        map.invalidateSize();
-      });
-
-      window.addEventListener('pageshow', function (e) {
-        if (e.persisted) map.invalidateSize();
-      });
-    }
-
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", initOpMap, { once: true });
-    } else {
-      initOpMap();
-    }
-  })();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initOppMap);
+  } else {
+    initOppMap();
+  }
+  document.addEventListener("turbo:load", initOppMap);
+  document.addEventListener("turbo:render", initOppMap);
 </script>
+<% end %>

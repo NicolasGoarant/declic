@@ -1,1161 +1,387 @@
-# db/seeds.rb — Données de départ pour Déclic
-# =====================================================
-#
-# PHILOSOPHIE :
-# - Ce fichier contient UNIQUEMENT des opportunités RÉELLES et vérifiées
-# - Coordonnées GPS fixes et précises (pas de randomisation)
-# - Textes engageants qui donnent vraiment envie de participer
-# - Idempotent : peut être exécuté plusieurs fois sans créer de doublons
-#
-# SOURCE DE VÉRITÉ :
-# Pour ajouter/modifier des opportunités en production, préférez :
-# - L'interface admin (/admin/opportunities)
-# - L'import CSV depuis opps_corridor_active.csv
-# =====================================================
+# db/seeds.rb
 
-# =================== Helpers simplifiés ===================
-Opportunity.destroy_all
+puts "🧹 Nettoyage de la base de données..."
 Story.destroy_all
+Opportunity.destroy_all
 
-# db/seeds.rb — Données de départ pour Déclic
-# =====================================================
-#
-# PHILOSOPHIE :
-# - Ce fichier contient UNIQUEMENT des opportunités RÉELLES et vérifiées
-# - Coordonnées GPS fixes et précises (pas de randomisation)
-# - Textes engageants qui donnent vraiment envie de participer
-# - Idempotent : peut être exécuté plusieurs fois sans créer de doublonsfaurélie
-#
-# SOURCE DE VÉRITÉ :
-# Pour ajouter/modifier des opportunités en production, préférez :
-# - L'interface admin (/admin/opportunities)
-# - L'import CSV depuis opps_corridor_active.csv
-# =====================================================
+# ==============================================================================
+# 1. LES BELLES HISTOIRES (STORIES)
+# ==============================================================================
+puts "📖 Création des Belles Histoires (Presse)..."
 
-# =================== Helpers simplifiés ===================
-
-CAT_IMAGES = {
-  "benevolat"    => "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop",
-  "formation"    => "https://images.unsplash.com/photo-1513258496099-48168024aec0?q=80&w=1200&auto=format&fit=crop",
-  "rencontres"   => "https://images.unsplash.com/photo-1558222217-0d77a6d3b3d1?q=80&w=1200&auto=format&fit=crop",
-  "entreprendre" => "https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1200&auto=format&fit=crop",
-  "ecologiser"   => "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200&auto=format&fit=crop",
-  "default"      => "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1200&auto=format&fit=crop"
-}.freeze
-
-
-def image_for(category)
-  CAT_IMAGES[category.to_s] || CAT_IMAGES["default"]
-end
-
-def build_description(category:, base_desc:, link: nil, when_line:)
-  parts = []
-  parts << "![Illustration](#{image_for(category)})"
-  parts << ""
-  parts << "### Pourquoi franchir le pas ?"
-  parts << base_desc.strip
-  parts << ""
-  parts << "🗓️ **Quand ?** #{when_line}"
-  parts << ""
-  parts << "### Ce que tu vas gagner"
-  parts << "• Des **compétences immédiatement utiles** que tu pourras appliquer dès le lendemain"
-  parts << "• Un **réseau bienveillant** de personnes qui partagent tes ambitions"
-  parts << "• La **confiance** de te lancer — parce que tu ne seras plus seul·e"
-  parts << ""
-  parts << "Pas besoin d'être expert·e. On est tous·tes là pour apprendre ensemble. 🙌"
-  parts << ""
-  parts << "🔗 **En savoir plus** : #{link}" if link.present?
-  parts.join("\n")
-end
-
-# =================== Opportunités Nancy (réelles & vérifiées) ===================
-
-nancy_opportunities = [
-  # ===== ENTREPRENDRE =====
+stories_data = [
   {
-    title: "Atelier — Construire son Business Plan",
-    description: build_description(
-      category: "entreprendre",
-      base_desc: "🎯 **Tu as une idée ? Transforme-la en plan d'action béton.**\n\nCet atelier de la CCI te donne la méthode complète : trame financière claire, hypothèses réalistes, et les mots justes pour convaincre investisseurs et partenaires.\n\nTu repars avec **ton business plan structuré** et la confiance de le pitcher devant n'importe qui. Les formateurs sont des entrepreneurs qui sont passés par là — leurs conseils valent de l'or.",
-      link: "https://www.nancy.cci.fr/evenements",
-      when_line: "Jeudi 13 novembre 2025, 14:00–17:00"
-    ),
-    category: "entreprendre",
-    organization: "CCI Grand Nancy",
-    location: "53 Rue Stanislas, 54000 Nancy",
-    time_commitment: "Jeudi 13/11/2025, 14:00–17:00",
-    latitude: 48.6932,
-    longitude: 6.1829,
-    is_active: true,
-    tags: "business plan,financement,atelier",
-    image_url: image_for("entreprendre")
+    title: "Elle plaque la finance à Paris pour devenir fromagère affineuse",
+    chapo: "Bénédicte a troqué ses fichiers Excel contre des tomes de fromage. Un retour aux sources et au terroir nancéien pour retrouver du sens.",
+    location: "21 Grande Rue, 54000 Nancy",
+    latitude: 48.6936, longitude: 6.1832,
+    happened_on: Date.new(2023, 6, 3),
+    source_name: "L'Est Républicain",
+    image_url: "https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?q=80&w=1600&auto=format&fit=crop",
+    body: <<~MARKDOWN
+      ### Le Profil
+      Bénédicte, 33 ans, avait une carrière toute tracée dans le marketing et la finance à Paris. Mais passer 10 heures par jour derrière un ordinateur ne lui suffisait plus. Elle cherchait du sens, du partage, et surtout à se rapprocher de sa famille et de ses racines nancéiennes.
+
+      ### Le Déclic
+      Le besoin de "changer de vie" s'est imposé comme une nécessité vitale. Elle ne voulait plus d'un métier virtuel. Elle a donc démissionné pour se lancer dans un "tour de France" de l'apprentissage : un an de formation auprès de fromagers affineurs, complété par des stages intensifs pour maîtriser le produit.
+
+      ### L'Action
+      Bénédicte a jeté son dévolu sur une ancienne librairie de la Vieille Ville pour ouvrir **Caseus**. Après deux mois de travaux, elle a créé un lieu hybride : une crèmerie-fromagerie qui fait la part belle aux producteurs locaux (comme la laiterie de Manoncourt-en-Vermois). Elle y a même installé des tables pour déguster des planches sur place, recréant ce lien social qui lui manquait tant.
+
+      ### Si vous voulez faire comme Bénédicte
+      Vous visez un métier de bouche ?
+      * **Formez-vous sur le terrain :** Bénédicte a passé 1 an à apprendre le métier chez des maîtres affineurs avant d'ouvrir. C'est indispensable pour la crédibilité.
+      * **Le sourcing est clé :** Elle connaît personnellement ses producteurs (Jura, Auvergne, Lorraine). Allez à la rencontre de ceux qui fabriquent !
+      * **Innovez :** Elle ne vend pas juste du fromage, elle propose une expérience (dégustation sur place, recettes créatives).
+    MARKDOWN
   },
   {
-    title: "Permanence création d'entreprise (sur RDV)",
-    description: build_description(
-      category: "entreprendre",
-      base_desc: "🚀 **Envie de te lancer, mais tu ne sais pas par où commencer ?**\n\nRéserve un créneau avec un conseiller de la CCI pour un entretien 100% personnalisé. Statut juridique, aides financières, étapes concrètes — tu repars avec une feuille de route claire et les contacts des bons partenaires (BPI, CMA, réseaux locaux).\n\nC'est **gratuit, sans engagement**, et ça peut te faire gagner des mois de galère administrative.",
-      link: "https://www.nancy.cci.fr/evenements",
-      when_line: "Chaque mardi (dès nov. 2025), 09:30–12:00 — sur rendez-vous"
-    ),
-    category: "entreprendre",
-    organization: "CCI Grand Nancy",
-    location: "53 Rue Stanislas, 54000 Nancy",
-    time_commitment: "Hebdomadaire — sur rendez-vous",
-    latitude: 48.6932,
-    longitude: 6.1829,
-    is_active: true,
-    tags: "diagnostic,statuts,accompagnement",
-    image_url: image_for("entreprendre")
+    title: "Il ramène la campagne en ville avec sa laiterie urbaine",
+    chapo: "Matthieu voulait produire de ses mains. Il a installé une véritable laiterie en plein centre-ville pour offrir du 100% local aux citadins.",
+    location: "6 rue Saint-Nicolas, 54000 Nancy",
+    latitude: 48.6885, longitude: 6.1852,
+    happened_on: Date.new(2023, 4, 8),
+    source_name: "L'Est Républicain",
+    image_url: "https://images.unsplash.com/photo-1629198688000-71f23e745b6e?q=80&w=1600&auto=format&fit=crop",
+    body: <<~MARKDOWN
+      ### Le Profil
+      Matthieu, trentenaire, travaillait dans la grande distribution. Une situation stable, mais qui a perdu son sens suite à la crise du Covid. Il a ressenti le besoin impérieux de "retourner à l'école" pour apprendre un savoir-faire manuel et concret.
+
+      ### Le Déclic
+      Son projet a mûri pendant deux ans. Il a quitté son poste pour passer un BTS Agricole spécialité "fromage" en Franche-Comté. Son ambition ? Casser les codes et prouver qu'on peut produire, transformer et vendre au même endroit, même en plein centre-ville.
+
+      ### L'Action
+      Il a transformé une cellule commerciale rue Saint-Nicolas en un véritable laboratoire aux normes sanitaires strictes. Matthieu ne se contente pas de vendre : il fabrique sur place ses yaourts et fromages (Tome de Nancy, type Morbier...) à partir de lait bio collecté à Royaumeix. Il offre ainsi aux citadins du "100% local" avec zéro intermédiaire.
+
+      ### Si vous voulez faire comme Matthieu
+      Le concept de "production urbaine" vous tente ?
+      * **La réglementation d'abord :** Transformer un local commercial en site de production alimentaire demande une maîtrise parfaite des normes d'hygiène.
+      * **La transparence :** Le laboratoire de Matthieu est visible. Montrer que vous "faites" est votre meilleur atout marketing.
+      * **La matière première :** Tout repose sur la qualité de votre partenaire agricole. Soignez cette relation.
+    MARKDOWN
   },
   {
-    title: "Afterwork Entrepreneurs Nancy",
-    description: build_description(
-      category: "entreprendre",
-      base_desc: "🍻 **Le réseau qui fait vraiment avancer les projets.**\n\nChaque mois, porteurs de projets, mentors et experts locaux se retrouvent pour partager leurs galères et leurs victoires. Pitch ton idée en 2 minutes, reçois des retours concrets, et repars avec de nouveaux contacts qui peuvent tout changer.\n\nL'ambiance est cool, les échanges sont vrais, et **certaines collaborations nées ici sont devenues des boîtes qui tournent**.",
-      link: "https://www.nancy.cci.fr/evenements",
-      when_line: "Jeudi 27 novembre 2025, 18:30–20:30"
-    ),
-    category: "entreprendre",
-    organization: "Réseau local (CCI & partenaires)",
-    location: "Centre-ville, 54000 Nancy",
-    time_commitment: "Mensuel, 18:30–20:30",
-    latitude: 48.6918,
-    longitude: 6.1837,
-    is_active: true,
-    tags: "réseau,pitch,mentorat",
-    image_url: image_for("entreprendre")
+    title: "De la fonction publique au Coffee Shop : le pari d'Aude",
+    chapo: "Ancienne professeure puis fonctionnaire, Aude a profité du confinement pour réaliser son rêve d'ouvrir un café, épaulée par une franchise.",
+    location: "Rue des Ponts, 54000 Nancy",
+    latitude: 48.6875, longitude: 6.1820,
+    happened_on: Date.new(2021, 12, 14),
+    source_name: "L'Est Républicain",
+    image_url: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=1600&auto=format&fit=crop",
+    body: <<~MARKDOWN
+      ### Le Profil
+      Aude, 29 ans, a d'abord été professeure des écoles, puis fonctionnaire dans un lycée (gestion du bac et de la cantine). Un parcours dans le service public qui ne laissait pas présager un avenir de commerçante.
+
+      ### Le Déclic
+      C'est le confinement qui a servi de catalyseur. "C'était le moment ou jamais, j'avais encore l'énergie de me lancer". Elle a réalisé que son rêve d'ouvrir un café, enfoui depuis longtemps, devait se concrétiser maintenant.
+
+      ### L'Action
+      Plutôt que de se lancer seule sans expérience, Aude a choisi la sécurité et l'accompagnement d'une franchise : **Miss Cookies Coffee**. Après une formation au siège à Dijon, elle a ouvert sa boutique rue des Ponts. Le rythme est intense (7j/7 au début), mais elle se sent "enfin à sa place", rassurée par le réseau sur la gestion.
+
+      ### Si vous voulez faire comme Aude
+      Vous voulez entreprendre mais vous avez peur de la gestion ?
+      * **Pensez à la franchise :** C'est un excellent moyen de se lancer avec un filet de sécurité (formation, marketing, concepts éprouvés).
+      * **Acceptez le changement de rythme :** Passer du fonctionnariat au commerce demande une adaptation physique et mentale.
+      * **Faites-vous accompagner :** Aude a eu une employée de la franchise avec elle pour le lancement.
+    MARKDOWN
   },
   {
-    title: "Atelier — Financer son projet",
-    description: build_description(
-      category: "entreprendre",
-      base_desc: "💰 **Ton idée est là. L'argent aussi — il faut juste savoir où chercher.**\n\nCet atelier décortique TOUS les financements possibles : prêts d'honneur, subventions régionales, love money, dispositifs BPI… Tu apprendras à monter un dossier en béton et à présenter ton prévisionnel comme un·e pro.\n\n**Résultat concret** : tu repars avec une stratégie de financement adaptée à TON projet.",
-      link: "https://www.nancy.cci.fr/evenements",
-      when_line: "Vendredi 28 novembre 2025, 09:30–12:00"
-    ),
-    category: "entreprendre",
-    organization: "CCI Grand Nancy",
-    location: "53 Rue Stanislas, 54000 Nancy",
-    time_commitment: "Vendredi 28/11/2025, 09:30–12:00",
-    latitude: 48.6932,
-    longitude: 6.1829,
-    is_active: true,
-    tags: "financement,bpi,subventions",
-    image_url: image_for("entreprendre")
+    title: "L'alliance gourmande d'une hôtelière et d'une pâtissière",
+    chapo: "Emma et Rahel ont fusionné leurs rêves pour créer Madame Bergamote, un lieu hybride mêlant salon de thé et ateliers créatifs.",
+    location: "3 Grande Rue, 54000 Nancy",
+    latitude: 48.6948, longitude: 6.1818,
+    happened_on: Date.new(2025, 7, 17),
+    source_name: "L'Est Républicain",
+    image_url: "https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=1600&auto=format&fit=crop",
+    body: <<~MARKDOWN
+      ### Le Profil
+      Elles sont amies depuis 15 ans. Emma (36 ans) était directrice adjointe d'hôtel et passionnée de création manuelle. Rahel (39 ans) travaillait dans l'administration avant de tout quitter pour passer un CAP Pâtisserie.
+
+      ### Le Déclic
+      Rahel rêvait d'ouvrir un salon de thé. Emma rêvait d'ouvrir un atelier créatif. Plutôt que de choisir, elles ont décidé de fusionner leurs envies. "Nous en avons rêvé, alors nous l'avons fait".
+
+      ### L'Action
+      Elles ont créé **Madame Bergamote** en Ville Vieille. C'est un lieu où l'on vient pour déguster les pâtisseries de Rahel, mais aussi pour participer à des ateliers DIY (couronnes de fleurs, bijoux...) gérés par Emma. Elles réinventent le commerce de proximité en y ajoutant de l'expérience et de l'apprentissage.
+
+      ### Si vous voulez faire comme Elles
+      Vous avez un associé ?
+      * **La complémentarité est votre force :** Emma gère la créativité/gestion, Rahel gère la production culinaire.
+      * **Testez votre concept :** Rahel a commencé par régaler ses proches et faire ses armes dans une maison renommée.
+      * **Créez une communauté :** Leurs ateliers créatifs fidélisent une clientèle qui revient pour apprendre.
+    MARKDOWN
   },
   {
-    title: "Mentorat entrepreneur·e — rendez-vous découverte",
-    description: build_description(
-      category: "entreprendre",
-      base_desc: "🧭 **Besoin d'un regard extérieur pour voir plus clair ?**\n\nCe programme te met en relation avec des mentors expérimentés (stratégie, juridique, produit) qui ont réussi et qui veulent t'aider. En quelques sessions, tu vas **clarifier ta feuille de route 90 jours** et éviter les erreurs de débutant.\n\nTu n'es plus seul·e face aux décisions difficiles. Le mentorat, c'est l'accélérateur dont tu as besoin.",
-      link: "https://communs-entrepreneurs.fr",
-      when_line: "Entretiens continus — créneaux nov.–déc. 2025"
-    ),
-    category: "entreprendre",
-    organization: "Communs d'entrepreneurs Nancy",
-    location: "Nancy & Métropole",
-    time_commitment: "Sur candidature",
-    latitude: 48.692,
-    longitude: 6.184,
-    is_active: true,
-    tags: "mentorat,roadmap,coaching",
-    image_url: image_for("entreprendre")
-  },
-
-  # ===== FORMATION =====
-  {
-    title: "Atelier Pitch & Storytelling",
-    description: build_description(
-      category: "formation",
-      base_desc: "🎤 **Ton projet est génial. Maintenant, apprends à le raconter.**\n\nEn 3 heures, tu vas structurer un pitch qui capte l'attention, qui reste en tête, et qui donne envie d'en savoir plus. Problème, solution, traction — la méthode est simple et redoutablement efficace.\n\nOn filme, on décortique, on ajuste. Tu repars avec **un pitch rodé** et la confiance de le délivrer devant n'importe qui.",
-      link: "https://www.nancy.cci.fr/evenements",
-      when_line: "Mercredi 19 novembre 2025, 14:00–17:00"
-    ),
-    category: "formation",
-    organization: "CCI Grand Nancy",
-    location: "53 Rue Stanislas, 54000 Nancy",
-    time_commitment: "Mercredi 19/11/2025, 14:00–17:00",
-    latitude: 48.6932,
-    longitude: 6.1829,
-    is_active: true,
-    tags: "pitch,communication,atelier",
-    image_url: image_for("formation")
-  },
-  {
-    title: "Matinale Numérique — TPE/PME",
-    description: build_description(
-      category: "formation",
-      base_desc: "💻 **Développe ta présence en ligne sans exploser ton budget.**\n\nRéférencement local, réseaux sociaux qui convertissent, outils no-code pour créer vite et bien — cette matinale condense l'essentiel en 90 minutes avec des **exemples concrets d'entreprises du coin** qui cartonnent.\n\nParfait pour le petit déj + boost de motivation avant d'attaquer ta journée !",
-      link: "https://www.nancy.cci.fr/evenements",
-      when_line: "Mardi 18 novembre 2025, 08:30–10:00"
-    ),
-    category: "formation",
-    organization: "CCI Grand Nancy",
-    location: "53 Rue Stanislas, 54000 Nancy",
-    time_commitment: "Mensuel, 08:30–10:00",
-    latitude: 48.6932,
-    longitude: 6.1829,
-    is_active: true,
-    tags: "numérique,seo,no-code",
-    image_url: image_for("formation")
-  },
-  {
-    title: "Découvrir la méthodologie HACCP (restauration)",
-    description: build_description(
-      category: "formation",
-      base_desc: "🍴 **Tu rêves d'ouvrir un resto, un food truck, un café ? Commence par ici.**\n\nLa formation HACCP, c'est **obligatoire** avant d'ouvrir, mais c'est aussi hyper utile : tu apprendras les bases de l'hygiène alimentaire, les points critiques, et comment éviter les galères sanitaires.\n\nFormat court, pratique, et tu repars avec ta certification en poche.",
-      link: "https://www.nancy.cci.fr/evenements",
-      when_line: "Sessions bimensuelles — prochains créneaux nov.–déc. 2025"
-    ),
-    category: "formation",
-    organization: "CCI Grand Nancy",
-    location: "53 Rue Stanislas, 54000 Nancy",
-    time_commitment: "Session bimensuelle",
-    latitude: 48.6932,
-    longitude: 6.1829,
-    is_active: true,
-    tags: "haccp,restauration,hygiène",
-    image_url: image_for("formation")
-  },
-  {
-    title: "Executive MBA — se réinventer (ICN Business School)",
-    description: build_description(
-      category: "formation",
-      base_desc: "🎓 **Cadre ou dirigeant·e, tu sens qu'il est temps de passer à autre chose ?**\n\nL'Executive MBA d'ICN, c'est le parcours pour celles et ceux qui veulent **se transformer** : leadership, stratégie, innovation. Tu travailles sur un vrai projet de transformation pendant 18-24 mois, compatible avec ton activité pro.\n\nÀ la clé : un diplôme reconnu, un réseau solide, et une nouvelle trajectoire professionnelle.",
-      link: "https://www.lasemaine.fr/enseignement-formation/executive-mba-quand-icn-aide-les-cadres-a-se-reinventer/",
-      when_line: "Rentrée de printemps 2026 — candidatures ouvertes dès nov. 2025"
-    ),
-    category: "formation",
-    organization: "ICN Business School",
-    location: "86 Rue Sergent Blandan, 54000 Nancy",
-    time_commitment: "Part-time (18–24 mois)",
-    latitude: 48.6829,
-    longitude: 6.1766,
-    is_active: true,
-    tags: "executive,mba,leadership,transformation",
-    image_url: image_for("formation")
-  },
-
-  # ===== RENCONTRES =====
-  {
-    title: "Café-projets — échanges entre pairs",
-    description: build_description(
-      category: "rencontres",
-      base_desc: "☕ **Galère sur ton projet ? Viens en parler autour d'un café.**\n\nCe rendez-vous bimensuel, c'est le moment où tu partages tes avancées, tes blocages, tes ressources. Pas de jugement, que de l'entraide. Format court (1h30), bienveillant, et **étonnamment efficace** pour débloquer des situations.\n\nOuvert à tous·tes, débutant·es compris. Parfois, il suffit d'un regard extérieur pour voir la solution.",
-      link: "https://www.grandnancy.eu",
-      when_line: "Tous les 15 jours, jeudi 18:30 — prochain : 06 novembre 2025"
-    ),
-    category: "rencontres",
-    organization: "Communauté Déclic Nancy",
-    location: "Place Stanislas, 54000 Nancy",
-    time_commitment: "Tous les 15 jours, 18:30",
-    latitude: 48.6937,
-    longitude: 6.1834,
-    is_active: true,
-    tags: "pair-à-pair,entraide,réseau",
-    image_url: image_for("rencontres")
-  },
-  {
-    title: "Visite — Tiers-lieu & fablab",
-    description: build_description(
-      category: "rencontres",
-      base_desc: "🛠️ **Découvre un lieu où les idées prennent forme.**\n\nVisite guidée du fablab : imprimantes 3D, découpe laser, outils de prototypage… Tu vas rencontrer des makers passionnés qui partagent leurs astuces, et tu découvriras les ateliers à venir.\n\n**Parfait si tu veux** passer du concept au prototype, ou juste traîner avec des gens créatifs qui font des trucs concrets.",
-      link: "https://lafabriquedespossibles.fr",
-      when_line: "Samedi 22 novembre 2025, 10:00–12:00"
-    ),
-    category: "rencontres",
-    organization: "La Fabrique des Possibles",
-    location: "Nancy",
-    time_commitment: "Mensuel",
-    latitude: 48.682,
-    longitude: 6.186,
-    is_active: true,
-    tags: "tiers-lieu,fablab,prototype",
-    image_url: image_for("rencontres")
-  },
-
-  # ===== BÉNÉVOLAT =====
-  {
-    title: "Repair Café — accueil & logistique",
-    description: build_description(
-      category: "benevolat",
-      base_desc: "🔧 **Donne un coup de main pour réparer au lieu de jeter.**\n\nPas besoin d'être bricoleur·se — on cherche des gens pour accueillir le public, orienter vers les bon·nes réparateur·ices, et donner un coup de main logistique. L'ambiance est conviviale, la cause est utile (anti-gaspi !), et **tu vas croiser des profils inspirants**.\n\nUn samedi matin par mois, et tu fais une vraie différence.",
-      link: "https://mjc-bazin.fr",
-      when_line: "Samedi 15 novembre 2025, 09:30–12:30"
-    ),
-    category: "benevolat",
-    organization: "MJC Bazin",
-    location: "47 Rue Henri Bazin, 54000 Nancy",
-    time_commitment: "Mensuel, samedi matin",
-    latitude: 48.6848,
-    longitude: 6.1899,
-    is_active: true,
-    tags: "réparation,accueil,convivial",
-    image_url: image_for("benevolat")
-  },
-  {
-    title: "Atelier couture — coup de main",
-    description: build_description(
-      category: "benevolat",
-      base_desc: "🪡 **Aide les débutant·es à se lancer dans la couture.**\n\nTu n'as pas besoin d'être styliste — juste d'être patient·e et souriant·e. Prendre les mesures, préparer le matériel, accompagner celles et ceux qui débutent… **Ton rôle, c'est de rendre l'atelier accueillant** pour que tout le monde ose essayer.\n\nChaque mercredi soir, ambiance bonne humeur garantie.",
-      link: "https://mjc-bazin.fr",
-      when_line: "Chaque mercredi 17:30–19:30 (nov.–déc. 2025)"
-    ),
-    category: "benevolat",
-    organization: "MJC Bazin",
-    location: "47 Rue Henri Bazin, 54000 Nancy",
-    time_commitment: "Hebdomadaire",
-    latitude: 48.6848,
-    longitude: 6.1899,
-    is_active: true,
-    tags: "couture,atelier,pédagogie",
-    image_url: image_for("benevolat")
-  },
-  {
-    title: "Distribution alimentaire",
-    description: build_description(
-      category: "benevolat",
-      base_desc: "❤️ **2–3 heures par semaine qui changent vraiment la vie des gens.**\n\nAux Restos du Cœur, on a besoin de bras pour la distribution, l'accueil, le réassort. L'équipe est soudée, l'ambiance est respectueuse, et **chaque geste compte**.\n\nTu découvriras une solidarité concrète, loin des grands discours. Viens tester un créneau — tu verras si ça te parle.",
-      link: "https://www.restosducoeur.org/devenir-benevole/",
-      when_line: "Créneaux hebdomadaires (2–3 h), dès novembre 2025"
-    ),
-    category: "benevolat",
-    organization: "Restos du Cœur — Nancy",
-    location: "Centre-ville, 54000 Nancy",
-    time_commitment: "Hebdomadaire (créneaux 2–3 h)",
-    latitude: 48.689,
-    longitude: 6.184,
-    is_active: true,
-    tags: "solidarité,logistique,accueil",
-    image_url: image_for("benevolat")
-  },
-  {
-    title: "Tri de dons & mise en rayon",
-    description: build_description(
-      category: "benevolat",
-      base_desc: "📦 **Transforme des dons en ressources pour ceux qui en ont besoin.**\n\nAu Secours Populaire, tu participeras au tri, à l'étiquetage, et à la mise en rayon dans la boutique solidaire. C'est concret, c'est utile, et **tu vois direct l'impact de ton action**.\n\nQuelques heures par semaine, et tu fais partie d'un circuit vertueux qui redonne une seconde vie aux objets.",
-      link: "https://www.secourspopulaire.fr",
-      when_line: "2–4 h / semaine — créneaux nov.–déc. 2025"
-    ),
-    category: "benevolat",
-    organization: "Secours Populaire — Nancy",
-    location: "Nancy",
-    time_commitment: "2–4 h / semaine",
-    latitude: 48.69,
-    longitude: 6.18,
-    is_active: true,
-    tags: "tri,solidarité,boutique",
-    image_url: image_for("benevolat")
-  },
-  {
-    title: "Bénévolat boutique & recyclerie",
-    description: build_description(
-      category: "benevolat",
-      base_desc: "♻️ **Fais vivre une économie circulaire qui a du sens.**\n\nÀ Emmaüs, tu accueilleras les clients, tu tiendras la caisse, tu trieras et réassortiras les rayons. Chaque objet vendu finance l'insertion de personnes en difficulté — **ton engagement a un double impact** : écologique et social.\n\nPonctuel ou régulier, viens comme tu peux. Ici, tout le monde est le bienvenu.",
-      link: "https://emmaus-france.org",
-      when_line: "Créneaux ponctuels et réguliers — dès novembre 2025"
-    ),
-    category: "benevolat",
-    organization: "Emmaüs — Agglo de Nancy",
-    location: "Heillecourt / agglomération nancéienne",
-    time_commitment: "Ponctuel ou régulier",
-    latitude: 48.654,
-    longitude: 6.183,
-    is_active: true,
-    tags: "recyclerie,réemploi,accueil",
-    image_url: image_for("benevolat")
-  },
-  {
-    title: "Maraude & lien social",
-    description: build_description(
-      category: "benevolat",
-      base_desc: "🌙 **Va à la rencontre de ceux qu'on ne voit plus.**\n\nEn binôme, tu partiras en maraude pour distribuer boissons chaudes, repas, et surtout : **écouter, orienter, redonner un peu de dignité**. C'est bouleversant, c'est humain, c'est une expérience qui te change.\n\nQuelques soirées par mois, et tu découvres une solidarité vraie, loin des clichés.",
-      link: "https://www.francebenevolat.org",
-      when_line: "Soirées (2–3 h) — tournées nov.–déc. 2025"
-    ),
-    category: "benevolat",
-    organization: "Réseau local (associatif)",
-    location: "Nancy — différents quartiers",
-    time_commitment: "Soirées (2–3 h)",
-    latitude: 48.692,
-    longitude: 6.184,
-    is_active: true,
-    tags: "maraude,écoute,orientation",
-    image_url: image_for("benevolat")
-  }
-]
-
-# ===== LIEUX & STRUCTURES ENGAGÉES / BELLES HISTOIRES =====
-nancy_opportunities += [
-  {
-    title: "Grande épicerie générale Nancy",
-    description: build_description(
-      category: "entreprendre",
-      base_desc: <<~MD,
-        La Grande Épicerie Générale, c’est un supermarché participatif où les coopératrices et coopérateurs décident ensemble de ce qu’on met dans les rayons.
-
-        Pour faire ses courses, il faut :
-        • participer **3 heures toutes les 4 semaines** aux tâches du magasin
-        • prendre au moins **une part sociale** : tu deviens copropriétaire de la coopérative 🧑‍🤝‍🧑
-
-        Ici, on privilégie :
-        • des produits **locaux, bio, éthiques** chaque fois que possible
-        • une **marge unique et transparente** (25 % sur tous les produits)
-        • une gouvernance démocratique : **une personne = une voix**, pas de logique purement financière
-
-        Tu peux t’y investir progressivement : d’abord comme coopérateur·rice qui assure ses créneaux, puis en rejoignant un **groupe de travail** pour faire grandir le projet (achats, communication, animation…). C’est un lieu de consommation, mais aussi un espace de lien social et d’apprentissage de la coopération.
-      MD
-      link: "https://www.grandeepiceriegenerale.fr",
-      when_line: "Engagement régulier — 3 h toutes les 4 semaines"
-    ),
-    category: "entreprendre",
-    organization: "Grande Épicerie Générale",
-    location: "88 avenue du XXème Corps, 54000 Nancy",
-    time_commitment: "3 h toutes les 4 semaines + implication possible en groupes de travail",
-    is_active: true,
-    tags: "coopérative,alimentation,supermarché participatif",
-    image_url: image_for("entreprendre"),
-    website: "https://www.grandeepiceriegenerale.fr",
-    contact_email: "contact@grandeepiceriegenerale.fr"
-  },
-  {
-    title: "Garage Solidaire de Lorraine",
-    description: build_description(
-      category: "benevolat",
-      base_desc: <<~MD,
-        Le Garage Solidaire de Lorraine, c’est **bien plus qu’un garage** : c’est un chantier d’insertion qui aide des personnes éloignées de l’emploi à retrouver un projet professionnel et une place dans la société.
-
-        Sur place :
-        • des salarié·es en insertion, accompagnés pendant **jusqu’à 2 ans**
-        • un encadrement par une équipe pluridisciplinaire
-        • un vrai parcours d’accompagnement social et professionnel
-
-        Côté services, le Garage Solidaire :
-        • répare et entretient des véhicules à **prix accessibles**
-        • vend ou loue des voitures à des publics pour qui la mobilité est un frein à l’emploi
-        • permet à chacun, quels que soient ses revenus, de contribuer à une mobilité **plus solidaire et plus écologique**.
-
-        S’engager avec le Garage Solidaire, c’est soutenir à la fois l’insertion, la mobilité et l’économie circulaire.
-      MD
-      link: "https://garagesolidairelorraine.fr",
-      when_line: "Accompagnement et services toute l’année — parcours d’insertion sur 24 mois"
-    ),
-    category: "benevolat",
-    organization: "Garage Solidaire de Lorraine",
-    location: "33 avenue de la Meurthe, 54320 Maxéville",
-    time_commitment: "Engagement régulier possible (bénévolat, partenariats, accompagnement)",
-    is_active: true,
-    tags: "mobilité,insertion,solidarité,économie circulaire",
-    image_url: image_for("benevolat"),
-    website: "https://garagesolidairelorraine.fr",
-    contact_email: "accueil@garagesolidairelorraine.fr"
-  },
-  {
-    title: "Tricot Couture Service (TCS)",
-    description: build_description(
-      category: "benevolat",
-      base_desc: <<~MD,
-        Tricot Couture Service (TCS), c’est une association d’économie sociale et solidaire qui utilise la couture, le tricot, la broderie et le patchwork comme **support d’insertion et de lien social**.
-
-        Sur ses chantiers d’insertion, TCS :
-        • propose des **emplois et un cadre de travail** à des personnes éloignées de l’emploi
-        • accompagne les salarié·es sur leurs projets de vie et de formation
-        • crée des articles textiles sur commande pour des collectivités ou des structures locales
-
-        TCS, c’est aussi :
-        • un **laboratoire de cohésion sociale**
-        • un fonds d’innovation sociale pour financer des projets à impact
-        • des ateliers où se croisent habitants de tous âges autour des activités créatives
-
-        En donnant du temps, des compétences ou en travaillant avec TCS, tu contribues à une **inclusion très concrète** et à une économie circulaire locale.
-      MD
-      link: "https://www.tricotcoutureservice.org/",
-      when_line: "Ateliers et chantiers d’insertion en continu — toute l’année"
-    ),
-    category: "benevolat",
-    organization: "Tricot Couture Service",
-    location: "17 Rue de Bavière, 54500 Vandœuvre-lès-Nancy",
-    time_commitment: "Engagement régulier ou ponctuel selon les ateliers et projets",
-    is_active: true,
-    tags: "insertion,couture,économie sociale,cohésion sociale",
-    image_url: image_for("benevolat"),
-    website: "https://www.tricotcoutureservice.org/",
-    contact_email: "tricot_couture_services@orange.fr"
-  },
-  {
-    title: "Le Relais — Friperie Ding Fring Laxou",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        Le Relais collecte des tonnes de textiles usagés via un réseau de bornes, puis les trie dans son centre proche de Nancy. Les vêtements en bon état alimentent les boutiques Ding Fring, comme celle de Laxou ; les autres sont **recyclés** (isolant Métisse, chiffons, combustible…).
-
-        Dans la boutique de Laxou, tu trouves :
-        • des vêtements seconde main en très bon état, parfois neufs
-        • des pièces vintage, des marques recherchées, des accessoires
-        • des prix accessibles pour étudiants, familles, amateurs de fripes
-
-        Acheter au Relais, c’est :
-        • réduire drastiquement les déchets textiles
-        • financer des **emplois en insertion**
-        • soutenir une coopérative où les salarié·es peuvent devenir sociétaires
-
-        C’est une **opportunité concrète d’écologiser ses achats**, tout en soutenant un modèle d’économie circulaire et solidaire.
-      MD
-      link: "https://www.lerelais.org",
-      when_line: "Boutique ouverte toute l’année — horaires variables selon le magasin"
-    ),
-    category: "ecologiser",
-    organization: "Le Relais / Ding Fring Laxou",
-    location: "6 Rue de la Mortagne, 54520 Laxou",
-    time_commitment: "Courses solidaires et engagées à ta convenance",
-    is_active: true,
-    tags: "seconde main,textile,réemploi,insertion,friperie",
-    image_url: image_for("ecologiser"),
-    website: "https://www.lerelais.org"
-  },
-  {
-    title: "Le Noël vert du Grand Nancy",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        Le Noël vert du Grand Nancy, c’est un marché de Noël **écoresponsable** qui rassemble une soixantaine de créateurs, artisans et producteurs locaux.
-
-        Sur place :
-        • des idées cadeaux durables : artisanat, produits locaux, objets réemployés
-        • des animations pour découvrir d’autres façons de consommer
-        • une ambiance festive, mais avec une vraie attention à l’empreinte écologique
-
-        C’est l’endroit idéal pour préparer les fêtes en accord avec tes valeurs : soutenir l’économie locale, réduire les déchets et faire découvrir des alternatives à ton entourage.
-      MD
-      link: nil,
-      when_line: "29–30 novembre 2025, 10h–18h (Salle Gentilly, Nancy)"
-    ),
-    category: "ecologiser",
-    organization: "Métropole du Grand Nancy",
-    location: "Salle Gentilly, 11 avenue du Rhin, 54000 Nancy",
-    time_commitment: "Événement sur 2 jours — 29 et 30 novembre 2025, 10h–18h",
-    starts_at: Time.zone.parse("2025-11-29 10:00"),
-    ends_at:   Time.zone.parse("2025-11-30 18:00"),
-    is_active: true,
-    tags: "noël,écoresponsable,artisanat local,économie circulaire",
-    image_url: image_for("ecologiser")
-  },
-  {
-    title: "Le Fourgon — Courses consignées à domicile",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        Le Fourgon remet la **consigne** au goût du jour : tu fais tes courses en ligne, tout arrive en contenants en verre réutilisables, livrés en véhicule électrique… et les contenants repartent lors de la tournée suivante.
-
-        Concrètement :
-        • plus de 700 références (boissons, épicerie, hygiène, entretien…)
-        • des produits majoritairement locaux quand c’est possible
-        • des bouteilles et bocaux en verre **réemployés jusqu’à 40 fois**
-
-        Les impacts :
-        • jusqu’à **79 % de CO₂ en moins** par rapport au tout-jetable
-        • réduction massive des déchets d’emballages
-        • tournées optimisées en véhicule électrique
-
-        Tu commandes, tu remplis une caisse, tu te fais livrer à Pulnoy et dans un large rayon autour de Nancy. C’est un excellent moyen d’écologiser ton quotidien sans ajouter une charge mentale énorme.
-      MD
-      link: "https://www.lefourgon.com/fr",
-      when_line: "Livraison régulière à domicile — selon tes commandes"
-    ),
-    category: "ecologiser",
-    organization: "Le Fourgon",
-    location: "10 Allée des Noires Terres, 54425 Pulnoy",
-    time_commitment: "Courses consignées à la demande",
-    is_active: true,
-    tags: "consigne,zéro déchet,livraison,verre réemployable",
-    image_url: image_for("ecologiser"),
-    website: "https://www.lefourgon.com/fr"
-  },
-  {
-    title: "Don de sang — Maison du Don Nancy",
-    description: build_description(
-      category: "benevolat",
-      base_desc: <<~MD,
-        La Maison du Don de Nancy accueille les donneurs de sang, de plasma et de plaquettes. **Aucun produit artificiel** ne peut remplacer ces dons : ils sont indispensables au quotidien pour soigner de nombreux patients.
-
-        Sur place :
-        • un parcours simple : inscription, entretien médical, prélèvement, collation
-        • une équipe qui t’accompagne et répond à toutes tes questions
-        • un accueil du lundi au vendredi, et même le samedi
-
-        Il suffit :
-        • d’être en bonne santé
-        • d’avoir plus de 18 ans
-        • de venir avec une pièce d’identité
-
-        La durée de vie des produits sanguins est courte : la **régularité des dons** est essentielle. Ton don peut littéralement sauver des vies.
-      MD
-      link: "https://dondesang.efs.sante.fr/grand-est/maison-du-don-de-nancy",
-      when_line: "Du lundi au vendredi 8h–19h, samedi 8h–16h"
-    ),
-    category: "benevolat",
-    organization: "Établissement Français du Sang — Maison du Don de Nancy",
-    location: "85–87 Boulevard Lobau, 54000 Nancy",
-    time_commitment: "Don ponctuel (45–60 min) — possibilité de dons réguliers",
-    is_active: true,
-    tags: "santé,don de sang,solidarité",
-    image_url: image_for("benevolat"),
-    website: "https://dondesang.efs.sante.fr/grand-est/maison-du-don-de-nancy",
-    contact_phone: "0 800 10 99 00"
-  },
-  {
-    title: "Réunion « Prêt à vous lancer ? » — CCI",
-    description: build_description(
-      category: "entreprendre",
-      base_desc: <<~MD,
-        Tu as une idée de création d’entreprise mais tu ne sais pas par où commencer ? La CCI Meurthe-et-Moselle anime une réunion d’information « Prêt à vous lancer ? » pour t’aider à clarifier les étapes.
-
-        Au programme :
-        • les grandes étapes pour transformer ton idée en projet rentable
-        • les différentes formes juridiques possibles
-        • les aides et dispositifs existants
-        • le processus concret d’immatriculation
-
-        On parle aussi des **facteurs-clés de réussite** et de ce que signifie réellement « devenir chef d’entreprise ». C’est une excellente porte d’entrée pour passer de l’intention à l’action.
-      MD
-      link: "https://www.nancy.cci.fr/evenement/reunion-dinformation-pret-vous-lancer-0",
-      when_line: "Mardi 9 décembre 2025, 9h30"
-    ),
-    category: "entreprendre",
-    organization: "CCI Meurthe-et-Moselle",
-    location: "51–53 Rue Stanislas, 54000 Nancy",
-    time_commitment: "Réunion d’information — 1/2 journée",
-    starts_at: Time.zone.parse("2025-12-09 09:30"),
-    ends_at:   Time.zone.parse("2025-12-09 12:00"),
-    is_active: true,
-    tags: "création d’entreprise,information,CCI",
-    image_url: image_for("entreprendre"),
-    website: "https://www.nancy.cci.fr/evenement/reunion-dinformation-pret-vous-lancer-0",
-    contact_email: "creation@nancy.cci.fr"
-  },
-  {
-    title: "Jimily — La box anniversaire qui aide les parents",
-    description: build_description(
-      category: "entreprendre",
-      base_desc: <<~MD,
-        Jimily, c’est une box anniversaire clé en main imaginée par Charline Didrat pour **simplifier la vie des parents** qui organisent un anniversaire à la maison.
-
-        Le concept :
-        • tu choisis une thématique (pirates, dinosaures, magie, licorne, safari, etc.)
-        • tu sélectionnes l’âge (4–7 ans ou 7–11 ans) et le nombre d’invité·es
-        • tu reçois une box avec décorations, vaisselle, activités, cadeaux invités et un guide pour animer la fête
-
-        Les plus :
-        • production locale ou française : boîtes et imprimés fabriqués à Nancy, articles sourcés en Alsace
-        • supports réutilisables (à colorier, à garder)
-        • une entrepreneure locale lauréate du concours « 101 femmes entrepreneures »
-
-        C’est une belle histoire d’entrepreneuriat local, avec un projet qui allie **praticité pour les parents** et **ancrage territorial**.
-      MD
-      link: "https://jimily.fr/",
-      when_line: "Box disponibles toute l’année — commande en ligne"
-    ),
-    category: "entreprendre",
-    organization: "Jimily",
-    location: "7 Rue Louis Pasteur, 54770 Dommartin-sous-Amance",
-    time_commitment: "Commande en ligne — Livraison en quelques jours",
-    is_active: true,
-    tags: "belle histoire,entrepreneuriat,famille,anniversaire",
-    image_url: image_for("entreprendre"),
-    website: "https://jimily.fr/"
-  },
-  {
-    title: "Soirée métiers dans la cité — APEC",
-    description: build_description(
-      category: "formation",
-      base_desc: <<~MD,
-        L’APEC organise une soirée « découverte métiers » pour cadres et jeunes diplômés qui envisagent une **reconversion ou un changement de trajectoire**.
-
-        Le principe :
-        • une trentaine « d’ambassadeurs métiers » sur place
-        • des échanges libres pour découvrir des secteurs : formation, immobilier, commerce, environnement, etc.
-        • un temps dédié pour poser toutes tes questions à celles et ceux qui font déjà ces métiers
-
-        L’idée : passer de l’intention (« j’aimerais peut-être changer ») à une vision plus concrète des options possibles, en s’appuyant sur l’expertise de l’APEC pour lever les blocages.
-
-        C’est un excellent point d’entrée si tu envisages une reconversion mais que tu te sens un peu perdu·e sur la suite.
-      MD
-      link: "https://www.apec.fr",
-      when_line: "Mercredi 10 décembre 2025, en soirée (CCI Nancy)"
-    ),
-    category: "formation",
-    organization: "APEC / CCI Meurthe-et-Moselle",
-    location: "51–53 Rue Stanislas, 54000 Nancy",
-    time_commitment: "Soirée unique — environ 3 heures",
-    starts_at: Time.zone.parse("2025-12-10 18:00"),
-    ends_at:   Time.zone.parse("2025-12-10 21:00"),
-    is_active: true,
-    tags: "reconversion,métiers,orientation,apec",
-    image_url: image_for("formation"),
-    website: "https://www.apec.fr"
-  },
-  {
-    title: "MJC Lillebonne — Une fourmilière d’activités",
-    description: build_description(
-      category: "rencontres",
-      base_desc: <<~MD,
-        La MJC Lillebonne, implantée dans un bâtiment historique du centre de Nancy, est une **véritable fourmilière d’activités culturelles et de loisirs**.
-
-        Elle propose :
-        • plus d’une centaine d’activités pour enfants, ados et adultes
-        • des expositions, conférences, spectacles, festivals… tout au long de l’année
-        • un accueil de nombreuses associations et collectifs
-
-        Au-delà des activités, Lillebonne porte un projet d’**éducation populaire** :
-        • permettre aux jeunes et aux adultes de développer leur personnalité
-        • prendre conscience de leurs aptitudes
-        • se préparer à devenir des citoyens actifs et responsables
-
-        C’est un lieu où l’on peut pratiquer, rencontrer, s’engager, et où naissent beaucoup de projets collectifs.
-      MD
-      link: "https://mjclillebonne.fr/activites-som/",
-      when_line: "Activités et événements toute l’année"
-    ),
-    category: "rencontres",
-    organization: "MJC Lillebonne",
-    location: "14 Rue du Cheval Blanc, 54000 Nancy",
-    time_commitment: "Activités régulières + événements ponctuels",
-    is_active: true,
-    tags: "mjc,culture,éducation populaire,loisirs",
-    image_url: image_for("rencontres"),
-    website: "https://mjclillebonne.fr/activites-som/",
-    contact_phone: "03 83 36 82 82"
-  }
-]
-
-# ===== REPAIR CAFÉS DU GRAND NANCY =====
-nancy_opportunities += [
-  {
-    title: "Repair Café à Villers-lès-Nancy",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        Un aspirateur à bout de souffle ? Une cafetière en carafe ? Un grille-pain cuit ? Le réseau des Repair Cafés du Grand Nancy est là pour ça.
-
-        À la MJC Savine, des bricoleurs et bricoleuses bénévoles t’aident à réparer tes objets du quotidien, **avec toi**, pas à ta place. L’objectif : apprendre ensemble, échanger des savoir-faire, éviter de jeter ce qui peut encore servir.
-
-        Ambiance conviviale, entrée libre, et satisfaction immense quand ton appareil repart pour quelques années.
-      MD
-      link: "https://mhdd.grandnancy.eu/actus-agenda/agenda/details-agenda?uuid=9cf27b54-4bfb-11ee-a51a-2dc944ed9ece",
-      when_line: "Mercredis 26 novembre, 17 décembre, 28 janvier 2025"
-    ),
-    category: "ecologiser",
-    organization: "MJC Savine",
-    location: "3 Bd des Essarts, 54600 Villers-lès-Nancy",
-    time_commitment: "Sessions ponctuelles — mercredis 26/11, 17/12, 28/01",
-    is_active: true,
-    tags: "repair café,réparation,anti-gaspi,convivialité",
-    image_url: image_for("ecologiser")
-  },
-  {
-    title: "Repair Café à Essey-lès-Nancy",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        Un atelier chaleureux au Foyer Foch où habitants et bénévoles se retrouvent pour réparer électroménager, objets du quotidien et luminaires.
-
-        Ici, on apprend par la pratique : guidé par des bricoleurs passionnés, tu découvres comment diagnostiquer une panne, démonter un appareil et lui offrir une seconde vie. L’ambiance est simple, conviviale, centrée sur l’entraide et la réduction des déchets.
-      MD
-      link: "https://mhdd.grandnancy.eu",
-      when_line: "Jeudis 11 décembre, 8 janvier, 12 février"
-    ),
-    category: "ecologiser",
-    organization: "Foyer Foch",
-    location: "Foyer Foch, 74 Avenue Foch, 54270 Essey-lès-Nancy",
-    time_commitment: "Jeudis 11/12, 08/01, 12/02",
-    is_active: true,
-    tags: "repair café,électroménager,économie circulaire",
-    image_url: image_for("ecologiser")
-  },
-  {
-    title: "Repair Café à Tomblaine",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        Tous les mardis, l’Espace Jean Jaurès se transforme en atelier collaboratif : tournevis, lampes, radios, vélos… chacun vient avec ce qu’il souhaite sauver.
-
-        Le Repair Café rassemble habitants, étudiants et bénévoles autour de la réparation d’objets du quotidien. Les bénévoles prennent le temps d’expliquer, de montrer les gestes et de transmettre leur savoir-faire dans une ambiance détendue.
-      MD
-      link: "https://mhdd.grandnancy.eu",
-      when_line: "Chaque mardi de 17h à 19h"
-    ),
-    category: "ecologiser",
-    organization: "Espace Jean Jaurès",
-    location: "Espace Jean Jaurès, Tomblaine",
-    time_commitment: "Tous les mardis, 17h–19h",
-    is_active: true,
-    tags: "repair café,réparation,vélos,convivialité",
-    image_url: image_for("ecologiser")
-  },
-  {
-    title: "Repair Café Nancy — Résidence Les Abeilles",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        Un Repair Café urbain et dynamique au sein de la Résidence Habitat Jeunes Les Abeilles.
-
-        Les ateliers en soirée attirent beaucoup de jeunes, curieux d’apprendre à réparer eux-mêmes leurs objets : petit électroménager, lampes, déco, petits appareils… C’est un lieu idéal pour s’initier au bricolage, comprendre les bases de l’électronique et rencontrer d’autres habitants dans une ambiance conviviale.
-      MD
-      link: "https://www.nancy.fr",
-      when_line: "Jeudis 23 jan, 27 fév, 27 mars, 24 avr, 22 mai, 26 juin"
-    ),
-    category: "ecologiser",
-    organization: "Résidence Habitat Jeunes Les Abeilles",
-    location: "Résidence Les Abeilles, 58 rue de la République, 54000 Nancy",
-    time_commitment: "Jeudis en soirée — plusieurs dates dans l’année",
-    is_active: true,
-    tags: "repair café,jeunesse,bricolage,électronique",
-    image_url: image_for("ecologiser")
-  },
-  {
-    title: "Repair Café à Saint-Max",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        Un Repair Café familial accueilli au Centre Social Saint-Michel-Jéricho (espace Champlain).
-
-        Les samedis matins, habitants du quartier et bénévoles se retrouvent pour remettre en état de petits appareils, outils ou objets cassés. L’objectif : apprendre ensemble, transmettre des compétences et éviter que des objets encore réparables ne finissent à la poubelle.
-      MD
-      link: "https://mhdd.grandnancy.eu",
-      when_line: "Samedis 20 déc, 17 jan, 21 fév"
-    ),
-    category: "ecologiser",
-    organization: "Centre Social Saint-Michel-Jéricho",
-    location: "Centre Social Saint-Michel-Jéricho, 75 rue Alexandre 1er, Saint-Max",
-    time_commitment: "Samedis matin — plusieurs dates",
-    is_active: true,
-    tags: "repair café,quartier,entraide",
-    image_url: image_for("ecologiser")
-  },
-  {
-    title: "Repair Café à Heillecourt",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        À la Maison du Temps Libre, le Repair Café rassemble régulièrement des habitants désireux d’apprendre à réparer leurs objets.
-
-        On y répare grille-pain, lampes, perceuses, mixers… avec l’aide de bénévoles expérimentés. C’est aussi un lieu d’échange où les participants prennent confiance en leurs capacités et découvrent l’importance du réemploi.
-      MD
-      link: "https://mhdd.grandnancy.eu",
-      when_line: "Mercredis 10 déc, 14 jan, 11 fév"
-    ),
-    category: "ecologiser",
-    organization: "Maison du Temps Libre",
-    location: "Maison du Temps Libre, 11 rue Gustave Lemaire, Heillecourt",
-    time_commitment: "Mercredis — plusieurs sessions",
-    is_active: true,
-    tags: "repair café,réemploi,bricolage",
-    image_url: image_for("ecologiser")
-  },
-  {
-    title: "Repair Café à Houdemont",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        Au Pôle Associatif de Houdemont, le Repair Café donne une seconde chance aux petits appareils, jouets et objets électriques.
-
-        Les bénévoles accompagnent chaque réparation pas à pas et expliquent les bons gestes. C’est une initiative locale forte qui sensibilise au réemploi et à la lutte contre le gaspillage.
-      MD
-      link: "https://mhdd.grandnancy.eu",
-      when_line: "Mardis 16 déc, 20 jan"
-    ),
-    category: "ecologiser",
-    organization: "Pôle Associatif de Houdemont",
-    location: "Pôle Associatif, 12 bis rue des Saules, Houdemont",
-    time_commitment: "Mardis — quelques dates",
-    is_active: true,
-    tags: "repair café,anti-gaspi,quartier",
-    image_url: image_for("ecologiser")
-  },
-  {
-    title: "Repair Café à Jarville-la-Malgrange",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        Un Repair Café de quartier où habitants et bénévoles s’entraident pour prolonger la vie des objets.
-
-        L’ambiance est détendue et pédagogique : chacun peut venir avec un appareil en panne, apprendre à l’ouvrir, comprendre ce qui ne va pas et tenter une réparation guidée. Un moment utile et convivial.
-      MD
-      link: "https://mhdd.grandnancy.eu",
-      when_line: "Mercredis 17 déc, 21 jan"
-    ),
-    category: "ecologiser",
-    organization: "Réseau Repair Cafés du Grand Nancy",
-    location: "Jarville-la-Malgrange",
-    time_commitment: "Mercredis — quelques dates",
-    is_active: true,
-    tags: "repair café,quartier,apprentissage",
-    image_url: image_for("ecologiser")
-  },
-  {
-    title: "Repair Café à Laneuveville-devant-Nancy",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        Le Repair Café local accueille régulièrement les habitants pour réparer ensemble leurs objets du quotidien.
-
-        On y apprend à diagnostiquer une panne simple, manipuler des outils en sécurité et adopter les bons réflexes pour offrir une seconde vie à ce qui semblait perdu. Un geste écologique et collectif apprécié dans la commune.
-      MD
-      link: "https://mhdd.grandnancy.eu",
-      when_line: "Jeudis 4 déc, 8 jan, 5 fév"
-    ),
-    category: "ecologiser",
-    organization: "Réseau Repair Cafés du Grand Nancy",
-    location: "Laneuveville-devant-Nancy",
-    time_commitment: "Jeudis — plusieurs dates",
-    is_active: true,
-    tags: "repair café,écologie,collectif",
-    image_url: image_for("ecologiser")
-  },
-  {
-    title: "Repair Café à Ludres",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        Un Repair Café convivial où les bénévoles accompagnent les habitants dans la réparation de petits équipements domestiques.
-
-        Les ateliers permettent à chacun de se familiariser avec les bases du bricolage et de l’électricité, dans un esprit de partage et de réduction des déchets.
-      MD
-      link: "https://mhdd.grandnancy.eu",
-      when_line: "Mardi 2 déc"
-    ),
-    category: "ecologiser",
-    organization: "Réseau Repair Cafés du Grand Nancy",
-    location: "Ludres",
-    time_commitment: "Mardi 2 décembre",
-    is_active: true,
-    tags: "repair café,électricité,bricolage",
-    image_url: image_for("ecologiser")
-  },
-  {
-    title: "Repair Café à Pulnoy",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        Au Centre de Rencontre de Pulnoy, le Repair Café propose des ateliers ouverts à tous : réparation d’appareils, petit bricolage, couture légère.
-
-        Les participants viennent avec leurs objets cassés et repartent avec de nouvelles compétences et la satisfaction d’avoir évité un déchet supplémentaire.
-      MD
-      link: "https://mhdd.grandnancy.eu",
-      when_line: "Lundis 1 déc, 2 mars, 1er juin"
-    ),
-    category: "ecologiser",
-    organization: "Centre de Rencontre de Pulnoy",
-    location: "Centre de rencontre, avenue Léonard de Vinci (Résidences Vertes), Pulnoy",
-    time_commitment: "Lundis — plusieurs dates dans l’année",
-    is_active: true,
-    tags: "repair café,couture,réparation",
-    image_url: image_for("ecologiser")
-  },
-  {
-    title: "Repair Café à Saulxures-lès-Nancy",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        Organisé à la Mairie, le Repair Café de Saulxures accueille habitants et bénévoles pour réparer ensemble toutes sortes d’objets.
-
-        De la bouilloire à la lampe en passant par les jouets, chaque séance est une occasion d’apprendre, de transmettre et de réduire notre impact environnemental.
-      MD
-      link: "https://mhdd.grandnancy.eu",
-      when_line: "Lundis 6 fév, 4 mai, 5 oct"
-    ),
-    category: "ecologiser",
-    organization: "Mairie de Saulxures-lès-Nancy",
-    location: "Mairie de Saulxures-lès-Nancy, 2 rue de Tomblaine",
-    time_commitment: "Lundis — plusieurs dates",
-    is_active: true,
-    tags: "repair café,mairie,écoresponsable",
-    image_url: image_for("ecologiser")
-  },
-  {
-    title: "Repair Café à Seichamps",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        Un Repair Café de proximité où l’on apprend à réparer au lieu de jeter : petit électroménager, éclairage, petits appareils domestiques.
-
-        Les bénévoles partagent leurs compétences, expliquent les gestes simples et encouragent chacun à devenir plus autonome face aux objets du quotidien.
-      MD
-      link: "https://mhdd.grandnancy.eu",
-      when_line: "Lundi 5 jan, mardi 7 avr, lundi 7 sept"
-    ),
-    category: "ecologiser",
-    organization: "Réseau Repair Cafés du Grand Nancy",
-    location: "Seichamps",
-    time_commitment: "Plusieurs dates entre janvier et septembre",
-    is_active: true,
-    tags: "repair café,autonomie,électroménager",
-    image_url: image_for("ecologiser")
-  },
-  {
-    title: "Repair Café à Vandœuvre-lès-Nancy",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        À la MJC Lorraine, le Repair Café attire bricoleurs confirmés et habitants curieux.
-
-        Les ateliers sont rythmés et très vivants : un mélange de partage de compétences, de dépannage pratique et d’apprentissage collectif. On y traite une grande variété d’objets dans une ambiance chaleureuse.
-      MD
-      link: "https://mhdd.grandnancy.eu",
-      when_line: "Lundis mensuels"
-    ),
-    category: "ecologiser",
-    organization: "MJC Lorraine",
-    location: "MJC Lorraine, 1 rue de Lorraine, Vandœuvre-lès-Nancy",
-    time_commitment: "Lundis — ateliers mensuels",
-    is_active: true,
-    tags: "repair café,mjc,collectif",
-    image_url: image_for("ecologiser")
-  },
-  {
-    title: "Repair Café du quartier 3B à Nancy",
-    description: build_description(
-      category: "ecologiser",
-      base_desc: <<~MD,
-        À la MJC Beauregard, le Repair Café du quartier 3B est un rendez-vous local apprécié.
-
-        Les habitants y amènent appareils en panne, outils, lampes ou objets divers. Soutenu par des bénévoles compétents, l’atelier met l’accent sur la transmission de savoir-faire et la réduction des déchets.
-      MD
-      link: "https://www.nancy.fr",
-      when_line: "Samedis 6 déc, 10 jan, 7 fév"
-    ),
-    category: "ecologiser",
-    organization: "MJC Beauregard",
-    location: "MJC Beauregard, Place Maurice Ravel, 54000 Nancy",
-    time_commitment: "Samedis — plusieurs dates",
-    is_active: true,
-    tags: "repair café,quartier,savoir-faire",
-    image_url: image_for("ecologiser")
-  }
-]
-
-# =================== Belles histoires (Stories) ===================
-
-nancy_stories = [
-  {
-    title: "Aurélie ouvre L’Écrin à Damelevières",
-    chapo: "Aurélie a quitté la fonction publique pour créer L’Écrin, un bar lounge chaleureux à Damelevières. Une histoire de courage, de doutes… et de rencontres. ✨",
-    description: "Aurélie, ex-fonctionnaire, a osé tout quitter pour ouvrir L’Écrin, un bar lounge convivial à Damelevières. Son histoire montre qu’on peut réinventer son quotidien, même loin des grandes villes.",
-    body: <<~MD,
-      ### Quand l’envie de changer devient trop forte
-
-      Pendant des années, Aurélie a travaillé dans la fonction publique. Un emploi stable, rassurant, mais qui la laissait de plus en plus sur sa faim. L’idée de créer un lieu à elle, où les gens viendraient se détendre et se retrouver, revenait régulièrement. Peu à peu, ce n’était plus juste un rêve, mais un besoin : avoir un projet qui lui ressemble vraiment. 💭
-
-      Elle commence à imaginer un bar lounge cosy, avec une ambiance feutrée, des lumières douces, des planches à partager et une carte qui donne envie de prendre le temps.
-
-      ### De la sécurité au grand saut
-
-      Quitter un poste stable pour ouvrir un commerce dans une petite ville, ce n’est pas anodin. Aurélie se forme, se fait accompagner, travaille son dossier et son prévisionnel. Elle passe des soirées à comparer les banques, à chercher le bon local, à comprendre les normes, les licences, les travaux.
-
-      Les doutes sont là : est-ce que les habitants répondront présent ? Est-ce que le projet tiendra dans la durée ? Mais à un moment, il faut trancher : elle signe. Les travaux commencent, et L’Écrin commence enfin à exister ailleurs que dans sa tête. 🔨
-
-      ### Un lieu pour faire une pause… et se rencontrer
-
-      Quand on pousse la porte de L’Écrin, on découvre un bar à l’atmosphère chaleureuse : banquettes confortables, déco travaillée, lumières tamisées. On y vient pour prendre un verre, grignoter, fêter un anniversaire ou juste décompresser après le travail.
-
-      Au fil des semaines, Aurélie voit se créer ce qu’elle avait imaginé : des habitués qui reviennent, des groupes d’amis qui se retrouvent, des gens qui ne se seraient peut-être jamais rencontrés ailleurs. Son bar devient un petit repère dans la ville, un endroit où l’on sait qu’on sera accueilli.
-
-       ### Ce que tu peux en retenir 💡
-
-      • 🌱 Partir d’un emploi très sécurisé pour construire un projet plus aligné avec ses envies.
-      • 📍 Créer un lieu de vie même en dehors des grandes métropoles.
-      • 🤝 S’appuyer sur l’accompagnement (banque, réseaux locaux, proches) pour franchir les étapes une par une.
-
-
-      Si tu rêves d’ouvrir un café, un bar, un commerce de proximité, son parcours rappelle que ce n’est jamais « trop tard » pour se lancer — à condition d’accepter un peu d’incertitude et beaucoup d’apprentissage en route. 🌟
-    MD
-     quote: "J’avais envie de créer quelque chose de différent du simple bistrot.",
-    location: "L’Écrin — Damelevières (54)",
-    latitude: 48.5568,
-    longitude: 6.3860,
-    image_url: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1600&auto=format&fit=crop",
-    source_name: "Est Républicain",
-    source_url: nil,
-    happened_on: Date.new(2023, 10, 1) # ≈ octobre 2023
-  },
-
-  {
-    title: "Laure crée Galapaga, concept store éthique à Villers-lès-Nancy",
-    chapo: "Après plusieurs années dans un parcours plus classique, Laure a ouvert Galapaga, un concept store éthique et éco-responsable à Villers-lès-Nancy. Un lieu qui raconte une autre façon de consommer. 🌱",
-    description: "Avec Galapaga, Laure propose un concept store éthique à Villers-lès-Nancy : marques engagées, sélection exigeante et envie de montrer qu’on peut consommer autrement, sans renoncer au plaisir.",
-    body: <<~MD,
-      ### L’envie de donner du sens à son travail
-
-      Laure a longtemps travaillé dans un univers plus traditionnel, avec des journées bien remplies mais un sentiment qui revenait souvent : « Est-ce que ce que je fais a vraiment du sens pour moi ? ». Peu à peu, elle s’intéresse aux marques responsables, à la consommation éthique, aux alternatives plus respectueuses de l’environnement et des personnes.
-
-      Elle se met à suivre des créateurs, des petites marques engagées, des projets qui allient esthétique et impact positif. L’idée d’un concept store commence à germer : un lieu où rassembler ces marques, les rendre visibles, et donner aux habitants des options concrètes pour consommer autrement.
-
-      ### Trois ans pour faire mûrir un projet
-
-      Laure a travaillé son concept, son positionnement, la sélection de marques, les prix… Elle a aussi dû apprendre un nouveau métier : négocier avec des fournisseurs, chercher un local, construire une identité visuelle, imaginer l’expérience client en boutique.
-
-      Elle résume ce chemin en une phrase : beaucoup de patience, de travail en coulisses et la conviction que le projet en vaut la peine. ✨
-
-      ### Un concept store engagé, sans être culpabilisant
-
-      Galapaga propose :
-      • des vêtements et accessoires responsables
-      • des objets du quotidien durables
-      • des produits transparents sur leur fabrication
-
-      Laure prend le temps de raconter l’histoire derrière chaque marque. Le but : proposer des alternatives concrètes, sans culpabiliser.
-
-      ### Ce que tu peux en retenir 💡
-
-      • 🔍 Un projet peut naître d’un malaise diffus puis se préciser.
-      • 🌍 Le commerce peut mêler esthétique, impact écologique et engagement social.
-      • 📌 Un lieu engagé peut devenir un repère local.
-
-
-      Un projet construit avec patience, conviction et sens. 🌈
-    MD
-    quote: "Il m’a fallu trois ans pour concrétiser ce projet qui a mûri en moi.",
-    location: "Galapaga — Villers-lès-Nancy (54)",
-    latitude: 48.6733,
-    longitude: 6.1532,
+    title: "Elle quitte 20 ans d'éducation pour ouvrir un concept-store éthique",
+    chapo: "Laure a mûri son projet pendant 3 ans. Elle a créé Galapaga, une boutique qui mêle consommation responsable et bien-être.",
+    location: "Boulevard de Baudricourt, 54600 Villers-lès-Nancy",
+    latitude: 48.6732, longitude: 6.1518,
+    happened_on: Date.new(2024, 5, 2),
+    source_name: "L'Est Républicain",
     image_url: "https://images.unsplash.com/photo-1526481280695-3c687fd543c0?q=80&w=1600&auto=format&fit=crop",
-    source_name: "Est Républicain",
-    source_url: nil,
-    happened_on: Date.new(2022, 5, 1) # ≈ mai 2022
+    body: <<~MARKDOWN
+      ### Le Profil
+      Laure a consacré plus de vingt ans aux enfants. D'abord baby-sitter, puis animatrice BAFA, elle est devenue éducatrice de jeunes enfants. Une carrière riche de sens, mais à l'approche de la quarantaine, l'envie de créer son propre univers s'est faite sentir.
+
+      ### Le Déclic
+      C'est le confinement qui a tout déclenché. Ce temps suspendu lui a permis de réfléchir à ses valeurs : l'éthique, l'écologie, le local. Il lui a fallu trois ans de patience et de détermination pour passer de l'idée à la réalité, soutenue par la mairie pour trouver le local idéal.
+
+      ### L'Action
+      Elle a ouvert **Galapaga**, un lieu qui lui ressemble. Laure ne s'est pas contentée d'acheter des étagères : elle a fabriqué la plupart des meubles elle-même avec du bois de récupération ! Elle y propose des produits qu'elle a personnellement testés et approuvés (jouets en bois, cosmétiques rechargeables, cookies artisanaux), privilégiant toujours l'impact positif.
+
+      ### Si vous voulez faire comme Laure
+      Vous voulez ouvrir une boutique engagée ?
+      * **Soyez patient :** Laure a mis 3 ans à concrétiser son projet. Ne précipitez pas la recherche du local.
+      * **Mettez la main à la pâte :** Fabriquer son mobilier (upcycling) donne une âme unique au lieu et réduit les coûts.
+      * **Curatez votre offre :** Ne vendez que ce que vous aimez et ce que vous avez testé. La sincérité est votre meilleur argument de vente.
+    MARKDOWN
+  },
+  {
+    title: "Prof d'anglais pendant 24 ans, elle devient pâtissière de marché",
+    chapo: "Alexandra aimait enseigner, mais sa passion pour la pâtisserie a pris le dessus. Elle régale désormais le marché bio de Vandœuvre.",
+    location: "Marché Bio, 54500 Vandœuvre-lès-Nancy",
+    latitude: 48.6605, longitude: 6.1754,
+    happened_on: Date.new(2024, 9, 1),
+    source_name: "L'Est Républicain",
+    image_url: "https://images.unsplash.com/photo-1579372786545-d24232daf58c?q=80&w=1600&auto=format&fit=crop",
+    body: <<~MARKDOWN
+      ### Le Profil
+      Pendant près de 25 ans, Alexandra a enseigné l'anglais au lycée Stanislas. Une vocation née dès le collège. Elle aimait son métier, mais une autre passion, plus gourmande, commençait doucement à fermenter dans sa cuisine.
+
+      ### Le Déclic
+      Tout commence par un défi lancé par une amie en 2020 : passer le CAP pâtisserie en candidate libre. Cette formation agit comme une révélation. Elle se découvre capable de réaliser des techniques complexes. "La gourmandise est l'art d'utiliser la nourriture pour apporter du plaisir", réalise-t-elle.
+
+      ### L'Action
+      Alexandra n'a pas tout lâché brutalement. Elle a commencé par créer sa microentreprise, *Alex’s Pastries*, en parallèle de l'enseignement ("side project"). Face au succès de ses commandes pour des mariages et des baptêmes, elle a fini par quitter l'Éducation nationale pour se consacrer à 100 % à ses gâteaux sur le marché bio.
+
+      ### Si vous voulez faire comme Alexandra
+      Vous hésitez à quitter un emploi stable ?
+      * **Testez en "Side Project" :** Alexandra a commencé sa microentreprise sans démissionner. C'est le meilleur moyen de valider son marché.
+      * **La voie "Candidate Libre" :** On peut obtenir des diplômes techniques (CAP) sans retourner à l'école à temps plein. Renseignez-vous !
+      * **Le soutien familial :** C'est une aventure collective. L'adhésion du conjoint et des enfants est un moteur essentiel.
+    MARKDOWN
+  },
+  {
+    title: "Du burn-out à la liberté : Fred a repris le volant de sa vie",
+    chapo: "Après un burn-out, Frédéric a quitté son poste de manager pour devenir chauffeur de taxi. Il a perdu en salaire mais gagné une liberté inestimable.",
+    location: "Saulxures-lès-Nancy (54420)",
+    latitude: 48.6946, longitude: 6.2424,
+    happened_on: Date.new(2025, 1, 15),
+    source_name: "L'Est Républicain",
+    image_url: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=1600&auto=format&fit=crop",
+    body: <<~MARKDOWN
+      ### Le Profil
+      Pendant des années, Frédéric, 55 ans, était manager référent d'une équipe de 30 personnes. Une carrière stable en apparence, mais la pression de la "rentabilité à outrance" a fini par l'user.
+
+      ### Le Déclic
+      Le 8 avril 2021, c'est la rupture : le burn-out. Frédéric ne se reconnaît plus dans les valeurs de son entreprise. À 54 ans, il se retrouve face au vide, mais avec une certitude : il veut retrouver de l'humain et de l'autonomie.
+
+      ### L'Action
+      Il retourne à l'école pour deux mois de formation intensive (gestion, sécurité). Il investit dans une licence et une Tesla pour lancer *Fred Taxi*. Aujourd'hui, il fait du transport médical et scolaire. Il a troqué la pression des chiffres contre des sourires, savourant chaque jour "le bonheur d'être libre".
+
+      ### Si vous voulez faire comme Fred
+      Rebondir après 50 ans, c'est possible.
+      * **Investissez sur vous :** Fred n'a pas hésité à se former et à investir financièrement (achat de la licence) pour assurer son avenir.
+      * **Visez une niche :** Il s'est spécialisé (transport assis médicalisé, sièges autos pour enfants). C'est là que se trouve la valeur ajoutée.
+      * **La liberté a un prix :** Il ne se verse pas encore de gros salaire au début, mais la satisfaction personnelle, elle, est immédiate.
+    MARKDOWN
+  },
+  {
+    title: "Elle quitte l'Ehpad pour offrir un \"Écrin\" à sa campagne",
+    chapo: "Laura ne se retrouvait plus dans les conditions de travail à l'hôpital. Elle a ouvert le bar lounge qui manquait à Damelevières.",
+    location: "Damelevières (54360)",
+    latitude: 48.5583, longitude: 6.3869,
+    happened_on: Date.new(2025, 9, 11),
+    source_name: "L'Est Républicain",
+    image_url: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1600&auto=format&fit=crop",
+    body: <<~MARKDOWN
+      ### Le Profil
+      Laura, 30 ans, a travaillé dix ans en Ehpad. Elle aimait ce métier humain, mais le manque de moyens et de temps pour les résidents l'a poussée à chercher du sens ailleurs.
+
+      ### Le Déclic
+      C'est en faisant des "extras" le soir dans des bars qu'elle a eu la révélation. Elle y a trouvé une ambiance conviviale qu'elle ne trouvait plus à l'hôpital. Elle a constaté qu'il manquait un lieu qualitatif dans sa commune rurale.
+
+      ### L'Action
+      Elle a créé **L'Écrin**. Pas un simple bistrot, mais un bar lounge "haut de gamme" ouvert à tous. Elle a voulu prouver qu'on n'est pas obligé d'habiter une grande métropole pour avoir accès à des lieux sympas. C'est un pari sur la redynamisation de son territoire.
+
+      ### Si vous voulez faire comme Laura
+      Vous voulez entreprendre en zone rurale ?
+      * **Identifiez le manque :** Laura a vu qu'il n'y avait pas d'offre "Lounge" chez elle. Ne copiez pas l'existant, apportez ce qui manque.
+      * **Testez le terrain :** Faire des "extras" avant de se lancer permet de voir si le métier nous plaît vraiment au quotidien.
+      * **Soignez le cadre :** En campagne, le "bouche à oreille" va vite. Si le lieu est beau et l'accueil chaleureux, le succès suit.
+    MARKDOWN
+  },
+  {
+    title: "Elle fait voyager les Toulois avec ses saveurs exotiques",
+    chapo: "Marielle ne trouvait pas les produits de son île à Toul. Elle a transformé ce manque en opportunité suite à un souci de santé.",
+    location: "9 rue Pont-des-Cordeliers, 54200 Toul",
+    latitude: 48.6756, longitude: 5.8906,
+    happened_on: Date.new(2025, 5, 3),
+    source_name: "L'Est Républicain",
+    image_url: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?q=80&w=1600&auto=format&fit=crop",
+    body: <<~MARKDOWN
+      ### Le Profil
+      Aide-soignante d'origine martiniquaise, Marielle vit à Toul depuis 15 ans. Suite à des problèmes de santé, elle a dû envisager une reconversion professionnelle totale.
+
+      ### Le Déclic
+      Depuis son arrivée, elle faisait le même constat : impossible de trouver des produits antillais locaux. Cette frustration, combinée à l'obligation de changer de métier, a été le catalyseur. "Si ça n'existe pas, je vais le créer".
+
+      ### L'Action
+      Elle a ouvert **Saveurs Exotics**. Elle y vend des ignames, des bananes plantains, et diffuse du zouk dans la boutique ! Plus qu'une épicerie, elle prévoit d'ouvrir un salon de thé pour en faire un lieu de vie. Elle a transformé une contrainte médicale en une aventure qui valorise sa culture.
+
+      ### Si vous voulez faire comme Marielle
+      Comment transformer un pépin en pépite ?
+      * **Parting from a problem:** La meilleure idée de business est souvent de résoudre un problème que vous rencontrez vous-même (ici, l'absence de produits).
+      * **Affirmez votre identité :** Marielle ne vend pas juste de la nourriture, elle vend "sa" Martinique. C'est ce qui rend son commerce unique.
+      * **Voyez plus loin :** Elle commence par l'épicerie, mais projette déjà le salon de thé. Ayez toujours une vision de l'étape d'après.
+    MARKDOWN
   }
 ]
 
-puts "🌱 Nettoyage et import des opportunités Nancy..."
+stories_data.each do |data|
+  # On utilise external_url comme clé d'unicité potentielle ou le titre
+  Story.find_or_create_by!(title: data[:title]) do |s|
+    s.assign_attributes(data)
+    s.is_active = true # On active aussi les stories au cas où
+  end
+end
+puts "✅ #{Story.count} belles histoires créées."
 
-nancy_opportunities.each do |attrs|
-  Opportunity.find_or_create_by!(
-    title: attrs[:title],
-    location: attrs[:location]
-  ) do |opportunity|
-    opportunity.assign_attributes(attrs)
+
+# ==============================================================================
+# 2. LES OPPORTUNITÉS (OPPORTUNITIES)
+# ==============================================================================
+puts "🚀 Création des Opportunités (avec focus Écologiser)..."
+
+opportunities_data = [
+  # --- CATÉGORIE : ÉCOLOGISER (Focus demandé) ---
+  {
+    title: "Jetez ? Pas question ! Venez réparer au Repair Café",
+    category: "ecologiser", # Important : minuscule pour le thème
+    location: "MJC Villers-lès-Nancy (54600)",
+    latitude: 48.6732, longitude: 6.1518,
+    external_url: "https://repaircafe.org/",
+    image_url: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1600&auto=format&fit=crop",
+    description: <<~MARKDOWN
+      Votre grille-pain fait la grève ? Votre chaise préférée est bancale ? Ne les jetez pas !
+
+      Le Repair Café de Villers est un atelier collaboratif où nous apprenons à réparer ensemble. L'objectif n'est pas de faire réparer votre objet par un technicien (ce n'est pas un SAV !), mais de mettre les mains dans le cambouis avec l'aide de nos bénévoles passionnés.
+
+      ### Ce que vous allez y faire
+      Vous apportez vos objets en panne (petit électroménager, vêtements, vélos, jouets...) et vous vous installez avec un réparateur bénévole. Ensemble, vous ouvrez, diagnostiquez et tentez de réparer. C'est l'occasion unique de comprendre comment fonctionnent vos objets.
+
+      ### Pourquoi c'est génial ?
+      C'est gratuit, écologique et convivial ! On lutte contre l'obsolescence programmée tout en buvant un café. Vous repartez avec la fierté d'avoir prolongé la vie de votre objet (et d'avoir économisé l'achat d'un neuf).
+
+      ### Infos pratiques
+      * **Quand ?** Le premier samedi du mois, de 14h à 17h.
+      * **Où ?** À la MJC de Villers-lès-Nancy.
+      * **Prix :** Entrée libre (une tirelire est dispo pour soutenir l'asso).
+
+      *Attention : une seule réparation par personne pour que tout le monde puisse passer !*
+    MARKDOWN
+  },
+  {
+    title: "Atelier Fresque du Climat : comprenez tout en 3h",
+    category: "ecologiser",
+    location: "Octroi Nancy, 47 Bd d'Austrasie",
+    latitude: 48.6955, longitude: 6.1983,
+    external_url: "https://fresqueduclimat.org",
+    image_url: "https://images.unsplash.com/photo-1542601906990-b4d3fb7d5fa5?q=80&w=1600&auto=format&fit=crop",
+    description: <<~MARKDOWN
+      Vous entendez parler du changement climatique tous les jours, mais avez-vous une vision d'ensemble ? La Fresque du Climat est un atelier ludique et collaboratif pour comprendre les causes et les conséquences du dérèglement.
+
+      ### Comment ça se passe ?
+      En équipe, vous devez relier 42 cartes entre elles pour reconstituer la fresque du système climatique. C'est visuel, intelligent et accessible à tous (pas besoin d'être un expert du GIEC !).
+
+      ### L'impact
+      En 3 heures, vous gagnez des années de compréhension. On sort de cet atelier motivé pour agir, sans culpabilité, mais avec lucidité.
+    MARKDOWN
+  },
+
+  # --- CATÉGORIE : BÉNÉVOLAT ---
+  {
+    title: "Maraude solidaire : apportez de la chaleur humaine",
+    category: "benevolat",
+    location: "Place Maginot, 54000 Nancy",
+    latitude: 48.6890, longitude: 6.1780,
+    external_url: "https://www.croix-rouge.fr",
+    image_url: "https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?q=80&w=1600&auto=format&fit=crop",
+    description: <<~MARKDOWN
+      Rejoignez l'équipe des maraudeurs du vendredi soir. Pas besoin de compétences médicales, juste de l'écoute et de la bienveillance.
+
+      ### Votre mission
+      Aller à la rencontre des personnes sans-abri en centre-ville pour distribuer des boissons chaudes, des duvets, mais surtout pour discuter. Briser la solitude est aussi vital que de manger.
+
+      ### Engagement
+      Une soirée par mois minimum (20h - 23h). Formation "écoute active" assurée par l'asso avant la première maraude.
+    MARKDOWN
+  },
+
+  # --- CATÉGORIE : ENTREPRENDRE ---
+  {
+    title: "Café des Entrepreneurs : Testez votre idée !",
+    category: "entreprendre",
+    location: "Pépinière d'entreprises, 54000 Nancy",
+    latitude: 48.6833, longitude: 6.1667, # Approx
+    external_url: "https://www.grandnancy.eu",
+    image_url: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1600&auto=format&fit=crop",
+    description: <<~MARKDOWN
+      Vous avez une idée de projet mais vous n'osez pas vous lancer ? Venez la pitcher dans une ambiance bienveillante !
+
+      ### Le concept
+      5 minutes pour présenter votre idée devant d'autres porteurs de projet et des mentors. Pas de jugement, que du feedback constructif pour vous aider à avancer.
+
+      ### Pour qui ?
+      Tout le monde ! Que vous vouliez ouvrir une boulangerie ou lancer une start-up tech. L'important, c'est l'envie.
+    MARKDOWN
+  },
+
+  # --- CATÉGORIE : FORMATION ---
+  {
+    title: "Initiation au Code : Créez votre premier site web",
+    category: "formation",
+    location: "Epitech Nancy, Rue des Jardiniers",
+    latitude: 48.6960, longitude: 6.1950,
+    external_url: "https://www.wagon.com",
+    image_url: "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1600&auto=format&fit=crop",
+    description: <<~MARKDOWN
+      Le numérique vous fait peur ? Démystifiez-le le temps d'une journée d'initiation gratuite.
+
+      ### Au programme
+      Vous apprendrez les bases du HTML et du CSS. À la fin de la journée, vous aurez codé et mis en ligne votre propre page de présentation.
+
+      ### Pourquoi participer ?
+      Même si vous ne voulez pas devenir développeur, comprendre comment fonctionne le web est une compétence clé aujourd'hui, quel que soit votre métier.
+    MARKDOWN
+  },
+
+  # --- CATÉGORIE : RENCONTRES ---
+  {
+    title: "Soirée Jeux de Société Intergénérationnelle",
+    category: "rencontres",
+    location: "Médiathèque Manufacture, Nancy",
+    latitude: 48.6980, longitude: 6.1750,
+    external_url: "https://mediatheques.nancy.fr",
+    image_url: "https://images.unsplash.com/photo-1606167668584-78701c57f13d?q=80&w=1600&auto=format&fit=crop",
+    description: <<~MARKDOWN
+      Marre des écrans ? Venez jouer !
+
+      ### Le principe
+      On mélange les tables : étudiants, familles, retraités. On sort les classiques (Dixit, Aventuriers du Rail) et on découvre des nouveautés. Le jeu est le meilleur prétexte pour briser la glace.
+
+      ### Ambiance
+      Détendue et rigolote. Des animateurs sont là pour expliquer les règles, donc pas besoin de lire la notice pendant 20 minutes !
+    MARKDOWN
+  }
+]
+
+opportunities_data.each do |data|
+  # On utilise external_url comme clé d'unicité potentielle ou le titre
+  Opportunity.find_or_create_by!(title: data[:title]) do |o|
+    o.assign_attributes(data)
+    o.is_active = true # <=== LA LIGNE MAGIQUE QUI ACTIVE L'OPPORTUNITÉ
   end
 end
 
-puts "✅ Opportunités seedées"
-puts "📍 #{Opportunity.count} opportunités dans la base"
-puts "   - Bénévolat : #{Opportunity.where(category: 'benevolat').count}"
-puts "   - Formation : #{Opportunity.where(category: 'formation').count}"
-puts "   - Rencontres : #{Opportunity.where(category: 'rencontres').count}"
-puts "   - Entreprendre : #{Opportunity.where(category: 'entreprendre').count}"
-puts "   - Écologiser : #{Opportunity.where(category: 'ecologiser').count}"
-
-# ===== Import des belles histoires =====
-puts "📖 Import des belles histoires..."
-
-nancy_stories.each do |attrs|
-  Story.find_or_create_by!(
-    title: attrs[:title],
-    location: attrs[:location]
-  ) do |story|
-    story.assign_attributes(attrs)
-  end
-end
-
-puts "✅ Stories seedées"
-puts "📖 #{Story.count} belles histoires dans la base"
+puts "✅ #{Opportunity.count} opportunités créées."
+puts "🎉 Seed terminé avec succès ! Votre app est prête."

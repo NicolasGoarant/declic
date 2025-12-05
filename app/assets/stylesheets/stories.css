@@ -243,4 +243,41 @@ body { color: var(--text); font-family: var(--font-sans); }
   .story-cta .btn-cta:hover {
     background: color-mix(in oklab, var(--accent) 85%, black);
   }
+
+  /* --- Ajout pour le bloc "Si vous voulez faire comme..." --- */
+.story-action {
+  margin: 2rem 0;
+  background: #f0f9ff; /* Bleu très léger pour l'action */
+  border: 1px solid #bae6fd;
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+
+.story-action h3 {
+  color: #0284c7; /* Bleu plus soutenu */
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.story-action ul {
+  padding-left: 1.2rem;
+  margin-bottom: 0;
+}
+
+.story-action li {
+  margin-bottom: 0.5rem;
+  color: #334155;
+}
+
+/* Petit hack pour l'icône dans le titre */
+.story-action h3::before {
+  content: "🛠️";
+  font-size: 1.2rem;
+}
+
 </style>
