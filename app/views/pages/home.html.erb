@@ -1,6 +1,7 @@
 <%# app/views/pages/home.html.erb %>
 
-<%\n# Helper de nettoyage (Markdown -> Texte brut)
+<%
+# Helper de nettoyage (Markdown -> Texte brut)
 def strip_unsplash_md(txt)
   s = txt.to_s.dup
   s.gsub!(/###\s*À quoi ça ressemble\s*\?/i, '')
