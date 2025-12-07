@@ -175,7 +175,7 @@ end
           </div>
 
           <div class="hm-cards">
-            <% (@opportunities || []).first(6).each do |o| %>
+            <% (@opportunities || []).first(3).each do |o| %>
               <%= link_to opportunity_path(o), class: "hm-card-op" do %>
                 <div class="op-img" style="background-image:url('<%= thumb_for(o) %>')"></div>
                 <div class="op-content">
