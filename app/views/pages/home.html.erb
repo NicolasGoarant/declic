@@ -175,7 +175,7 @@ end
           </div>
 
           <div class="hm-cards">
-            <% (@opportunities || []).first(3).each do |o| %>
+            <% (@opportunities || []).first(6).each do |o| %>
               <%= link_to opportunity_path(o), class: "hm-card-op" do %>
                 <div class="op-img" style="background-image:url('<%= thumb_for(o) %>')"></div>
                 <div class="op-content">
@@ -210,7 +210,7 @@ end
       </div>
 
       <div class="hm-stories-grid">
-        <% stories_collection = (@latest_stories || Story.order(happened_on: :desc).limit(6)) %>
+        <% stories_collection = (@latest_stories || Story.order(happened_on: :desc).limit(3)) %>
         <% stories_collection.each do |story| %>
           <%= link_to story_path(story), class: "hm-story-card" do %>
             <div class="hm-story-img" style="background-image:url('<%= hero_fallback(story) %>')"></div>
