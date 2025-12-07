@@ -1,43 +1,29 @@
-<%# app/views/pages/home.html.erb — v10 : ajout "écologiser" + couleurs + chips %>
-
-<%#
-  Nettoyage léger Markdown côté ERB pour éviter que les images Unsplash s'affichent en texte
-%>
+<%# app/views/pages/home.html.erb %>
 
 <%
 def strip_unsplash_md(txt)
   s = txt.to_s.dup
-  # Supprime "À quoi ça ressemble ?" avec variations
   s.gsub!(/###\s*À quoi ça ressemble\s*\?/i, '')
   s.gsub!(/À quoi ça ressemble\s*\?/i, '')
-  # Supprime les emojis courants
   s.gsub!(/💡|🗓️|👉|🔗/, '')
-  # Supprime images Markdown ![...](url)
   s.gsub!(/!\[[^\]]*\]\([^)]+\)/, " ")
-  # Remplace liens Markdown [texte](url) -> texte
   s.gsub!(/\[([^\]]+)\]\([^\)]+\)/, '\1')
-  # Supprime toutes les URLs brutes
   s.gsub!(%r{https?://\S+}, ' ')
-  # Supprime les titres Markdown (###, ##, #)
   s.gsub!(/^\#{1,6}\s+/, '')
   s.gsub!(/\s\#{1,6}\s+/, ' ')
-  # Supprime le gras/italique
   s.gsub!(/\*\*([^\*]+)\*\*/, '\1')
   s.gsub!(/\*([^\*]+)\*/, '\1')
   s.gsub!(/__([^_]+)__/, '\1')
   s.gsub!(/_([^_]+)_/, '\1')
-  # Supprime autres marqueurs Markdown
   s.gsub!(/`([^`]+)`/, '\1')
   s.gsub!(/[>\-\+]{1,}\s*/, '')
-  # Nettoie espaces multiples
   s.gsub!(/\s+/, ' ')
   s.strip
 end
 
 def thumb_for(o)
-  return o.image_url if o.image_url.present?
-
-  cat = (o.category || '').downcase
+  return o.image_url if o.respond_to?(:image_url) && o.image_url.present?
+  cat = (o.respond_to?(:category) ? o.category : '').to_s.downcase
   case cat
   when 'benevolat'
     'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=400&q=80&auto=format&fit=crop'
@@ -55,10 +41,14 @@ def thumb_for(o)
     'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400&q=80&auto=format&fit=crop'
   end
 end
+
+def hero_fallback(obj)
+  return obj.image_url if obj.respond_to?(:image_url) && obj.image_url.present?
+  thumb_for(obj)
+end
 %>
 
 <div class="home-ms">
-  <!-- HERO -->
   <header class="hm-hero" role="banner">
     <%= link_to "⚡️ Pourquoi Déclic ?", philosophie_path, class: "hm-badge", aria: { label: "Pourquoi Déclic ?" } %>
 
@@ -85,72 +75,69 @@ end
     <div class="hm-hero-img" style="--hero:url('<%= hero_src %>')"></div>
   </header>
 
-  <!-- PARCOURS -->
   <section id="parcours" class="hm-slice alt">
-  <div class="container">
-    <h2 class="hm-h2">Choisis ton Déclic</h2>
+    <div class="container">
+      <h2 class="hm-h2">Choisis ton Déclic</h2>
 
-    <div class="hm-grid-cards">
-      <% btn_base = "hm-card" %>
+      <div class="hm-grid-cards">
+        <% btn_base = "hm-card" %>
 
-      <%= link_to opportunities_path(category: "entreprendre"),
-                  class: "#{btn_base} -entreprendre" do %>
-        <span class="hm-emoji">🚀</span>
-        <div class="hm-card-txt">
-          <p class="t1">Je veux entreprendre</p>
-          <p class="t2">Lance ton projet avec des mentors</p>
-        </div>
-      <% end %>
+        <%= link_to opportunities_path(category: "entreprendre"),
+                    class: "#{btn_base} -entreprendre" do %>
+          <span class="hm-emoji">🚀</span>
+          <div class="hm-card-txt">
+            <p class="t1">Je veux entreprendre</p>
+            <p class="t2">Lance ton projet avec des mentors</p>
+          </div>
+        <% end %>
 
-      <%= link_to opportunities_path(category: "ecologiser"),
-                  class: "#{btn_base} -ecologiser" do %>
-        <span class="hm-emoji">🌱</span>
-        <div class="hm-card-txt">
-          <p class="t1">Je veux écologiser</p>
-          <p class="t2">Des actions pour la planète</p>
-        </div>
-      <% end %>
+        <%= link_to opportunities_path(category: "ecologiser"),
+                    class: "#{btn_base} -ecologiser" do %>
+          <span class="hm-emoji">🌱</span>
+          <div class="hm-card-txt">
+            <p class="t1">Je veux écologiser</p>
+            <p class="t2">Des actions pour la planète</p>
+          </div>
+        <% end %>
 
-      <%= link_to opportunities_path(category: "formation"),
-                  class: "#{btn_base} -formation" do %>
-        <span class="hm-emoji">📘</span>
-        <div class="hm-card-txt">
-          <p class="t1">Je veux me former</p>
-          <p class="t2">Des formations pour progresser</p>
-        </div>
-      <% end %>
+        <%= link_to opportunities_path(category: "formation"),
+                    class: "#{btn_base} -formation" do %>
+          <span class="hm-emoji">📘</span>
+          <div class="hm-card-txt">
+            <p class="t1">Je veux me former</p>
+            <p class="t2">Des formations pour progresser</p>
+          </div>
+        <% end %>
 
-      <%= link_to opportunities_path(category: "benevolat"),
-                  class: "#{btn_base} -benevolat" do %>
-        <span class="hm-emoji">❤️</span>
-        <div class="hm-card-txt">
-          <p class="t1">Je veux aider</p>
-          <p class="t2">Des missions utiles et humaines</p>
-        </div>
-      <% end %>
+        <%= link_to opportunities_path(category: "benevolat"),
+                    class: "#{btn_base} -benevolat" do %>
+          <span class="hm-emoji">❤️</span>
+          <div class="hm-card-txt">
+            <p class="t1">Je veux aider</p>
+            <p class="t2">Des missions utiles et humaines</p>
+          </div>
+        <% end %>
 
-      <%= link_to opportunities_path(category: "rencontres"),
-                  class: "#{btn_base} -rencontres" do %>
-        <span class="hm-emoji">🤝</span>
-        <div class="hm-card-txt">
-          <p class="t1">Je veux rencontrer</p>
-          <p class="t2">Des communautés près de chez toi</p>
-        </div>
-      <% end %>
+        <%= link_to opportunities_path(category: "rencontres"),
+                    class: "#{btn_base} -rencontres" do %>
+          <span class="hm-emoji">🤝</span>
+          <div class="hm-card-txt">
+            <p class="t1">Je veux rencontrer</p>
+            <p class="t2">Des communautés près de chez toi</p>
+          </div>
+        <% end %>
 
-      <%= link_to stories_path, class: "#{btn_base} -histoires" do %>
-        <span class="hm-emoji">📖</span>
-        <div class="hm-card-txt">
-          <p class="t1">“Belles histoires !”</p>
-          <p class="t2">Déclics, reconversions, prises de risque</p>
-        </div>
-      <% end %>
+        <%= link_to stories_path, class: "#{btn_base} -histoires" do %>
+          <span class="hm-emoji">📖</span>
+          <div class="hm-card-txt">
+            <p class="t1">“Belles histoires !”</p>
+            <p class="t2">Déclics, reconversions, prises de risque</p>
+          </div>
+        <% end %>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-
-  <!-- CARTE -->
   <section id="explorer" class="hm-slice bg-muted grad-behind-map">
     <div class="container">
       <h2 class="hm-h2">Explorez les opportunités</h2>
@@ -166,42 +153,92 @@ end
         <button class="chip" data-cat="histoires">📖 Belles histoires</button>
       </div>
 
-      <div class="hm-mapwrap">
-        <div id="map" class="hm-map"></div>
-        <button id="btn-locate" class="hm-locate"><span>📍</span> <span>Me localiser</span></button>
+      <div class="hm-explore-grid">
+        <div class="hm-explore-left">
+          <div class="hm-map-sticky">
+            <div class="hm-mapwrap">
+              <div id="map" class="hm-map"></div>
+              <button id="btn-locate" class="hm-locate">
+                <span>📍</span><span>Me localiser</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="hm-explore-right">
+          <div class="hm-explore-header">
+            <h3 class="hm-h3">Dernières pépites</h3>
+            <%= link_to opportunities_path, class: "hm-explore-more" do %>
+              Voir tout →
+            <% end %>
+          </div>
+
+          <div class="hm-cards">
+            <% (@opportunities || []).first(6).each do |o| %>
+              <%= link_to opportunity_path(o), class: "hm-card-op" do %>
+                <div class="op-img" style="background-image:url('<%= thumb_for(o) %>')"></div>
+                <div class="op-content">
+                  <p class="k"><%= o.category.to_s.capitalize %></p>
+                  <p class="t"><%= o.title %></p>
+                  <p class="d"><%= strip_unsplash_md(o.description) %></p>
+                  <p class="l">📍 <%= o.location %></p>
+                </div>
+              <% end %>
+            <% end %>
+
+            <% if (@opportunities || []).empty? %>
+              <div class="hm-empty">
+                Aucune opportunité pour le moment… Revenez vite !
+              </div>
+            <% end %>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- QUELQUES OPPORTUNITÉS -->
-  <section class="hm-slice grad-soft">
+  <section id="stories" class="hm-slice hm-stories">
     <div class="container">
-      <h2 class="hm-h2">Quelques opportunités</h2>
-      <div class="hm-cards">
-        <% (@opportunities || []).first(6).each do |o| %>
-          <%= link_to opportunity_path(o), class: "hm-card-op" do %>
-            <div class="op-img" style="background-image:url('<%= thumb_for(o) %>')"></div>
-            <div class="op-content">
-              <p class="k"><%= o.category.to_s.capitalize %></p>
-              <p class="t"><%= o.title %></p>
-              <p class="d"><%= strip_unsplash_md(o.description) %></p>
-              <p class="l">📍 <%= o.location %></p>
+      <div class="hm-stories-head">
+        <span class="hm-tag">Inspiration</span>
+        <h2 class="hm-h2">Les Belles Histoires</h2>
+        <p class="hm-sub">
+          Ils ont osé franchir le pas.
+          Découvre les parcours de celles et ceux qui font bouger les lignes près de chez toi.
+        </p>
+      </div>
+
+      <div class="hm-stories-grid">
+        <% stories_collection = (@latest_stories || Story.order(happened_on: :desc).limit(3)) %>
+        <% stories_collection.each do |story| %>
+          <%= link_to story_path(story), class: "hm-story-card" do %>
+            <div class="hm-story-img" style="background-image:url('<%= hero_fallback(story) %>')"></div>
+            <div class="hm-story-overlay">
+              <span class="hm-story-pill">Témoignage</span>
+              <h3 class="hm-story-title"><%= story.title %></h3>
+              <% if story.chapo.present? %>
+                <p class="hm-story-chapo"><%= story.chapo %></p>
+              <% end %>
             </div>
           <% end %>
         <% end %>
       </div>
+
+      <div class="hm-stories-footer">
+        <%= link_to "Lire toutes les histoires", stories_path, class: "hm-story-more" %>
+      </div>
     </div>
   </section>
 
-  <!-- TÉMOIGNAGES -->
+
   <section id="temoignages" class="hm-slice bg-muted grad-behind-testis">
     <div class="container">
       <h2 class="hm-h2">Ils/elles ont trouvé leur déclic</h2>
 
       <% testimonials = [
-                {
+        {
           name: "Nathalie",
-          role: "Boulangère — Nancy",
+          role: "Chargée de communication — Nancy",
           avatar: "avatars/nathalie.jpeg",
           story: "Je cherchais un engagement local sans trop savoir par où commencer. Grâce à Déclic, j’ai trouvé une mission de bénévolat dans une épicerie solidaire à 10 minutes de chez moi. Ça m’a donné l’élan dont j’avais besoin."
         },
@@ -224,6 +261,7 @@ end
           story: "Après mes études, je me sentais un peu perdue. En explorant Déclic, j’ai découvert un atelier d’accompagnement pour jeunes actifs. J’y ai rencontré d’autres personnes motivées et retrouvé de la confiance."
         }
       ] %>
+
       <div class="hm-testis">
         <% testimonials.each do |t| %>
           <article class="hm-testi">
@@ -238,19 +276,20 @@ end
           </article>
         <% end %>
       </div>
-
     </div>
   </section>
 
-
-  <!-- CTA -->
   <section class="hm-cta">
     <div class="container">
       <h2>Envie d’agir à ton tour ?</h2>
       <p>Découvre des opportunités près de chez toi ou partage ta propre histoire pour inspirer d’autres personnes.</p>
       <div class="buttons">
-        <%= link_to "Voir les actions locales", (url_for(controller: :opportunities, action: :index, category: 'toutes') rescue root_path(anchor:"explorer")), class: "btn primary" %>
-        <%= link_to "Partager mon histoire", (respond_to?(:new_story_path) ? new_story_path : stories_path), class: "btn secondary" %>
+        <%= link_to "Voir les actions locales",
+                    (url_for(controller: :opportunities, action: :index, category: 'toutes') rescue root_path(anchor: "explorer")),
+                    class: "btn primary" %>
+        <%= link_to "Partager mon histoire",
+                    (respond_to?(:new_story_path) ? new_story_path : stories_path),
+                    class: "btn secondary" %>
       </div>
     </div>
   </section>
@@ -259,7 +298,8 @@ end
 <style>
 /* ====== Thème global ====== */
 .home-ms{
-  --a1:#7e5bef; --a2:#3b82f6; --muted:#f4f2fb;
+  --a1:#7e5bef;
+  --a2:#3b82f6; --muted:#f4f2fb;
   color:#0f172a; font-family:"Inter",system-ui,sans-serif;
   background:
     radial-gradient(1400px 800px at 10% -10%, #efe8ff 0%, transparent 60%) no-repeat,
@@ -270,7 +310,8 @@ end
 
 /* ====== HERO ====== */
 .hm-hero{ position:relative; color:#fff; overflow:hidden; background:linear-gradient(160deg,var(--a1),var(--a2)); }
-.hm-hero-inner{ position:relative; padding-top:clamp(72px,8vw,120px); padding-bottom:clamp(44px,6.5vw,84px); z-index:10; }
+.hm-hero-inner{ position:relative;
+  padding-top:clamp(72px,8vw,120px); padding-bottom:clamp(44px,6.5vw,84px); z-index:10; }
 .hm-hero::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(7,9,22,.62),rgba(7,9,22,.62)); mix-blend:multiply; z-index:2; }
 .hm-hero-img{ position:absolute; inset:0; background:var(--hero,none) center/cover no-repeat; filter:blur(2px) saturate(1.05) brightness(0.9); opacity:.85; z-index:1; }
 
@@ -278,7 +319,8 @@ end
 .hm-badge{
   position:absolute; top:14px; right:calc(18px + env(safe-area-inset-right)); z-index:30;
   display:inline-flex; align-items:center; gap:.55rem; padding:.55rem .9rem; border-radius:999px;
-  font:900 .95rem/1 "Epilogue"; color:#1e1b4b;
+  font:900 .95rem/1 "Epilogue";
+  color:#1e1b4b;
   background:linear-gradient(135deg,#fef3c7,#fde68a,#fcd34d);
   box-shadow:0 8px 20px rgba(0,0,0,.12); border:1px solid rgba(17,24,39,.06); text-decoration:none;
 }
@@ -319,7 +361,8 @@ end
 }
 .hm-stats dt{
   font:700 .82rem/1 "Inter"; color:#6b7280;
-  text-transform:uppercase; letter-spacing:.04em;
+  text-transform:uppercase;
+  letter-spacing:.04em;
 }
 .hm-stats dd{ margin:.25rem 0 0; font:900 1.8rem/1 "Epilogue"; }
 @media (max-width:640px){
@@ -364,6 +407,14 @@ end
 }
 .hm-sub{ margin:.2rem 0 1rem; color:#475569; font-size:1.05rem; }
 
+/* ====== h3 utilisé pour "Dernières pépites" ====== */
+.hm-h3{
+  font-family:"Epilogue"; font-weight:800;
+  font-size:1.4rem;
+  color:#0f172a;
+  margin:0;
+}
+
 /* ====== GROS BOUTONS ====== */
 .hm-grid-cards{
   display:grid;
@@ -372,8 +423,6 @@ end
   max-width:1220px;
   margin-inline:auto;
 }
-
-/* Chaque carte occupe une cellule de la grille */
 .hm-card{
   display:grid;
   grid-template-columns:110px 1fr;
@@ -405,36 +454,24 @@ end
   font:700 clamp(1rem,.7vw + .7rem,1.22rem)/1.45 "Inter";
   opacity:.98;
 }
-
-/* Couleurs des catégories */
 .hm-card.-entreprendre{ background:linear-gradient(135deg,#f59e0b,#ef4444,#fb7185); }
 .hm-card.-ecologiser{  background:linear-gradient(135deg,#16a34a,#22c55e,#4ade80); }
 .hm-card.-formation{   background:linear-gradient(135deg,#6366f1,#38bdf8); }
 .hm-card.-benevolat{   background:linear-gradient(135deg,#f43f5e,#ec4899); }
 .hm-card.-rencontres{  background:linear-gradient(135deg,#facc15,#f97316,#fb923c); }
 .hm-card.-histoires{
-  background: linear-gradient(
-    135deg,
-    #ef4444,  /* rouge - Aider */
-    #3b82f6,  /* bleu - Se former */
-    #f59e0b,  /* orange - Entreprendre */
-    #10b981,  /* vert turquoise - Rencontrer */
-    #fb7185,  /* rose chaud - storytelling */
-    #22c55e   /* vert - Écologiser */
-  );
-  background-size: 350% 350%;
-  animation: gradientShift 12s ease infinite;
+  background:linear-gradient(135deg,#ef4444,#3b82f6,#f59e0b,#10b981,#fb7185,#22c55e);
+  background-size:350% 350%;
+  animation:gradientShift 12s ease infinite;
 }
-
-
-
-
-/* 2 colonnes sur tablette */
+@keyframes gradientShift{
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
+}
 @media (max-width:900px){
   .hm-grid-cards{ grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
-
-/* 1 colonne sur mobile */
 @media (max-width:560px){
   .hm-grid-cards{ grid-template-columns:1fr; }
   .hm-card{
@@ -457,12 +494,10 @@ end
   gap:10px;
   margin-bottom:12px;
 }
-
 .chip{
   --chip-bg-soft:#ffffff;
   --chip-border:#e6e8ee;
   --chip-text:#111827;
-
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -474,66 +509,57 @@ end
   color:var(--chip-text);
   cursor:pointer;
 }
-
-/* Styles par catégorie */
-.chip[data-cat="benevolat"]{
-  --chip-bg-soft:#fff1f2;
-  --chip-border:#fecdd3;
-  --chip-text:#be123c;
-}
-.chip[data-cat="ecologiser"]{
-  --chip-bg-soft:#ecfdf3;
-  --chip-border:#bbf7d0;
-  --chip-text:#166534;
-}
-.chip[data-cat="formation"]{
-  --chip-bg-soft:#eff6ff;
-  --chip-border:#bfdbfe;
-  --chip-text:#1d4ed8;
-}
-.chip[data-cat="rencontres"]{
-  --chip-bg-soft:#fefce8;
-  --chip-border:#fef3c7;
-  --chip-text:#92400e;
-}
-.chip[data-cat="entreprendre"]{
-  --chip-bg-soft:#fff7ed;
-  --chip-border:#fed7aa;
-  --chip-text:#c2410c;
-}
-.chip[data-cat="histoires"]{
-  --chip-bg-soft:#f5f3ff;
-  --chip-border:#ddd6fe;
-  --chip-text:#5b21b6;
-}
-
-/* État actif : fond plein, texte blanc */
+.chip[data-cat="benevolat"]{--chip-bg-soft:#fff1f2;--chip-border:#fecdd3;--chip-text:#be123c;}
+.chip[data-cat="ecologiser"]{--chip-bg-soft:#ecfdf3;--chip-border:#bbf7d0;--chip-text:#166534;}
+.chip[data-cat="formation"]{--chip-bg-soft:#eff6ff;--chip-border:#bfdbfe;--chip-text:#1d4ed8;}
+.chip[data-cat="rencontres"]{--chip-bg-soft:#fefce8;--chip-border:#fef3c7;--chip-text:#92400e;}
+.chip[data-cat="entreprendre"]{--chip-bg-soft:#fff7ed;--chip-border:#fed7aa;--chip-text:#c2410c;}
+.chip[data-cat="histoires"]{--chip-bg-soft:#f5f3ff;--chip-border:#ddd6fe;--chip-text:#5b21b6;}
 .chip.is-active{
   background:var(--chip-text);
   color:#fff;
   border-color:transparent;
 }
-
-.hm-mapwrap{ position:relative; }
-
-/* Chip "Belles histoires" multicolore quand active */
 .chip[data-cat="histoires"].is-active{
-  background: linear-gradient(
-    135deg,
-    #ef4444,  /* rouge - Aider */
-    #3b82f6,  /* bleu - Se former */
-    #f59e0b,  /* orange - Entreprendre */
-    #10b981,  /* vert turquoise - Rencontrer */
-    #fb7185,  /* rose chaud - storytelling */
-    #22c55e   /* vert - Écologiser */
-  );
-  background-size: 350% 350%;
-  animation: gradientShift 12s ease infinite; /* réutilise l’anim du gros bouton */
-  color:#fff;
-  border-color: transparent;
+  background:linear-gradient(135deg,#ef4444,#3b82f6,#f59e0b,#10b981,#fb7185,#22c55e);
+  background-size:350% 350%;
+  animation:gradientShift 12s ease infinite;
+  color:#fff;border-color:transparent;
+}
+
+/* layout carte + cards */
+
+.hm-explore-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);
+  gap:22px;
+  /* align-items:flex-start; <-- SUPPRIMÉ POUR ACTIVER LE SCROLL STICKY */
+  margin-top:18px;
+}
+
+.hm-explore-left{ min-width:0; }
+.hm-explore-right{ min-width:0; }
+.hm-explore-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:10px;
+}
+.hm-explore-more{
+  font:700 .95rem/1 "Inter";
+  color:#4f46e5;
+  text-decoration:none;
+}
+.hm-explore-more:hover{ text-decoration:underline; }
+
+@media (max-width:960px){
+  .hm-explore-grid{
+    grid-template-columns:1fr;
+  }
 }
 
 /* Carte */
+.hm-mapwrap{ position:relative; }
 .hm-map{
   height:560px;
   width:100%;
@@ -543,126 +569,29 @@ end
   box-shadow:0 10px 30px rgba(15,23,42,.10);
 }
 
-/* Sur mobile : on laisse le popup dépasser de la carte */
+.hm-map-sticky {
+  position: sticky;
+  top: 110px; /* ajusté pour ne pas coller au header */
+  z-index: 10;
+}
+@media (max-width:960px){
+  .hm-map-sticky {
+    position: static;
+    top: auto;
+  }
+}
+
 @media (max-width:768px){
   .hm-map{ overflow:visible; }
 }
 
-/* ====== LEAFLET popup Déclic (unique et responsive) ====== */
-.leaflet-popup.dc-popup .leaflet-popup-content {
-  margin:0 !important;
-  padding:0;
-}
-
-.leaflet-popup.dc-popup .leaflet-popup-content-wrapper {
-  padding:0;
-  border-radius:16px;
-  box-shadow:0 18px 40px rgba(15,23,42,.18);
-  border:1px solid #eef2f7;
-  width:auto !important;
-  max-width:calc(100vw - 32px);
-}
-
-.leaflet-popup.dc-popup .leaflet-popup-tip { display:block; }
-
-.leaflet-popup-close-button{
-  color:#0f172a;
-  font-weight:900;
-  font-size:18px;
-}
-
-/* Contenu du popup */
-.dcpp{
-  display:grid;
-  grid-template-columns:56px 1fr;
-  gap:12px;
-  padding:12px;
-  box-sizing:border-box;
-  max-width:100%;
-  overflow-wrap:anywhere;
-}
-.dcpp-img{
-  width:56px; height:56px;
-  border-radius:12px;
-  background:#f1f5f9 center/cover no-repeat;
-  border:1px solid #e2e8f0;
-}
-.dcpp-title{
-  font:900 1rem/1.15 "Epilogue";
-  margin:0 0 4px;
-  letter-spacing:-.01em;
-}
-.dcpp-org{
-  font:700 .9rem/1.3 "Inter";
-  color:#475569;
-  margin:0;
-}
-.dcpp-addr{
-  font:500 .9rem/1.3 "Inter";
-  color:#6b7280;
-  margin:.2rem 0 .35rem;
-}
-.dcpp-blurb{
-  font:500 .9rem/1.35 "Inter";
-  color:#334155;
-  margin:.1rem 0 .5rem;
-}
-.dcpp-actions{
-  display:flex;
-  gap:8px;
-  margin-top:.25rem;
-}
-.dcpp-actions a{
-  display:inline-flex;
-  align-items:center;
-  gap:.4rem;
-  font:800 .9rem/1 "Epilogue";
-  text-decoration:none;
-  color:#fff;
-  padding:.6rem .8rem;
-  border-radius:10px;
-  background:var(--cat, #7e5bef);
-}
-.dcpp a:focus{
-  outline:2px solid #7c3aed;
-  outline-offset:2px;
-  border-radius:8px;
-}
-
-/* Version responsive du popup (mobile) */
-@media (max-width:520px){
-  .leaflet-popup.dc-popup .leaflet-popup-content-wrapper{
-    border-radius:14px;
-    max-width:calc(100vw - 24px);
-  }
-  .dcpp{
-    grid-template-columns:44px 1fr;
-    gap:10px;
-  }
-  .dcpp-img{
-    width:44px; height:44px;
-  }
-  .dcpp-blurb{
-    overflow-wrap:anywhere;
-    word-break:break-word;
-  }
-}
-
-/* Sur mobile, on autorise le popup à dépasser du div .hm-map */
-@media (max-width:480px){
-  .hm-map{ overflow:visible; }
-}
-
-/* ====== Cards opportunités AVEC IMAGES ====== */
+/* ====== Cards opportunités ====== */
 .hm-cards{
   display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-columns:repeat(2,minmax(0,1fr));
   gap:18px;
 }
 @media (max-width:980px){
-  .hm-cards{ grid-template-columns:repeat(2,minmax(0,1fr)); }
-}
-@media (max-width:640px){
   .hm-cards{ grid-template-columns:1fr; }
 }
 .hm-card-op{
@@ -690,7 +619,8 @@ end
 .hm-card-op .k{
   color:#64748b; font-size:.82rem;
   margin:0 0 .4rem;
-  font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+  font-weight:700; text-transform:uppercase;
+  letter-spacing:.04em;
 }
 .hm-card-op .t{
   font:900 1.16rem/1.2 "Epilogue"; margin:0 0 .3rem;
@@ -698,14 +628,24 @@ end
 .hm-card-op .d{
   font:1rem/1.55 "Inter"; color:#475569;
   margin:.3rem 0 .5rem;
-  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  display:-webkit-box;
+  -webkit-line-clamp:2; -webkit-box-orient:vertical;
   overflow:hidden;
 }
 .hm-card-op .l{
   font:1rem/1.4 "Inter"; color:#1f2937; margin:0;
 }
+.hm-empty{
+  grid-column:1 / -1;
+  padding:18px;
+  border-radius:14px;
+  border:1px dashed #e5e7eb;
+  background:#f9fafb;
+  text-align:center;
+  color:#6b7280;
+}
 
-/* ====== TÉMOIGNAGES (fix) ====== */
+/* ====== TÉMOIGNAGES ====== */
 .hm-testis{
   display:grid;
   grid-template-columns:repeat(4, minmax(0,1fr));
@@ -730,56 +670,136 @@ end
 .hm-testi .who{
   display:flex; align-items:center; gap:12px; margin-bottom:8px;
 }
-
 .hm-avatar{
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  object-fit: cover;
-  object-position: 50% 8%; /* réglage “par défaut” pour tout le monde */
-  background: #fff;
-  flex: 0 0 64px;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 10px rgba(15,23,42,.12);
+  width:64px;
+  height:64px;
+  border-radius:50%;
+  object-fit:cover;
+  object-position:50% 8%;
+  background:#fff;
+  flex:0 0 64px;
+  border:2px solid #fff;
+  box-shadow:0 2px 10px rgba(15,23,42,.12);
 }
-
-/* Micro-ajustement de cadrage uniquement pour Nathalie */
 .hm-avatar[src*="nathalie"]{
-  object-position: 50% 18%;
+  object-position:50% 18%;
 }
-
-
-
-
-
 .hm-testi .name{
-  margin:0; font:900 1.05rem/1.1 "Epilogue"; color:#0f172a;
+  margin:0;
+  font:900 1.05rem/1.1 "Epilogue"; color:#0f172a;
 }
 .hm-testi .role{
   margin:.15rem 0 0; font:700 .9rem/1.2 "Inter"; color:#64748b;
 }
-
 .hm-testi .story{
   margin:.4rem 0 0;
   color:#334155;
   font:500 .95rem/1.45 "Inter";
-  /* plus de line-clamp, plus d'overflow hidden */
 }
 
-.hm-testi header {
-  min-height: 72px; /* ajuste si besoin 68–76px */
-  display: flex;
-  align-items: flex-start;
+/* ====== Belles histoires ====== */
+.hm-stories{
+  background:#eef2ff;
+}
+.hm-stories-head{
+  text-align:center;
+  max-width:720px;
+  margin:0 auto 24px;
+}
+.hm-tag{
+  display:inline-block;
+  padding:.3rem .8rem;
+  border-radius:999px;
+  font:700 .75rem/1 "Inter";
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:#4f46e5;
+  background:#e0e7ff;
+  margin-bottom:.4rem;
+}
+.hm-stories-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:20px;
+}
+@media (max-width:960px){
+  .hm-stories-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:640px){
+  .hm-stories-grid{ grid-template-columns:1fr; }
 }
 
-.hm-testi header img {
-  width: 42px;
-  height: 42px;
-  object-fit: cover;
-  border-radius: 999px;
-  margin-right: 10px;
+.hm-story-card{
+  position:relative;
+  display:block;
+  border-radius:24px;
+  overflow:hidden;
+  text-decoration:none;
+  min-height:500px;
+  box-shadow:0 16px 40px rgba(15,23,42,.26);
 }
 
+.hm-story-img{
+  position:absolute;
+  inset:0;
+  background:#020617 center/cover no-repeat;
+  transform:scale(1.03);
+  transition:transform .7s ease;
+}
+.hm-story-overlay{
+  position:absolute;
+  inset:0;
+  padding:18px 18px 20px;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  background:linear-gradient(180deg,rgba(15,23,42,.05),rgba(15,23,42,.86));
+}
+.hm-story-card:hover .hm-story-img{
+  transform:scale(1.09);
+}
+.hm-story-pill{
+  align-self:flex-start;
+  padding:.25rem .7rem;
+  border-radius:999px;
+  border:1px solid rgba(248,250,252,.8);
+  background:rgba(15,23,42,.55);
+  color:#e5e7eb;
+  font:700 .7rem/1 "Inter";
+  text-transform:uppercase;
+  letter-spacing:.18em;
+  margin-bottom:.55rem;
+}
+.hm-story-title{
+  margin:0 0 .25rem;
+  font:800 1.3rem/1.2 "Epilogue";
+  color:#f9fafb;
+}
+.hm-story-chapo{
+  margin:0;
+  font:500 .9rem/1.4 "Inter";
+  color:#e5e7eb;
+}
+.hm-stories-footer{
+  text-align:center;
+  margin-top:18px;
+}
+.hm-story-more{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:.8rem 1.5rem;
+  border-radius:999px;
+  border:2px solid #111827;
+  font:800 .95rem/1 "Epilogue";
+  text-decoration:none;
+  color:#111827;
+  background:#fff;
+}
+.hm-story-more:hover{
+  background:#111827;
+  color:#fff;
+}
 
 /* ====== CTA ====== */
 .hm-cta{
@@ -816,12 +836,6 @@ end
   border:2px solid #fff;
   color:#fff;
 }
-@keyframes gradientShift {
-  0%{ background-position: 0% 50%; }
-  50%{ background-position: 100% 50%; }
-  100%{ background-position: 0% 50%; }
-}
-
 </style>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -829,13 +843,12 @@ end
 
 <% content_for :scripts do %>
 <script>
-// Nettoyage Markdown (supprime images ![...](...) et transforme [txt](url) -> txt)
 window.DeclicCleanMd = function(md){
   return (md || "")
-    .replace(/!\[[^\]]*\]\([^\)]+\)/g, "")     // images
-    .replace(/\[([^\]]+)\]\((.*?)\)/g, "$1")   // liens
-    .replace(/[*_`>#]/g, "")                   // emphases
-    .replace(/\s+/g, " ")                      // espaces multiples
+    .replace(/!\[[^\]]*\]\([^\)]+\)/g, "")
+    .replace(/\[([^\]]+)\]\((.*?)\)/g, "$1")
+    .replace(/[*_`>#]/g, "")
+    .replace(/\s+/g, " ")
     .trim();
 };
 </script>
@@ -848,7 +861,6 @@ function bootHome(){
   const mapEl = document.getElementById('map');
   if (!mapEl || !window.L) return;
 
-  // ---- Map unique ----
   let map = window._declicMap;
   if (!map) {
     map = L.map(mapEl, { zoomControl:true, attributionControl:false }).setView([46.6, 2.2], 6);
@@ -857,7 +869,6 @@ function bootHome(){
       detectRetina: true,
       crossOrigin: true
     }).addTo(map);
-
     window._declicMap = map;
   } else {
     requestAnimationFrame(()=> map.invalidateSize());
@@ -869,14 +880,13 @@ function bootHome(){
 
     const colors = {
       benevolat:   '#f43f5e',
-      ecologiser:  '#16a34a', // vert
+      ecologiser:  '#16a34a',
       formation:   '#3b82f6',
-      rencontres:  '#facc15', // jaune
+      rencontres:  '#facc15',
       entreprendre:'#f59e0b',
       histoires:   '#a855f7',
       default:     '#7e5bef'
     };
-
     const emojis = {
       benevolat:   '❤️',
       ecologiser:  '🌱',
@@ -887,36 +897,30 @@ function bootHome(){
       default:     '📍'
     };
 
-const iconFor = (c) => {
-  const em = emojis[c] || emojis.default;
-  const baseStyle =
-    "width:26px;height:26px;border-radius:9999px;border:2px solid #fff;" +
-    "display:grid;place-items:center;color:#fff;font-size:14px;" +
-    "box-shadow:0 1px 4px rgba(0,0,0,.25);";
+    const iconFor = (c) => {
+      const em = emojis[c] || emojis.default;
+      const baseStyle =
+        "width:26px;height:26px;border-radius:9999px;border:2px solid #fff;" +
+        "display:grid;place-items:center;color:#fff;font-size:14px;" +
+        "box-shadow:0 1px 4px rgba(0,0,0,.25);";
+      let extraStyle;
+      if (c === 'histoires') {
+        extraStyle =
+          "background:linear-gradient(135deg,#f97316,#ec4899,#3b82f6,#22c55e,#f59e0b);" +
+          "background-size:320% 320%;animation:gradientShift 8s ease infinite;";
+      } else {
+        const bg = colors[c] || colors.default;
+        extraStyle = `background:${bg};`;
+      }
 
-  let extraStyle;
-
-  if (c === 'histoires') {
-    // Marker multicolore animé pour les Belles histoires
-    extraStyle =
-      "background:linear-gradient(135deg," +
-      "#f97316,#ec4899,#3b82f6,#22c55e,#f59e0b);" +
-      "background-size:320% 320%;" +
-      "animation:gradientShift 8s ease infinite;";
-  } else {
-    const bg = colors[c] || colors.default;
-    extraStyle = `background:${bg};`;
-  }
-
-  return L.divIcon({
-    className: '',
-    html: `<div style="${baseStyle}${extraStyle}"><span>${em}</span></div>`,
-    iconSize: [26, 32],
-    iconAnchor: [13, 28],
-    popupAnchor: [0, -16]
-  });
-};
-
+      return L.divIcon({
+        className: '',
+        html: `<div style="${baseStyle}${extraStyle}"><span>${em}</span></div>`,
+        iconSize: [26, 32],
+        iconAnchor: [13, 28],
+        popupAnchor: [0, -16]
+      });
+    };
 
     const esc = s => (s || '').toString()
       .replace(/&/g,'&amp;')
@@ -978,7 +982,6 @@ const iconFor = (c) => {
       })(o);
 
       const blurb = mdPlain(o.summary || o.description || o.chapo || '').slice(0,140);
-
       return `
 <div class="dcpp" style="--cat:${ciColor}" role="dialog" aria-label="Opportunité">
   <div class="dcpp-img" style="background-image:url('${img}')"></div>
@@ -1055,7 +1058,6 @@ const iconFor = (c) => {
     window._declicPlot = plot;
   }
 
-  // ---- Géoloc : one-shot + suivi opt-in ----
   if (!window._declicMeLayer) window._declicMeLayer = L.layerGroup().addTo(map);
   window._declicMeLayer.clearLayers();
 
