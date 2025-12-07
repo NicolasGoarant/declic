@@ -1,6 +1,7 @@
 <%# app/views/pages/home.html.erb %>
 
 <%
+# Helper de nettoyage (Markdown -> Texte brut)
 def strip_unsplash_md(txt)
   s = txt.to_s.dup
   s.gsub!(/###\s*À quoi ça ressemble\s*\?/i, '')
@@ -11,8 +12,8 @@ def strip_unsplash_md(txt)
   s.gsub!(%r{https?://\S+}, ' ')
   s.gsub!(/^\#{1,6}\s+/, '')
   s.gsub!(/\s\#{1,6}\s+/, ' ')
-  s.gsub!(/\*\*([^\*]+)\*\*/, '\1')
-  s.gsub!(/\*([^\*]+)\*/, '\1')
+  s.gsub!(/\*\*([^\*]+)\*\*/, '\1') # Enlève le gras **
+  s.gsub!(/\*([^\*]+)\*/, '\1')    # Enlève l'italique *
   s.gsub!(/__([^_]+)__/, '\1')
   s.gsub!(/_([^_]+)_/, '\1')
   s.gsub!(/`([^`]+)`/, '\1')
@@ -179,7 +180,7 @@ end
                 <div class="op-img" style="background-image:url('<%= thumb_for(o) %>')"></div>
                 <div class="op-content">
                   <p class="k"><%= o.category.to_s.capitalize %></p>
-                  <p class="t"><%= o.title %></p>
+                  <p class="t"><%= strip_unsplash_md(o.title) %></p>
                   <p class="d"><%= strip_unsplash_md(o.description) %></p>
                   <p class="l">📍 <%= o.location %></p>
                 </div>
@@ -215,7 +216,7 @@ end
             <div class="hm-story-img" style="background-image:url('<%= hero_fallback(story) %>')"></div>
             <div class="hm-story-overlay">
               <span class="hm-story-pill">Témoignage</span>
-              <h3 class="hm-story-title"><%= story.title %></h3>
+              <h3 class="hm-story-title"><%= strip_unsplash_md(story.title) %></h3>
               <% if story.chapo.present? %>
                 <p class="hm-story-chapo"><%= story.chapo %></p>
               <% end %>
@@ -415,7 +416,7 @@ end
   margin:0;
 }
 
-/* ====== GROS BOUTONS ====== */
+/* ====== GROS BOUTONS (Améliorés) ====== */
 .hm-grid-cards{
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
@@ -438,13 +439,25 @@ end
   max-width:400px;
   transition:transform .15s ease, box-shadow .15s ease;
   justify-self:center;
+  /* Nouveau : pour l'effet shine */
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
 }
 .hm-card:hover{ transform:translateY(-6px); box-shadow:0 22px 62px rgba(0,0,0,.20); }
+
+/* Interaction Emoji au survol */
+.hm-card:hover .hm-emoji {
+  transform: scale(1.1) rotate(6deg);
+  background: rgba(255,255,255,0.4);
+}
+
 .hm-emoji{
   width:100px; height:100px;
   border-radius:24px;
   background:rgba(255,255,255,.22);
   font-size:50px; display:grid; place-items:center;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .hm-card-txt .t1{
   font:900 clamp(1.2rem,1vw + 1rem,1.6rem)/1.15 "Epilogue"; margin:0;
@@ -459,16 +472,32 @@ end
 .hm-card.-formation{   background:linear-gradient(135deg,#6366f1,#38bdf8); }
 .hm-card.-benevolat{   background:linear-gradient(135deg,#f43f5e,#ec4899); }
 .hm-card.-rencontres{  background:linear-gradient(135deg,#facc15,#f97316,#fb923c); }
+
+/* Nouveau style "Histoires" avec effet Shimmer */
 .hm-card.-histoires{
-  background:linear-gradient(135deg,#ef4444,#3b82f6,#f59e0b,#10b981,#fb7185,#22c55e);
-  background-size:350% 350%;
-  animation:gradientShift 12s ease infinite;
+  background:linear-gradient(135deg, #f59e0b, #ec4899, #7e5bef);
 }
-@keyframes gradientShift{
-  0%{background-position:0% 50%;}
-  50%{background-position:100% 50%;}
-  100%{background-position:0% 50%;}
+.hm-card.-histoires::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -150%;
+  width: 100%; height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transform: skewX(-20deg);
+  animation: shine 6s infinite;
+  pointer-events: none;
 }
+@keyframes shine {
+  0% { left: -150%; }
+  10% { left: 150%; }
+  100% { left: 150%; }
+}
+
 @media (max-width:900px){
   .hm-grid-cards{ grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
@@ -533,7 +562,7 @@ end
   display:grid;
   grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);
   gap:22px;
-  /* align-items:flex-start; <-- SUPPRIMÉ POUR ACTIVER LE SCROLL STICKY */
+  /* Correction Sticky : pas de align-items flex-start ici */
   margin-top:18px;
 }
 
@@ -571,7 +600,7 @@ end
 
 .hm-map-sticky {
   position: sticky;
-  top: 110px; /* ajusté pour ne pas coller au header */
+  top: 110px; /* Un peu d'air sous le header */
   z-index: 10;
 }
 @media (max-width:960px){
@@ -583,6 +612,102 @@ end
 
 @media (max-width:768px){
   .hm-map{ overflow:visible; }
+}
+
+/* ====== POPUP CARTE MODERNE ====== */
+/* Styles pour remplacer le popup par défaut blanc */
+
+.leaflet-popup-content-wrapper {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+.leaflet-popup-content {
+  margin: 0 !important;
+  width: 280px !important;
+}
+.leaflet-popup-tip {
+  background: white;
+}
+.leaflet-container a.leaflet-popup-close-button {
+  top: 8px; right: 8px;
+  color: white;
+  background: rgba(0,0,0,0.3);
+  border-radius: 50%;
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  font: 16px/14px Tahoma, Verdana, sans-serif;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  border: none;
+}
+.leaflet-container a.leaflet-popup-close-button:hover {
+  background: rgba(0,0,0,0.6);
+  color: white;
+}
+
+/* Contenu de la carte popup */
+.dc-pop-card {
+  font-family: "Inter", sans-serif;
+  color: #0f172a;
+}
+.dc-pop-hero {
+  height: 140px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+.dc-pop-badge {
+  position: absolute;
+  top: 12px; left: 12px;
+  background: var(--cat-color, #7e5bef);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 99px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  letter-spacing: 0.05em;
+}
+.dc-pop-body {
+  padding: 16px;
+}
+.dc-pop-title {
+  margin: 0 0 6px 0;
+  font-family: "Epilogue", sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  line-height: 1.3;
+  color: #0f172a;
+}
+.dc-pop-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+.dc-pop-meta span {
+  display: flex; align-items: center; gap: 6px;
+}
+.dc-pop-btn {
+  display: block; width: 100%;
+  text-align: center;
+  background: #0f172a;
+  color: white !important;
+  text-decoration: none !important;
+  padding: 10px 0;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  transition: transform 0.1s, background 0.2s;
+}
+.dc-pop-btn:hover {
+  background: #7e5bef;
+  transform: translateY(-1px);
 }
 
 /* ====== Cards opportunités ====== */
@@ -939,63 +1064,63 @@ function bootHome(){
         .trim();
     }
 
+    // Nouvelle fonction POPUP MODERNISÉE
     function popupHtml(o){
-      function cleanMd(md){
-        return (md||"")
-          .replace(/!\[[^\]]*\]\([^\)]+\)/g, "")
-          .replace(/\[([^\]]+)\]\((.*?)\)/g, "$1")
-          .replace(/[*_`>#]/g, "")
-          .replace(/\s+/g, " ")
-          .trim();
-      }
-
-      const colors = {
-        benevolat:   '#f43f5e',
-        ecologiser:  '#16a34a',
-        formation:   '#3b82f6',
-        rencontres:  '#facc15',
-        entreprendre:'#f59e0b',
-        histoires:   '#a855f7',
-        default:     '#7e5bef'
+      const cats = {
+        benevolat:    { color: '#f43f5e', label: 'Bénévolat' },
+        ecologiser:   { color: '#16a34a', label: 'Écologie' },
+        formation:    { color: '#3b82f6', label: 'Formation' },
+        rencontres:   { color: '#facc15', label: 'Rencontres' },
+        entreprendre: { color: '#f59e0b', label: 'Entreprise' },
+        histoires:    { color: '#a855f7', label: 'Témoignage' },
+        default:      { color: '#7e5bef', label: 'Initiative' }
       };
 
-      const cat = (o.category||'').toLowerCase();
-      const ciColor = colors[cat] || colors.default;
-      const base = (cat==='histoires') ? '/stories' : '/opportunities';
+      const cKey = (o.category||'').toLowerCase();
+      const conf = cats[cKey] || cats.default;
+
+      const base = (cKey==='histoires') ? '/stories' : '/opportunities';
       const url = `${base}/${o.slug||o.id}`;
-      const st = new Date(o.starts_at||o.start_at||o.start_time||o.date||o.scheduled_on);
-      const en = o.ends_at||o.end_at||o.end_time ? new Date(o.ends_at||o.end_at||o.end_time) : null;
-      const when = isNaN(st)
-        ? (o.schedule_text||'')
-        : `📅 ${st.toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'})} — ${st.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}${en?`–${en.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`:''}`;
-      const addr = o.location ? `📍 ${o.location}` : '';
+
+      let dateStr = "";
+      if(o.starts_at || o.date) {
+        const d = new Date(o.starts_at || o.date);
+        dateStr = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+      }
+
       const img = (function thumbForJs(obj){
         if(obj.image_url) return obj.image_url;
-        const cat=(obj.category||'').toLowerCase();
-        if(cat==='benevolat')    return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=300&auto=format&fit=crop';
-        if(cat==='formation')    return 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=300&auto=format&fit=crop';
-        if(cat==='rencontres')   return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=300&auto=format&fit=crop';
-        if(cat==='entreprendre') return 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=300&auto=format&fit=crop';
-        if(cat==='histoires')    return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
-        if(cat==='ecologiser')   return 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=300&auto=format&fit=crop';
-        return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop';
+        if(cKey==='benevolat') return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400&q=80&fit=crop';
+        if(cKey==='formation') return 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=400&q=80&fit=crop';
+        if(cKey==='rencontres') return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=400&q=80&fit=crop';
+        return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80&fit=crop';
       })(o);
 
-      const blurb = mdPlain(o.summary || o.description || o.chapo || '').slice(0,140);
+      const safeTitle = esc(mdPlain(o.title||''));
+      const safeLoc = esc(o.location || '');
+      const safeOrg = esc(o.organization || '');
+
       return `
-<div class="dcpp" style="--cat:${ciColor}" role="dialog" aria-label="Opportunité">
-  <div class="dcpp-img" style="background-image:url('${img}')"></div>
-  <div>
-    <h3 class="dcpp-title">${esc(o.title||'')}</h3>
-    ${o.organization?`<p class="dcpp-org">${esc(o.organization)}</p>`:''}
-    ${when?`<p class="dcpp-addr">${esc(when)}</p>`:''}
-    ${addr?`<p class="dcpp-addr">${esc(addr)}</p>`:''}
-    <p class="dcpp-blurb">${cleanMd(blurb)}</p>
-    <div class="dcpp-actions">
-      <a href="${url}" aria-label="Déclic">Déclic !</a>
-    </div>
-  </div>
-</div>`;
+        <div class="dc-pop-card" style="--cat-color: ${conf.color}">
+          <div class="dc-pop-hero" style="background-image: url('${img}')">
+            <span class="dc-pop-badge">${conf.label}</span>
+          </div>
+
+          <div class="dc-pop-body">
+            <h3 class="dc-pop-title">${safeTitle}</h3>
+
+            <div class="dc-pop-meta">
+              ${safeOrg ? `<span>🏢 ${safeOrg}</span>` : ''}
+              ${dateStr ? `<span>🗓️ ${dateStr}</span>` : ''}
+              ${safeLoc ? `<span>📍 ${safeLoc}</span>` : ''}
+            </div>
+
+            <a href="${url}" class="dc-pop-btn">
+              Voir le déclic →
+            </a>
+          </div>
+        </div>
+      `;
     }
 
     const dataLayer = L.layerGroup().addTo(map);
@@ -1014,8 +1139,8 @@ function bootHome(){
             {
               className: "dc-popup",
               closeButton: true,
-              maxWidth: Math.min(window.innerWidth - 60, 300),
-              minWidth: Math.min(window.innerWidth - 80, 240),
+              maxWidth: 300, // On laisse un peu de marge
+              minWidth: 280,
               keepInView: true,
               autoPan: true,
               autoPanPaddingTopLeft: [10, 60],
@@ -1024,10 +1149,6 @@ function bootHome(){
           );
 
         marker.on("click", () => marker.openPopup());
-        marker.on("popupopen", (e)=> {
-          const link = e.popup.getElement().querySelector(".dcpp-actions a");
-          if (link) link.focus({preventScroll:true});
-        });
         bounds.push([o.latitude,o.longitude]);
       });
       if(bounds.length){ map.fitBounds(bounds,{padding:[30,30]}); }
