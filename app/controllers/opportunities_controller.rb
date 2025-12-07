@@ -3,15 +3,25 @@
 
 class OpportunitiesController < ApplicationController
   # GET /opportunities
-  def index
+def index
+    # 1. Commence avec le scope de base (actives)
+    opportunities = Opportunity.active
+
+    # 2. Ajoute un filtre par catégorie si le paramètre est présent dans l'URL
+    if params[:category].present?
+      # Assurez-vous que le paramètre correspond à une catégorie valide
+      opportunities = opportunities.where(category: params[:category])
+    end
+
+    # 3. Applique l'ordre et la limite au jeu de données filtré (ou non)
     @opportunities =
-      Opportunity.active
-                 .order(Arel.sql("COALESCE(starts_at, created_at) DESC"))
-                 .limit(1000)
+      opportunities.order(Arel.sql("COALESCE(starts_at, created_at) DESC"))
+                   .limit(1000)
 
     respond_to do |format|
       format.html
       format.json do
+        # La réponse JSON utilise maintenant le jeu de données potentiellement filtré
         render json: @opportunities.as_json(
           only: %i[
             id slug title description category organization location

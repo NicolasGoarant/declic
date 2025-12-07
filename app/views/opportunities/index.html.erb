@@ -4,7 +4,6 @@
 # Helpers visuels (Images par défaut selon catégorie)
 def thumb_for(o)
   return o.image_url if o.respond_to?(:image_url) && o.image_url.present?
-
   cat = (o.respond_to?(:category) ? o.category : '').to_s.downcase
   case cat
   when 'benevolat'    then 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=600&q=80&fit=crop'
@@ -26,6 +25,7 @@ end
   <header class="ops-hero">
     <div class="ops-hero-inner">
       <div class="container">
+
         <span class="ops-pill-head">Agir maintenant</span>
         <h1 class="ops-title">Les Opportunités</h1>
         <p class="ops-chapo">
@@ -45,18 +45,20 @@ end
   <section class="ops-slice ops-map-section">
     <div class="container">
 
-      <div class="ops-filters">
-        <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
-        <button class="chip" data-cat="entreprendre">🚀 Entreprendre</button>
-        <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
-        <button class="chip" data-cat="ecologiser">🌱 Écologiser</button>
-        <button class="chip" data-cat="formation">📘 Formation</button>
-        <button class="chip" data-cat="rencontres">🤝 Rencontres</button>
-      </div>
+<% current_cat = params[:category].to_s.downcase.presence || 'toutes' %>
+<div class="ops-filters">
+  <button class="chip <%= 'is-active' if current_cat == 'toutes' %>" data-cat="toutes">🌍 Toutes</button>
+  <button class="chip <%= 'is-active' if current_cat == 'entreprendre' %>" data-cat="entreprendre">🚀 Entreprendre</button>
+  <button class="chip <%= 'is-active' if current_cat == 'benevolat' %>" data-cat="benevolat">❤️ Bénévolat</button>
+  <button class="chip <%= 'is-active' if current_cat == 'ecologiser' %>" data-cat="ecologiser">🌱 Écologiser</button>
+  <button class="chip <%= 'is-active' if current_cat == 'formation' %>" data-cat="formation">📘 Formation</button>
+  <button class="chip <%= 'is-active' if current_cat == 'rencontres' %>" data-cat="rencontres">🤝 Rencontres</button>
+</div>
 
       <div class="ops-mapwrap">
         <div id="map-ops" class="ops-map"></div>
-        <button id="btn-locate-ops" class="ops-locate">
+        <button
+        id="btn-locate-ops" class="ops-locate">
           <span>📍</span> Me localiser
         </button>
       </div>
@@ -77,7 +79,7 @@ end
             <div class="ops-card-img" style="background-image: url('<%= thumb_for(op) %>');">
               <span class="ops-badge" data-cat="<%= cat_key %>">
                 <%= op.category.to_s.capitalize %>
-              </span>
+           </span>
             </div>
 
             <div class="ops-card-body">
@@ -109,13 +111,16 @@ end
 <style>
 /* Base */
 .ops-ms {
-  --p: #4f46e5; /* Indigo principal */
+  --p: #4f46e5;
+  /* Indigo principal */
   font-family: "Inter", system-ui, sans-serif;
   color: #0f172a;
   background: #fff;
 }
-.ops-ms .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-.bg-muted { background: linear-gradient(180deg, #fff 0%, #f8fafc 100%); }
+.ops-ms .container { max-width: 1200px;
+  margin: 0 auto; padding: 0 24px; }
+.bg-muted { background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+}
 
 /* Hero */
 .ops-hero {
@@ -128,7 +133,8 @@ end
 .ops-pill-head {
   display: inline-block;
   background: #e0e7ff; color: var(--p);
-  font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+  font-weight: 800; font-size: 0.75rem;
+  text-transform: uppercase; letter-spacing: 0.05em;
   padding: 6px 14px; border-radius: 99px; margin-bottom: 16px;
 }
 .ops-title {
@@ -136,7 +142,8 @@ end
   font-size: clamp(2.5rem, 5vw, 4rem);
   line-height: 1.1; margin: 0 0 16px;
   background: linear-gradient(135deg, #1e1b4b 0%, #3b82f6 50%, #06b6d4 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 .ops-chapo {
   font-size: 1.15rem; color: #475569; max-width: 700px; margin: 0 auto 32px; line-height: 1.6;
@@ -144,82 +151,106 @@ end
 .ops-btn-primary {
   display: inline-flex; align-items: center; gap: 8px;
   background: #0f172a; color: #fff;
-  font-weight: 700; padding: 14px 32px; border-radius: 99px; text-decoration: none;
+  font-weight: 700; padding: 14px 32px; border-radius: 99px;
+  text-decoration: none;
   box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
   transition: transform 0.2s;
 }
-.ops-btn-primary:hover { transform: translateY(-2px); background: #1e293b; }
+.ops-btn-primary:hover { transform: translateY(-2px); background: #1e293b;
+}
 
 /* Map & Filters */
 .ops-slice { padding: 40px 0 60px; }
-.ops-filters { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 24px; }
+.ops-filters { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+  margin-bottom: 24px; }
 .chip {
   padding: 8px 18px; border-radius: 99px; background: #fff; border: 1px solid #e2e8f0;
-  font-weight: 700; font-size: 0.9rem; color: #64748b; cursor: pointer; transition: 0.2s;
+  font-weight: 700; font-size: 0.9rem;
+  color: #64748b; cursor: pointer; transition: 0.2s;
 }
 .chip:hover { background: #f8fafc; }
-.chip.is-active { background: #0f172a; color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15); }
+.chip.is-active { background: #0f172a; color: #fff; border-color: transparent;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15); }
 
-.ops-mapwrap { position: relative; height: 500px; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
-.ops-map { width: 100%; height: 100%; z-index: 1; }
+.ops-mapwrap { position: relative; height: 500px; border-radius: 24px; overflow: hidden;
+  border: 1px solid #e2e8f0; box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
+.ops-map { width: 100%; height: 100%; z-index: 1;
+}
 .ops-locate {
   position: absolute; bottom: 20px; left: 20px; z-index: 500;
   background: #fff; border: 1px solid #cbd5e1;
-  padding: 10px 20px; border-radius: 99px; font-weight: 700; cursor: pointer;
+  padding: 10px 20px;
+  border-radius: 99px; font-weight: 700; cursor: pointer;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: 0.2s;
 }
-.ops-locate:hover { transform: translateY(-2px); }
+.ops-locate:hover { transform: translateY(-2px);
+}
 
 /* Grid Cards */
 .ops-list-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 24px; }
-.ops-h2 { font-family: "Epilogue"; font-weight: 800; font-size: 1.8rem; margin: 0; }
+.ops-h2 { font-family: "Epilogue"; font-weight: 800;
+  font-size: 1.8rem; margin: 0; }
 .ops-count { font-weight: 600; color: #94a3b8; font-size: 0.9rem; }
 
-.ops-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 32px; }
+.ops-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 32px; }
 .ops-card {
   background: #fff; border-radius: 20px; overflow: hidden;
   text-decoration: none; color: inherit;
-  border: 1px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
   transition: transform 0.2s, box-shadow 0.2s;
   display: flex; flex-direction: column;
 }
-.ops-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-.ops-card-img { height: 180px; background-size: cover; background-position: center; position: relative; }
+.ops-card:hover { transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+.ops-card-img { height: 180px; background-size: cover; background-position: center; position: relative;
+}
 
 /* Badges couleurs */
 .ops-badge {
   position: absolute; top: 12px; left: 12px;
   background: #fff; color: #0f172a;
-  font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+  font-size: 0.7rem; font-weight: 800;
+  text-transform: uppercase;
   padding: 5px 10px; border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
-.ops-badge[data-cat="benevolat"]   { color: #f43f5e; }
+.ops-badge[data-cat="benevolat"]   { color: #f43f5e;
+}
 .ops-badge[data-cat="entreprendre"]{ color: #f59e0b; }
 .ops-badge[data-cat="ecologiser"]  { color: #16a34a; }
 .ops-badge[data-cat="formation"]   { color: #3b82f6; }
-.ops-badge[data-cat="rencontres"]  { color: #facc15; }
+.ops-badge[data-cat="rencontres"]  { color: #facc15;
+}
 
 .ops-card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
-.ops-card-title { font-family: "Epilogue"; font-weight: 800; font-size: 1.25rem; margin: 0 0 8px; line-height: 1.3; }
-.ops-card-meta { font-size: 0.85rem; color: #94a3b8; font-weight: 600; margin-bottom: 12px; display: flex; gap: 12px; }
+.ops-card-title { font-family: "Epilogue"; font-weight: 800; font-size: 1.25rem;
+  margin: 0 0 8px; line-height: 1.3; }
+.ops-card-meta { font-size: 0.85rem; color: #94a3b8; font-weight: 600; margin-bottom: 12px; display: flex; gap: 12px;
+}
 .ops-card-desc { color: #475569; font-size: 0.95rem; line-height: 1.5; margin-bottom: 16px; flex-grow: 1; }
-.ops-read-more { font-weight: 700; color: var(--p); font-size: 0.9rem; }
+.ops-read-more { font-weight: 700; color: var(--p); font-size: 0.9rem;
+}
 
 /* POPUP STYLE (Uniformisé) */
 .dc-pop-card { font-family: "Inter", sans-serif; color: #0f172a; width: 260px; padding:0; margin:0; }
-.dc-pop-hero { height: 120px; background-size: cover; background-position: center; position: relative; border-radius: 12px 12px 0 0; }
+.dc-pop-hero { height: 120px;
+  background-size: cover; background-position: center; position: relative; border-radius: 12px 12px 0 0; }
 .dc-pop-badge {
   position: absolute; top: 8px; left: 8px;
   background: var(--cat-color, #4f46e5); color: white;
   font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
-  padding: 3px 8px; border-radius: 99px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  padding: 3px 8px; border-radius: 99px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 .dc-pop-body { padding: 12px; }
-.dc-pop-title { font-family: "Epilogue"; font-weight: 800; font-size: 1rem; line-height: 1.2; margin: 0 0 6px; }
+.dc-pop-title { font-family: "Epilogue"; font-weight: 800; font-size: 1rem; line-height: 1.2;
+  margin: 0 0 6px; }
 .dc-pop-meta { font-size: 0.8rem; color: #64748b; margin-bottom: 10px; }
 .dc-pop-btn {
-  display: block; width: 100%; text-align: center;
+  display: block; width: 100%;
+  text-align: center;
   background: #0f172a; color: white !important; text-decoration: none !important;
   padding: 8px; border-radius: 6px; font-weight: 700; font-size: 0.85rem;
   transition: opacity 0.2s;
@@ -227,7 +258,8 @@ end
 .dc-pop-btn:hover { opacity: 0.9; }
 
 @media (max-width: 768px) {
-  .ops-mapwrap { height: 350px; }
+  .ops-mapwrap { height: 350px;
+  }
   .ops-grid { grid-template-columns: 1fr; }
 }
 </style>
@@ -238,22 +270,19 @@ end
 <script>
 document.addEventListener('turbo:load', initOpsMap);
 document.addEventListener('DOMContentLoaded', initOpsMap);
-
 function initOpsMap() {
   const mapEl = document.getElementById('map-ops');
   if (!mapEl) return;
   if (mapEl.dataset.inited) return;
   mapEl.dataset.inited = "1";
-
-  // Init Map
+// Init Map
   const map = L.map(mapEl).setView([48.6921, 6.1844], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19, attribution: '© OpenStreetMap'
   }).addTo(map);
 
   const layer = L.layerGroup().addTo(map);
-
-  // CONFIG ICONES & COULEURS
+// CONFIG ICONES & COULEURS
   const colors = {
     benevolat: '#f43f5e', ecologiser: '#16a34a', formation: '#3b82f6',
     rencontres: '#facc15', entreprendre:'#f59e0b', default: '#4f46e5'
@@ -262,7 +291,6 @@ function initOpsMap() {
     benevolat: '❤️', ecologiser: '🌱', formation: '📘',
     rencontres: '🤝', entreprendre:'🚀', default: '📍'
   };
-
   const iconFor = (c) => {
     const cat = (c||'').toLowerCase().trim();
     const em = emojis[cat] || emojis.default;
@@ -284,12 +312,10 @@ function initOpsMap() {
     const cKey = (o.category||'').toLowerCase();
     const conf = { color: colors[cKey] || colors.default, label: cKey.toUpperCase() };
     const url = `/opportunities/${o.slug || o.id}`;
-
     // Image
     let img = o.image_url;
     // Fallback simple si pas d'image
     if(!img) img = "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400";
-
     const safeTitle = (o.title || "").replace(/"/g, '&quot;');
     const location = o.location || "Nancy";
 
@@ -301,13 +327,13 @@ function initOpsMap() {
         <div class="dc-pop-body">
           <h3 class="dc-pop-title">${safeTitle}</h3>
           <div class="dc-pop-meta">📍 ${location}</div>
-          <a href="${url}" class="dc-pop-btn">Voir l'opportunité →</a>
+         <a href="${url}" class="dc-pop-btn">Voir l'opportunité →</a>
         </div>
       </div>
     `;
   }
 
-  // LOGIQUE DONNEES & FILTRES
+// LOGIQUE DONNEES & FILTRES
   let dataset = [];
 
   function plot(items) {
@@ -331,9 +357,19 @@ function initOpsMap() {
     .then(data => {
       dataset = data;
       plot(dataset);
-    });
 
-  // Gestion des Chips (Filtres)
+      // CORRECTION DU BUG : ⬇️ Déclenche le filtre correct après le chargement des données ⬇️
+      const currentActiveChip = document.querySelector('.ops-filters .chip.is-active');
+      const cat = currentActiveChip ? currentActiveChip.dataset.cat : 'toutes';
+
+      // Si le chip actif n'est pas "Toutes", on filtre la carte et la liste
+      if (cat !== 'toutes') {
+          // On simule un clic sur le chip actif pour appliquer les filtres (visuel + liste + carte)
+          currentActiveChip.click();
+      }
+      // CORRECTION DU BUG : ⬆️ Fin du bloc d'initialisation du filtre ⬆️
+    });
+// Gestion des Chips (Filtres)
   const chips = document.querySelectorAll('.chip');
   const cards = document.querySelectorAll('.op-item');
 
@@ -358,6 +394,7 @@ function initOpsMap() {
         if(cat === 'toutes') {
           card.style.display = 'flex';
         } else {
+          // Utiliser l'attribut data-cat pour filtrer la liste
           card.style.display = (card.dataset.cat === cat) ? 'flex' : 'none';
         }
       });
@@ -369,7 +406,7 @@ function initOpsMap() {
     });
   });
 
-  // Bouton Geoloc
+// Bouton Geoloc
   const btn = document.getElementById('btn-locate-ops');
   if(btn){
     btn.onclick = function(){
@@ -382,5 +419,5 @@ function initOpsMap() {
       });
     };
   }
-}
+} // <--- Fin de la fonction initOpsMap()
 </script>

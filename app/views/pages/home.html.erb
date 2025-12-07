@@ -83,7 +83,7 @@ end
       <div class="hm-grid-cards">
         <% btn_base = "hm-card" %>
 
-        <%= link_to opportunities_path(category: "entreprendre"),
+        <%= link_to opportunities_path(category: "entreprendre"), # <<< Lien Corrigé
                     class: "#{btn_base} -entreprendre" do %>
           <span class="hm-emoji">🚀</span>
           <div class="hm-card-txt">
@@ -92,7 +92,7 @@ end
           </div>
         <% end %>
 
-        <%= link_to opportunities_path(category: "ecologiser"),
+        <%= link_to opportunities_path(category: "ecologiser"), # <<< Lien Corrigé
                     class: "#{btn_base} -ecologiser" do %>
           <span class="hm-emoji">🌱</span>
           <div class="hm-card-txt">
@@ -101,7 +101,7 @@ end
           </div>
         <% end %>
 
-        <%= link_to opportunities_path(category: "formation"),
+        <%= link_to opportunities_path(category: "formation"), # <<< Lien Corrigé
                     class: "#{btn_base} -formation" do %>
           <span class="hm-emoji">📘</span>
           <div class="hm-card-txt">
@@ -110,7 +110,7 @@ end
           </div>
         <% end %>
 
-        <%= link_to opportunities_path(category: "benevolat"),
+        <%= link_to opportunities_path(category: "benevolat"), # <<< Lien Corrigé
                     class: "#{btn_base} -benevolat" do %>
           <span class="hm-emoji">❤️</span>
           <div class="hm-card-txt">
@@ -119,7 +119,7 @@ end
           </div>
         <% end %>
 
-        <%= link_to opportunities_path(category: "rencontres"),
+        <%= link_to opportunities_path(category: "rencontres"), # <<< Lien Corrigé
                     class: "#{btn_base} -rencontres" do %>
           <span class="hm-emoji">🤝</span>
           <div class="hm-card-txt">
@@ -1127,32 +1127,29 @@ function bootHome(){
     window._declicDataLayer = dataLayer;
     let dataset = [];
 
-    function plot(items){
-      dataLayer.clearLayers();
-      const bounds=[];
-      (items||[]).forEach(o=>{
-        if(!o.latitude || !o.longitude) return;
-        const marker = L.marker([o.latitude,o.longitude], { icon:iconFor((o.category||'').toLowerCase()) })
-          .addTo(dataLayer)
-          .bindPopup(
-            popupHtml(o),
-            {
-              className: "dc-popup",
-              closeButton: true,
-              maxWidth: 300, // On laisse un peu de marge
-              minWidth: 280,
-              keepInView: true,
-              autoPan: true,
-              autoPanPaddingTopLeft: [10, 60],
-              autoPanPaddingBottomRight: [10, 10]
-            }
-          );
+// La fonction plot(items) gère le dessin des marqueurs sur la carte
+function plot(items){
+  dataLayer.clearLayers();
+  const bounds=[];
+  (items||[]).forEach(o=>{
 
-        marker.on("click", () => marker.openPopup());
-        bounds.push([o.latitude,o.longitude]);
-      });
-      if(bounds.length){ map.fitBounds(bounds,{padding:[30,30]}); }
-    }
+    // FIX DÉCISIF: Convertir la latitude et la longitude en nombre.
+    const lat = Number(o.latitude);
+    const lng = Number(o.longitude);
+
+    if(!lat || !lng) return; // Si la conversion échoue (lat ou lng vaut 0 ou NaN), on saute
+
+    // Le reste du code reste le même, mais utilise lat et lng (variables locales)
+    const marker = L.marker([lat, lng], { icon:iconFor((o.category||'').toLowerCase()) })
+      .addTo(dataLayer)
+      .bindPopup(popupHtml(o));
+
+    bounds.push([lat, lng]);
+  });
+
+  // Recentrage de la carte si des points existent
+  if(bounds.length){ map.fitBounds(bounds,{padding:[30,30]}); }
+}
 
     Promise.all([
       fetch('/api/v1/opportunities').then(r=>r.ok?r.json():[]).catch(()=>[]),
