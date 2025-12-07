@@ -1205,8 +1205,20 @@ function bootHome(){
     }
   }
 
-  // --- CORRECTION GEOLOCALISATION ---
-  // On remplace la fonction simple par une version plus robuste (timeout 15s + erreurs)
+  // --- RESTAURATION DE LA GEOLOCALISATION AUTOMATIQUE ---
+  // Ce bloc a été supprimé par erreur, il relance la recherche dès le chargement
+  if ('geolocation' in navigator) {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        updateMe(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+        // Si on trouve, on centre la carte (optionnel, sinon ça reste vue d'ensemble)
+        // const map = window._declicMap;
+        // if(map) map.panTo([pos.coords.latitude, pos.coords.longitude], { animate:true });
+      },
+      err => {}, // Pas d'alerte au chargement automatique
+      { enableHighAccuracy:true, timeout:8000, maximumAge:60000 }
+    );
+  }
 
   const btnEl = document.getElementById('btn-locate');
   function bindLocateButton(){
