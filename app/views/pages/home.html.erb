@@ -1,7 +1,6 @@
 <%# app/views/pages/home.html.erb %>
 
-<%
-# Helper de nettoyage (Markdown -> Texte brut)
+<%\n# Helper de nettoyage (Markdown -> Texte brut)
 def strip_unsplash_md(txt)
   s = txt.to_s.dup
   s.gsub!(/###\s*À quoi ça ressemble\s*\?/i, '')
@@ -1205,19 +1204,8 @@ function bootHome(){
     }
   }
 
-  if ('geolocation' in navigator) {
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        updateMe(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-        const p = L.latLng(pos.coords.latitude, pos.coords.longitude);
-        if (!map.getBounds().pad(-0.05).contains(p)) {
-          map.panTo(p, { animate:true });
-        }
-      },
-      err => {},
-      { enableHighAccuracy:true, timeout:5000, maximumAge:15000 }
-    );
-  }
+  // --- CORRECTION GEOLOCALISATION ---
+  // On remplace la fonction simple par une version plus robuste (timeout 15s + erreurs)
 
   const btnEl = document.getElementById('btn-locate');
   function bindLocateButton(){
@@ -1228,39 +1216,36 @@ function bootHome(){
   }
   bindLocateButton();
 
-function startFollow(){
+  function startFollow(){
     if (!('geolocation' in navigator)) {
       alert("La géolocalisation n'est pas disponible sur cet appareil.");
       return;
     }
     if (window._declicWatchId) return;
 
-    // Options : on laisse 15 secondes (15000ms) au GPS pour répondre au lieu de 5s
-    const geoOptions = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
-
-    // Petit feedback visuel immédiat
+    // Feedback immédiat
     if (window._declicButton) window._declicButton.innerHTML = '<span>⏳</span> <span>Recherche...</span>';
 
-    // 1. On tente d'avoir la position une première fois
+    const geoOptions = { enableHighAccuracy:true, timeout:15000, maximumAge:0 };
+
     navigator.geolocation.getCurrentPosition(
       p => {
         updateMe(p.coords.latitude, p.coords.longitude, p.coords.accuracy);
-        // Si on trouve, on change le bouton en "Arrêter"
+        // Si on trouve, on change le bouton
         if (window._declicButton) window._declicButton.innerHTML = '<span>🛑</span> <span>Arrêter le suivi</span>';
+        // On recentre la carte sur l'utilisateur
+        const map = window._declicMap;
+        if(map) map.panTo([p.coords.latitude, p.coords.longitude], { animate:true });
       },
       e => {
         console.warn('[geo] getCurrentPosition ERR', e);
-        // Si erreur (refus ou timeout), on prévient l'utilisateur
         if(e.code === 1) alert("Vous devez autoriser la géolocalisation pour que cela fonctionne.");
-        else if(e.code === 3) alert("Le délai d'attente GPS est dépassé. Réessayez, svp.");
-
-        // On remet le bouton normal
+        else if(e.code === 3) alert("Le délai d'attente GPS est dépassé. Réessayez dehors ou avec une meilleure connexion.");
         stopFollow();
       },
       geoOptions
     );
 
-    // 2. On lance le suivi continu
     window._declicWatchId = navigator.geolocation.watchPosition(
       p => updateMe(p.coords.latitude, p.coords.longitude, p.coords.accuracy),
       e => console.warn('[geo] watch ERR', e),
