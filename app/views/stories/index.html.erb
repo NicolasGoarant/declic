@@ -1,202 +1,289 @@
-<%# app/views/stories/index.html.erb — v2 : cohérence avec la home Déclic (fond, map, cartes) %>
+<%# app/views/stories/index.html.erb %>
+
+<%
+# Helpers visuels
+def story_thumb(s)
+  return s.image_url if s.respond_to?(:image_url) && s.image_url.present?
+  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=80&fit=crop"
+end
+
+def clean_desc(txt)
+  (txt || "").to_s.gsub(/###|!\[.*?\]\(.*?\)/, "").gsub(/\*\*|__/, "").truncate(130)
+end
+%>
 
 <div class="stories-ms">
+
   <header class="st-hero">
-    <div class="container">
-      <h1 class="st-title">Belles histoires</h1>
-      <p class="st-chapo">Des parcours inspirants de reconversion et de prise de risque.</p>
+    <div class="st-hero-inner">
+      <div class="container">
+        <span class="st-pill-head">Inspiration</span>
+        <h1 class="st-title">Les Belles Histoires</h1>
+        <p class="st-chapo">
+          Découvrez les parcours de celles et ceux qui ont osé franchir le pas.<br>
+          Reconversions, déclics, engagements : inspirez-vous du changement près de chez vous.
+        </p>
+
+        <div class="st-actions">
+          <%= link_to new_story_path, class: "st-btn-primary" do %>
+            <span>✏️</span> Raconter mon histoire
+          <% end %>
+        </div>
+      </div>
     </div>
   </header>
 
-  <!-- Carte -->
-  <section class="st-map-section">
+  <section class="st-slice st-map-section">
     <div class="container">
+      <div class="st-map-header">
+        <h2 class="st-h2">La carte des déclics</h2>
+        <p class="st-sub">Explorez les témoignages autour de vous.</p>
+      </div>
+
       <div class="st-mapwrap">
         <div id="map-stories" class="st-map"></div>
-        <button id="btn-locate-stories" class="st-btn-locate"><span>📍</span> <span>Me localiser</span></button>
-        <button id="btn-fixloc-stories" class="st-btn-fix"><span>🗺️</span> <span>Définir ma position</span></button>
+        <button id="btn-locate-stories" class="st-locate">
+          <span>📍</span> Me localiser
+        </button>
       </div>
     </div>
   </section>
 
-  <div class="max-w-5xl mx-auto py-10">
-  <div class="flex items-center justify-between gap-4 mb-6">
-    <h1 class="text-2xl font-semibold">Témoignages</h1>
-
-<div class="mt-4">
-  <%= link_to "💬 Partager mon témoignage",
-      new_story_path,
-      class: "inline-flex items-center gap-2 rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700" %>
-</div>
-
-  <!-- ici ta liste de stories -->
-</div>
-
-
-  <!-- Grille d’histoires -->
-  <section class="st-list">
+  <section class="st-slice st-grid-section bg-muted">
     <div class="container">
+      <h2 class="st-h2">Derniers témoignages</h2>
+
       <div class="st-grid">
-        <% @stories.each do |s| %>
-          <article class="st-card">
-            <img src="<%= s.image_url.presence || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1200&auto=format&fit=crop' %>"
-                 alt="<%= s.title %>" class="st-thumb" loading="lazy">
+        <% @stories.each do |story| %>
+          <%= link_to story_path(story), class: "st-card" do %>
+            <div class="st-card-img" style="background-image: url('<%= story_thumb(story) %>');">
+              <span class="st-badge">Témoignage</span>
+            </div>
 
             <div class="st-card-body">
-              <span class="st-badge">Belle histoire</span>
-              <h2 class="st-card-title"><%= s.title %></h2>
-              <p class="st-card-text"><%= (s.try(:chapo).presence || s.try(:description)).to_s %></p>
-
-              <div class="st-card-footer">
-                <% if s.location.present? %><span class="st-loc">📍 <%= s.location %></span><% end %>
-                <%= link_to "Lire", story_path(s.respond_to?(:slug) && s.slug.present? ? s.slug : s.id),
-                            class: "st-btn" %>
+              <h3 class="st-card-title"><%= story.title %></h3>
+              <div class="st-card-meta">
+                <span>📍 <%= story.location || "Grand Nancy" %></span>
+                <% if story.happened_on %>
+                  <span>🗓️ <%= l(story.happened_on, format: :short) rescue "" %></span>
+                <% end %>
               </div>
+              <p class="st-card-desc">
+                <%= clean_desc(story.chapo.present? ? story.chapo : story.description) %>
+              </p>
+              <span class="st-read-more">Lire l'histoire →</span>
             </div>
-          </article>
+          <% end %>
         <% end %>
       </div>
+
+      <% if @stories.empty? %>
+        <div class="st-empty">
+          <p>Aucune histoire pour le moment. Soyez le premier à raconter la vôtre !</p>
+        </div>
+      <% end %>
     </div>
   </section>
 </div>
 
 <style>
-  .stories-ms {
-    --violet:#7e5bef;
-    --muted:#f6f3ff;
-    background: radial-gradient(1200px 700px at 10% -10%, #efe8ff 0%, transparent 60%) no-repeat,
-                linear-gradient(180deg,#fbfaff 0%,#f6f3ff 60%,#f3f1ff 100%);
-    font-family:"Inter",system-ui,sans-serif;
-    color:#0f172a;
-    min-height:100vh;
-  }
-  .container{ max-width:1280px; margin:0 auto; padding:0 24px; }
+/* Base */
+.stories-ms {
+  --p: #a855f7; /* Violet Histoires */
+  --bg-soft: #fdf4ff;
+  font-family: "Inter", system-ui, sans-serif;
+  color: #0f172a;
+  background: #fff;
+}
+.stories-ms .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.bg-muted { background: linear-gradient(180deg, #fff 0%, #f8fafc 100%); }
 
-  /* HERO */
-  .st-hero{ text-align:left; padding:clamp(2rem,5vw,3.5rem) 0 1rem; }
-  .st-title{ font:900 clamp(2.2rem,4vw,3rem)/1.1 "Epilogue"; margin:0; }
-  .st-chapo{ margin-top:.5rem; font:500 1.15rem/1.6 "Inter"; color:#475569; }
+/* Hero */
+.st-hero {
+  position: relative;
+  background: radial-gradient(circle at 90% 10%, #f3e8ff 0%, transparent 40%),
+              linear-gradient(135deg, #fff 0%, #faf5ff 100%);
+  padding: 80px 0 60px;
+  text-align: center;
+}
+.st-pill-head {
+  display: inline-block;
+  background: #f3e8ff; color: var(--p);
+  font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 6px 14px; border-radius: 99px; margin-bottom: 16px;
+}
+.st-title {
+  font-family: "Epilogue", sans-serif; font-weight: 900;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  line-height: 1.1; margin: 0 0 16px;
+  background: linear-gradient(135deg, #1e1b4b 0%, #7e5bef 50%, #d946ef 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.st-chapo {
+  font-size: 1.15rem; color: #475569; max-width: 700px; margin: 0 auto 32px; line-height: 1.6;
+}
+.st-btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #0f172a; color: #fff;
+  font-weight: 700; padding: 14px 32px; border-radius: 99px; text-decoration: none;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+  transition: transform 0.2s;
+}
+.st-btn-primary:hover { transform: translateY(-2px); background: #1e293b; }
 
-  /* MAP */
-  .st-map-section{ padding-bottom:2.5rem; }
-  .st-mapwrap{ position:relative; border-radius:20px; overflow:hidden; box-shadow:0 12px 28px rgba(15,23,42,.08); }
-  .st-map{ width:100%; height:420px; }
-  .st-btn-locate,.st-btn-fix{
-    position:absolute; right:12px; z-index:20; display:inline-flex; gap:8px; align-items:center;
-    padding:.7rem 1rem; border-radius:12px; background:#fff; border:1px solid #e6e8ee;
-    box-shadow:0 6px 16px rgba(15,23,42,.08); font:600 .9rem/1 "Inter"; color:#0f172a;
-  }
-  .st-btn-locate{ top:12px; }
-  .st-btn-fix{ top:60px; }
+/* Map */
+.st-slice { padding: 50px 0; }
+.st-h2 { font-family: "Epilogue"; font-weight: 800; font-size: 2rem; margin: 0 0 8px; }
+.st-sub { color: #64748b; margin-bottom: 24px; }
+.st-mapwrap { position: relative; height: 500px; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
+.st-map { width: 100%; height: 100%; z-index: 1; }
+.st-locate {
+  position: absolute; bottom: 20px; left: 20px; z-index: 500;
+  background: #fff; border: 1px solid #cbd5e1;
+  padding: 10px 20px; border-radius: 99px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: 0.2s;
+}
+.st-locate:hover { transform: translateY(-2px); }
 
-  /* GRID */
-  .st-list{ padding-bottom:4rem; }
-  .st-grid{
-    display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
-    gap:28px; margin-top:1.5rem;
-  }
+/* Grid Cards */
+.st-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 32px; }
+.st-card {
+  background: #fff; border-radius: 20px; overflow: hidden;
+  text-decoration: none; color: inherit;
+  border: 1px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex; flex-direction: column;
+}
+.st-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+.st-card-img { height: 220px; background-size: cover; background-position: center; position: relative; }
+.st-badge {
+  position: absolute; top: 16px; left: 16px;
+  background: rgba(255,255,255,0.95); color: var(--p);
+  font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+  padding: 6px 12px; border-radius: 99px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.st-card-body { padding: 24px; flex: 1; display: flex; flex-direction: column; }
+.st-card-title { font-family: "Epilogue"; font-weight: 800; font-size: 1.4rem; margin: 0 0 12px; line-height: 1.25; }
+.st-card-meta { font-size: 0.85rem; color: #94a3b8; font-weight: 600; margin-bottom: 12px; display: flex; gap: 12px; }
+.st-card-desc { color: #475569; font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px; flex-grow: 1; }
+.st-read-more { font-weight: 700; color: var(--p); font-size: 0.95rem; }
 
-  /* CARD */
-  .st-card{
-    background:#fff; border-radius:20px; overflow:hidden;
-    border:1px solid #e6e8ee; box-shadow:0 10px 26px rgba(15,23,42,.08);
-    display:flex; flex-direction:column; transition:transform .2s ease, box-shadow .2s ease;
-  }
-  .st-card:hover{ transform:translateY(-4px); box-shadow:0 16px 38px rgba(15,23,42,.12); }
-  .st-thumb{ width:100%; height:180px; object-fit:cover; display:block; }
-  .st-card-body{ padding:20px; flex:1; display:flex; flex-direction:column; }
-  .st-badge{
-    align-self:flex-start; font:700 .75rem/1 "Inter"; background:#ede9fe; color:#6d28d9;
-    padding:.35rem .7rem; border-radius:999px;
-  }
-  .st-card-title{ margin:.6rem 0 .3rem; font:800 1.1rem/1.3 "Epilogue"; }
-  .st-card-text{
-    flex:1; font:500 .98rem/1.55 "Inter"; color:#475569;
-    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
-  }
-  .st-card-footer{
-    display:flex; align-items:center; justify-content:space-between;
-    margin-top:1rem; font:.9rem/1.4 "Inter"; color:#475569;
-  }
-  .st-loc{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .st-btn{
-    background:var(--violet); color:#fff; text-decoration:none; font:700 .9rem/1 "Epilogue";
-    padding:.6rem 1rem; border-radius:10px; box-shadow:0 8px 20px rgba(126,91,239,.25);
-  }
-  .st-btn:hover{ background:#6d28d9; }
+/* POPUP STYLE (Identique Home) */
+.dc-pop-card { font-family: "Inter", sans-serif; color: #0f172a; width: 260px; padding:0; margin:0; }
+.dc-pop-hero { height: 130px; background-size: cover; background-position: center; position: relative; border-radius: 12px 12px 0 0; }
+.dc-pop-badge {
+  position: absolute; top: 10px; left: 10px;
+  background: var(--cat-color, #a855f7); color: white;
+  font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 99px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.dc-pop-body { padding: 14px; }
+.dc-pop-title { font-family: "Epilogue"; font-weight: 800; font-size: 1rem; line-height: 1.3; margin: 0 0 8px; }
+.dc-pop-meta { font-size: 0.8rem; color: #64748b; margin-bottom: 12px; }
+.dc-pop-btn {
+  display: block; width: 100%; text-align: center;
+  background: #0f172a; color: white !important; text-decoration: none !important;
+  padding: 10px; border-radius: 8px; font-weight: 700; font-size: 0.85rem;
+  transition: opacity 0.2s;
+}
+.dc-pop-btn:hover { opacity: 0.9; }
 
-    @keyframes gradientShift {
-    0%   { background-position: 0%   50%; }
-    50%  { background-position: 100% 50%; }
-    100% { background-position: 0%   50%; }
-  }
-
-  @media(max-width:560px){
-    .st-map{ height:320px; }
-    .st-card-text{ -webkit-line-clamp:2; }
-  }
+@media (max-width: 768px) {
+  .st-mapwrap { height: 350px; }
+  .st-grid { grid-template-columns: 1fr; }
+}
 </style>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<% content_for :scripts do %>
 <script>
-document.addEventListener('turbo:load', bootStories, { once:true });
-document.addEventListener('DOMContentLoaded', bootStories, { once:true });
+document.addEventListener('turbo:load', initStoriesMap);
+document.addEventListener('DOMContentLoaded', initStoriesMap);
 
-function bootStories(){
-  const el=document.getElementById('map-stories');
-  if(!el||!window.L) return;
-  if(el.dataset.mapInited==="1") return;
-  const map=L.map(el,{zoomControl:true,attributionControl:false}).setView([46.6,2.2],6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+function initStoriesMap() {
+  const mapEl = document.getElementById('map-stories');
+  if (!mapEl) return;
+  // Anti-doublon Turbo
+  if (mapEl.dataset.inited) return;
+  mapEl.dataset.inited = "1";
+
+  // Init Map
+  const map = L.map(mapEl).setView([48.6921, 6.1844], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, attribution: '© OpenStreetMap'
+  }).addTo(map);
+
   const layer = L.layerGroup().addTo(map);
 
-const icon = () => L.divIcon({
-  className: '',
-  html: `<div style="
-    width:26px;
-    height:26px;
-    border-radius:9999px;
-    border:2px solid #fff;
-    display:grid;
-    place-items:center;
-    color:#fff;
-    font-size:14px;
-    box-shadow:0 1px 4px rgba(0,0,0,.25);
-    position:relative;
-    background:linear-gradient(135deg,#f97316,#ec4899,#3b82f6,#22c55e,#f59e0b);
-    background-size:320% 320%;
-    animation:gradientShift 8s ease infinite;
-  "><span>📖</span></div>`,
-  iconSize: [26, 32],
-  iconAnchor: [13, 28],
-  popupAnchor: [0, -26]
-});
-
-  const bounds=[];
-  fetch('/api/v1/stories').then(r=>r.ok?r.json():[]).then(data=>{
-    (data||[]).forEach(s=>{
-      if(!s.latitude||!s.longitude)return;
-      const m=L.marker([s.latitude,s.longitude],{icon:icon()}).addTo(layer);
-      const url=`/stories/${s.slug||s.id}`;
-      m.bindPopup(`<strong>${s.title||''}</strong><p style="margin:.4rem 0">${(s.description||s.chapo||'').slice(0,90)}${((s.description||s.chapo||'').length>90)?'…':''}</p><a href="${url}" class="text-indigo-600 underline text-sm">Lire l’histoire</a>`);
-      bounds.push([s.latitude,s.longitude]);
-    });
-    if(bounds.length) map.fitBounds(bounds,{padding:[24,24]});
+  // Icône Livre 📖
+  const icon = () => L.divIcon({
+    className: '',
+    html: `<div style="
+      width:32px;height:32px;border-radius:50%;border:2px solid #fff;
+      display:grid;place-items:center;color:#fff;font-size:16px;
+      box-shadow:0 3px 8px rgba(0,0,0,.3);
+      background:linear-gradient(135deg,#a855f7,#d946ef);
+    "><span>📖</span></div>`,
+    iconSize: [32, 32], iconAnchor: [16, 16], popupAnchor: [0, -12]
   });
-  el.dataset.mapInited="1";
 
-  // Localisation simple
-  document.getElementById('btn-locate-stories')?.addEventListener('click',()=>{
-    if(!('geolocation'in navigator))return alert("Géolocalisation non supportée");
-    navigator.geolocation.getCurrentPosition(pos=>{
-      const {latitude,longitude}=pos.coords;
-      map.flyTo([latitude,longitude],12,{duration:.8});
-      L.circleMarker([latitude,longitude],{radius:6,color:'#6366f1',fillColor:'#6366f1',fillOpacity:.9}).addTo(layer);
+  // Popup HTML Generator (Le même que sur la Home)
+  function popupHtml(s) {
+    const url = `/stories/${s.slug || s.id}`;
+    // Fallback image si pas présente
+    let img = s.image_url;
+    if(!img) img = "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400";
+
+    // Nettoyage titre
+    const safeTitle = (s.title || "").replace(/"/g, '&quot;');
+    const location = s.location || "Grand Nancy";
+
+    return `
+      <div class="dc-pop-card" style="--cat-color: #a855f7">
+        <div class="dc-pop-hero" style="background-image: url('${img}')">
+          <span class="dc-pop-badge">Témoignage</span>
+        </div>
+        <div class="dc-pop-body">
+          <h3 class="dc-pop-title">${safeTitle}</h3>
+          <div class="dc-pop-meta">📍 ${location}</div>
+          <a href="${url}" class="dc-pop-btn">Lire l'histoire →</a>
+        </div>
+      </div>
+    `;
+  }
+
+  // Fetch Data
+  const bounds = [];
+  fetch('/api/v1/stories')
+    .then(r => r.ok ? r.json() : [])
+    .then(data => {
+      data.forEach(s => {
+        if (!s.latitude || !s.longitude) return;
+
+        const m = L.marker([s.latitude, s.longitude], { icon: icon() })
+          .addTo(layer)
+          .bindPopup(popupHtml(s));
+
+        bounds.push([s.latitude, s.longitude]);
+      });
+
+      if (bounds.length) map.fitBounds(bounds, { padding: [50, 50] });
     });
-  });
+
+  // Bouton "Me localiser"
+  const btn = document.getElementById('btn-locate-stories');
+  if(btn){
+    btn.onclick = function(){
+      if(!navigator.geolocation) return alert("Pas de GPS");
+      btn.innerHTML = "⏳ ...";
+      navigator.geolocation.getCurrentPosition(p=>{
+        map.setView([p.coords.latitude, p.coords.longitude], 14);
+        L.marker([p.coords.latitude, p.coords.longitude]).addTo(map).bindPopup("Vous êtes ici").openPopup();
+        btn.innerHTML = "📍 Me localiser";
+      });
+    };
+  }
 }
 </script>
-<% end %>
