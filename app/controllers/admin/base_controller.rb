@@ -4,9 +4,10 @@ class Admin::BaseController < ApplicationController
 
   private
 
-  def http_basic_authenticate
-    user = ENV.fetch("ADMIN_USER", nil)
+def http_basic_authenticate
+    user = ENV.fetch("ADMIN_USERNAME", nil) # <-- CORRIGÉ : On lit "ADMIN_USERNAME"
     pass = ENV.fetch("ADMIN_PASSWORD", nil)
+    # ...
 
     # Si identifiants non configurés -> autoriser en dev, protéger en prod
     return if Rails.env.development? && user.blank? && pass.blank?
