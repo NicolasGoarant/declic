@@ -100,18 +100,32 @@ class Admin::StoriesController < Admin::BaseController
   end
 
   # POST /admin/stories/geocode_missing
+# POST /admin/stories/geocode_missing
   def geocode_missing
+    # On sélectionne toutes les stories qui manquent de latitude OU de longitude
     scope = Story.where(latitude: nil).or(Story.where(longitude: nil))
     done  = 0
 
     scope.find_each do |s|
-      if s.location.present? || [s.try(:address), s.try(:city), s.try(:postcode)].any?(&:present?)
-        done += 1 if s.save
+      # On s'assure qu'une adresse est présente pour géocoder
+      if s.location.present?
+
+        # 1. FORCER LE GÉOCODAGE
+        # On appelle la méthode `geocode` fournie par la gemme Geocoder
+        s.geocode
+
+        # 2. VÉRIFIER SI LES COORDONNÉES ONT ÉTÉ TROUVÉES
+        if s.latitude.present? && s.longitude.present?
+          # 3. SAUVEGARDER UNIQUEMENT LES COORDONNÉES
+          # update_columns est plus rapide et évite de relancer des validations inutiles.
+          s.update_columns(latitude: s.latitude, longitude: s.longitude, updated_at: Time.current)
+          done += 1
+        end
       end
     end
 
     redirect_to admin_stories_path(request.query_parameters),
-                notice: "Géocodage tenté sur #{done} élément(s)."
+                notice: "Géocodage forcé sur les fiches manquantes : #{done} élément(s) mis à jour avec succès."
   end
 
   private
@@ -133,7 +147,6 @@ class Admin::StoriesController < Admin::BaseController
       :source_url,
       :image_url,  # URL éventuelle
       :image,      # upload Active Storage
-      :tags,
       :slug,
       :happened_on
     )

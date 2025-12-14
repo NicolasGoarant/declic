@@ -74,6 +74,8 @@ gem 'feedjira', '~> 3.2'
 gem 'icalendar'
 gem 'httparty'
 
+gem 'kramdown'
+# gem 'kramdown-parser-gfm' # si vous voulez le format GFM (GitHub Flavored Markdown)S
 # --- Production ---
 group :production do
   gem "pg", "~> 1.5"

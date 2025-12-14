@@ -168,6 +168,8 @@ GEM
       activesupport (>= 7.0.0)
     jmespath (1.6.2)
     json (2.13.2)
+    kramdown (2.5.1)
+      rexml (>= 3.3.9)
     language_server-protocol (3.17.0.5)
     launchy (3.1.1)
       addressable (~> 2.8)
@@ -412,6 +414,7 @@ DEPENDENCIES
   icalendar
   importmap-rails
   jbuilder
+  kramdown
   letter_opener
   letter_opener_web
   pagy (~> 9.4)

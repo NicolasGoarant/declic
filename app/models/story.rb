@@ -5,6 +5,14 @@ class Story < ApplicationRecord
   validates :title, presence: true
   validates :slug, uniqueness: true, allow_blank: true
 
+  # --- DÉBUT DU CODE À AJOUTER ---
+  # Configure la géolocalisation
+  geocoded_by :location
+  # Déclenche la méthode geocode (qui calcule lat/lng) avant de sauver,
+  # uniquement si le champ 'location' a été modifié
+  before_validation :geocode, if: :will_save_change_to_location?
+  # --- FIN DU CODE À AJOUTER ---
+
   before_validation :ensure_slug
 
   def to_param
