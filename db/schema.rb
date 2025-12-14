@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_07_170855) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_01_165706) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -125,7 +125,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_07_170855) do
     t.boolean "is_active"
     t.text "quote"
     t.date "happened_on"
-    t.string "author_name"
   end
 
   create_table "testimonials", force: :cascade do |t|
