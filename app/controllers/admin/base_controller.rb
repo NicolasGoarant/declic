@@ -5,7 +5,9 @@ class Admin::BaseController < ApplicationController
   private
 
 def http_basic_authenticate
-    user = ENV.fetch("ADMIN_USERNAME", nil) # <-- CORRIGÉ : On lit "ADMIN_USERNAME"
+    # app/controllers/admin/base_controller.rb
+# Ligne 7 :
+user = ENV.fetch("ADMIN_USERNAME", nil) # CORRIGÉ
     pass = ENV.fetch("ADMIN_PASSWORD", nil)
     # ...
 
