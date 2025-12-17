@@ -229,3 +229,46 @@ body {
     font-size: 0.78rem;
   }
 }
+
+/* CTA éditorial rendu depuis Markdown */
+.markdown-content .md-cta{
+  margin-top: 1rem;
+  padding: 1rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(99,102,241,.18); /* indigo */
+  background: rgba(99,102,241,.06);
+}
+
+.markdown-content .md-cta-title{
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.markdown-content .md-cta-title::before{
+  content: "🚀";
+  display: inline-flex;
+}
+
+
+/* CTA éditorial (Markdown) */
+.markdown-content blockquote,
+.prose blockquote {
+  margin: 1.25rem 0;
+  padding: 1rem 1rem 1rem 1.1rem;
+  border-left: 4px solid rgba(99, 102, 241, 0.55); /* indigo */
+  background: rgba(99, 102, 241, 0.08);
+  border-radius: 14px;
+}
+
+.markdown-content blockquote p,
+.prose blockquote p {
+  margin: 0 0 .5rem 0;
+  font-weight: 700;
+}
+
+.markdown-content blockquote ul,
+.prose blockquote ul {
+  margin: .25rem 0 0 1rem;
+}

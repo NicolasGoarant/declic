@@ -1,48 +1,54 @@
 module ApplicationHelper
-  # ----- Assets -----
-  def asset_exists?(logical_path)
-    if Rails.application.config.assets.compile
-      !!Rails.application.assets&.find_asset(logical_path)
-    else
-      Rails.application.assets_manifest.assets.key?(logical_path)
-    end
-  end
+  include ActionView::Helpers::SanitizeHelper
 
-  # ----- Markdown rendering (robuste) -----
-  #
-  # Utilise Kramdown si disponible (gem 'kramdown' / 'kramdown-parser-gfm').
-  # Sinon, fallback sobre : auto_link + simple_format.
-  #
-  # Sécurisation par sanitize avec liste blanche (img, a, h1..h4, etc.).
+  CTA_REGEX = /(et moi,\s*comment\s*je\s*peux\s*avoir\s*le\s*d[ée]clic)/i
+
   def md(text)
-    str = text.to_s
+    raw = text.to_s
 
     html =
-      if defined?(Kramdown)
-        Kramdown::Document.new(str, input: "GFM").to_html
+      if defined?(Commonmarker)
+        # ✅ API correcte (1 seul argument)
+        Commonmarker.commonmark_to_html(raw)
       else
-        # Fallback très simple (pas de rendu d'images Markdown ici)
-        # pour éviter tout crash si la gem n'est pas installée.
-        simple_format(ERB::Util.h(str))
+        ERB::Util.html_escape(raw).gsub("\n", "<br>")
       end
 
-    sanitize(
+    safe = sanitize(
       html,
-      tags: %w[h1 h2 h3 h4 p br strong em b i a ul ol li blockquote img code pre hr span],
-      attributes: %w[href src alt title target rel class]
+      tags: %w[h1 h2 h3 h4 h5 h6 p br hr strong em a ul ol li blockquote code pre],
+      attributes: %w[href title target rel class]
     )
+
+    decorate_md_cta(safe)
   end
 
-  # ----- Retirer le Markdown (pour les chapeaux et metas) -----
-  def strip_markdown(text)
-    html =
-      if defined?(Kramdown)
-        Kramdown::Document.new(text.to_s, input: "GFM").to_html
-      else
-        ERB::Util.h(text.to_s)
+  private
+
+  def decorate_md_cta(safe_html)
+    require "nokogiri"
+
+    frag = Nokogiri::HTML::DocumentFragment.parse(safe_html)
+
+    frag.css("h3").each do |h|
+      next unless h.text.match?(CTA_REGEX)
+
+      h["class"] = [h["class"], "md-cta-title"].compact.join(" ")
+
+      wrapper = Nokogiri::XML::Node.new("div", frag)
+      wrapper["class"] = "md-cta"
+
+      node = h.next_sibling
+      while node
+        break if node.element? && node.name.match?(/^h[1-6]$/)
+        nxt = node.next_sibling
+        wrapper.add_child(node)
+        node = nxt
       end
 
-    # On retire les balises pour obtenir un plain-text propre.
-    ActionView::Base.full_sanitizer.sanitize(html)
+      h.add_next_sibling(wrapper) if wrapper.children.any?
+    end
+
+    frag.to_html.html_safe
   end
 end

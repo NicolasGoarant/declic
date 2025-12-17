@@ -77,6 +77,9 @@ gem 'httparty'
 gem 'kramdown'
 # gem 'kramdown-parser-gfm' # si vous voulez le format GFM (GitHub Flavored Markdown)S
 # --- Production ---
+gem "commonmarker"
+gem "nokogiri"
+
 group :production do
   gem "pg", "~> 1.5"
 end

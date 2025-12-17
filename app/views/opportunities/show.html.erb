@@ -1,185 +1,150 @@
-<%# app/views/opportunities/show.html.erb %>
+<%# app/views/opportunities/show.html.erb - CORRECTION MISE EN PAGE & ALIGNEMENT FINAL %>
 <% content_for :main_classes, "pt-0" %>
 
 <%
 # ---------- 1. CONFIGURATION DU THÈME ----------
-# On définit les couleurs en fonction de la catégorie
-# "Ecologiser" a droit à un traitement de faveur (Vert)
-is_eco = @opportunity.category.to_s.downcase == 'ecologiser'
+is_eco = @opportunity.category.to_s.downcase == "ecologiser"
 
 theme = if is_eco
   {
     badge: "bg-emerald-600 text-white",
-    title: "text-emerald-700",
-    prose_strong: "text-emerald-800",
-    btn_gradient: "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700",
+    btn: "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700",
     icon: "text-emerald-600",
-    bg_light: "bg-emerald-50",
-    border: "border-emerald-100"
+    border: "border-emerald-100",
+    halo: "from-emerald-500/20 via-teal-500/10 to-transparent"
   }
 else
-  # Thème par défaut (Indigo/Violet)
   {
     badge: "bg-indigo-600 text-white",
-    title: "text-indigo-700",
-    prose_strong: "text-indigo-800",
-    btn_gradient: "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700",
+    btn: "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700",
     icon: "text-indigo-600",
-    bg_light: "bg-indigo-50",
-    border: "border-indigo-50"
+    border: "border-indigo-100",
+    halo: "from-indigo-500/20 via-purple-500/10 to-transparent"
   }
 end
 
-# Image de couverture (Fallback)
-hero_img = if @opportunity.image_url.present?
-   (@opportunity.image_url =~ /\Ahttp/i) ? @opportunity.image_url : asset_path(@opportunity.image_url)
-else
-  case @opportunity.category.to_s.downcase
-  when 'bénévolat' then "https://images.unsplash.com/photo-1559027615-cd4628902d4a?q=80&w=1600&auto=format&fit=crop"
-  when 'ecologiser' then "https://images.unsplash.com/photo-1542601906990-b4d3fb7d5fa5?q=80&w=1600&auto=format&fit=crop" # Nature / Réparation
-  when 'emploi/formation' then "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1600&auto=format&fit=crop"
-  else "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1600&auto=format&fit=crop"
+opportunity_emoji = (defined?(emoji_for_category) ? emoji_for_category(@opportunity.category) : "✨")
+
+hero_img =
+  if @opportunity.respond_to?(:photo) && @opportunity.photo.attached?
+    :attached
+  elsif @opportunity.respond_to?(:image_url) && @opportunity.image_url.present?
+    @opportunity.image_url
+  else
+    "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1600&auto=format&fit=crop"
   end
-end
 %>
 
-<div class="relative w-full h-72 md:h-96 overflow-hidden bg-slate-900">
-  <div class="absolute inset-0 bg-cover bg-center opacity-70 transition-transform duration-700 hover:scale-105"
-       style="background-image: url('<%= hero_img %>');">
-  </div>
-  <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
+<div class="relative overflow-hidden">
+  <%# --- HERO (Titre & Image) --- %>
+  <div class="relative">
+    <div class="absolute inset-0 bg-gradient-to-br <%= theme[:halo] %>"></div>
 
-  <div class="absolute inset-0 flex flex-col justify-end pb-12">
-    <div class="container mx-auto px-4">
-      <div class="max-w-4xl">
-        <% if @opportunity.category.present? %>
-          <span class="inline-block py-1.5 px-4 rounded-full text-sm font-bold uppercase tracking-wider shadow-sm mb-4 <%= theme[:badge] %>">
-            <%= @opportunity.category %>
-          </span>
-        <% end %>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-10">
+      <div class="flex flex-wrap items-center gap-3 text-sm">
+        <span class="<%= theme[:badge] %> inline-flex items-center px-3 py-1 rounded-full font-semibold">
+          <%= @opportunity.category %>
+        </span>
+        <span class="text-slate-500">
+          <%= l @opportunity.created_at, format: :long %>
+        </span>
+      </div>
 
-        <h1 class="text-3xl md:text-5xl font-extrabold text-white leading-tight drop-shadow-lg font-serif">
-          <%= @opportunity.title %>
-        </h1>
+      <h1 class="mt-4 text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900">
+        <span class="mr-3"><%= opportunity_emoji %></span>
+        <%= @opportunity.title %>
+      </h1>
 
-        <% if @opportunity.location.present? %>
-          <div class="flex items-center text-white/90 mt-4 font-medium">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            <%= @opportunity.location %>
-          </div>
+      <%# Image d’illustration %>
+      <div class="mt-8">
+        <% if hero_img == :attached %>
+          <%= cl_image_tag @opportunity.photo.key,
+            width: 1600, height: 900, crop: :fill, gravity: :center,
+            class: "w-full h-[260px] sm:h-[360px] rounded-2xl shadow-xl object-cover" %>
+        <% else %>
+          <%= image_tag hero_img,
+            class: "w-full h-[260px] sm:h-[360px] rounded-2xl shadow-xl object-cover",
+            alt: @opportunity.title %>
         <% end %>
       </div>
     </div>
   </div>
-</div>
 
-<div class="container mx-auto px-4 -mt-8 relative z-10 pb-24">
-  <% if notice.present? %>
-    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-8 rounded shadow-sm">
-      <p class="font-bold">Succès</p>
-      <p><%= notice %></p>
-    </div>
-  <% end %>
+  <%# --- GRILLE DE CONTENU (MAP/INFOS & DESCRIPTION) --- %>
+  <div class="relative bg-slate-50 <%= theme[:border] %> border-t py-14">
+    <%# CORRECTION DU GAP: passage à lg:gap-6 %>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:grid lg:grid-cols-3 lg:gap-6 lg:items-start">
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <%# Colonne gauche (1/3) : MAP/ACTIONS/INFOS %>
+      <div class="lg:col-span-1">
+        <div class="sticky top-12 space-y-8">
 
-    <div class="lg:col-span-2 space-y-8">
-      <div class="bg-white rounded-3xl shadow-xl p-6 md:p-10">
+          <%# Carte %>
+          <% if @opportunity.location.present? && @opportunity.latitude.present? %>
+            <div id="opportunity-map"
+                 class="w-full aspect-video rounded-2xl shadow-lg border-2 <%= theme[:border] %> bg-white"
+                 data-lat="<%= @opportunity.latitude %>"
+                 data-lon="<%= @opportunity.longitude %>"></div>
+          <% end %>
 
-        <h2 class="text-2xl font-bold text-slate-800 mb-6 font-serif flex items-center">
-          <span class="text-3xl mr-3">📄</span> De quoi s'agit-il ?
+          <%# Bouton Action %>
+          <% if ext_url_for(@opportunity).present? %>
+            <a href="<%= ext_url_for(@opportunity) %>"
+               target="_blank" rel="noopener nofollow"
+               class="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-semibold <%= theme[:btn] %> shadow-lg transform transition duration-200 hover:scale-[1.01]">
+              <span>Accéder à l’opportunité</span>
+              <span aria-hidden="true">→</span>
+            </a>
+          <% end %>
+
+          <%# Bloc Infos Pratiques %>
+          <div class="bg-white rounded-2xl border <%= theme[:border] %> shadow-sm p-6 space-y-4">
+            <h2 class="text-lg font-extrabold text-slate-800 border-b pb-2 mb-2">Informations pratiques</h2>
+
+            <% if @opportunity.location.present? %>
+              <div class="flex items-start gap-3">
+                <div class="mt-0.5"><svg class="w-6 h-6 <%= theme[:icon] %>" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.54 22.351A8.257 8.257 0 0 1 12 22.5c2.21 0 4.218-.813 5.759-2.008m-11.518 0C6.182 21.687 8.19 22.5 10.5 22.5h1.5a8.257 8.257 0 0 0-3.99-1.399l-.02.007a49.102 49.102 0 0 1-.502-.275C6.734 20.306 6 19.492 6 18.5V9a6 6 0 0 1 6-6
+6 6 0 0 1 6 6v9.5c0 .992-.734 1.806-1.666 2.302-.132.072-.265.143-.4.214-.02.01-.04.02-.06.03l-.02.01c-.13.065-.262.13-.393.193a.75.75 0 0 0-.15.062 8.286 8.286 0 0 1-.365.176h-1.5c.046 0 .092 0 .138-.002m-1.442-2.122A8.25 8.25 0 0 0 12 21.75a8.25 8.25 0 0 0 3.702-1.293L12 16.5l-3.702 3.136ZM18 9a4.5 4.5 0 0 0-9 0v9.5c0 .034.004.067.012.1A6.75 6.75 0 0 0 12 20.25a6.75 6.75 0 0 0 4.988-1.574A.75.75 0 0 0 17 18.5V9Z" clip-rule="evenodd" /></svg></div>
+                <div>
+                  <div class="font-semibold text-slate-800">Lieu</div>
+                  <div class="text-slate-600"><%= @opportunity.location %></div>
+                </div>
+              </div>
+            <% end %>
+
+            <% if @opportunity.starts_at.present? %>
+              <div class="mt-4 flex items-start gap-3">
+                <div class="mt-0.5"><svg class="w-6 h-6 <%= theme[:icon] %>" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 6a.75.75 0 0 0-1.5 0v6.75c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6Z" /></svg></div>
+                <div>
+                  <div class="font-semibold text-slate-800">Date</div>
+                  <div class="text-slate-600">
+                    <% if @opportunity.ends_at.present? %>
+                      Du <%= l @opportunity.starts_at, format: :short %> au <%= l @opportunity.ends_at, format: :short %>
+                    <% else %>
+                      Le <%= l @opportunity.starts_at, format: :long %>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <%# Colonne droite (2/3) : CONTENU PRINCIPAL %>
+      <div class="lg:col-span-2 mt-12 lg:mt-0">
+        <h2 class="text-xl font-extrabold text-slate-900 mb-6">
+          En savoir plus sur l’opportunité
         </h2>
 
-        <div class="prose prose-lg prose-slate max-w-none text-slate-700">
-          <%
-             raw_desc = @opportunity.description.to_s
-
-             # 1. Suppression des images Markdown ![Alt](url)
-             raw_desc = raw_desc.gsub(/!\[[^\]]*\]\([^)]+\)/, '')
-
-             # 2. Découpage par titres '###'
-             # On split sur le motif "### Titre"
-             # Cela crée un tableau : [Intro, Titre1, Contenu1, Titre2, Contenu2...]
-             parts = raw_desc.split(/^###\s+(.+)$/)
-
-             # Le premier élément est l'intro (texte avant le premier titre)
-             intro = parts.shift
-          %>
-
-          <%# Affichage de l'intro %>
-          <% if intro.present? %>
-            <%= simple_format(intro) %>
-          <% end %>
-
-          <%# Boucle sur les paires Titre / Contenu %>
-          <% parts.each_slice(2) do |title, content| %>
-            <div class="mt-8">
-              <h3 class="text-xl font-bold mb-3 font-serif <%= theme[:title] %>">
-                <%= title %>
-              </h3>
-              <%= simple_format(content) %>
-            </div>
-          <% end %>
-
-          <% if raw_desc.blank? %>
-            <p class="italic text-slate-400">Aucune description détaillée fournie.</p>
-          <% end %>
+        <%# On met le contenu dans un bloc blanc pour le contraste %>
+        <div class="bg-white rounded-2xl border <%= theme[:border] %> shadow-sm p-8">
+          <div class="markdown-content prose prose-lg prose-slate max-w-none text-slate-700 leading-relaxed">
+            <%# Utilisation du Helper MD %>
+            <%= md(@opportunity.description) %>
+          </div>
         </div>
       </div>
-
-      <div class="mt-8">
-        <%= link_to opportunities_path, class: "inline-flex items-center font-semibold hover:underline transition #{theme[:title]}" do %>
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18"></path></svg>
-          Retour aux opportunités
-        <% end %>
-      </div>
-    </div>
-
-    <div class="lg:col-span-1 space-y-8">
-
-      <div class="bg-white rounded-3xl shadow-lg p-6 border sticky top-24 z-20 <%= theme[:border] %>">
-        <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
-          🚀 Passez à l'action !
-        </h3>
-        <p class="text-slate-600 mb-6 text-sm">
-          Cette opportunité vous intéresse ? Ne la laissez pas passer.
-        </p>
-
-        <% if @opportunity.external_url.present? %>
-          <%= link_to @opportunity.external_url, target: "_blank", rel: "noopener", class: "block w-full text-center text-white font-bold text-lg py-4 px-6 rounded-xl shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 #{theme[:btn_gradient]}" do %>
-            Je participe   →
-          <% end %>
-          <p class="text-xs text-center text-slate-400 mt-3">
-            Lien externe vers le site partenaire
-          </p>
-        <% else %>
-          <div class="bg-slate-100 text-slate-500 p-4 rounded-xl text-center text-sm italic">
-            Aucun lien d'inscription direct.
-          </div>
-        <% end %>
-      </div>
-
-      <% if @opportunity.latitude.present? && @opportunity.longitude.present? %>
-        <div class="bg-white rounded-3xl shadow-lg overflow-hidden border border-slate-100 z-10">
-          <div class="p-5 border-b border-slate-50 bg-slate-50/50">
-            <h3 class="font-bold text-slate-800 flex items-center gap-2">
-              <span>📍</span> C'est où ?
-            </h3>
-            <p class="text-sm text-slate-500 mt-1 break-words"><%= @opportunity.location %></p>
-          </div>
-
-          <div class="relative w-full bg-slate-100" style="height: 250px;">
-            <div id="opportunity-map"
-                 class="h-full w-full z-0"
-                 data-lat="<%= @opportunity.latitude %>"
-                 data-lon="<%= @opportunity.longitude %>">
-            </div>
-          </div>
-           <a href="http://googleusercontent.com/maps.google.com/?q=<%= @opportunity.latitude %>,<%= @opportunity.longitude %>" target="_blank" class="block p-3 text-center bg-slate-50 text-sm font-medium hover:bg-slate-100 transition <%= theme[:title] %>">
-            Ouvrir l'itinéraire dans Google Maps
-          </a>
-        </div>
-      <% end %>
 
     </div>
   </div>
@@ -190,12 +155,10 @@ end
 <script>
   function initOppMap() {
     var el = document.getElementById('opportunity-map');
-    if (!el) return;
-    if (el.dataset.mapInited === "1") return;
+    if (!el || el.dataset.mapInited === "1") return;
 
     var lat = parseFloat(el.dataset.lat);
     var lon = parseFloat(el.dataset.lon);
-
     if (!lat || !lon) return;
 
     var map = L.map(el, { scrollWheelZoom: false }).setView([lat, lon], 15);
@@ -205,9 +168,7 @@ end
       attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    // Marqueur : Couleur adaptée au thème si possible, sinon rouge par défaut
-    // Ici on garde le rouge pour le contraste de l'action
-    var redIcon = new L.Icon({
+    var icon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
       shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
       iconSize: [25, 41],
@@ -216,20 +177,13 @@ end
       shadowSize: [41, 41]
     });
 
-    L.marker([lat, lon], {icon: redIcon}).addTo(map)
+    L.marker([lat, lon], {icon: icon}).addTo(map)
       .bindPopup("<b><%= j(@opportunity.title) %></b>");
 
     el.dataset.mapInited = "1";
-
     setTimeout(function() { map.invalidateSize(); }, 200);
-    requestAnimationFrame(function() { map.invalidateSize(); });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initOppMap);
-  } else {
-    initOppMap();
-  }
   document.addEventListener("turbo:load", initOppMap);
   document.addEventListener("turbo:render", initOppMap);
 </script>
