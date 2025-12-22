@@ -1,276 +1,1337 @@
-<%# v4 — Pourquoi Déclic ? Images cohérentes avec le contenu %>
+<%# app/views/pages/philosophie.html.erb - VERSION AMÉLIORÉE %>
 
+<%# HERO IMMERSIF %>
 <section class="ph-hero">
   <div class="container">
-    <p class="kicker">À propos</p>
-    <h1>Pourquoi <span>Déclic</span> ?</h1>
-    <p class="lead">
-      <b>À portée de main, à portée de clic</b>, nous pouvons changer notre vie. Autour de nous, les initiatives foisonnent,
-      des opportunités palpitent, des histoires inspirantes de personnalités qui ont franchi le pas aussi :
-      <b>Déclic</b> permet de les repérer. ✨
+    <div class="hero-badge">
+      <span class="pulse"></span>
+      À propos de Déclic
+    </div>
+
+    <h1 class="hero-title">
+      Pourquoi <span class="gradient-text">Déclic</span> ?
+    </h1>
+
+    <p class="hero-lead">
+      <strong>À portée de main, à portée de clic</strong>, nous pouvons changer notre vie.
+      Autour de nous, les initiatives foisonnent, des opportunités palpitent,
+      des histoires inspirantes de personnalités qui ont franchi le pas aussi.
     </p>
-    <div class="cta">
-      <%= link_to "Voir les actions locales", (url_for(controller: :opportunities, action: :index, category: 'toutes') rescue root_path(anchor:"explorer")), class: "btn primary" %>
-      <%= link_to "Notre carte", root_path(anchor:"explorer"), class:"btn ghost" %>
+
+    <p class="hero-highlight">
+      ✨ <strong>Déclic</strong> permet de les repérer et de passer à l'action.
+    </p>
+
+    <div class="hero-cta">
+      <%= link_to (url_for(controller: :opportunities, action: :index, category: 'toutes') rescue root_path(anchor:"explorer")), class: "btn btn-primary" do %>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <span>Voir les actions locales</span>
+      <% end %>
+      <%= link_to root_path(anchor:"explorer"), class: "btn btn-ghost" do %>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+        <span>Notre carte</span>
+      <% end %>
     </div>
 
-    <!-- bandeau visuel : actions locales et engagement communautaire -->
-    <div class="gallery">
-      <img src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1200&q=80&auto=format&fit=crop" alt="Atelier de formation collectif" loading="lazy">
-      <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&q=80&auto=format&fit=crop" alt="Équipe qui travaille ensemble" loading="lazy">
-      <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&q=80&auto=format&fit=crop" alt="Atelier créatif communautaire" loading="lazy">
+    <%# Statistiques Hero %>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-number" data-count="15000">0</div>
+        <div class="stat-label">Opportunités</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" data-count="300">0</div>
+        <div class="stat-label">Villes</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" data-count="10000">0</div>
+        <div class="stat-label">Membres</div>
+      </div>
     </div>
+
+    <%# Galerie d'images %>
+    <div class="hero-gallery">
+      <div class="gallery-item gallery-main">
+        <img src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1200&q=80&auto=format&fit=crop" alt="Bénévolat communautaire" loading="eager">
+        <div class="gallery-overlay">
+          <span class="gallery-tag">🤝 Bénévolat</span>
+        </div>
+      </div>
+      <div class="gallery-item">
+        <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&q=80&auto=format&fit=crop" alt="Coworking et collaboration" loading="lazy">
+        <div class="gallery-overlay">
+          <span class="gallery-tag">🚀 Entreprendre</span>
+        </div>
+      </div>
+      <div class="gallery-item">
+        <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&q=80&auto=format&fit=crop" alt="Atelier créatif" loading="lazy">
+        <div class="gallery-overlay">
+          <span class="gallery-tag">🎨 Créer</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Vague de séparation %>
+  <div class="wave-separator">
+    <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+      <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
+    </svg>
   </div>
 </section>
 
-<section class="ph-slice">
-  <div class="container grid-3">
-    <article class="card">
-      <div class="icon">🧩</div>
-      <h3>Le défi</h3>
-      <p>Des initiatives locales nombreuses, mais souvent dispersées, peu visibles, et de fait, on ne sait pas par où commencer.</p>
-      <img class="thumb" src="https://images.unsplash.com/photo-1531482615713-2afd69097998?w=900&q=80&auto=format&fit=crop" alt="Recherche d'opportunités" loading="lazy">
-    </article>
-
-    <article class="card">
-      <div class="icon">🧭</div>
-      <h3>Notre approche</h3>
-      <p>On centralise les <b>opportunités</b> autour de toi, puis on te guide selon ton intention :
-         entreprendre, t'engager, aider, progresser, etc.</p>
-      <img class="thumb" src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=900&q=80&auto=format&fit=crop" alt="Brainstorming en équipe" loading="lazy">
-    </article>
-
-    <article class="card">
-      <div class="icon">🌱</div>
-      <h3>Ce que tu y gagnes</h3>
-      <p>Des actions près de chez toi, un réseau bienveillant, et des <em>belles histoires</em> qui donnent
-         l'élan pour passer du "un jour" au "jour 1".</p>
-      <img class="thumb" src="https://images.unsplash.com/photo-1552581234-26160f608093?w=900&q=80&auto=format&fit=crop" alt="Personnes heureuses et connectées" loading="lazy">
-    </article>
-  </div>
-</section>
-
-<section class="ph-slice alt">
+<%# SECTION PROBLÈME-SOLUTION-BÉNÉFICE %>
+<section class="ph-cards">
   <div class="container">
-    <h2>Comment ça marche ?</h2>
-    <ol class="steps">
-      <li><span>1</span><b>Choisis ton parcours.</b> 🚀 Entreprendre, 📘 te former, ❤️ aider, 🤝 rencontrer, ou 📖 t'inspirer.</li>
-      <li><span>2</span><b>Localise-toi.</b> 📍 On trouve ce qui est près de toi (et on respecte ta vie privée).</li>
-      <li><span>3</span><b>Agis en petit.</b> 🧪 Un atelier, une mission d'essai, un café-rencontre.</li>
-      <li><span>4</span><b>Partage ton déclic.</b> ✍️ Inspire la suite et aide d'autres à franchir le pas.</li>
-    </ol>
+    <div class="section-intro">
+      <h2 class="section-title">Comment Déclic transforme ta recherche</h2>
+      <p class="section-subtitle">Du chaos à la clarté en 3 étapes</p>
+    </div>
 
-    <!-- illustration : événement communautaire convivial -->
-    <figure class="illustr">
-      <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=1600&q=80&auto=format&fit=crop"
-           alt="Rencontre communautaire chaleureuse" loading="lazy">
+    <div class="cards-grid">
+      <article class="feature-card card-problem">
+        <div class="card-badge">
+          <span class="badge-icon">😵</span>
+          <span class="badge-text">Le problème</span>
+        </div>
+        <div class="card-emoji">🧩</div>
+        <h3>Le défi</h3>
+        <p>Des initiatives locales <strong>nombreuses</strong>, mais souvent <strong>dispersées</strong>, peu visibles.
+        Résultat : on ne sait pas par où commencer et on abandonne avant d'avoir essayé.</p>
+
+        <div class="problem-context">
+          <p class="context-text">Tu veux t'engager, mais tu passes des heures à chercher sans trouver l'opportunité parfaite pour toi.</p>
+        </div>
+
+        <ul class="pain-points">
+          <li>
+            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+            <span>Info fragmentée sur 15 sites différents</span>
+          </li>
+          <li>
+            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+            <span>Pas de vision d'ensemble</span>
+          </li>
+          <li>
+            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+            <span>Découragement face à la masse d'infos</span>
+          </li>
+          <li>
+            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+            <span>Manque de repères pour savoir quoi choisir</span>
+          </li>
+        </ul>
+        <img class="card-image" src="https://images.unsplash.com/photo-1531482615713-2afd69097998?w=900&q=80&auto=format&fit=crop" alt="Recherche complexe" loading="lazy">
+      </article>
+
+      <article class="feature-card card-solution">
+        <div class="card-badge">
+          <span class="badge-icon">🎯</span>
+          <span class="badge-text">Notre solution</span>
+        </div>
+        <div class="card-emoji">🧭</div>
+        <h3>Notre approche</h3>
+        <p>On <strong>centralise les opportunités</strong> autour de toi, puis on te guide selon ton intention :
+        entreprendre, t'engager, aider, progresser...</p>
+        <div class="solution-features">
+          <div class="feature-item">
+            <div class="feature-icon">🗺️</div>
+            <div>
+              <strong>Carte interactive</strong>
+              <span>Visualise tout en un coup d'œil</span>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🎯</div>
+            <div>
+              <strong>Filtres intelligents</strong>
+              <span>Trouve exactement ce que tu cherches</span>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">📖</div>
+            <div>
+              <strong>Histoires inspirantes</strong>
+              <span>Découvre des parcours qui motivent</span>
+            </div>
+          </div>
+        </div>
+        <img class="card-image" src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=900&q=80&auto=format&fit=crop" alt="Collaboration d'équipe" loading="lazy">
+      </article>
+
+      <article class="feature-card card-benefit">
+        <div class="card-badge">
+          <span class="badge-icon">✨</span>
+          <span class="badge-text">Ton gain</span>
+        </div>
+        <div class="card-emoji">🌱</div>
+        <h3>Ce que tu y gagnes</h3>
+        <p>Des <strong>actions près de chez toi</strong>, un réseau bienveillant, et des <em>belles histoires</em>
+        qui donnent l'élan pour passer du "un jour" au <strong>"jour 1"</strong>.</p>
+        <div class="benefits-grid">
+          <div class="benefit-badge">⏱️ Gain de temps</div>
+          <div class="benefit-badge">🤝 Réseau local</div>
+          <div class="benefit-badge">💪 Confiance</div>
+          <div class="benefit-badge">🎯 Passage à l'action</div>
+        </div>
+        <blockquote class="testimonial-mini">
+          <p>"Déclic m'a permis de trouver ma mission de bénévolat en 10 minutes. J'avais cherché pendant des mois !"</p>
+          <cite>— Marie, 28 ans, Nancy</cite>
+        </blockquote>
+        <img class="card-image" src="https://images.unsplash.com/photo-1552581234-26160f608093?w=900&q=80&auto=format&fit=crop" alt="Personnes heureuses" loading="lazy">
+      </article>
+    </div>
+  </div>
+</section>
+
+<%# COMMENT ÇA MARCHE - VERSION INTERACTIVE %>
+<section class="ph-howto">
+  <div class="container">
+    <div class="section-intro">
+      <h2 class="section-title">Comment ça marche ?</h2>
+      <p class="section-subtitle">4 étapes pour trouver ton déclic</p>
+    </div>
+
+    <div class="steps-visual">
+      <div class="step-item" data-step="1">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <div class="step-icon-group">
+            <span class="step-icon">🚀</span>
+            <span class="step-icon">📘</span>
+            <span class="step-icon">❤️</span>
+            <span class="step-icon">🤝</span>
+            <span class="step-icon">📖</span>
+          </div>
+          <h3>Choisis ton parcours</h3>
+          <p>Entreprendre, te former, aider, rencontrer, ou t'inspirer des histoires d'autres personnes.</p>
+        </div>
+      </div>
+
+      <div class="step-connector">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+      </div>
+
+      <div class="step-item" data-step="2">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <div class="step-icon-single">📍</div>
+          <h3>Localise-toi</h3>
+          <p>On trouve ce qui est près de toi. Ta vie privée est respectée : géolocalisation uniquement pour la recherche.</p>
+        </div>
+      </div>
+
+      <div class="step-connector">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+      </div>
+
+      <div class="step-item" data-step="3">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <div class="step-icon-single">🧪</div>
+          <h3>Agis en petit</h3>
+          <p>Un atelier, une mission d'essai, un café-rencontre. Commence léger, vois si ça te plaît.</p>
+        </div>
+      </div>
+
+      <div class="step-connector">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+      </div>
+
+      <div class="step-item" data-step="4">
+        <div class="step-number">4</div>
+        <div class="step-content">
+          <div class="step-icon-single">✍️</div>
+          <h3>Partage ton déclic</h3>
+          <p>Inspire la suite et aide d'autres à franchir le pas. Ta story peut changer des vies.</p>
+        </div>
+      </div>
+    </div>
+
+    <%# Illustration %>
+    <figure class="howto-illustration">
+      <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=1600&q=80&auto=format&fit=crop" alt="Communauté engagée" loading="lazy">
+      <figcaption>
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+        <span>La force de Déclic : une communauté bienveillante qui agit localement</span>
+      </figcaption>
     </figure>
   </div>
 </section>
 
-<section class="ph-slice">
+<%# NOS PRINCIPES - VERSION MODERNE %>
+<section class="ph-principles">
   <div class="container">
-    <h2>Nos principes</h2>
-    <ul class="chips">
-      <li>🤝 Ouvert & non partisan</li>
-      <li>📍 Impact local</li>
-      <li>💜 Bienveillance</li>
-      <li>🔎 Transparence</li>
-      <li>🌿 Sobriété numérique</li>
-    </ul>
-  </div>
-</section>
-
-<section class="ph-slice alt">
-  <div class="container grid-2">
-    <div class="card">
-      <div class="icon">🔐</div>
-      <h3>Données & vie privée</h3>
-      <p>La géolocalisation sert uniquement à te proposer des opportunités à proximité.
-         Rien n'est vendu ni partagé à des tiers publicitaires.</p>
-      <p>Tu peux activer/désactiver le suivi à tout moment depuis la carte.</p>
-      <img class="thumb" src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1000&q=80&auto=format&fit=crop" alt="Carte sur smartphone" loading="lazy">
+    <div class="section-intro">
+      <h2 class="section-title">Nos principes</h2>
+      <p class="section-subtitle">Les valeurs qui guident chaque décision</p>
     </div>
-    <div class="card">
-      <div class="icon">✨</div>
-      <h3>Contribuer</h3>
-      <p>Tu as une opportunité à valoriser ou une histoire à raconter ? Propose-la !</p>
-      <div class="cta">
-        <%= link_to "Proposer une opportunité", new_opportunity_path, class:"btn primary" %>
-        <%= link_to "Partager mon histoire", (respond_to?(:new_story_path) ? new_story_path : stories_path), class:"btn ghost" %>
+
+    <div class="principles-grid">
+      <div class="principle-card">
+        <div class="principle-icon">🤝</div>
+        <h4>Ouvert & non partisan</h4>
+        <p>Toutes les initiatives bienveillantes sont bienvenues, sans distinction politique.</p>
       </div>
-      <img class="thumb" src="https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1000&q=80&auto=format&fit=crop" alt="Personne qui partage son expérience" loading="lazy">
+      <div class="principle-card">
+        <div class="principle-icon">📍</div>
+        <h4>Impact local</h4>
+        <p>Priorité aux actions qui transforment concrètement ton territoire.</p>
+      </div>
+      <div class="principle-card">
+        <div class="principle-icon">💜</div>
+        <h4>Bienveillance</h4>
+        <p>Respect, entraide et encouragement dans toutes nos interactions.</p>
+      </div>
+      <div class="principle-card">
+        <div class="principle-icon">🔎</div>
+        <h4>Transparence</h4>
+        <p>Code open source, modération claire, pas de contenu caché.</p>
+      </div>
+      <div class="principle-card">
+        <div class="principle-icon">🌿</div>
+        <h4>Sobriété numérique</h4>
+        <p>Design léger, serveurs verts, respect de l'environnement.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="ph-cta">
+<%# VIE PRIVÉE & CONTRIBUTION %>
+<section class="ph-trust">
   <div class="container">
-    <h2>Prêt·e pour ton déclic ?</h2>
-    <p>Parcours la carte et choisis une première action. Le reste suivra.</p>
-    <%= link_to "Voir la carte", root_path(anchor:"explorer"), class:"btn primary big" %>
+    <div class="trust-grid">
+
+      <%# Vie privée %>
+      <article class="trust-card">
+        <div class="trust-icon">🔐</div>
+        <h3>Données & vie privée</h3>
+        <div class="trust-content">
+          <p class="trust-lead">Ta confidentialité est <strong>non-négociable</strong>.</p>
+
+          <p class="trust-intro">Nous ne vivons pas de la revente de tes données. Notre modèle est simple : tu utilises Déclic gratuitement, nous restons indépendants.</p>
+
+          <div class="privacy-points">
+            <div class="privacy-item">
+              <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+              <div>
+                <strong>Géolocalisation sur demande</strong>
+                <span>Uniquement pour te proposer des opportunités proches</span>
+              </div>
+            </div>
+            <div class="privacy-item">
+              <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+              <div>
+                <strong>Zéro revente de données</strong>
+                <span>Jamais partagé à des tiers publicitaires</span>
+              </div>
+            </div>
+            <div class="privacy-item">
+              <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+              <div>
+                <strong>Contrôle total</strong>
+                <span>Active/désactive le suivi depuis la carte à tout moment</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="trust-badge-group">
+            <span class="trust-badge">🇪🇺 RGPD compliant</span>
+            <span class="trust-badge">🔒 Données chiffrées</span>
+          </div>
+        </div>
+        <img class="trust-image" src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1000&q=80&auto=format&fit=crop" alt="Sécurité des données" loading="lazy">
+      </article>
+
+      <%# Contribution %>
+      <article class="trust-card card-contribute">
+        <div class="trust-icon">✨</div>
+        <h3>Contribuer</h3>
+        <div class="trust-content">
+          <p class="trust-lead">Tu as une opportunité à valoriser ou une histoire à raconter ?</p>
+
+          <div class="contribute-types">
+            <div class="contribute-type">
+              <div class="contribute-icon">📢</div>
+              <strong>Propose une opportunité</strong>
+              <span>Atelier, formation, mission, événement...</span>
+            </div>
+            <div class="contribute-type">
+              <div class="contribute-icon">📖</div>
+              <strong>Partage ton histoire</strong>
+              <span>Inspire d'autres personnes avec ton parcours</span>
+            </div>
+          </div>
+
+          <div class="contribute-cta">
+            <%= link_to new_opportunity_path, class: "btn btn-primary" do %>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              <span>Proposer une opportunité</span>
+            <% end %>
+            <%= link_to (respond_to?(:new_story_path) ? new_story_path : stories_path), class: "btn btn-ghost" do %>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+              <span>Partager mon histoire</span>
+            <% end %>
+          </div>
+
+          <p class="contribute-note">
+            💡 <strong>Modération bienveillante</strong> : Ton contenu sera relu sous 48h pour garantir la qualité.
+          </p>
+        </div>
+        <img class="trust-image" src="https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1000&q=80&auto=format&fit=crop" alt="Partage d'expérience" loading="lazy">
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<%# CTA FINAL - VERSION SPECTACULAIRE %>
+<section class="ph-final-cta">
+  <div class="cta-background"></div>
+  <div class="container">
+    <div class="cta-content">
+      <div class="cta-icon">⚡</div>
+      <h2>Prêt·e pour ton déclic ?</h2>
+      <p>Parcours la carte et choisis une première action.<br>Le reste suivra naturellement.</p>
+
+      <div class="cta-buttons">
+        <%= link_to root_path(anchor:"explorer"), class: "btn btn-primary btn-big" do %>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+          <span>Voir la carte interactive</span>
+        <% end %>
+      </div>
+
+      <div class="cta-stats-mini">
+        <span>Rejoins 10 000+ personnes qui ont déjà trouvé leur déclic</span>
+      </div>
+    </div>
   </div>
 </section>
 
 <style>
-  .container{max-width:1180px;margin:0 auto;padding:0 24px;}
+/* ============================================
+   VARIABLES & RESET
+   ============================================ */
+:root {
+  --purple: #7e5bef;
+  --blue: #3b82f6;
+  --pink: #ec4899;
+  --green: #10b981;
+  --slate: #0f172a;
+  --slate-light: #64748b;
+}
 
-  /* ---------- HERO ---------- */
-  .ph-hero{
-    background:linear-gradient(135deg,#7e5bef,#3b82f6);
-    color:#fff; padding:clamp(64px, 8vw, 88px) 0 clamp(48px, 6vw, 64px);
-    position:relative; overflow:hidden;
-  }
-  .ph-hero .kicker{opacity:.9;text-transform:uppercase;font:800 .95rem/1 "Inter";letter-spacing:.08em;margin:0 0 .25rem}
-  .ph-hero h1{font:900 clamp(2.6rem,5.2vw,3.8rem)/1.03 "Epilogue";margin:.25rem 0 .7rem}
-  .ph-hero h1 span{background:linear-gradient(90deg,#fce7f3,#c084fc,#93c5fd);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .ph-hero .lead{max-width:980px;font:700 clamp(1.18rem,1.25vw + .95rem,1.6rem)/1.6 "Inter";opacity:.98}
-  .ph-hero .cta{margin-top:18px;display:flex;gap:14px;flex-wrap:wrap}
+.container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
 
-  /* Bandeau visuel amélioré */
-  .ph-hero .gallery{
-    display:grid;
-    grid-template-columns:1.4fr 1fr 1fr;
-    gap:14px;
-    margin-top:32px;
-    filter:drop-shadow(0 24px 48px rgba(0,0,0,.3));
-  }
-  .ph-hero .gallery img{
-    width:100%;
-    height:200px;
-    object-fit:cover;
-    border-radius:16px;
-    border: 2px solid rgba(255,255,255,.15);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  .ph-hero .gallery img:hover{
-    transform: translateY(-4px);
-    box-shadow: 0 28px 56px rgba(0,0,0,.35);
-  }
+/* ============================================
+   HERO IMMERSIF
+   ============================================ */
+.ph-hero {
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+  color: white;
+  padding: clamp(60px, 10vw, 120px) 0 clamp(60px, 8vw, 100px);
+  position: relative;
+  overflow: hidden;
+}
 
-  /* ---------- BOUTONS ---------- */
-  .btn{display:inline-flex;align-items:center;gap:.6rem;border-radius:999px;padding:.95rem 1.35rem;
-       font:900 1.06rem/1 "Epilogue";text-decoration:none;transition:transform 0.2s ease}
-  .btn:hover{transform:translateY(-2px)}
-  .btn.primary{background:#fff;color:#4f46e5;box-shadow:0 12px 26px rgba(0,0,0,.16)}
-  .btn.ghost{background:transparent;border:2px solid #fff;color:#fff}
-  .btn.big{padding:1.05rem 1.6rem;font-size:1.1rem}
+@media (max-width: 768px) {
+  .ph-hero {
+    padding: 40px 0 60px;
+  }
+}
 
-  /* ---------- SLICES ---------- */
-  .ph-slice{padding:clamp(44px, 6vw, 56px) 0}
-  .ph-slice.alt{background:linear-gradient(180deg, #f8f7ff 0%, #faf9ff 100%)}
+.ph-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(236, 72, 153, 0.3), transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.3), transparent 50%);
+  animation: pulse-bg 8s ease-in-out infinite;
+}
 
-  .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
-  .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
-  @media (max-width:980px){
-    .grid-3{grid-template-columns:1fr; gap:20px}
-    .grid-2{grid-template-columns:1fr; gap:20px}
-    .ph-hero .gallery{grid-template-columns:1fr; gap:12px}
-    .ph-hero .gallery img{height:180px}
-  }
+@keyframes pulse-bg {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+}
 
-  .ph-slice h2{font:900 clamp(1.9rem,3.2vw,2.3rem)/1.08 "Epilogue";margin:0 0 22px; color:#0f172a}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 20px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 10;
+}
 
-  /* ---------- CARDS AMÉLIORÉES ---------- */
-  .card{
-    background:#fff;
-    border:1px solid #e6e8ee;
-    border-radius:20px;
-    padding:22px;
-    position:relative;
-    box-shadow:0 16px 40px rgba(15,23,42,.08);
-    overflow:hidden;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .card:hover{
-    transform: translateY(-4px);
-    box-shadow:0 20px 52px rgba(15,23,42,.12);
-  }
-  .card .icon{position:absolute; top:16px; right:16px; font-size:1.5rem; opacity:0.9}
-  .card h3{font:900 1.35rem/1.1 "Epilogue";margin:0 0 .6rem; color:#0f172a}
-  .card p{color:#334155;margin:.35rem 0 0;font:500 1.05rem/1.6 "Inter"}
+.pulse {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
 
-  /* Images des cartes plus grandes et mieux mises en valeur */
-  .card .thumb{
-    width:calc(100% + 44px);
-    margin-left:-22px;
-    margin-right:-22px;
-    height:180px;
-    object-fit:cover;
-    margin-top:18px;
-    margin-bottom:-22px;
-    border-radius:0 0 20px 20px;
-  }
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
 
-  /* ---------- STEPS ---------- */
-  .steps{display:grid;gap:14px;margin:0 0 28px;padding:0;list-style:none}
-  .steps li{
-    background:#fff;
-    border:1px solid #e6e8ee;
-    border-radius:16px;
-    padding:16px 18px;
-    box-shadow:0 10px 24px rgba(15,23,42,.07);
-    font:600 1.05rem/1.55 "Inter";
-    color:#1f2937;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .steps li:hover{
-    transform: translateX(4px);
-    box-shadow:0 14px 32px rgba(15,23,42,.10);
-  }
-  .steps li span{
-    display:inline-grid;
-    place-items:center;
-    width:28px;
-    height:28px;
-    border-radius:999px;
-    background:linear-gradient(135deg, #6366f1, #8b5cf6);
-    color:#fff;
-    font:800 .95rem/1 "Inter";
-    margin-right:.7rem;
-    box-shadow:0 4px 12px rgba(99,102,241,.3);
-  }
+.hero-title {
+  font-family: 'Epilogue', system-ui, sans-serif;
+  font-size: clamp(48px, 7vw, 80px);
+  font-weight: 900;
+  line-height: 1.1;
+  margin: 0 0 24px;
+  position: relative;
+  z-index: 10;
+}
 
-  /* ---------- ILLUSTRATION AMÉLIORÉE ---------- */
-  .illustr{margin:0}
-  .illustr img{
-    width:100%;
-    height:320px;
-    object-fit:cover;
-    border-radius:20px;
-    box-shadow:0 24px 60px rgba(0,0,0,.14);
-    display:block;
-    border: 3px solid rgba(255,255,255,.5);
-    transition: transform 0.3s ease;
-  }
-  .illustr img:hover{
-    transform: scale(1.01);
-  }
+.gradient-text {
+  background: linear-gradient(90deg, #fce7f3, #c084fc, #93c5fd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-shift 3s ease infinite;
+}
 
-  /* ---------- CHIPS ---------- */
-  .chips{display:flex;flex-wrap:wrap;gap:12px;margin:0;padding:0;list-style:none}
-  .chips li{
-    background:#fff;
-    border:1px solid #e6e8ee;
-    border-radius:999px;
-    padding:.7rem 1rem;
-    font:800 1rem/1 "Inter";
-    box-shadow:0 10px 22px rgba(15,23,42,.06);
-    color:#0f172a;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .chips li:hover{
-    transform: translateY(-2px);
-    box-shadow:0 14px 28px rgba(15,23,42,.10);
-  }
+@keyframes gradient-shift {
+  0%, 100% { filter: hue-rotate(0deg); }
+  50% { filter: hue-rotate(20deg); }
+}
 
-  /* ---------- CTA ---------- */
-  .ph-cta{
-    background:linear-gradient(135deg,#7e5bef,#3b82f6);
-    color:#fff;
-    text-align:center;
-    padding:clamp(48px, 7vw, 64px) 0
-  }
-  .ph-cta h2{font:900 clamp(1.9rem,3.2vw,2.4rem)/1.08 "Epilogue";margin:0 0 .5rem}
-  .ph-cta p{margin:0 0 1.2rem;font:800 1.1rem/1.6 "Inter";opacity:.98}
+.hero-lead {
+  font-size: clamp(18px, 2vw, 24px);
+  line-height: 1.7;
+  max-width: 900px;
+  margin-bottom: 16px;
+  opacity: 0.95;
+  position: relative;
+  z-index: 10;
+}
+
+.hero-highlight {
+  font-size: clamp(20px, 2.2vw, 26px);
+  font-weight: 700;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 10;
+}
+
+.hero-cta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 48px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Boutons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 32px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 16px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background: white;
+  color: var(--purple);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: white;
+  border: 2px solid white;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.btn-big {
+  padding: 20px 48px;
+  font-size: 18px;
+}
+
+/* Stats Hero */
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  max-width: 800px;
+  margin-bottom: 48px;
+  position: relative;
+  z-index: 10;
+}
+
+.stat {
+  text-align: center;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+}
+
+.stat-number {
+  font-size: 48px;
+  font-weight: 900;
+  margin-bottom: 8px;
+  font-family: 'Epilogue', sans-serif;
+}
+
+.stat-label {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.9;
+}
+
+/* Galerie */
+.hero-gallery {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  gap: 20px;
+  position: relative;
+  z-index: 10;
+}
+
+.gallery-item {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.gallery-item:hover {
+  transform: translateY(-8px);
+}
+
+.gallery-main {
+  grid-row: span 1;
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  display: block;
+}
+
+.gallery-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gallery-item:hover .gallery-overlay {
+  opacity: 1;
+}
+
+.gallery-tag {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Vague */
+.wave-separator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.wave-separator svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 60px;
+}
+
+.wave-separator path {
+  fill: #ffffff;
+}
+
+/* ============================================
+   CARDS PROBLÈME-SOLUTION-BÉNÉFICE
+   ============================================ */
+.ph-cards {
+  padding: clamp(60px, 8vw, 100px) 0;
+  background: white;
+}
+
+.section-intro {
+  text-align: center;
+  margin-bottom: 64px;
+}
+
+.section-title {
+  font-family: 'Epilogue', sans-serif;
+  font-size: clamp(36px, 5vw, 52px);
+  font-weight: 900;
+  color: var(--slate);
+  margin: 0 0 16px;
+}
+
+.section-subtitle {
+  font-size: 20px;
+  color: var(--slate-light);
+  margin: 0;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.feature-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 32px;
+  padding: 40px 32px;
+  position: relative;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.card-problem { border-color: #fecaca; background: linear-gradient(to bottom, #fef2f2, white); }
+.card-solution { border-color: #bfdbfe; background: linear-gradient(to bottom, #eff6ff, white); }
+.card-benefit { border-color: #bbf7d0; background: linear-gradient(to bottom, #f0fdf4, white); }
+
+.card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 20px;
+}
+
+.card-problem .card-badge { background: #fee2e2; color: #991b1b; }
+.card-solution .card-badge { background: #dbeafe; color: #1e40af; }
+.card-benefit .card-badge { background: #dcfce7; color: #166534; }
+
+.card-emoji {
+  font-size: 56px;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.feature-card h3 {
+  font-family: 'Epilogue', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--slate);
+  margin: 0 0 16px;
+}
+
+.feature-card p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--slate-light);
+  margin-bottom: 24px;
+  flex-grow: 1;
+}
+
+.pain-points {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0;
+}
+
+.problem-context {
+  background: #fff5f5;
+  border-left: 4px solid #f87171;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin: 20px 0;
+}
+
+.context-text {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #7f1d1d;
+  margin: 0;
+  font-weight: 600;
+  font-style: italic;
+}
+
+.pain-points li {
+  display: flex;
+  align-items: start;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 15px;
+  color: var(--slate);
+}
+
+.solution-features,
+.privacy-points {
+  margin: 24px 0;
+}
+
+.feature-item,
+.privacy-item {
+  display: flex;
+  align-items: start;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.feature-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.feature-item strong,
+.privacy-item strong {
+  display: block;
+  font-size: 15px;
+  color: var(--slate);
+  margin-bottom: 4px;
+}
+
+.feature-item span,
+.privacy-item span {
+  font-size: 13px;
+  color: var(--slate-light);
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.benefit-badge {
+  padding: 12px 16px;
+  background: white;
+  border: 2px solid #10b981;
+  border-radius: 16px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--slate);
+}
+
+.testimonial-mini {
+  background: white;
+  border-left: 4px solid var(--green);
+  padding: 20px;
+  border-radius: 12px;
+  margin: 24px 0;
+}
+
+.testimonial-mini p {
+  font-style: italic;
+  margin: 0 0 8px;
+}
+
+.testimonial-mini cite {
+  font-style: normal;
+  font-size: 14px;
+  color: var(--slate-light);
+}
+
+.card-image {
+  width: calc(100% + 64px);
+  margin-left: -32px;
+  margin-right: -32px;
+  margin-bottom: -40px;
+  margin-top: auto;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 0 0 32px 32px;
+  display: block;
+}
+
+/* Fix pour uniformiser la hauteur des feature-cards */
+.feature-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 32px;
+  padding: 40px 32px;
+  position: relative;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+.ph-howto {
+  padding: clamp(60px, 8vw, 100px) 0;
+  background: linear-gradient(180deg, #f8f7ff 0%, #faf9ff 100%);
+}
+
+.steps-visual {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 64px;
+  overflow-x: auto;
+  padding: 20px 0;
+}
+
+.step-item {
+  flex: 1;
+  min-width: 200px;
+  text-align: center;
+}
+
+.step-number {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 900;
+  box-shadow: 0 8px 24px rgba(126, 91, 239, 0.3);
+  font-family: 'Epilogue', sans-serif;
+}
+
+.step-icon-group {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.step-icon {
+  font-size: 28px;
+}
+
+.step-icon-single {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.step-content h3 {
+  font-family: 'Epilogue', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--slate);
+  margin: 0 0 12px;
+}
+
+.step-content p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--slate-light);
+  margin: 0;
+}
+
+.step-connector {
+  flex-shrink: 0;
+  color: #cbd5e1;
+  margin: 0 16px;
+}
+
+.step-connector svg {
+  width: 32px;
+  height: 32px;
+}
+
+.howto-illustration {
+  margin: 0;
+  position: relative;
+}
+
+.howto-illustration img {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  border-radius: 32px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15);
+  border: 4px solid white;
+}
+
+.howto-illustration figcaption {
+  position: absolute;
+  bottom: 32px;
+  left: 32px;
+  right: 32px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 20px 24px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   PRINCIPES
+   ============================================ */
+.ph-principles {
+  padding: clamp(60px, 8vw, 100px) 0;
+  background: white;
+}
+
+.principles-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 24px;
+}
+
+.principle-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 24px;
+  padding: 32px 24px;
+  text-align: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.principle-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+  border-color: var(--purple);
+}
+
+.principle-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.principle-card h4 {
+  font-family: 'Epilogue', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--slate);
+  margin: 0 0 12px;
+}
+
+.principle-card p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--slate-light);
+  margin: 0;
+}
+
+/* ============================================
+   VIE PRIVÉE & CONTRIBUTION
+   ============================================ */
+.ph-trust {
+  padding: clamp(60px, 8vw, 100px) 0;
+  background: linear-gradient(180deg, #f8f7ff 0%, #faf9ff 100%);
+}
+
+.trust-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 48px;
+}
+
+.trust-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 32px;
+  padding: 48px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.trust-content {
+  flex-grow: 1;
+}
+
+.trust-icon {
+  font-size: 64px;
+  margin-bottom: 24px;
+  display: block;
+}
+
+.trust-card h3 {
+  font-family: 'Epilogue', sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--slate);
+  margin: 0 0 24px;
+}
+
+.trust-lead {
+  font-size: 18px;
+  line-height: 1.7;
+  color: var(--slate);
+  margin-bottom: 20px;
+}
+
+.trust-intro {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--slate-light);
+  padding: 16px 20px;
+  background: #f0f9ff;
+  border-left: 4px solid #3b82f6;
+  border-radius: 12px;
+  margin-bottom: 32px;
+}
+
+.trust-badge-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.trust-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.contribute-types {
+  margin: 32px 0;
+}
+
+.contribute-type {
+  display: flex;
+  align-items: start;
+  gap: 16px;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.contribute-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.contribute-type strong {
+  display: block;
+  font-size: 16px;
+  color: var(--slate);
+  margin-bottom: 4px;
+}
+
+.contribute-type span {
+  font-size: 14px;
+  color: var(--slate-light);
+}
+
+.contribute-cta {
+  display: flex;
+  gap: 16px;
+  margin: 32px 0;
+  flex-wrap: wrap;
+}
+
+.contribute-note {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--slate-light);
+  padding: 16px;
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+}
+
+.trust-image {
+  width: calc(100% + 96px);
+  margin-left: -48px;
+  margin-right: -48px;
+  margin-bottom: -48px;
+  margin-top: auto;
+  height: 260px;
+  object-fit: cover;
+  border-radius: 0 0 32px 32px;
+  display: block;
+}
+
+/* ============================================
+   CTA FINAL
+   ============================================ */
+.ph-final-cta {
+  position: relative;
+  padding: clamp(80px, 10vw, 120px) 0;
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+  color: white;
+  text-align: center;
+  overflow: hidden;
+}
+
+.cta-background {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 50%, rgba(236, 72, 153, 0.4), transparent 60%),
+              radial-gradient(circle at 70% 80%, rgba(59, 130, 246, 0.4), transparent 60%);
+  animation: pulse-bg 8s ease-in-out infinite;
+}
+
+.cta-content {
+  position: relative;
+  z-index: 10;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.cta-icon {
+  font-size: 80px;
+  margin-bottom: 24px;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.cta-content h2 {
+  font-family: 'Epilogue', sans-serif;
+  font-size: clamp(40px, 6vw, 64px);
+  font-weight: 900;
+  margin: 0 0 24px;
+}
+
+.cta-content p {
+  font-size: clamp(18px, 2vw, 22px);
+  line-height: 1.6;
+  margin-bottom: 40px;
+  opacity: 0.95;
+}
+
+.cta-buttons {
+  margin-bottom: 32px;
+}
+
+.cta-stats-mini {
+  font-size: 15px;
+  opacity: 0.9;
+  font-weight: 600;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 1024px) {
+  .cards-grid { grid-template-columns: 1fr; }
+  .trust-grid { grid-template-columns: 1fr; }
+  .principles-grid { grid-template-columns: repeat(2, 1fr); }
+  .hero-gallery { grid-template-columns: 1fr; }
+  .hero-stats { grid-template-columns: 1fr; }
+  .steps-visual { flex-direction: column; }
+  .step-connector { transform: rotate(90deg); margin: 16px 0; }
+}
+
+@media (max-width: 640px) {
+  .hero-title { font-size: 40px; }
+  .principles-grid { grid-template-columns: 1fr; }
+  .benefits-grid { grid-template-columns: 1fr; }
+}
 </style>
+
+<script>
+// Animation des compteurs
+function animateCounter(element, target) {
+  const duration = 2000;
+  const start = 0;
+  const increment = target / (duration / 16);
+  let current = start;
+
+  const timer = setInterval(() => {
+    current += increment;
+    if (current >= target) {
+      element.textContent = target.toLocaleString('fr-FR');
+      clearInterval(timer);
+    } else {
+      element.textContent = Math.floor(current).toLocaleString('fr-FR');
+    }
+  }, 16);
+}
+
+// Démarrer l'animation au scroll
+const observerOptions = {
+  threshold: 0.5,
+  rootMargin: '0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting && !entry.target.dataset.animated) {
+      const number = entry.target;
+      const target = parseInt(number.dataset.count);
+      animateCounter(number, target);
+      number.dataset.animated = 'true';
+    }
+  });
+}, observerOptions);
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.stat-number').forEach(el => observer.observe(el));
+});
+</script>

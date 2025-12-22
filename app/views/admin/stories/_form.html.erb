@@ -1,10 +1,12 @@
+
+
 <%= form_with model: [:admin, @story],
               local: true,
-              html: { multipart: true } do |f| %>
+              html: { multipart: true, class: 'story-admin-form' } do |f| %>
 
   <% if @story.errors.any? %>
     <div class="form-errors">
-      <h2><%= pluralize(@story.errors.count, "erreur") %> :</h2>
+      <h2>❌ <%= pluralize(@story.errors.count, "erreur") %> empêche(nt) la sauvegarde :</h2>
       <ul>
         <% @story.errors.full_messages.each do |m| %>
           <li><%= m %></li>
@@ -13,104 +15,579 @@
     </div>
   <% end %>
 
-  <div class="form-grid">
-    <div class="field">
-      <%= f.label :title, "Titre" %>
-      <%= f.text_field :title %>
+  <%# ========================================
+      SECTION 1 : CONTENU PRINCIPAL
+      ======================================== %>
+  <div class="form-section">
+    <div class="section-header">
+      <h3>📝 Contenu Principal</h3>
+      <p class="section-help">Informations qui apparaissent sur la page de l'histoire</p>
     </div>
 
-    <div class="field">
-      <%= f.label :chapo, "Chapô (résumé court)" %>
-      <%= f.text_area :chapo, rows: 3 %>
+    <div class="form-grid">
+      <div class="field full">
+        <%= f.label :title, "Titre *" %>
+        <%= f.text_field :title, placeholder: "Ex: Elle plaque la finance à Paris pour devenir fromagère...", required: true %>
+        <span class="field-help">🎯 Apparaît en grand dans le héros avec emoji</span>
+      </div>
+
+      <div class="field full">
+        <%= f.label :chapo, "Citation en exergue" %>
+        <%= f.text_area :chapo, rows: 3, placeholder: "Ex: Je ne me voyais pas passer ma vie derrière un ordinateur..." %>
+        <span class="field-help">💬 Affiché dans l'encadré coloré sous le héros</span>
+      </div>
+
+      <div class="field full">
+        <%= f.label :body, "Corps de l'histoire (Markdown autorisé)" %>
+        <%= f.text_area :body, rows: 16, placeholder: "Racontez l'histoire complète en plusieurs paragraphes..." %>
+        <div class="field-help">
+          📚 Structure recommandée :<br>
+          - Paragraphe 1-2 : Le déclic (contexte)<br>
+          - Paragraphe 3-4 : La formation / préparation<br>
+          - Paragraphe 5-6 : L'ouverture / réalisation<br>
+          - Paragraphe 7-8 : Un lieu de vie / résultats
+        </div>
+      </div>
+
+      <div class="field">
+        <%= f.label :description, "Description courte (SEO)" %>
+        <%= f.text_area :description, rows: 2, placeholder: "Résumé en 1-2 phrases pour Google et les partages sociaux" %>
+        <span class="field-help">🔍 Visible dans les résultats de recherche</span>
+      </div>
+    </div>
+  </div>
+
+  <%# ========================================
+      SECTION 2 : MÉTADONNÉES & LOCALISATION
+      ======================================== %>
+  <div class="form-section">
+    <div class="section-header">
+      <h3>📍 Métadonnées & Localisation</h3>
+      <p class="section-help">Informations de contexte et géolocalisation</p>
     </div>
 
-    <div class="field">
-      <%= f.label :description, "Description (SEO / listing)" %>
-      <%= f.text_area :description, rows: 3 %>
+    <div class="form-grid">
+      <div class="field">
+        <%= f.label :happened_on, "Date de l'histoire *" %>
+        <%= f.date_field :happened_on, required: true %>
+        <span class="field-help">📅 Format : "Samedi 03 juin 2023" (avec jour de la semaine)</span>
+      </div>
+
+      <div class="field">
+        <%= f.label :location, "Lieu *" %>
+        <%= f.text_field :location, placeholder: "21 Grande-Rue, 54000 Nancy", required: true %>
+        <span class="field-help">🏪 Adresse complète affichée dans la sidebar</span>
+      </div>
+
+      <div class="field">
+        <%= f.label :latitude, "Latitude" %>
+        <%= f.text_field :latitude, placeholder: "48.6937", step: "any" %>
+        <span class="field-help">🗺️ Pour la carte interactive</span>
+      </div>
+
+      <div class="field">
+        <%= f.label :longitude, "Longitude" %>
+        <%= f.text_field :longitude, placeholder: "6.1844", step: "any" %>
+        <span class="field-help">🗺️ Pour la carte interactive</span>
+      </div>
+
+      <div class="field full geocode-help">
+        <a href="https://www.latlong.net/" target="_blank" class="btn-link">
+          🔗 Trouver lat/long sur LatLong.net
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <%# ========================================
+      SECTION 3 : MÉDIA & IMAGE
+      ======================================== %>
+  <div class="form-section">
+    <div class="section-header">
+      <h3>🖼️ Image de Couverture</h3>
+      <p class="section-help">Photo affichée dans le héros (obligatoire pour un bel affichage)</p>
     </div>
 
-    <div class="field full">
-      <%= f.label :body, "Texte complet (markdown)" %>
-      <%= f.text_area :body, rows: 14 %>
+    <div class="form-grid">
+      <div class="field full image-preview-container">
+        <% if @story.image_url.present? || @story.image.attached? %>
+          <div class="current-image">
+            <p class="preview-label">✅ Image actuelle :</p>
+            <% if @story.image_url.present? %>
+              <img src="<%= @story.image_url %>" alt="Preview" class="preview-img">
+              <p class="image-source">Source : URL externe</p>
+            <% elsif @story.image.attached? %>
+              <%= image_tag @story.image.variant(resize_to_limit: [600, 400]), class: "preview-img" rescue nil %>
+              <p class="image-source">Source : Upload fichier</p>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="no-image-warning">
+            ⚠️ Aucune image définie - Une image par défaut Unsplash sera affichée
+          </div>
+        <% end %>
+      </div>
+
+      <div class="field">
+        <%= f.label :image, "📤 Upload d'image (recommandé)" %>
+        <%= f.file_field :image, direct_upload: true, accept: "image/*" %>
+        <span class="field-help">Format recommandé : 1920x1080px (16:9)</span>
+      </div>
+
+      <div class="field">
+        <%= f.label :image_url, "🔗 OU URL d'image externe" %>
+        <%= f.text_field :image_url, placeholder: "https://images.unsplash.com/photo-..." %>
+        <span class="field-help">Alternative à l'upload (prioritaire si rempli)</span>
+      </div>
+    </div>
+  </div>
+
+  <%# ========================================
+      SECTION 4 : SOURCE & ATTRIBUTION
+      ======================================== %>
+  <div class="form-section">
+    <div class="section-header">
+      <h3>📰 Source & Attribution</h3>
+      <p class="section-help">Crédit de l'article original (IMPORTANT pour affichage)</p>
     </div>
 
-    <div class="field">
-      <%= f.label :happened_on, "Date de l’histoire (mois / année)" %>
-      <%= f.date_select :happened_on,
-            include_blank: true,
-            discard_day: true,
-            start_year: 2010,
-            end_year: Date.today.year + 1 %>
+    <div class="form-grid">
+      <div class="field">
+        <%= f.label :source_name, "Nom de la source *" %>
+        <%= f.text_field :source_name, placeholder: "Ex: L'Est Républicain", required: true %>
+        <span class="field-help">📰 Affiché dans le héros ET dans le bouton CTA</span>
+      </div>
+
+      <div class="field">
+        <%= f.label :source_url, "URL de la source" %>
+        <%= f.text_field :source_url, placeholder: "https://www.estrepublicain.fr/..." %>
+        <span class="field-help">🔗 Lien vers l'article original</span>
+      </div>
+
+      <div class="field full source-preview">
+        <strong>Aperçu d'affichage :</strong>
+        <div class="preview-box">
+          <p>Dans le héros : <code>Source : <%= @story.source_name.presence || "[Nom de la source]" %></code></p>
+          <p>Bouton CTA : <code>Lire sur <%= @story.source_name.presence || "[Nom de la source]" %></code></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# ========================================
+      SECTION 5 : SEO & ORGANISATION
+      ======================================== %>
+  <div class="form-section">
+    <div class="section-header">
+      <h3>🔧 SEO & Organisation</h3>
+      <p class="section-help">Paramètres techniques et organisation</p>
     </div>
 
-    <div class="field">
-      <%= f.label :location, "Lieu" %>
-      <%= f.text_field :location %>
-    </div>
+    <div class="form-grid">
+      <div class="field">
+        <%= f.label :slug, "Slug (URL)" %>
+        <%= f.text_field :slug, placeholder: "elle-plaque-finance-fromage" %>
+        <span class="field-help">🔗 Généré automatiquement depuis le titre si vide</span>
+      </div>
 
-    <!-- Image upload / URL -->
-    <div class="field">
-      <%= f.label :image, "Image (upload)" %>
-      <%= f.file_field :image, direct_upload: true %>
-      <% if @story.image.attached? %>
-        <p class="preview-label">Image actuelle :</p>
-        <%= image_tag @story.image.variant(resize_to_limit: [300, 180]),
-                      class: "preview-img" rescue nil %>
+      <div class="field">
+        <%= f.label :tags, "Tags" %>
+        <%= f.text_field :tags, placeholder: "reconversion, entreprendre, fromage" %>
+        <span class="field-help">🏷️ Séparés par des virgules</span>
+      </div>
+
+      <% if @story.respond_to?(:active) %>
+        <div class="field">
+          <%= f.label :active, "Statut" %>
+          <div class="checkbox-field">
+            <%= f.check_box :active, checked: @story.active != false %>
+            <span>✅ Publié (visible sur le site)</span>
+          </div>
+        </div>
+      <% elsif @story.respond_to?(:is_active) %>
+        <div class="field">
+          <%= f.label :is_active, "Statut" %>
+          <div class="checkbox-field">
+            <%= f.check_box :is_active, checked: @story.is_active != false %>
+            <span>✅ Publié (visible sur le site)</span>
+          </div>
+        </div>
+      <% elsif @story.respond_to?(:published) %>
+        <div class="field">
+          <%= f.label :published, "Statut" %>
+          <div class="checkbox-field">
+            <%= f.check_box :published, checked: @story.published != false %>
+            <span>✅ Publié (visible sur le site)</span>
+          </div>
+        </div>
+      <% else %>
+        <div class="field">
+          <p class="info-box">ℹ️ Cette story sera automatiquement publiée (pas de champ statut dans la base de données)</p>
+        </div>
       <% end %>
     </div>
-
-    <div class="field">
-      <%= f.label :image_url, "Image (URL externe)" %>
-      <%= f.text_field :image_url, placeholder: "https://…" %>
-    </div>
-
-    <div class="field">
-      <%= f.label :source_name, "Source (nom)" %>
-      <%= f.text_field :source_name %>
-    </div>
-
-    <div class="field">
-      <%= f.label :source_url, "Source (URL)" %>
-      <%= f.text_field :source_url %>
-    </div>
-
-    <div class="field">
-      <%= f.label :tags, "Tags (séparés par des virgules)" %>
-      <%= f.text_field :tags %>
-    </div>
-
-    <div class="field">
-      <%= f.label :slug, "Slug (URL)" %>
-      <%= f.text_field :slug %>
-    </div>
-
-    <div class="field">
-      <%= f.label :latitude %>
-      <%= f.text_field :latitude %>
-    </div>
-
-    <div class="field">
-      <%= f.label :longitude %>
-      <%= f.text_field :longitude %>
-    </div>
   </div>
 
+  <%# ========================================
+      ACTIONS DU FORMULAIRE
+      ======================================== %>
   <div class="form-actions">
-    <%= f.submit class: "btn" %>
-    <%= link_to "Annuler", admin_stories_path, class: "btn ghost" %>
+    <%= f.submit "💾 Enregistrer", class: "btn primary" %>
+    <%= link_to "👁️ Prévisualiser", story_path(@story), class: "btn secondary", target: "_blank" if @story.persisted? %>
+    <%= link_to "❌ Annuler", admin_stories_path, class: "btn ghost" %>
   </div>
+
 <% end %>
 
 <style>
-.form-errors{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem}
-.form-errors h2{margin:0 0 .5rem;font-weight:700;font-size:.95rem}
-.form-errors ul{margin:0;padding-left:1.1rem}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:.5rem}
-.field{display:flex;flex-direction:column;gap:.25rem}
-.field.full{grid-column:1/-1}
-.field label{font-weight:600;font-size:.9rem;color:#334155}
-.field input,.field textarea,.field select{border:1px solid #cbd5e1;border-radius:8px;padding:.4rem .55rem;font:inherit}
-.form-actions{margin-top:1.2rem;display:flex;gap:.5rem}
-.preview-label{margin-top:.4rem;font-size:.85rem;color:#64748b}
-.preview-img{margin-top:.25rem;border-radius:8px;border:1px solid #e5e7eb;max-width:100%;height:auto}
+/* ========================================
+   FORMULAIRE ADMIN STORIES - DESIGN SYSTEM
+   ======================================== */
+
+.story-admin-form {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Erreurs */
+.form-errors {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border: 2px solid #fca5a5;
+  color: #991b1b;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.1);
+}
+
+.form-errors h2 {
+  margin: 0 0 12px;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.form-errors ul {
+  margin: 0;
+  padding-left: 24px;
+}
+
+.form-errors li {
+  margin: 6px 0;
+}
+
+/* Sections */
+.form-section {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 32px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.section-header h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 8px;
+}
+
+.section-help {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+/* Champs */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field.full {
+  grid-column: 1 / -1;
+}
+
+.field label {
+  font-weight: 700;
+  font-size: 15px;
+  color: #1e293b;
+}
+
+.field input[type="text"],
+.field input[type="date"],
+.field input[type="file"],
+.field textarea,
+.field select {
+  border: 2px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font: inherit;
+  font-size: 15px;
+  transition: all 0.2s;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: none;
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.6;
+}
+
+.field-help {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* Checkbox */
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.checkbox-field input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+/* Preview d'image */
+.image-preview-container {
+  background: #f8fafc;
+  padding: 24px;
+  border-radius: 12px;
+  border: 2px dashed #cbd5e1;
+}
+
+.current-image {
+  text-align: center;
+}
+
+.preview-label {
+  font-weight: 700;
+  color: #059669;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.preview-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  margin-bottom: 12px;
+}
+
+.image-source {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.no-image-warning {
+  background: #fef3c7;
+  border: 2px solid #fde68a;
+  color: #92400e;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Source preview */
+.source-preview {
+  background: #eff6ff;
+  padding: 20px;
+  border-radius: 12px;
+  border-left: 4px solid #3b82f6;
+}
+
+.preview-box {
+  margin-top: 12px;
+}
+
+.preview-box p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.preview-box code {
+  background: #dbeafe;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+/* Liens utiles */
+.geocode-help {
+  text-align: center;
+}
+
+.btn-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 12px 20px;
+  background: #eff6ff;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.btn-link:hover {
+  background: #dbeafe;
+  transform: translateY(-2px);
+}
+
+/* Actions */
+.form-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 2px solid #f3f4f6;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 16px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  color: white;
+  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.3);
+}
+
+.btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(168, 85, 247, 0.4);
+}
+
+.btn.secondary {
+  background: #0f172a;
+  color: white;
+}
+
+.btn.secondary:hover {
+  background: #1e293b;
+  transform: translateY(-2px);
+}
+
+.btn.ghost {
+  background: transparent;
+  color: #64748b;
+  border: 2px solid #cbd5e1;
+}
+
+.btn.ghost:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+/* Info Box */
+.info-box {
+  background: #eff6ff;
+  border: 2px solid #bfdbfe;
+  color: #1e40af;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .story-admin-form {
+    padding: 16px;
+  }
+
+  .form-section {
+    padding: 20px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
 </style>
+
+<script>
+// Auto-generate slug from title
+document.addEventListener('DOMContentLoaded', function() {
+  const titleInput = document.querySelector('input[name="story[title]"]');
+  const slugInput = document.querySelector('input[name="story[slug]"]');
+
+  if (titleInput && slugInput && !slugInput.value) {
+    titleInput.addEventListener('blur', function() {
+      if (!slugInput.value) {
+        const slug = titleInput.value
+          .toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove accents
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        slugInput.value = slug;
+      }
+    });
+  }
+
+  // Preview image URL
+  const imageUrlInput = document.querySelector('input[name="story[image_url]"]');
+  if (imageUrlInput) {
+    imageUrlInput.addEventListener('blur', function() {
+      if (this.value && this.value.startsWith('http')) {
+        console.log('Image URL:', this.value);
+      }
+    });
+  }
+});
+</script>

@@ -84,11 +84,25 @@ end
   <%# ========== HÉROS AVEC PHOTO ========== %>
   <div style="position: relative; height: 500px; overflow: hidden; background: #1e293b;">
 
-    <%# PHOTO %>
-    <% if @story.image_url.present? %>
-      <%= image_tag @story.image_url, class: "story-hero-image", alt: @story.title %>
-    <% elsif @story.respond_to?(:photo) && @story.photo.attached? %>
-      <%= image_tag @story.photo, class: "story-hero-image", alt: @story.title %>
+    <%# PHOTO - Vérifie image_url, puis image, puis photo, puis fallback %>
+    <%
+    image_src = nil
+
+    if @story.image_url.present? && @story.image_url.start_with?('http')
+      image_src = @story.image_url
+    elsif @story.respond_to?(:image) && @story.image.attached?
+      image_src = url_for(@story.image) rescue nil
+    elsif @story.respond_to?(:photo) && @story.photo.attached?
+      image_src = url_for(@story.photo) rescue nil
+    end
+    %>
+
+    <% if image_src.present? %>
+      <img src="<%= image_src %>"
+           class="story-hero-image"
+           alt="<%= @story.title %>"
+           loading="eager"
+           onerror="this.src='https://images.unsplash.com/photo-1452195100486-9cc805987862?w=1920&q=80'" />
     <% else %>
       <img src="https://images.unsplash.com/photo-1452195100486-9cc805987862?w=1920&q=80"
            class="story-hero-image"
