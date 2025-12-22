@@ -1,203 +1,485 @@
-<%# app/views/stories/show.html.erb - Style aligné sur Opportunities (Final) %>
-<% content_for :main_classes, "pt-0" %>
+<%# app/views/stories/show.html.erb - VERSION FINALE RESPONSIVE + COULEURS STORIES %>
 
 <%
-# ---------- 1. CONFIGURATION DU THÈME (Basé sur le modèle Opportunity) ----------
-
-# Le modèle Story n'a pas de colonne 'category'. On utilise le titre pour la thématisation.
+# Configuration thème
 story_haystack = @story.title.to_s.downcase
-
 is_eco = story_haystack.include?('jardin') || story_haystack.include?('laiterie') || story_haystack.include?('écologie')
+is_social = story_haystack.include?('rencontr') || story_haystack.include?('café')
+is_entreprendre = story_haystack.include?('entreprise') || story_haystack.include?('fromag') || story_haystack.include?('commerce')
 
 theme = if is_eco
-  {
-    badge: "bg-emerald-600 text-white",
-    title: "text-emerald-700",
-    btn_gradient: "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700",
-    icon: "text-emerald-600",
-    bg_light: "bg-emerald-50",
-    border: "border-emerald-100"
-  }
+  { name: "Écologiser", color: "emerald", gradient: "from-emerald-500 to-teal-500", bg: "bg-emerald-50", icon: "🌱" }
+elsif is_social
+  { name: "Rencontres", color: "amber", gradient: "from-amber-500 to-orange-500", bg: "bg-amber-50", icon: "☕" }
+elsif is_entreprendre
+  { name: "Entreprendre", color: "orange", gradient: "from-orange-500 to-red-500", bg: "bg-orange-50", icon: "🚀" }
 else
-  # Thème par défaut (Indigo/Violet)
-  {
-    badge: "bg-indigo-600 text-white",
-    title: "text-indigo-700",
-    btn_gradient: "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700",
-    icon: "text-indigo-600",
-    bg_light: "bg-indigo-50",
-    border: "border-indigo-100"
-  }
+  { name: "Belle Histoire", color: "purple", gradient: "from-purple-500 to-pink-500", bg: "bg-purple-50", icon: "✨" }
+end
+
+story_emoji = defined?(emoji_for) ? emoji_for(@story.title) : "👍"
+
+# Format date français
+date_fr = if @story.happened_on.present?
+  day_names = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
+  month_names = ['', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+                 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
+  "#{day_names[@story.happened_on.wday].capitalize} #{@story.happened_on.day.to_s.rjust(2, '0')} #{month_names[@story.happened_on.month]} #{@story.happened_on.year}"
+else
+  ""
 end
 %>
 
-<%# Définir l'émoji basé sur le Helper des Stories %>
-<% story_emoji = emoji_for(@story.title) %>
+<style>
+/* Styles inline pour éviter les conflits */
+.story-hero-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.story-spacing-1 { height: 40px; }
+.story-spacing-2 { height: 30px; }
+.story-spacing-3 { height: 25px; }
+.story-separator {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
+  margin: 30px 0;
+}
 
+/* RESPONSIVE FIXES */
+@media (max-width: 1024px) {
+  .story-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .story-sidebar {
+    position: static !important;
+  }
+}
 
-<div class="relative pb-16 bg-white overflow-hidden">
+@media (max-width: 640px) {
+  .story-hero-title {
+    font-size: 28px !important;
+  }
+  .story-hero-emoji {
+    font-size: 36px !important;
+  }
+  .story-quote-text {
+    font-size: 18px !important;
+  }
+  .story-section-title {
+    font-size: 20px !important;
+  }
+  .story-chiffres {
+    grid-template-columns: 1fr !important;
+  }
+  .story-cta-title {
+    font-size: 24px !important;
+  }
+}
+</style>
 
-  <%# ---------------------------------------------------- %>
-  <%# 2. EN-TÊTE (TITRE ET INTRO) - SANS GRILLE %>
-  <%# ---------------------------------------------------- %>
-  <div class="relative pt-6 pb-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6">
-      <div class="relative bg-white lg:max-w-7xl lg:mx-auto">
+<div style="background: white; min-height: 100vh;">
 
-        <p class="inline-flex items-center space-x-2 text-sm">
-          <%# Affiche "Belle Histoire" car il n'y a pas de champ category %>
-          <span class="<%= theme[:badge] %> inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium">
-            Belle Histoire
-          </span>
-          <span class="text-slate-500">
-            <%= l @story.happened_on, format: :long %>
-          </span>
-        </p>
+  <%# ========== HÉROS AVEC PHOTO ========== %>
+  <div style="position: relative; height: 500px; overflow: hidden; background: #1e293b;">
 
-        <h1 class="text-4xl tracking-tight font-extrabold text-slate-900 mt-4 sm:text-5xl md:text-6xl">
-          <%# Affichage de l'émoji dans le titre %>
-          <span class="mr-3"><%= story_emoji %></span>
+    <%# PHOTO %>
+    <% if @story.image_url.present? %>
+      <%= image_tag @story.image_url, class: "story-hero-image", alt: @story.title %>
+    <% elsif @story.respond_to?(:photo) && @story.photo.attached? %>
+      <%= image_tag @story.photo, class: "story-hero-image", alt: @story.title %>
+    <% else %>
+      <img src="https://images.unsplash.com/photo-1452195100486-9cc805987862?w=1920&q=80"
+           class="story-hero-image"
+           alt="Fromages artisanaux" />
+    <% end %>
+
+    <%# Overlay %>
+    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.75) 100%);"></div>
+
+    <%# Contenu %>
+    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 40px 24px;">
+      <div style="max-width: 1140px; margin: 0 auto;">
+
+        <%# Badge %>
+        <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); padding: 8px 16px; border-radius: 999px; margin-bottom: 16px;">
+          <span style="font-size: 20px;"><%= theme[:icon] %></span>
+          <span style="color: white; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;"><%= theme[:name] %></span>
+        </div>
+
+        <%# Titre %>
+        <h1 class="story-hero-title" style="color: white; font-size: 42px; font-weight: 800; line-height: 1.2; margin: 0 0 20px 0; max-width: 900px; word-wrap: break-word;">
+          <span class="story-hero-emoji" style="font-size: 56px; margin-right: 12px;"><%= story_emoji %></span>
           <%= @story.title %>
         </h1>
 
-        <%# AFFICHAGE DE L'IMAGE D'ILLUSTRATION %>
-        <%# Note: Les Stories utilisent image_url %>
-        <% if @story.image_url.present? %>
-          <div class="mt-6">
-            <%= image_tag(@story.image_url,
-              class: "rounded-xl shadow-lg w-full object-cover aspect-video",
-              alt: @story.title) %>
+        <%# Date en français %>
+        <% if date_fr.present? %>
+          <div style="display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,0.95); font-size: 15px; margin-bottom: 12px; flex-wrap: wrap;">
+            <svg style="width: 18px; height: 18px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span style="font-weight: 600;"><%= date_fr %></span>
           </div>
         <% end %>
 
-        <%# Introduction/Chapo: Utilise le champ chapo ou extrait du body %>
-        <% chapo_text = @story.chapo.presence || @story.body.to_s.split("\n\n").first.strip %>
-        <% if chapo_text.present? %>
-          <div class="markdown-content prose prose-lg prose-slate max-w-none text-slate-700 leading-relaxed">
-            <%= md(chapo_text) %>
-          </p>
+        <%# Source %>
+        <% if @story.source_name.present? %>
+          <div style="display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.85); font-size: 14px; flex-wrap: wrap;">
+            <svg style="width: 16px; height: 16px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+            </svg>
+            <span>Source : <strong><%= @story.source_name %></strong></span>
+          </div>
         <% end %>
 
       </div>
     </div>
   </div>
 
-  <%# ---------------------------------------------------- %>
-  <%# 3. CORPS ET INFORMATIONS SECONDAIRES (GRILLE INVERSÉE 1/3 - 2/3) %>
-  <%# ---------------------------------------------------- %>
-  <div class="relative bg-slate-50 <%= theme[:border] %> border-t py-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:grid lg:grid-cols-3 lg:gap-8">
+  <%# ESPACEMENT 1 %>
+  <div class="story-spacing-1"></div>
 
-      <%# Colonne de gauche (Carte et Infos) - span 1 %>
-      <div class="lg:col-span-1 pt-12 lg:pt-0">
-        <div class="sticky top-12 space-y-8">
+  <%# ========== CITATION - COULEUR STORIES (PURPLE/PINK) ========== %>
+  <div style="max-width: 1140px; margin: 0 auto; padding: 0 24px;">
+    <div style="max-width: 860px; margin: 0 auto;">
+      <div style="padding: 32px; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); border-radius: 20px; box-shadow: 0 10px 40px rgba(168,85,247,0.25);">
+        <div style="display: flex; align-items: start; gap: 20px;">
+          <div style="font-size: 64px; color: rgba(255,255,255,0.3); line-height: 1; user-select: none; flex-shrink: 0;">"</div>
+          <p class="story-quote-text" style="color: white; font-size: 22px; font-weight: 500; line-height: 1.6; margin: 0; word-wrap: break-word;">
+            Je ne me voyais pas passer ma vie derrière un ordinateur. J'avais besoin d'une activité tournée vers le partage, qui me ressemble.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-          <%# Carte %>
-          <% if @story.location.present? && @story.latitude.present? %>
-            <div id="story-map"
-                 class="w-full aspect-video rounded-xl shadow-lg border-2 <%= theme[:border] %> z-0"
-                 data-lat="<%= @story.latitude %>"
-                 data-lon="<%= @story.longitude %>">
+  <%# ESPACEMENT 2 %>
+  <div class="story-spacing-2"></div>
+
+  <%# ========== CHAPO ========== %>
+  <div style="max-width: 1140px; margin: 0 auto; padding: 0 24px;">
+    <div style="max-width: 860px; margin: 0 auto;">
+      <%
+      chapo_text = if @story.chapo.present?
+        @story.chapo
+      elsif @story.body.present?
+        paragraphs = @story.body.to_s.split("\n\n")
+        paragraphs.first(2).join("\n\n").strip
+      else
+        ""
+      end
+      %>
+      <% if chapo_text.present? %>
+        <div style="font-size: 18px; line-height: 1.7; color: #475569; word-wrap: break-word; overflow-wrap: break-word;">
+          <%= simple_format(chapo_text) %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# SÉPARATEUR %>
+  <div style="max-width: 1140px; margin: 40px auto; padding: 0 24px;">
+    <div class="story-separator"></div>
+  </div>
+
+  <%# ========== CONTENU ========== %>
+  <div style="max-width: 1140px; margin: 0 auto; padding: 0 24px 60px;">
+    <div class="story-grid" style="display: grid; grid-template-columns: 1fr 320px; gap: 40px;">
+
+      <%# COLONNE PRINCIPALE %>
+      <div style="min-width: 0; overflow-wrap: break-word;">
+
+        <%# Titre section %>
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #e2e8f0; flex-wrap: wrap;">
+          <div style="font-size: 40px; flex-shrink: 0;"><%= story_emoji %></div>
+          <h2 class="story-section-title" style="font-size: 32px; font-weight: 700; color: #0f172a; margin: 0; word-wrap: break-word;">Le récit de l'action</h2>
+        </div>
+
+        <%# Section 1 %>
+        <div style="margin-bottom: 50px;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #a855f7, #ec4899); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(168,85,247,0.3); flex-shrink: 0;">
+              <span style="font-size: 24px;">💭</span>
+            </div>
+            <h3 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0; word-wrap: break-word;">Le déclic</h3>
+          </div>
+          <div style="background: linear-gradient(135deg, #faf5ff 0%, #fff 100%); padding: 24px; border-radius: 16px; border-left: 4px solid #a855f7; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <p style="font-size: 17px; line-height: 1.7; color: #475569; margin: 0; word-wrap: break-word; overflow-wrap: break-word;">
+              Après quatre années dans la finance parisienne, Bénédicte Begin ressent le besoin d'un changement radical. À 33 ans, elle aspire à une vie plus concrète, plus proche de ses valeurs et de ses racines lorraines.
+            </p>
+          </div>
+        </div>
+
+        <div class="story-separator"></div>
+
+        <%# Section 2 %>
+        <div style="margin-bottom: 50px;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #a855f7, #ec4899); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(168,85,247,0.3); flex-shrink: 0;">
+              <span style="font-size: 24px;">📚</span>
+            </div>
+            <h3 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0; word-wrap: break-word;">La formation</h3>
+          </div>
+          <p style="font-size: 17px; line-height: 1.7; color: #475569; margin-bottom: 20px; word-wrap: break-word; overflow-wrap: break-word;">
+            La reconversion ne s'improvise pas. Bénédicte suit une formation complète d'un an auprès de fromagers affineurs parisiens. Elle se familiarise avec les produits à travers des stages pratiques et obtient une attestation de formation en vente de crèmerie-fromagerie.
+          </p>
+          <div style="background: #eff6ff; padding: 24px; border-radius: 16px; border-left: 4px solid #3b82f6; box-shadow: 0 4px 12px rgba(59,130,246,0.1);">
+            <div style="display: flex; align-items: start; gap: 12px;">
+              <span style="font-size: 24px; flex-shrink: 0;">💡</span>
+              <div style="min-width: 0;">
+                <p style="font-weight: 600; color: #1e40af; margin: 0 0 8px 0; word-wrap: break-word;">Le conseil de Bénédicte</p>
+                <p style="font-style: italic; color: #475569; line-height: 1.7; margin: 0; word-wrap: break-word; overflow-wrap: break-word;">
+                  "Pour réussir sa reconversion, il faut se former sérieusement et multiplier les stages pratiques. C'est comme ça qu'on apprend vraiment le métier."
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="story-separator"></div>
+
+        <%# Section 3 %>
+        <div style="margin-bottom: 50px;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #a855f7, #ec4899); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(168,85,247,0.3); flex-shrink: 0;">
+              <span style="font-size: 24px;">🏪</span>
+            </div>
+            <h3 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0; word-wrap: break-word;">L'ouverture de Caseus</h3>
+          </div>
+          <p style="font-size: 17px; line-height: 1.7; color: #475569; margin-bottom: 30px; word-wrap: break-word; overflow-wrap: break-word;">
+            Bénédicte trouve son bonheur dans une ancienne librairie de 45 m² au 21 Grande-Rue, en plein cœur du Vieux-Nancy. Deux mois de travaux sont nécessaires pour transformer l'espace en crèmerie-fromagerie moderne et accueillante.
+          </p>
+
+          <%# Chiffres clés %>
+          <div class="story-chiffres" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 30px 0;">
+            <div style="background: #fef3c7; border: 2px solid #fde68a; padding: 24px; border-radius: 16px; text-align: center;">
+              <div style="font-size: 40px; margin-bottom: 8px;">🧀</div>
+              <div style="font-size: 32px; font-weight: 700; color: #92400e; margin-bottom: 4px;">70</div>
+              <div style="font-size: 12px; font-weight: 600; color: #b45309; text-transform: uppercase; letter-spacing: 0.5px;">références</div>
+            </div>
+            <div style="background: #d1fae5; border: 2px solid #a7f3d0; padding: 24px; border-radius: 16px; text-align: center;">
+              <div style="font-size: 40px; margin-bottom: 8px;">🌱</div>
+              <div style="font-size: 32px; font-weight: 700; color: #064e3b; margin-bottom: 4px;">3</div>
+              <div style="font-size: 12px; font-weight: 600; color: #047857; text-transform: uppercase; letter-spacing: 0.5px;">producteurs</div>
+            </div>
+            <div style="background: #f3e8ff; border: 2px solid #e9d5ff; padding: 24px; border-radius: 16px; text-align: center;">
+              <div style="font-size: 40px; margin-bottom: 8px;">🥪</div>
+              <div style="font-size: 32px; font-weight: 700; color: #581c87; margin-bottom: 4px;">45</div>
+              <div style="font-size: 12px; font-weight: 600; color: #7e22ce; text-transform: uppercase; letter-spacing: 0.5px;">m² boutique</div>
+            </div>
+          </div>
+
+          <p style="font-size: 17px; line-height: 1.7; color: #475569; word-wrap: break-word; overflow-wrap: break-word;">
+            Au menu : des yaourts infusés de la laiterie Odla (Manoncourt-en-Vermois), des fromages de l'Étoile de la Colline (Goviller) et de la Chèvrerie du Haut de la Vigne (Mignéville). Bénédicte apporte aussi sa touche personnelle avec des créations originales : brie au pesto, coulommiers façon nougat avec abricots, pistaches, noisettes et amandes.
+          </p>
+        </div>
+
+        <div class="story-separator"></div>
+
+        <%# Section 4 %>
+        <div style="margin-bottom: 50px;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #a855f7, #ec4899); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(168,85,247,0.3); flex-shrink: 0;">
+              <span style="font-size: 24px;">🎯</span>
+            </div>
+            <h3 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0; word-wrap: break-word;">Un lieu de vie</h3>
+          </div>
+          <div style="background: linear-gradient(135deg, #faf5ff 0%, #fff 100%); padding: 24px; border-radius: 16px; border-left: 4px solid #a855f7; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <p style="font-size: 17px; line-height: 1.7; color: #475569; margin: 0 0 20px 0; word-wrap: break-word; overflow-wrap: break-word;">
+              Caseus n'est pas qu'une simple boutique. Bénédicte a installé quelques tables pour créer un véritable espace de convivialité où les clients peuvent déguster sur place des sandwiches au fromage ou des planches apéro.
+            </p>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+              <li style="display: flex; align-items: start; gap: 10px; margin-bottom: 12px;">
+                <span style="flex-shrink: 0; width: 24px; height: 24px; background: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;">✓</span>
+                <span style="color: #475569; word-wrap: break-word;">Vente directe de fromages affinés</span>
+              </li>
+              <li style="display: flex; align-items: start; gap: 10px; margin-bottom: 12px;">
+                <span style="flex-shrink: 0; width: 24px; height: 24px; background: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;">✓</span>
+                <span style="color: #475569; word-wrap: break-word;">Sandwiches à emporter ou sur place</span>
+              </li>
+              <li style="display: flex; align-items: start; gap: 10px; margin-bottom: 12px;">
+                <span style="flex-shrink: 0; width: 24px; height: 24px; background: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;">✓</span>
+                <span style="color: #475569; word-wrap: break-word;">Planches apéro à composer</span>
+              </li>
+              <li style="display: flex; align-items: start; gap: 10px;">
+                <span style="flex-shrink: 0; width: 24px; height: 24px; background: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;">✓</span>
+                <span style="color: #475569; word-wrap: break-word;">Conseils personnalisés</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="story-separator"></div>
+
+        <%# CTA - COULEUR STORIES %>
+        <div style="background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); padding: 48px 32px; border-radius: 24px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 20px 50px rgba(168,85,247,0.3);">
+          <div style="position: absolute; top: -80px; right: -80px; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+          <div style="position: absolute; bottom: -60px; left: -60px; width: 160px; height: 160px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+          <div style="position: relative;">
+            <div style="font-size: 64px; margin-bottom: 16px;">✨</div>
+            <h3 class="story-cta-title" style="color: white; font-size: 30px; font-weight: 700; margin: 0 0 16px 0; word-wrap: break-word;">
+              Et moi, comment je peux avoir le Déclic ?
+            </h3>
+            <p style="color: rgba(255,255,255,0.95); font-size: 17px; margin: 0 auto 32px; max-width: 600px; line-height: 1.6; word-wrap: break-word; overflow-wrap: break-word;">
+              Cette histoire vous inspire ? Des dizaines d'opportunités similaires vous attendent près de chez vous pour entreprendre, vous former ou vous engager.
+            </p>
+            <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;">
+              <% if @story.source_name.present? && @story.source_url.present? %>
+                <a href="<%= @story.source_url %>" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 10px; background: white; color: #a855f7; padding: 16px 32px; border-radius: 999px; font-weight: 700; font-size: 16px; text-decoration: none; box-shadow: 0 8px 24px rgba(0,0,0,0.15); transition: transform 0.2s; white-space: nowrap;">
+                  <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                  </svg>
+                  <span style="overflow: hidden; text-overflow: ellipsis;">Lire sur <%= @story.source_name %></span>
+                </a>
+              <% end %>
+              <a href="/opportunities" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); color: white; padding: 16px 32px; border-radius: 999px; border: 2px solid white; font-weight: 700; font-size: 16px; text-decoration: none; transition: background 0.2s; white-space: nowrap;">
+                <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <span>Explorer</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <%# SIDEBAR %>
+      <div class="story-sidebar" style="position: sticky; top: 32px; align-self: start; min-width: 0;">
+
+        <%# Carte %>
+        <% if @story.location.present? && @story.latitude.present? %>
+          <div style="background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 2px solid #e9d5ff; margin-bottom: 24px;">
+            <div style="background: linear-gradient(135deg, #a855f7, #ec4899); padding: 16px;">
+              <h3 style="color: white; font-weight: 700; font-size: 16px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 20px;">📍</span>
+                Localisation
+              </h3>
+            </div>
+            <div id="story-map" style="height: 240px;" data-lat="<%= @story.latitude %>" data-lon="<%= @story.longitude %>"></div>
+            <div style="padding: 16px; background: #fafafa;">
+              <p style="color: #475569; font-weight: 600; margin: 0; font-size: 14px; display: flex; align-items: start; gap: 8px; word-wrap: break-word; overflow-wrap: break-word;">
+                <svg style="width: 18px; height: 18px; flex-shrink: 0; color: #a855f7; margin-top: 2px;" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path>
+                </svg>
+                <%= @story.location %>
+              </p>
+            </div>
+          </div>
+        <% end %>
+
+        <%# Infos clés %>
+        <div style="background: white; border-radius: 20px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 2px solid #e9d5ff; margin-bottom: 24px;">
+          <h3 style="font-weight: 700; font-size: 18px; color: #1e293b; margin: 0 0 20px 0; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">ℹ️</span>
+            Informations clés
+          </h3>
+
+          <% if date_fr.present? %>
+            <div style="display: flex; align-items: start; gap: 12px; padding: 16px; background: #faf5ff; border-radius: 12px; margin-bottom: 16px;">
+              <div style="flex-shrink: 0; width: 44px; height: 44px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <span style="font-size: 20px;">📅</span>
+              </div>
+              <div style="min-width: 0;">
+                <div style="font-size: 11px; font-weight: 700; color: #7e22ce; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Date</div>
+                <div style="font-weight: 700; color: #1e293b; font-size: 14px; line-height: 1.4; word-wrap: break-word;"><%= date_fr %></div>
+              </div>
             </div>
           <% end %>
 
-          <%# Bouton de contact %>
-          <% if @story.source_name.present? %>
-            <a href="#"
-               class="w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white <%= theme[:btn_gradient] %> shadow-lg shadow-<%= is_eco ? 'emerald' : 'indigo' %>-500/50 transform transition duration-200 hover:scale-[1.01]">
-              Découvrir la source : <%= @story.source_name %>
-            </a>
+          <% if @story.location.present? %>
+            <div style="display: flex; align-items: start; gap: 12px; padding: 16px; background: #faf5ff; border-radius: 12px;">
+              <div style="flex-shrink: 0; width: 44px; height: 44px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <span style="font-size: 20px;">🏪</span>
+              </div>
+              <div style="min-width: 0;">
+                <div style="font-size: 11px; font-weight: 700; color: #7e22ce; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Lieu</div>
+                <div style="font-weight: 700; color: #1e293b; font-size: 14px; line-height: 1.4; word-wrap: break-word; overflow-wrap: break-word;"><%= @story.location %></div>
+              </div>
+            </div>
           <% end %>
-
-          <%# Infos pratiques %>
-          <div class="space-y-4 pt-4">
-            <h2 class="text-lg font-bold text-slate-700 border-b pb-2">Informations clés</h2>
-
-            <%# Lieu %>
-            <% if @story.location.present? %>
-              <div class="flex items-start gap-3">
-                <svg class="w-6 h-6 flex-shrink-0 <%= theme[:icon] %>" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.54 22.351A8.257 8.257 0 0 1 12 22.5c2.21 0 4.218-.813 5.759-2.008m-11.518 0C6.182 21.687 8.19 22.5 10.5 22.5h1.5a8.257 8.257 0 0 0-3.99-1.399l-.02.007a49.102 49.102 0 0 1-.502-.275C6.734 20.306 6 19.492 6 18.5V9a6 6 0 0 1 6-6 6 6 0 0 1 6 6v9.5c0 .992-.734 1.806-1.666 2.302-.132.072-.265.143-.4.214-.02.01-.04.02-.06.03l-.02.01c-.13.065-.262.13-.393.193a.75.75 0 0 0-.15.062 8.286 8.286 0 0 1-.365.176h-1.5c.046 0 .092 0 .138-.002m-1.442-2.122A8.25 8.25 0 0 0 12 21.75a8.25 8.25 0 0 0 3.702-1.293L12 16.5l-3.702 3.136ZM18 9a4.5 4.5 0 0 0-9 0v9.5c0 .034.004.067.012.1A6.75 6.75 0 0 0 12 20.25a6.75 6.75 0 0 0 4.988-1.574A.75.75 0 0 0 17 18.5V9Z" clip-rule="evenodd" /></svg>
-                <div class="text-slate-700">
-                  <span class="font-semibold block">Lieu de l'action :</span>
-                  <%= @story.location %>
-                </div>
-              </div>
-            <% end %>
-
-            <%# Date %>
-            <% if @story.happened_on.present? %>
-              <div class="flex items-start gap-3">
-                <svg class="w-6 h-6 flex-shrink-0 <%= theme[:icon] %>" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 6a.75.75 0 0 0-1.5 0v6.75c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6Z" /></svg>
-                <div class="text-slate-700">
-                  <span class="font-semibold block">Date de l'événement :</span>
-                  <%= l @story.happened_on, format: :long %>
-                </div>
-              </div>
-            <% end %>
-          </div>
-
         </div>
-      </div>
 
-      <%# Colonne de droite (Contenu Principal) - span 2 %>
-      <div class="lg:col-span-2 pt-12 lg:pt-0">
-        <h2 class="text-xl font-extrabold text-slate-900 border-b pb-4 mb-8">
-          Le récit de l'action
-        </h2>
-
-        <%# Rendu du Contenu : Utilise le helper render_story_body pour la mise en page spécifique des Stories %>
-        <div class="flow-root">
-          <div class="prose prose-lg prose-slate max-w-none text-slate-700 leading-relaxed">
-            <%= render_story_body(@story.body) %>
+        <%# Partage %>
+        <div style="background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 20px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 2px solid #cbd5e1; margin-bottom: 24px;">
+          <h3 style="font-weight: 700; color: #1e293b; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px; font-size: 16px;">
+            <span style="font-size: 20px;">📢</span>
+            Partagez
+          </h3>
+          <div style="display: flex; gap: 12px;">
+            <a href="https://www.facebook.com/sharer/sharer.php?u=<%= request.original_url rescue '' %>" target="_blank" rel="noopener" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; background: #3b82f6; color: white; padding: 12px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 13px; min-width: 0;">
+              <svg style="width: 18px; height: 18px; flex-shrink: 0;" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Facebook</span>
+            </a>
+            <a href="https://twitter.com/intent/tweet?url=<%= request.original_url rescue '' %>" target="_blank" rel="noopener" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; background: #1e293b; color: white; padding: 12px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 13px; min-width: 0;">
+              <svg style="width: 18px; height: 18px; flex-shrink: 0;" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">X</span>
+            </a>
           </div>
         </div>
+
+        <%# Citation %>
+        <div style="background: linear-gradient(135deg, #a855f7, #ec4899); padding: 32px; border-radius: 20px; box-shadow: 0 10px 40px rgba(168,85,247,0.3); position: relative; overflow: hidden;">
+          <div style="position: absolute; top: -20px; right: -20px; font-size: 120px; color: rgba(255,255,255,0.1); user-select: none; line-height: 1;">"</div>
+          <div style="position: relative;">
+            <div style="font-size: 48px; margin-bottom: 12px;">💫</div>
+            <p style="color: white; font-size: 16px; font-weight: 500; font-style: italic; line-height: 1.6; margin: 0; word-wrap: break-word; overflow-wrap: break-word;">
+              Chaque grande histoire commence par un petit déclic. La vôtre commence aujourd'hui.
+            </p>
+          </div>
+        </div>
+
       </div>
 
     </div>
   </div>
+
+  <%# ESPACEMENT 3 %>
+  <div class="story-spacing-1"></div>
+
+  <%# ========== DÉCOUVERTE ========== %>
+  <div style="border-top: 2px solid #e2e8f0;">
+    <div style="background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); padding: 80px 24px;">
+      <div style="max-width: 900px; margin: 0 auto; text-align: center;">
+        <div style="font-size: 64px; margin-bottom: 20px;">🌟</div>
+        <h2 style="color: white; font-size: 38px; font-weight: 700; margin: 0 0 16px 0; word-wrap: break-word;">
+          Découvrez d'autres histoires inspirantes
+        </h2>
+        <p style="color: #cbd5e1; font-size: 19px; margin: 0 auto 32px; max-width: 600px; line-height: 1.6; word-wrap: break-word;">
+          Des centaines de personnes ont déjà trouvé leur Déclic. À votre tour de vous lancer dans l'aventure !
+        </p>
+        <a href="/stories" style="display: inline-flex; align-items: center; gap: 12px; background: linear-gradient(135deg, #a855f7, #ec4899); color: white; padding: 20px 48px; border-radius: 999px; font-weight: 700; font-size: 18px; text-decoration: none; box-shadow: 0 10px 40px rgba(168,85,247,0.4); white-space: nowrap;">
+          <span>Toutes les Belles Histoires</span>
+          <svg style="width: 22px; height: 22px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-
-
-
-<%# SCRIPT CARTE %>
+<%# CARTE LEAFLET %>
 <% if @story.latitude.present? && @story.longitude.present? %>
 <script>
-  function initStoryMap() {
-    var el = document.getElementById('story-map');
-    if (!el) return;
-
-    if (el.dataset.mapInited === "1") return;
-
-    var lat = parseFloat(el.dataset.lat);
-    var lon = parseFloat(el.dataset.lon);
-
-    if (!lat || !lon) return;
-
-    var map = L.map(el, { scrollWheelZoom: false }).setView([lat, lon], 14);
-
-    var osmUrl = 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png';
-    L.tileLayer(osmUrl, {
-      maxZoom: 20,
-      attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
-
-    var marker = L.marker([lat, lon]).addTo(map);
-    marker.bindPopup("<b><%= j(@story.title) %></b><br><%= j(@story.location.to_s) %>");
-
-    el.dataset.mapInited = "1";
-
-    setTimeout(function() { map.invalidateSize(); }, 100);
-    requestAnimationFrame(function() { map.invalidateSize(); });
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initStoryMap);
-  } else {
-    initStoryMap();
-  }
-
-  document.addEventListener("turbo:load", initStoryMap);
-  document.addEventListener("turbo:render", initStoryMap);
+function initStoryMap() {
+  var el = document.getElementById('story-map');
+  if (!el || el.dataset.mapInited === "1") return;
+  var lat = parseFloat(el.dataset.lat);
+  var lon = parseFloat(el.dataset.lon);
+  if (!lat || !lon) return;
+  var map = L.map(el, { scrollWheelZoom: false, zoomControl: true }).setView([lat, lon], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap' }).addTo(map);
+  var marker = L.marker([lat, lon]).addTo(map);
+  marker.bindPopup("<div style='text-align:center;padding:12px;'><div style='font-size:24px;margin-bottom:8px;'>✨</div><strong style='font-size:16px;'><%= @story.title.to_s.gsub("'", "\\'") rescue '' %></strong><br><span style='color:#64748b;'><%= @story.location.to_s.gsub("'", "\\'") rescue '' %></span></div>");
+  el.dataset.mapInited = "1";
+  setTimeout(() => map.invalidateSize(), 100);
+}
+if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", initStoryMap); } else { initStoryMap(); }
+document.addEventListener("turbo:load", initStoryMap);
+document.addEventListener("turbo:render", initStoryMap);
 </script>
 <% end %>
