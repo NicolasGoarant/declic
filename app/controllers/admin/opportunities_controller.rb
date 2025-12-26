@@ -136,24 +136,48 @@ class Admin::OpportunitiesController < Admin::BaseController
 
   def opportunity_params
     params.require(:opportunity).permit(
+      # Informations de base
       :title,
-      :description,
       :category,
+      :is_active,
       :organization,
+      :description,
+
+      # Localisation
       :location,
+      :latitude,
+      :longitude,
+
+      # Dates et temps
       :time_commitment,
       :starts_at,
       :ends_at,
-      :latitude,
-      :longitude,
-      :is_active,
-      :image_url,     # URL éventuelle
-      :image,         # upload Active Storage
-      :source_url,
+
+      # Images
+      :image,
+      :image_url,
+
+      # Liens et contact
       :website,
+      :source_url,
       :contact_email,
       :contact_phone,
-      :tags
+
+      # Métadonnées
+      :tags,
+
+      # Nouveaux champs pour la show
+      :quote,
+      :quote_author,
+      :stat_1_number,
+      :stat_1_label,
+      :stat_2_number,
+      :stat_2_label,
+      :stat_3_number,
+      :stat_3_label,
+      :stat_4_number,
+      :stat_4_label,
+      :challenges
     )
   end
 end

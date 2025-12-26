@@ -46,8 +46,68 @@
     </div>
 
     <div class="field full">
-      <%= f.label :description, "Description (markdown accepté)" %>
+      <%= f.label :description, "Description (utilisez **texte** pour grasser)" %>
       <%= f.text_area :description, rows: 8 %>
+      <small style="color:#64748b;font-size:0.85rem;margin-top:0.25rem">Utilisez **mot** pour mettre en gras</small>
+    </div>
+
+    <!-- NOUVEAUX CHAMPS : CITATION -->
+    <div class="field full" style="background:#f0fdf4;padding:1rem;border-radius:8px;border:1px solid #86efac">
+      <strong style="color:#16a34a;margin-bottom:0.5rem;display:block">💬 Citation / Témoignage</strong>
+      <%= f.label :quote, "Citation inspirante" %>
+      <%= f.text_area :quote, rows: 3, placeholder: "« En 48h, j'avais 15 messages de personnes prêtes à aider... »" %>
+    </div>
+
+    <div class="field">
+      <%= f.label :quote_author, "Auteur de la citation" %>
+      <%= f.text_field :quote_author, placeholder: "Marie, fondatrice" %>
+    </div>
+
+    <!-- NOUVEAUX CHAMPS : STATISTIQUES -->
+    <div class="field full" style="background:#eff6ff;padding:1rem;border-radius:8px;border:1px solid:#93c5fd;margin-top:1rem">
+      <strong style="color:#2563eb;margin-bottom:0.5rem;display:block">📊 Statistiques d'impact (4 stats max)</strong>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.75rem">
+        <div>
+          <%= f.label :stat_1_number, "Stat 1 - Nombre" %>
+          <%= f.text_field :stat_1_number, placeholder: "200+" %>
+        </div>
+        <div>
+          <%= f.label :stat_1_label, "Stat 1 - Label" %>
+          <%= f.text_field :stat_1_label, placeholder: "objets réparés" %>
+        </div>
+        <div>
+          <%= f.label :stat_2_number, "Stat 2 - Nombre" %>
+          <%= f.text_field :stat_2_number, placeholder: "45" %>
+        </div>
+        <div>
+          <%= f.label :stat_2_label, "Stat 2 - Label" %>
+          <%= f.text_field :stat_2_label, placeholder: "participants" %>
+        </div>
+        <div>
+          <%= f.label :stat_3_number, "Stat 3 - Nombre" %>
+          <%= f.text_field :stat_3_number, placeholder: "3 ans" %>
+        </div>
+        <div>
+          <%= f.label :stat_3_label, "Stat 3 - Label" %>
+          <%= f.text_field :stat_3_label, placeholder: "d'existence" %>
+        </div>
+        <div>
+          <%= f.label :stat_4_number, "Stat 4 - Nombre" %>
+          <%= f.text_field :stat_4_number, placeholder: "2x" %>
+        </div>
+        <div>
+          <%= f.label :stat_4_label, "Stat 4 - Label" %>
+          <%= f.text_field :stat_4_label, placeholder: "par mois" %>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOUVEAUX CHAMPS : DÉFIS -->
+    <div class="field full" style="background:#fff1f2;padding:1rem;border-radius:8px;border:1px solid #fca5a5;margin-top:1rem">
+      <strong style="color:#dc2626;margin-bottom:0.5rem;display:block">💪 Défis surmontés</strong>
+      <%= f.label :challenges, "Un défi par ligne (format: **Défi:** Solution)" %>
+      <%= f.text_area :challenges, rows: 5, placeholder: "**Trouver un lieu :** Négociation avec la mairie\n**Assurance :** Souscription via l'association\n**Matériel :** Appel aux dons" %>
+      <small style="color:#64748b;font-size:0.85rem;margin-top:0.25rem">Format : **Titre du défi :** Description de la solution (un par ligne)</small>
     </div>
 
     <div class="field">
@@ -141,4 +201,7 @@
 .form-actions{margin-top:1.2rem;display:flex;gap:.5rem}
 .preview-label{margin-top:.4rem;font-size:.85rem;color:#64748b}
 .preview-img{margin-top:.25rem;border-radius:8px;border:1px solid #e5e7eb;max-width:100%;height:auto}
+.btn{padding:.625rem 1.25rem;border-radius:8px;font-weight:600;text-decoration:none;display:inline-block;border:none;cursor:pointer}
+.btn:not(.ghost){background:#6366f1;color:white}
+.btn.ghost{background:transparent;border:1px solid #cbd5e1;color:#334155}
 </style>

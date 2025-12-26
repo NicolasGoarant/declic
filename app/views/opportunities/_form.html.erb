@@ -1,220 +1,277 @@
-<%= form_with model: @opportunity, class: "space-y-8" do |f| %>
+<%= form_with model: [:admin, @opportunity],
+              local: true,
+              html: { multipart: true } do |f| %>
+
   <% if @opportunity.errors.any? %>
-    <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800">
-      <p class="font-semibold mb-2"><%= pluralize(@opportunity.errors.count, "erreur") %> à corriger :</p>
-      <ul class="list-disc pl-5 space-y-1">
-        <% @opportunity.errors.full_messages.each do |msg| %>
-          <li><%= msg %></li>
+    <div class="form-errors">
+      <h2><%= pluralize(@opportunity.errors.count, "erreur") %> :</h2>
+      <ul>
+        <% @opportunity.errors.full_messages.each do |m| %>
+          <li><%= m %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
 
-  <!-- Identité -->
-  <section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-    <h2 class="text-lg font-semibold mb-4">Informations générales</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <%= f.label :title, "Titre", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_field :title, required: true, class: "w-full rounded-lg border-gray-300", placeholder: "Ex. Bootcamp climat pour cadres" %>
-      </div>
-      <div>
-        <%= f.label :organization, "Organisation", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_field :organization, class: "w-full rounded-lg border-gray-300", placeholder: "Nom de l'organisme" %>
-      </div>
-
-      <div>
-        <%= f.label :category, "Catégorie", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.select :category,
-          [["Bénévolat","benevolat"],["Formation","formation"],["Rencontres","rencontres"],["Entreprendre","entreprendre"]],
-          { prompt: "Choisir..." },
-          class: "w-full rounded-lg border-gray-300" %>
-      </div>
-      <div>
-        <%= f.label :website, "Site / Page de l’opportunité", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.url_field :website, class: "w-full rounded-lg border-gray-300", placeholder: "https://..." %>
-      </div>
-
-      <div class="sm:col-span-2">
-        <%= f.label :description, "Description", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_area :description, rows: 5, class: "w-full rounded-lg border-gray-300", placeholder: "Expliquez l'opportunité, le public visé, les résultats attendus (min. ~140 caractères)." %>
-      </div>
-    </div>
-  </section>
-
-  <!-- Logistique -->
-  <section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-    <h2 class="text-lg font-semibold mb-4">Logistique</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <%= f.label :location, "Ville / Lieu", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_field :location, class: "w-full rounded-lg border-gray-300", placeholder: "Paris 10e, Nancy..." %>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <%= f.label :latitude, "Latitude", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= f.number_field :latitude, step: :any, class: "w-full rounded-lg border-gray-300" %>
+  <div class="form-sections">
+    <%# ========== SECTION 1 : INFORMATIONS DE BASE ========== %>
+    <div class="form-section">
+      <h3 class="section-title">📋 Informations de base</h3>
+      <div class="form-grid">
+        <div class="field">
+          <%= f.label :title, "Titre" %>
+          <%= f.text_field :title %>
         </div>
-        <div>
-          <%= f.label :longitude, "Longitude", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= f.number_field :longitude, step: :any, class: "w-full rounded-lg border-gray-300" %>
+
+        <div class="field">
+          <%= f.label :category, "Catégorie" %>
+          <%= f.select :category,
+                [
+                  ["Bénévolat", "benevolat"],
+                  ["Formation", "formation"],
+                  ["Rencontres", "rencontres"],
+                  ["Entreprendre", "entreprendre"],
+                  ["Écologiser", "ecologiser"]
+                ],
+                { include_blank: "(choisir)" } %>
+        </div>
+
+        <div class="field">
+          <%= f.label :is_active, "Active ?" %>
+          <div class="checkbox-inline">
+            <%= f.check_box :is_active %>
+            <span>Visible sur le site</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <%= f.label :organization, "Organisation" %>
+          <%= f.text_field :organization %>
+        </div>
+
+        <div class="field full">
+          <%= f.label :description, "Description (utilisez **texte** pour grasser)" %>
+          <%= f.text_area :description, rows: 8 %>
+          <small class="field-hint">Utilisez **mot** pour mettre en gras. Le texte sera affiché avec une police plus grande sur la page.</small>
         </div>
       </div>
-
-      <div>
-        <%= f.label :format, "Format", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.select :format,
-          [["Présentiel","présentiel"],["Distanciel","distanciel"],["Hybride","hybride"]],
-          { prompt: "Choisir..." }, class: "w-full rounded-lg border-gray-300" %>
-      </div>
-      <div>
-        <%= f.label :schedule, "Rythme", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.select :schedule,
-          [["Soir & week-end","soir/week-end"],["Intensif","intensif"],["Temps plein","temps plein"],["Ponctuel","ponctuel"]],
-          { prompt: "Choisir..." }, class: "w-full rounded-lg border-gray-300" %>
-      </div>
-
-      <div>
-        <%= f.label :duration_weeks, "Durée (semaines)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.number_field :duration_weeks, class: "w-full rounded-lg border-gray-300" %>
-      </div>
-      <div>
-        <%= f.label :time_commitment, "Temps hebdo (ex. 4h/sem)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_field :time_commitment, class: "w-full rounded-lg border-gray-300" %>
-      </div>
-
-      <div>
-        <%= f.label :starts_at, "Début", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.datetime_local_field :starts_at, class: "w-full rounded-lg border-gray-300" %>
-      </div>
-      <div>
-        <%= f.label :application_deadline, "Date limite de candidature", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.datetime_local_field :application_deadline, class: "w-full rounded-lg border-gray-300" %>
-      </div>
     </div>
-  </section>
 
-  <!-- Carrière / Virage -->
-  <section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-    <h2 class="text-lg font-semibold mb-4">Virage & résultats</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <%= f.label :audience_level, "Public cible", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.select :audience_level,
-          [["En reconversion","reconversion"],["Cadre / Dir.","cadre/dir"],["Confirmé","confirme"],["Junior","junior"]],
-          { prompt: "Choisir..." }, class: "w-full rounded-lg border-gray-300" %>
-      </div>
-      <div>
-        <%= f.label :career_outcome, "Résultat visé", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.select :career_outcome,
-          [["Reconversion","reconversion"],["Upskilling","upskilling"],["Networking","networking"],["Mise à l’épreuve","essai"],["Entrepreneuriat/Incubation","entreprendre"]],
-          { prompt: "Choisir..." }, class: "w-full rounded-lg border-gray-300" %>
-      </div>
+    <%# ========== SECTION 2 : CITATION & TÉMOIGNAGE ========== %>
+    <div class="form-section">
+      <h3 class="section-title">💬 Citation / Témoignage</h3>
+      <div class="form-grid">
+        <div class="field full">
+          <%= f.label :quote, "Citation inspirante" %>
+          <%= f.text_area :quote, rows: 3, placeholder: "« En 48h, j'avais 15 messages de personnes prêtes à aider... »" %>
+          <small class="field-hint">Une citation marquante d'un participant ou fondateur. Sera affichée après la description.</small>
+        </div>
 
-      <div>
-        <%= f.label :credential, "Certification", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.select :credential,
-          [["Aucune",""],["Certificat","Certificat"],["RNCP","RNCP"],["Badge","Badge"]],
-          { prompt: "Choisir..." }, class: "w-full rounded-lg border-gray-300" %>
-      </div>
-      <div class="grid grid-cols-3 gap-3">
-        <div class="flex items-center gap-2">
-          <%= f.check_box :mentorship, class: "rounded" %>
-          <%= f.label :mentorship, "Mentorat" %>
-        </div>
-        <div class="flex items-center gap-2">
-          <%= f.check_box :alumni_network, class: "rounded" %>
-          <%= f.label :alumni_network, "Réseau alumni" %>
-        </div>
-        <div class="flex items-center gap-2">
-          <%= f.check_box :hiring_partners, class: "rounded" %>
-          <%= f.label :hiring_partners, "Partenaires emploi" %>
+        <div class="field">
+          <%= f.label :quote_author, "Auteur de la citation" %>
+          <%= f.text_field :quote_author, placeholder: "Marie, fondatrice du Repair Café" %>
         </div>
       </div>
+    </div>
 
-      <div class="sm:col-span-2">
-        <%= f.label :skills, "Compétences visées (séparées par des virgules)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_field :skills, class: "w-full rounded-lg border-gray-300", placeholder: "gestion de projet, dataviz, fundraising, ..." %>
-      </div>
-      <div class="sm:col-span-2">
-        <%= f.label :prerequisites, "Prérequis", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_area :prerequisites, rows: 3, class: "w-full rounded-lg border-gray-300", placeholder: "Diplôme, années d’expérience, tests, etc." %>
+    <%# ========== SECTION 3 : STATISTIQUES D'IMPACT ========== %>
+    <div class="form-section">
+      <h3 class="section-title">📊 Statistiques d'impact</h3>
+      <p class="section-desc">4 statistiques clés affichées en chiffres colorés sous la description</p>
+      <div class="form-grid stats-grid">
+        <div class="stat-pair">
+          <div class="field">
+            <%= f.label :stat_1_number, "Stat 1 - Nombre" %>
+            <%= f.text_field :stat_1_number, placeholder: "200+" %>
+          </div>
+          <div class="field">
+            <%= f.label :stat_1_label, "Stat 1 - Label" %>
+            <%= f.text_field :stat_1_label, placeholder: "objets réparés" %>
+          </div>
+        </div>
+
+        <div class="stat-pair">
+          <div class="field">
+            <%= f.label :stat_2_number, "Stat 2 - Nombre" %>
+            <%= f.text_field :stat_2_number, placeholder: "45" %>
+          </div>
+          <div class="field">
+            <%= f.label :stat_2_label, "Stat 2 - Label" %>
+            <%= f.text_field :stat_2_label, placeholder: "participants réguliers" %>
+          </div>
+        </div>
+
+        <div class="stat-pair">
+          <div class="field">
+            <%= f.label :stat_3_number, "Stat 3 - Nombre" %>
+            <%= f.text_field :stat_3_number, placeholder: "3 ans" %>
+          </div>
+          <div class="field">
+            <%= f.label :stat_3_label, "Stat 3 - Label" %>
+            <%= f.text_field :stat_3_label, placeholder: "d'existence" %>
+          </div>
+        </div>
+
+        <div class="stat-pair">
+          <div class="field">
+            <%= f.label :stat_4_number, "Stat 4 - Nombre" %>
+            <%= f.text_field :stat_4_number, placeholder: "2x" %>
+          </div>
+          <div class="field">
+            <%= f.label :stat_4_label, "Stat 4 - Label" %>
+            <%= f.text_field :stat_4_label, placeholder: "par mois" %>
+          </div>
+        </div>
       </div>
     </div>
-  </section>
 
-  <!-- Économie / accès -->
-  <section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-    <h2 class="text-lg font-semibold mb-4">Coûts & accès</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div>
-        <%= f.label :cost_eur, "Coût (€)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.number_field :cost_eur, step: "0.01", class: "w-full rounded-lg border-gray-300" %>
-      </div>
-      <div class="flex items-center gap-2">
-        <%= f.check_box :is_free, class: "rounded" %>
-        <%= f.label :is_free, "Gratuit" %>
-      </div>
-      <div class="flex items-center gap-2">
-        <%= f.check_box :scholarship_available, class: "rounded" %>
-        <%= f.label :scholarship_available, "Bourses / financements" %>
-      </div>
-
-      <div class="sm:col-span-3">
-        <%= f.label :funding_options, "Dispositifs (CPF, bourses…)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_field :funding_options, class: "w-full rounded-lg border-gray-300" %>
-      </div>
-      <div class="sm:col-span-3">
-        <%= f.label :accessibility, "Accessibilité", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_area :accessibility, rows: 2, class: "w-full rounded-lg border-gray-300" %>
+    <%# ========== SECTION 4 : DÉFIS SURMONTÉS ========== %>
+    <div class="form-section">
+      <h3 class="section-title">💪 Défis surmontés</h3>
+      <div class="form-grid">
+        <div class="field full">
+          <%= f.label :challenges, "Défis et solutions (un par ligne)" %>
+          <%= f.text_area :challenges, rows: 6, placeholder: "**Trouver un lieu :** Négociation avec la mairie pendant 2 mois, puis accord pour une salle municipale gratuite\n**Assurance :** Souscription d'une assurance responsabilité civile via l'association de quartier (120€/an)\n**Matériel :** Appel aux dons qui a permis de collecter outils, fer à souder et machines à coudre d'occasion" %>
+          <small class="field-hint">Format : **Défi :** Solution (un par ligne). Sera affiché dans un encadré rose.</small>
+        </div>
       </div>
     </div>
-  </section>
 
-  <!-- Impact -->
-  <section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-    <h2 class="text-lg font-semibold mb-4">Impact</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <%= f.label :impact_domains, "Domaines (séparés par virgules)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_field :impact_domains, class: "w-full rounded-lg border-gray-300", placeholder: "climat, éducation, santé, ESS…" %>
-      </div>
-      <div>
-        <%= f.label :selectivity_level, "Sélectivité", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.select :selectivity_level,
-          [["Ouvert","ouvert"],["Dossier","dossier"],["Sélectif / Entretien","sélectif"]],
-          { prompt: "Choisir..." }, class: "w-full rounded-lg border-gray-300" %>
-      </div>
+    <%# ========== SECTION 5 : LOCALISATION ========== %>
+    <div class="form-section">
+      <h3 class="section-title">📍 Localisation</h3>
+      <div class="form-grid">
+        <div class="field">
+          <%= f.label :location, "Adresse / lieu" %>
+          <%= f.text_field :location %>
+        </div>
 
-      <div class="sm:col-span-2">
-        <%= f.label :impact_metric_hint, "Indicateur d’impact (optionnel)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_field :impact_metric_hint, class: "w-full rounded-lg border-gray-300", placeholder: "ex. 100 bénéficiaires/mois" %>
+        <div class="field">
+          <%= f.label :latitude %>
+          <%= f.text_field :latitude, placeholder: "48.6936" %>
+        </div>
+
+        <div class="field">
+          <%= f.label :longitude %>
+          <%= f.text_field :longitude, placeholder: "6.1832" %>
+        </div>
       </div>
     </div>
-  </section>
 
-  <!-- Contact / Divers -->
-  <section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-    <h2 class="text-lg font-semibold mb-4">Contact & Divers</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div>
-        <%= f.label :contact_email, "Email", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.email_field :contact_email, class: "w-full rounded-lg border-gray-300" %>
-      </div>
-      <div>
-        <%= f.label :contact_phone, "Téléphone", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_field :contact_phone, class: "w-full rounded-lg border-gray-300" %>
-      </div>
-      <div>
-        <%= f.label :tags, "Tags (CSV)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_field :tags, class: "w-full rounded-lg border-gray-300", placeholder: "soirs, senior, climat..." %>
+    <%# ========== SECTION 6 : IMAGES ========== %>
+    <div class="form-section">
+      <h3 class="section-title">🖼️ Images</h3>
+      <div class="form-grid">
+        <div class="field">
+          <%= f.label :image, "Image principale (upload)" %>
+          <%= f.file_field :image, direct_upload: true %>
+          <% if @opportunity.image.attached? %>
+            <p class="preview-label">Image actuelle :</p>
+            <%= image_tag @opportunity.image.variant(resize_to_limit: [300, 180]),
+                          class: "preview-img" rescue nil %>
+          <% end %>
+          <small class="field-hint">Ratio recommandé : 16:9</small>
+        </div>
+
+        <div class="field">
+          <%= f.label :image_url, "Image principale (URL externe)" %>
+          <%= f.text_field :image_url, placeholder: "https://…" %>
+          <small class="field-hint">Alternative à l'upload. URL d'image externe.</small>
+        </div>
       </div>
     </div>
-  </section>
 
-  <div class="flex items-center justify-end gap-3">
-    <%= link_to "Annuler", root_path, class: "px-4 py-2 rounded-lg border text-gray-700 hover:bg-gray-50" %>
-    <%= f.submit "Envoyer l’opportunité",
-      class: "px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700" %>
+    <%# ========== SECTION 7 : DATES & HORAIRES ========== %>
+    <div class="form-section">
+      <h3 class="section-title">📅 Dates & horaires</h3>
+      <div class="form-grid">
+        <div class="field">
+          <%= f.label :time_commitment, "Temps à prévoir" %>
+          <%= f.text_field :time_commitment, placeholder: "2h par semaine" %>
+        </div>
+
+        <div class="field">
+          <%= f.label :starts_at, "Début" %>
+          <%= f.datetime_select :starts_at, include_blank: true %>
+        </div>
+
+        <div class="field">
+          <%= f.label :ends_at, "Fin" %>
+          <%= f.datetime_select :ends_at, include_blank: true %>
+        </div>
+      </div>
+    </div>
+
+    <%# ========== SECTION 8 : CONTACT & LIENS ========== %>
+    <div class="form-section">
+      <h3 class="section-title">📞 Contact & liens</h3>
+      <div class="form-grid">
+        <div class="field">
+          <%= f.label :contact_email, "Email contact" %>
+          <%= f.email_field :contact_email %>
+        </div>
+
+        <div class="field">
+          <%= f.label :contact_phone, "Téléphone contact" %>
+          <%= f.telephone_field :contact_phone %>
+        </div>
+
+        <div class="field">
+          <%= f.label :website, "Site web (URL)" %>
+          <%= f.text_field :website, placeholder: "https://…" %>
+        </div>
+
+        <div class="field">
+          <%= f.label :source_url, "Lien source / infos" %>
+          <%= f.text_field :source_url, placeholder: "https://…" %>
+        </div>
+      </div>
+    </div>
+
+    <%# ========== SECTION 9 : AUTRES ========== %>
+    <div class="form-section">
+      <h3 class="section-title">🏷️ Autres informations</h3>
+      <div class="form-grid">
+        <div class="field">
+          <%= f.label :tags, "Tags (séparés par des virgules)" %>
+          <%= f.text_field :tags, placeholder: "réparation, écologie, solidarité" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <%= f.submit class: "btn" %>
+    <%= link_to "Annuler", admin_opportunities_path, class: "btn ghost" %>
   </div>
 <% end %>
+
+<style>
+.form-errors{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem}
+.form-errors h2{margin:0 0 .5rem;font-weight:700;font-size:.95rem}
+.form-errors ul{margin:0;padding-left:1.1rem}
+
+.form-sections{display:flex;flex-direction:column;gap:1.5rem}
+.form-section{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:1.25rem}
+.section-title{margin:0 0 .75rem;font-size:1.05rem;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:.5rem}
+.section-desc{margin:0 0 1rem;font-size:.875rem;color:#64748b;font-style:italic}
+
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
+.stats-grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.stat-pair{display:flex;flex-direction:column;gap:.75rem;padding:.75rem;background:white;border-radius:8px;border:1px solid #e2e8f0}
+
+.field{display:flex;flex-direction:column;gap:.25rem}
+.field.full{grid-column:1/-1}
+.field label{font-weight:600;font-size:.9rem;color:#334155}
+.field input,.field textarea,.field select{border:1px solid #cbd5e1;border-radius:8px;padding:.4rem .55rem;font:inherit}
+.field-hint{font-size:.8rem;color:#64748b;margin-top:.25rem;font-style:italic}
+
+.checkbox-inline{display:flex;align-items:center;gap:.4rem;margin-top:.15rem}
+.form-actions{margin-top:1.5rem;display:flex;gap:.5rem;position:sticky;bottom:0;background:white;padding:1rem;border-top:2px solid #e2e8f0;z-index:10}
+.btn{padding:.625rem 1.25rem;border-radius:8px;font-weight:600;border:none;cursor:pointer;text-decoration:none;display:inline-block}
+.btn:not(.ghost){background:#6366f1;color:white}
+.btn.ghost{background:transparent;border:1px solid #cbd5e1;color:#334155}
+
+.preview-label{margin-top:.4rem;font-size:.85rem;color:#64748b}
+.preview-img{margin-top:.25rem;border-radius:8px;border:1px solid #e5e7eb;max-width:100%;height:auto}
+</style>
