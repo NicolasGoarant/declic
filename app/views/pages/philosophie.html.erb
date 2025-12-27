@@ -71,13 +71,6 @@
       </div>
     </div>
   </div>
-
-  <%# Vague de séparation %>
-  <div class="wave-separator">
-    <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
-      <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
-    </svg>
-  </div>
 </section>
 
 <%# SECTION PROBLÈME-SOLUTION-BÉNÉFICE %>
@@ -196,15 +189,9 @@
       <div class="step-item" data-step="1">
         <div class="step-number">1</div>
         <div class="step-content">
-          <div class="step-icon-group">
-            <span class="step-icon">🚀</span>
-            <span class="step-icon">📘</span>
-            <span class="step-icon">❤️</span>
-            <span class="step-icon">🤝</span>
-            <span class="step-icon">📖</span>
-          </div>
+          <div class="step-icon-single">🎯</div>
           <h3>Choisis ton parcours</h3>
-          <p>Entreprendre, te former, aider, rencontrer, ou t'inspirer des histoires d'autres personnes.</p>
+          <p>Entreprendre, te former, écologiser, aider, rencontrer, ou t'inspirer des histoires d'autres personnes.</p>
         </div>
       </div>
 
@@ -217,7 +204,7 @@
         <div class="step-content">
           <div class="step-icon-single">📍</div>
           <h3>Localise-toi</h3>
-          <p>On trouve ce qui est près de toi. Ta vie privée est respectée : géolocalisation uniquement pour la recherche.</p>
+          <p>On trouve ce qui est près de toi. Ta vie privée est respectée : la géolocalisation est uniquement utilisée pour la recherche.</p>
         </div>
       </div>
 
@@ -230,7 +217,7 @@
         <div class="step-content">
           <div class="step-icon-single">🧪</div>
           <h3>Agis en petit</h3>
-          <p>Un atelier, une mission d'essai, un café-rencontre. Commence léger, vois si ça te plaît.</p>
+          <p>Un atelier, une mission d'essai, un café-rencontre, un pitch : commence léger, vois si ça te plaît, et vas-y !</p>
         </div>
       </div>
 
@@ -243,7 +230,7 @@
         <div class="step-content">
           <div class="step-icon-single">✍️</div>
           <h3>Partage ton déclic</h3>
-          <p>Inspire la suite et aide d'autres à franchir le pas. Ta story peut changer des vies.</p>
+          <p>Sois une source d'inspiration et aide d'autres à franchir le pas. Ta story peut à son tour changer des vies !</p>
         </div>
       </div>
     </div>
@@ -683,17 +670,6 @@
   line-height: 0;
 }
 
-.wave-separator svg {
-  position: relative;
-  display: block;
-  width: calc(100% + 1.3px);
-  height: 60px;
-}
-
-.wave-separator path {
-  fill: #ffffff;
-}
-
 /* ============================================
    CARDS PROBLÈME-SOLUTION-BÉNÉFICE
    ============================================ */
@@ -921,7 +897,7 @@
 
 .steps-visual {
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* Alignement en haut pour cards au même niveau */
   justify-content: space-between;
   margin-bottom: 64px;
   overflow-x: auto;
@@ -955,6 +931,8 @@
   gap: 8px;
   justify-content: center;
   margin-bottom: 16px;
+  min-height: 64px; /* Hauteur fixe pour alignement */
+  align-items: center;
 }
 
 .step-icon {
@@ -964,6 +942,10 @@
 .step-icon-single {
   font-size: 48px;
   margin-bottom: 16px;
+  min-height: 64px; /* Même hauteur que step-icon-group */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .step-content h3 {
@@ -985,6 +967,7 @@
   flex-shrink: 0;
   color: #cbd5e1;
   margin: 0 16px;
+  margin-top: 30px; /* Aligner avec les numéros des steps */
 }
 
 .step-connector svg {

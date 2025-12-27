@@ -59,7 +59,7 @@ end
           Change ta vie, <span class="grad">en quelques clics</span>
         </h1>
         <p class="hm-chapo">
-          Déclic agrège les mille et une opportunités locales pour entreprendre, se former, rencontrer,
+          Déclic agrège les mille et une opportunités locales pour entreprendre, écologiser, se former, rencontrer,
           aider — et pour découvrir des <strong>“belles histoires”</strong> qui inspirent.
         </p>
 
@@ -76,10 +76,81 @@ end
     <div class="hm-hero-img" style="--hero:url('<%= hero_src %>')"></div>
   </header>
 
+  <%# ========== SECTION CARTE (MAINTENANT EN PREMIER !) ========== %>
+  <section id="explorer" class="hm-slice hm-map-hero">
+    <%# Grille sortie du container pour pleine largeur %>
+    <div class="hm-explore-grid">
+        <div class="hm-explore-left">
+          <%# Filtres : chips sur desktop, select sur mobile %>
+          <div class="hm-filter-wrapper">
+            <%# Select mobile (visible uniquement sur mobile) %>
+            <select class="hm-select-mobile" id="category-select">
+              <option value="toutes">🌍 Toutes les catégories</option>
+              <option value="benevolat">❤️ Bénévolat</option>
+              <option value="ecologiser">🌱 Écologiser</option>
+              <option value="formation">📘 Formation</option>
+              <option value="rencontres">👥 Rencontres</option>
+              <option value="entreprendre">💼 Entreprendre</option>
+              <option value="histoires">✨ Belles histoires</option>
+            </select>
+
+            <%# Chips desktop (cachés sur mobile) %>
+            <div class="hm-filterbar">
+              <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
+              <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
+              <button class="chip" data-cat="ecologiser">🌱 Écologiser</button>
+              <button class="chip" data-cat="formation">📘 Formation</button>
+              <button class="chip" data-cat="rencontres">👥 Rencontres</button>
+              <button class="chip" data-cat="entreprendre">💼 Entreprendre</button>
+              <button class="chip" data-cat="histoires">✨ Belles histoires</button>
+            </div>
+          </div>
+
+          <div class="hm-map-sticky">
+            <div class="hm-mapwrap">
+              <div id="map" class="hm-map"></div>
+              <button id="btn-locate" class="hm-locate hm-locate-enhanced">
+                <span class="locate-icon">📍</span>
+                <span class="locate-text">Me localiser</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="hm-explore-right">
+          <div class="hm-explore-header">
+            <h3 class="hm-h3">Dernières pépites</h3>
+            <%= link_to opportunities_path, class: "hm-explore-more" do %>
+              Voir tout →
+            <% end %>
+          </div>
+
+          <div class="hm-cards">
+            <% (@opportunities || []).first(3).each do |o| %>
+              <%= link_to opportunity_path(o), class: "hm-card-op" do %>
+                <div class="op-img" style="background-image:url('<%= thumb_for(o) %>')"></div>
+                <div class="op-content">
+                  <p class="k"><%= o.category.to_s.capitalize %></p>
+                  <p class="t"><%= strip_unsplash_md(o.title) %></p>
+                  <p class="d"><%= strip_unsplash_md(o.description) %></p>
+                  <p class="l">📍 <%= o.location %></p>
+                </div>
+              <% end %>
+            <% end %>
+
+            <% if (@opportunities || []).empty? %>
+              <div class="hm-empty">
+                Aucune opportunité pour le moment… Revenez vite !
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+  </section>
+
+  <%# ========== SECTION "CHOISIS TON DÉCLIC" (MAINTENANT EN 2ÈME) ========== %>
   <section id="parcours" class="hm-slice alt">
     <div class="container">
-      <h2 class="hm-h2">Choisis ton Déclic</h2>
-
       <div class="hm-grid-cards">
         <% btn_base = "hm-card" %>
 
@@ -129,7 +200,7 @@ end
         <% end %>
 
         <%= link_to stories_path, class: "#{btn_base} -histoires" do %>
-          <span class="hm-emoji">📖</span>
+          <span class="hm-emoji">✨</span>
           <div class="hm-card-txt">
             <p class="t1">“Belles histoires !”</p>
             <p class="t2">Déclics, reconversions, prises de risque</p>
@@ -139,64 +210,6 @@ end
     </div>
   </section>
 
-  <section id="explorer" class="hm-slice bg-muted grad-behind-map">
-    <div class="container">
-      <h2 class="hm-h2">Explorez les opportunités</h2>
-      <p class="hm-sub">Découvre sur la carte toutes les possibilités d’engagement près de chez toi.</p>
-
-      <div class="hm-filterbar">
-        <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
-        <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
-        <button class="chip" data-cat="ecologiser">🌱 Écologiser</button>
-        <button class="chip" data-cat="formation">📘 Formation</button>
-        <button class="chip" data-cat="rencontres">👥 Rencontres</button>
-        <button class="chip" data-cat="entreprendre">💼 Entreprendre</button>
-        <button class="chip" data-cat="histoires">📖 Belles histoires</button>
-      </div>
-
-      <div class="hm-explore-grid">
-        <div class="hm-explore-left">
-          <div class="hm-map-sticky">
-            <div class="hm-mapwrap">
-              <div id="map" class="hm-map"></div>
-              <button id="btn-locate" class="hm-locate">
-                <span>📍</span><span>Me localiser</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="hm-explore-right">
-          <div class="hm-explore-header">
-            <h3 class="hm-h3">Dernières pépites</h3>
-            <%= link_to opportunities_path, class: "hm-explore-more" do %>
-              Voir tout →
-            <% end %>
-          </div>
-
-          <div class="hm-cards">
-            <% (@opportunities || []).first(6).each do |o| %>
-              <%= link_to opportunity_path(o), class: "hm-card-op" do %>
-                <div class="op-img" style="background-image:url('<%= thumb_for(o) %>')"></div>
-                <div class="op-content">
-                  <p class="k"><%= o.category.to_s.capitalize %></p>
-                  <p class="t"><%= strip_unsplash_md(o.title) %></p>
-                  <p class="d"><%= strip_unsplash_md(o.description) %></p>
-                  <p class="l">📍 <%= o.location %></p>
-                </div>
-              <% end %>
-            <% end %>
-
-            <% if (@opportunities || []).empty? %>
-              <div class="hm-empty">
-                Aucune opportunité pour le moment… Revenez vite !
-              </div>
-            <% end %>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <section id="stories" class="hm-slice hm-stories">
     <div class="container">
@@ -316,22 +329,64 @@ end
 .hm-hero::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(7,9,22,.62),rgba(7,9,22,.62)); mix-blend:multiply; z-index:2; }
 .hm-hero-img{ position:absolute; inset:0; background:var(--hero,none) center/cover no-repeat; filter:blur(2px) saturate(1.05) brightness(0.9); opacity:.85; z-index:1; }
 
-/* Badge */
+/* Badge - En haut à droite sur desktop ET mobile */
 .hm-badge{
   position:absolute; top:14px; right:calc(18px + env(safe-area-inset-right)); z-index:30;
-  display:inline-flex; align-items:center; gap:.55rem; padding:.55rem .9rem; border-radius:999px;
-  font:900 .95rem/1 "Epilogue";
+  display:inline-flex;
+  align-items:center;
+  gap:.55rem;
+  padding:.75rem 1.25rem;
+  border-radius:999px;
+  font:900 1.05rem/1 "Epilogue";
   color:#1e1b4b;
   background:linear-gradient(135deg,#fef3c7,#fde68a,#fcd34d);
-  box-shadow:0 8px 20px rgba(0,0,0,.12); border:1px solid rgba(17,24,39,.06); text-decoration:none;
+  box-shadow:0 8px 20px rgba(0,0,0,.25), 0 0 0 3px rgba(254, 243, 199, 0.3);
+  border:2px solid rgba(251, 191, 36, 0.4);
+  text-decoration:none;
+  transition: all 0.3s ease;
+  animation: badge-pulse 3s ease-in-out infinite;
 }
+
+@keyframes badge-pulse {
+  0%, 100% {
+    box-shadow: 0 8px 20px rgba(0,0,0,.25), 0 0 0 3px rgba(254, 243, 199, 0.3);
+  }
+  50% {
+    box-shadow: 0 8px 20px rgba(0,0,0,.25), 0 0 0 6px rgba(254, 243, 199, 0.5);
+  }
+}
+
 @media (min-width:1024px){
-  .hm-badge{ padding:.7rem 1.1rem; font-size:1.05rem; }
-  .hm-badge:hover{ transform:translateY(-1px); transition:transform .12s ease; }
+  .hm-badge{
+    padding:.85rem 1.4rem;
+    font-size:1.1rem;
+  }
+  .hm-badge:hover{
+    transform:translateY(-2px) scale(1.05);
+    transition:transform .12s ease;
+    box-shadow: 0 12px 28px rgba(0,0,0,.3), 0 0 0 6px rgba(254, 243, 199, 0.5);
+  }
 }
+
+@media (max-width:1023px){
+  .hm-badge{
+    font-size:.92rem;
+    padding:.55rem .85rem;
+  }
+}
+
 @media (max-width:480px){
-  .hm-badge{ top:10px; right:10px; font-size:.88rem; padding:.45rem .7rem; }
+  .hm-badge{
+    top:10px;
+    right:10px;
+  }
 }
+
+/* Badge CTA - masqué maintenant qu'on a remis l'original */
+.hm-badge-cta {
+  display:none;
+}
+
 
 .hm-title{
   font-family:"Epilogue",Inter; font-weight:900;
@@ -516,44 +571,184 @@ end
   }
 }
 
-/* ====== Carte & filtres ====== */
+/* ====== Filtres : Select mobile + Chips desktop ====== */
+
+/* Wrapper des filtres */
+.hm-filter-wrapper{
+  margin-bottom:18px;
+}
+
+/* Select mobile (caché sur desktop) */
+.hm-select-mobile{
+  display:none;
+  width:100%;
+  padding:.75rem 1rem;
+  font:700 .95rem/1.2 "Inter";
+  color:#475569;
+  background:rgba(255, 255, 255, 0.9);
+  backdrop-filter:blur(10px);
+  border:2px solid rgba(203, 213, 225, 0.6);
+  border-radius:14px;
+  cursor:pointer;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 1rem center;
+  padding-right:3rem;
+  box-shadow:0 4px 12px rgba(15, 23, 42, 0.08);
+  transition:all 0.3s ease;
+}
+.hm-select-mobile:focus{
+  outline:none;
+  border-color:rgba(126, 91, 239, 0.5);
+  box-shadow:0 6px 20px rgba(126, 91, 239, 0.15);
+}
+
+/* Chips desktop */
 .hm-filterbar{
   display:flex;
   flex-wrap:wrap;
-  gap:10px;
-  margin-bottom:12px;
+  gap:8px;
 }
 .chip{
-  --chip-bg-soft:#ffffff;
-  --chip-border:#e6e8ee;
-  --chip-text:#111827;
+  --chip-bg-soft:rgba(255, 255, 255, 0.85);
+  --chip-border:rgba(203, 213, 225, 0.4);
+  --chip-text:#475569;
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  padding:.6rem 1rem;
-  border-radius:999px;
+  padding:.55rem .8rem;
+  border-radius:12px;
   background:var(--chip-bg-soft);
+  backdrop-filter:blur(10px);
   border:1px solid var(--chip-border);
-  font:800 .95rem/1.1 "Inter";
+  font:700 .8rem/1.1 "Inter";
   color:var(--chip-text);
   cursor:pointer;
+  transition:all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow:0 2px 8px rgba(15, 23, 42, 0.04);
+  white-space:nowrap;
 }
-.chip[data-cat="benevolat"]{--chip-bg-soft:#fff1f2;--chip-border:#fecdd3;--chip-text:#be123c;}
-.chip[data-cat="ecologiser"]{--chip-bg-soft:#ecfdf3;--chip-border:#bbf7d0;--chip-text:#166534;}
-.chip[data-cat="formation"]{--chip-bg-soft:#eff6ff;--chip-border:#bfdbfe;--chip-text:#1d4ed8;}
-.chip[data-cat="rencontres"]{--chip-bg-soft:#fefce8;--chip-border:#fef3c7;--chip-text:#92400e;}
-.chip[data-cat="entreprendre"]{--chip-bg-soft:#fff7ed;--chip-border:#fed7aa;--chip-text:#c2410c;}
-.chip[data-cat="histoires"]{--chip-bg-soft:#f5f3ff;--chip-border:#ddd6fe;--chip-text:#5b21b6;}
+.chip:hover {
+  transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(15, 23, 42, 0.08);
+  background:rgba(255, 255, 255, 0.95);
+}
+
+/* Desktop : chips plus compacts pour tenir sur 1 ligne */
+@media (min-width:1280px){
+  .chip{
+    padding:.5rem .75rem;
+    font-size:.78rem;
+  }
+  .hm-filterbar{
+    gap:7px;
+  }
+}
+
+/* Mobile : afficher select, cacher chips */
+@media (max-width:768px){
+  .hm-select-mobile{
+    display:block;
+  }
+  .hm-filterbar{
+    display:none;
+  }
+}
+
+/* Variantes de couleurs subtiles */
+.chip[data-cat="benevolat"]{--chip-bg-soft:rgba(255, 241, 242, 0.7);--chip-border:rgba(254, 205, 211, 0.4);--chip-text:#be123c;}
+.chip[data-cat="ecologiser"]{--chip-bg-soft:rgba(236, 253, 243, 0.7);--chip-border:rgba(187, 247, 208, 0.4);--chip-text:#166534;}
+.chip[data-cat="formation"]{--chip-bg-soft:rgba(239, 246, 255, 0.7);--chip-border:rgba(191, 219, 254, 0.4);--chip-text:#1d4ed8;}
+.chip[data-cat="rencontres"]{--chip-bg-soft:rgba(254, 252, 232, 0.7);--chip-border:rgba(254, 243, 199, 0.4);--chip-text:#92400e;}
+.chip[data-cat="entreprendre"]{--chip-bg-soft:rgba(255, 247, 237, 0.7);--chip-border:rgba(254, 215, 170, 0.4);--chip-text:#c2410c;}
+.chip[data-cat="histoires"]{--chip-bg-soft:rgba(245, 243, 255, 0.7);--chip-border:rgba(221, 214, 254, 0.4);--chip-text:#5b21b6;}
+
+/* État actif - Plus marqué mais élégant */
 .chip.is-active{
   background:var(--chip-text);
   color:#fff;
   border-color:transparent;
+  box-shadow:0 4px 16px rgba(0, 0, 0, 0.15);
+  transform:translateY(0);
 }
 .chip[data-cat="histoires"].is-active{
-  background:linear-gradient(135deg,#ef4444,#3b82f6,#f59e0b,#10b981,#fb7185,#22c55e);
-  background-size:350% 350%;
-  animation:gradientShift 12s ease infinite;
-  color:#fff;border-color:transparent;
+  background:linear-gradient(135deg,#a855f7,#7e5bef,#6366f1);
+  background-size:200% 200%;
+  animation:gradientShift 8s ease infinite;
+  color:#fff;
+  border-color:transparent;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ====== SECTION CARTE HERO (MAINTENANT EN PREMIER !) ====== */
+.hm-map-hero {
+  background: linear-gradient(180deg, #f8f9fc 0%, #eef2f7 100%);
+  padding-top: 3rem;
+  padding-bottom: 4rem;
+}
+
+/* Réduire l'espace sur mobile */
+@media (max-width: 768px) {
+  .hm-map-hero {
+    padding-top: 1.5rem;
+    padding-bottom: 2.5rem;
+  }
+}
+
+.hm-map-intro {
+  text-align: center;
+  max-width: 880px;
+  margin: 0 auto 2.5rem;
+}
+
+.hm-map-title {
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 900;
+  line-height: 1.1;
+  margin: 0 0 1rem;
+  background: linear-gradient(135deg, #7e5bef 0%, #3b82f6 50%, #10b981 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hm-map-subtitle {
+  font-size: clamp(1.05rem, 1.5vw, 1.3rem);
+  color: #475569;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Bouton "Me localiser" amélioré */
+/* Bouton "Me localiser" - Version discrète avec glassmorphism */
+.hm-locate-enhanced {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px) !important;
+  padding: 0.65rem 1.2rem !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  color: #475569 !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+  transition: all 0.3s ease !important;
+}
+
+.hm-locate-enhanced:hover {
+  background: rgba(255, 255, 255, 1) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12) !important;
+  border-color: rgba(126, 91, 239, 0.3) !important;
+}
+
+.hm-locate-enhanced .locate-icon {
+  font-size: 1.1em;
+  margin-right: 0.4rem;
 }
 
 /* layout carte + cards */
@@ -564,6 +759,25 @@ end
   gap:22px;
   /* Correction Sticky : pas de align-items flex-start ici */
   margin-top:18px;
+  /* Pleine largeur sur desktop */
+  max-width:1650px;
+  margin-left:auto;
+  margin-right:auto;
+  padding:0 2rem;
+}
+
+@media (max-width:960px){
+  .hm-explore-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+/* Réduire les marges sur mobile */
+@media (max-width:768px){
+  .hm-explore-grid{
+    margin-top:0;
+    padding:0 1rem;
+  }
 }
 
 .hm-explore-left{ min-width:0; }
@@ -581,26 +795,73 @@ end
 }
 .hm-explore-more:hover{ text-decoration:underline; }
 
-@media (max-width:960px){
-  .hm-explore-grid{
-    grid-template-columns:1fr;
-  }
+/* Carte - Design amélioré et plus grande */
+.hm-mapwrap{
+  position:relative;
 }
-
-/* Carte */
-.hm-mapwrap{ position:relative; }
 .hm-map{
   height:560px;
   width:100%;
-  border-radius:20px;
-  border:1px solid #e6e8ee;
+  border-radius:24px;
+  border:2px solid #cbd5e1;
   overflow:hidden;
-  box-shadow:0 10px 30px rgba(15,23,42,.10);
+  box-shadow:0 20px 50px rgba(15,23,42,.15), 0 0 0 1px rgba(99,102,241,0.1);
+  transition:box-shadow 0.3s ease;
+}
+.hm-map:hover{
+  box-shadow:0 25px 60px rgba(15,23,42,.2), 0 0 0 2px rgba(99,102,241,0.2);
+}
+
+/* Ajout d'un cadre décoratif autour de la carte */
+.hm-mapwrap::before {
+  content:"";
+  position:absolute;
+  inset:-6px;
+  border-radius:28px;
+  background:linear-gradient(135deg,
+    rgba(99,102,241,0.1) 0%,
+    rgba(139,92,246,0.1) 50%,
+    rgba(236,72,153,0.1) 100%);
+  z-index:-1;
+  opacity:0;
+  transition:opacity 0.3s ease;
+}
+.hm-mapwrap:hover::before {
+  opacity:1;
+}
+
+@media (min-width:1280px){
+  .hm-explore-grid{
+    grid-template-columns:1.8fr 1fr;
+    gap:48px;
+  }
+  .hm-map{
+    height:900px; /* IMMENSE sur desktop ! */
+  }
+}
+
+/* Responsive : hauteurs réduites sur tablette et mobile */
+@media (max-width:1279px){
+  .hm-map{
+    height:420px; /* Réduit sur laptop/tablette */
+  }
+}
+
+@media (max-width:768px){
+  .hm-map{
+    height:320px; /* Plus petit sur tablette */
+  }
+}
+
+@media (max-width:520px){
+  .hm-map{
+    height:280px; /* Compact sur mobile */
+  }
 }
 
 .hm-map-sticky {
   position: sticky;
-  top: 110px; /* Un peu d'air sous le header */
+  top: 80px; /* Réduit pour coller plus au header */
   z-index: 10;
 }
 @media (max-width:960px){
@@ -713,7 +974,7 @@ end
 /* ====== Cards opportunités ====== */
 .hm-cards{
   display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-columns:1fr;
   gap:18px;
 }
 @media (max-width:980px){
@@ -1167,10 +1428,28 @@ function plot(items){
         document.querySelectorAll('.chip').forEach(c=>c.classList.remove('is-active'));
         ch.classList.add('is-active');
         const cat=ch.dataset.cat;
+        // Sync avec le select mobile
+        const sel = document.getElementById('category-select');
+        if (sel) sel.value = cat;
         if(cat==='toutes'){ plot(dataset); return; }
         plot((dataset||[]).filter(o=> (o.category||'').toLowerCase()===cat));
       });
     });
+
+    // Gérer le select mobile
+    const sel = document.getElementById('category-select');
+    if (sel && !sel.dataset.bound) {
+      sel.dataset.bound = '1';
+      sel.addEventListener('change', ()=>{
+        const cat = sel.value;
+        // Sync avec les chips (au cas où on passe de mobile à desktop)
+        document.querySelectorAll('.chip').forEach(c=>c.classList.remove('is-active'));
+        const activeChip = document.querySelector(`.chip[data-cat="${cat}"]`);
+        if (activeChip) activeChip.classList.add('is-active');
+        if(cat==='toutes'){ plot(dataset); return; }
+        plot((dataset||[]).filter(o=> (o.category||'').toLowerCase()===cat));
+      });
+    }
 
     window._declicDataInit = true;
     window._declicPlot = plot;
