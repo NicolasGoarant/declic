@@ -124,7 +124,6 @@ end
 
         <%# Titre %>
         <h1 class="story-hero-title" style="color: white; font-size: 42px; font-weight: 800; line-height: 1.2; margin: 0 0 20px 0; max-width: 900px; word-wrap: break-word;">
-          <span class="story-hero-emoji" style="font-size: 56px; margin-right: 12px;"><%= story_emoji %></span>
           <%= @story.title %>
         </h1>
 
@@ -293,37 +292,33 @@ end
         <div class="story-separator"></div>
 
         <%# Section 4 %>
+        <% if @story.respond_to?(:highlights_title) && @story.highlights_title.present? %>
         <div style="margin-bottom: 50px;">
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
             <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #a855f7, #ec4899); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(168,85,247,0.3); flex-shrink: 0;">
               <span style="font-size: 24px;">🎯</span>
             </div>
-            <h3 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0; word-wrap: break-word;">Un lieu de vie</h3>
+            <h3 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0; word-wrap: break-word;"><%= @story.highlights_title %></h3>
           </div>
           <div style="background: linear-gradient(135deg, #faf5ff 0%, #fff 100%); padding: 24px; border-radius: 16px; border-left: 4px solid #a855f7; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-            <p style="font-size: 17px; line-height: 1.7; color: #475569; margin: 0 0 20px 0; word-wrap: break-word; overflow-wrap: break-word;">
-              Caseus n'est pas qu'une simple boutique. Bénédicte a installé quelques tables pour créer un véritable espace de convivialité où les clients peuvent déguster sur place des sandwiches au fromage ou des planches apéro.
-            </p>
-            <ul style="list-style: none; padding: 0; margin: 0;">
-              <li style="display: flex; align-items: start; gap: 10px; margin-bottom: 12px;">
-                <span style="flex-shrink: 0; width: 24px; height: 24px; background: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;">✓</span>
-                <span style="color: #475569; word-wrap: break-word;">Vente directe de fromages affinés</span>
-              </li>
-              <li style="display: flex; align-items: start; gap: 10px; margin-bottom: 12px;">
-                <span style="flex-shrink: 0; width: 24px; height: 24px; background: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;">✓</span>
-                <span style="color: #475569; word-wrap: break-word;">Sandwiches à emporter ou sur place</span>
-              </li>
-              <li style="display: flex; align-items: start; gap: 10px; margin-bottom: 12px;">
-                <span style="flex-shrink: 0; width: 24px; height: 24px; background: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;">✓</span>
-                <span style="color: #475569; word-wrap: break-word;">Planches apéro à composer</span>
-              </li>
-              <li style="display: flex; align-items: start; gap: 10px;">
-                <span style="flex-shrink: 0; width: 24px; height: 24px; background: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;">✓</span>
-                <span style="color: #475569; word-wrap: break-word;">Conseils personnalisés</span>
-              </li>
-            </ul>
+            <% if @story.highlights_text.present? %>
+              <p style="font-size: 17px; line-height: 1.7; color: #475569; margin: 0 0 20px 0; word-wrap: break-word; overflow-wrap: break-word;">
+                <%= @story.highlights_text %>
+              </p>
+            <% end %>
+            <% if @story.highlights_items.present? %>
+              <ul style="list-style: none; padding: 0; margin: 0;">
+                <% @story.highlights_items.to_s.split("\n").reject(&:blank?).each do |item| %>
+                  <li style="display: flex; align-items: start; gap: 10px; margin-bottom: 12px;">
+                    <span style="flex-shrink: 0; width: 24px; height: 24px; background: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;">✓</span>
+                    <span style="color: #475569; word-wrap: break-word;"><%= item.strip %></span>
+                  </li>
+                <% end %>
+              </ul>
+            <% end %>
           </div>
         </div>
+        <% end %>
 
         <div class="story-separator"></div>
 

@@ -54,6 +54,25 @@
         <%= f.text_area :description, rows: 2, placeholder: "Résumé en 1-2 phrases pour Google et les partages sociaux" %>
         <span class="field-help">🔍 Visible dans les résultats de recherche</span>
       </div>
+
+      <%# NOUVEAUX CHAMPS HIGHLIGHTS %>
+      <div class="field full">
+        <%= f.label :highlights_title, "🎯 Titre de la section points forts (optionnel)" %>
+        <%= f.text_field :highlights_title, placeholder: "Ex: Un lieu de vie" %>
+        <span class="field-help">Titre de la section avec liste à puces (ex: services, caractéristiques)</span>
+      </div>
+
+      <div class="field full">
+        <%= f.label :highlights_text, "📝 Texte d'introduction (optionnel)" %>
+        <%= f.text_area :highlights_text, rows: 3, placeholder: "Ex: Caseus n'est pas qu'une simple boutique..." %>
+        <span class="field-help">Paragraphe avant la liste à puces</span>
+      </div>
+
+      <div class="field full">
+        <%= f.label :highlights_items, "✓ Liste des points forts (optionnel)" %>
+        <%= f.text_area :highlights_items, rows: 5, placeholder: "Un point par ligne:\nVente directe de fromages affinés\nSandwiches à emporter ou sur place\nPlanches apéro à composer\nConseils personnalisés" %>
+        <span class="field-help">Un point par ligne - affichés avec des coches vertes ✓</span>
+      </div>
     </div>
   </div>
 

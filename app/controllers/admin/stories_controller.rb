@@ -134,21 +134,16 @@ class Admin::StoriesController < Admin::BaseController
     @story = Story.find_by(id: params[:id]) || Story.find_by!(slug: params[:id])
   end
 
-  def story_params
-    params.require(:story).permit(
-      :title,
-      :chapo,
-      :description,
-      :body,
-      :location,
-      :latitude,
-      :longitude,
-      :source_name,
-      :source_url,
-      :image_url,  # URL éventuelle
-      :image,      # upload Active Storage
-      :slug,
-      :happened_on
-    )
-  end
+def story_params
+  params.require(:story).permit(
+    :title, :chapo, :body, :description,
+    :happened_on, :location, :latitude, :longitude,
+    :image, :image_url,
+    :source_name, :source_url,
+    :slug, :tags, :active, :is_active, :published,
+    :highlights_title,     # ← NOUVEAU
+    :highlights_text,      # ← NOUVEAU
+    :highlights_items      # ← NOUVEAU
+  )
+end
 end
