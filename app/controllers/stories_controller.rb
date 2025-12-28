@@ -33,6 +33,7 @@ class StoriesController < ApplicationController
       :author_name,
       :author_email,
       :city,
+      :contact_info,
       photos: []
     )
   end

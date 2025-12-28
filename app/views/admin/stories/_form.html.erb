@@ -162,32 +162,39 @@
   </div>
 
   <%# ========================================
-      SECTION 4 : SOURCE & ATTRIBUTION
+      SECTION 4 : SOURCE & ATTRIBUTION + CONTACT
       ======================================== %>
   <div class="form-section">
     <div class="section-header">
-      <h3>📰 Source & Attribution</h3>
-      <p class="section-help">Crédit de l'article original (IMPORTANT pour affichage)</p>
+      <h3>📰 Source & Contact</h3>
+      <p class="section-help">Crédit de l'article original + informations de contact</p>
     </div>
 
     <div class="form-grid">
       <div class="field">
         <%= f.label :source_name, "Nom de la source *" %>
         <%= f.text_field :source_name, placeholder: "Ex: L'Est Républicain", required: true %>
-        <span class="field-help">📰 Affiché dans le héros ET dans le bouton CTA</span>
+        <span class="field-help">📰 Nom du média (affiché dans le héros ET dans "Informations clés")</span>
       </div>
 
       <div class="field">
-        <%= f.label :source_url, "URL de la source" %>
-        <%= f.text_field :source_url, placeholder: "https://www.estrepublicain.fr/..." %>
-        <span class="field-help">🔗 Lien vers l'article original</span>
+        <%= f.label :source_url, "🔗 URL de l'article source (IMPORTANT)" %>
+        <%= f.text_field :source_url, placeholder: "https://www.estrepublicain.fr/economie/2023/06/04/benedicte-begin..." %>
+        <span class="field-help">⚠️ Lien vers l'article original (affiché dans "Informations clés" - quasiment obligatoire)</span>
+      </div>
+
+      <div class="field full">
+        <%= f.label :contact_info, "📧 Informations de contact (optionnel)" %>
+        <%= f.text_area :contact_info, rows: 2, placeholder: "Ex: contact@caseus.fr • 06 12 34 56 78 • www.caseus-nancy.fr" %>
+        <span class="field-help">Comment contacter la personne/structure de l'histoire (affiché dans "Informations clés")</span>
       </div>
 
       <div class="field full source-preview">
-        <strong>Aperçu d'affichage :</strong>
+        <strong>📍 Où ces infos sont affichées :</strong>
         <div class="preview-box">
-          <p>Dans le héros : <code>Source : <%= @story.source_name.presence || "[Nom de la source]" %></code></p>
-          <p>Bouton CTA : <code>Lire sur <%= @story.source_name.presence || "[Nom de la source]" %></code></p>
+          <p>• <strong>Héros de la story</strong> : "Source : <%= @story.source_name.presence || "[Nom de la source]" %>"</p>
+          <p>• <strong>Bloc "Informations clés"</strong> : Lien cliquable vers l'article (<%= @story.source_name.presence || "[Nom de la source]" %> →)</p>
+          <p>• <strong>Bloc CTA (si URL remplie)</strong> : Bouton "Lire sur <%= @story.source_name.presence || "[Nom de la source]" %>"</p>
         </div>
       </div>
     </div>

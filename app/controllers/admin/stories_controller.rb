@@ -143,7 +143,8 @@ def story_params
     :slug, :tags, :active, :is_active, :published,
     :highlights_title,     # ← NOUVEAU
     :highlights_text,      # ← NOUVEAU
-    :highlights_items      # ← NOUVEAU
+    :highlights_items,      # ← NOUVEAU
+    :contact_info
   )
 end
 end
