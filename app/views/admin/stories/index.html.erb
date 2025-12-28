@@ -87,13 +87,15 @@
             </td>
             <td><%= l(s.updated_at, format: :short) rescue s.updated_at.to_s(:short) %></td>
             <td class="td-actions">
-              <%= link_to "Voir", story_path(s), class: "btn small" %>
+              <%= link_to "Voir", story_path(s), class: "btn small", target: "_blank" %>
               <%= link_to "Éditer", edit_admin_story_path(s, request.query_parameters), class: "btn small" %>
-              <%= button_to "Supprimer",
-                            admin_story_path(s, request.query_parameters),
-                            method: :delete,
-                            form: { data: { turbo_confirm: "Confirmer la suppression ?" } },
-                            class: "btn small danger" %>
+              <a href="#"
+                 class="btn small danger delete-story-btn"
+                 data-story-id="<%= s.id %>"
+                 data-story-title="<%= h s.title %>"
+                 data-delete-url="<%= admin_story_path(s, request.query_parameters) %>">
+                Supprimer
+              </a>
             </td>
           </tr>
         <% end %>
@@ -109,6 +111,45 @@
     if(!all) return;
     all.addEventListener('change', function(){
       document.querySelectorAll('input[name="ids[]"]').forEach(cb => cb.checked = all.checked);
+    });
+
+    // Gestion suppression individuelle (HORS du formulaire bulk)
+    document.querySelectorAll('.delete-story-btn').forEach(btn => {
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+
+        const storyTitle = this.dataset.storyTitle;
+        const deleteUrl = this.dataset.deleteUrl;
+
+        if (confirm(`Confirmer la suppression de « ${storyTitle} » ?`)) {
+          // Créer un formulaire temporaire HORS du bulk form
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = deleteUrl;
+
+          // Token CSRF
+          const csrfToken = document.querySelector('meta[name="csrf-token"]');
+          if (csrfToken) {
+            const tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = 'authenticity_token';
+            tokenInput.value = csrfToken.content;
+            form.appendChild(tokenInput);
+          }
+
+          // Method DELETE
+          const methodInput = document.createElement('input');
+          methodInput.type = 'hidden';
+          methodInput.name = '_method';
+          methodInput.value = 'delete';
+          form.appendChild(methodInput);
+
+          // Ajouter au body et soumettre
+          document.body.appendChild(form);
+          form.submit();
+        }
+      });
     });
   });
 </script>
