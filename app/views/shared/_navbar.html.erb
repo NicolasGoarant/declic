@@ -46,19 +46,24 @@
     <!-- CTA desktop -->
     <div class="hidden md:flex items-center gap-3">
       <%= link_to new_story_path,
-            class: "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full
-                    bg-indigo-50/80 border border-indigo-100/70
-                    text-indigo-700 hover:bg-indigo-100 hover:border-indigo-200
-                    text-sm font-semibold shadow-sm transition-colors" do %>
-        <span class="text-base">💬</span>
+            class: "inline-flex items-center gap-2 px-4 py-2 rounded-full
+                    text-white text-sm font-semibold shadow-sm hover:shadow-md
+                    transition-all duration-200",
+            style: "background-color: #db2777;" do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+        </svg>
         <span>Partager un témoignage</span>
       <% end %>
 
       <%= link_to new_opportunity_path,
-            class: "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full
-                    bg-indigo-600 text-white hover:bg-indigo-700
-                    shadow-sm text-sm font-semibold transition-colors" do %>
-        <span class="text-base">✨</span>
+            class: "inline-flex items-center gap-2 px-4 py-2 rounded-full
+                    text-white shadow-sm hover:shadow-md text-sm font-semibold
+                    transition-all duration-200",
+            style: "background-color: #9333ea;" do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
         <span>Proposer une opportunité</span>
       <% end %>
     </div>
@@ -121,15 +126,24 @@
       <div class="pt-2 space-y-2">
         <%= link_to new_opportunity_path,
             class: "w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl
-                    bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700" do %>
-          <span>✨</span><span>Proposer une opportunité</span>
+                    text-white font-semibold shadow-sm
+                    transition-all duration-200",
+            style: "background-color: #9333ea;" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          <span>Proposer une opportunité</span>
         <% end %>
 
         <%= link_to new_story_path,
-            class: "w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full
-                    bg-indigo-50 text-indigo-700 font-semibold
-                    ring-1 ring-indigo-100 hover:bg-indigo-100" do %>
-          <span>💬</span><span>Partager un témoignage</span>
+            class: "w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl
+                    text-white font-semibold shadow-sm
+                    transition-all duration-200",
+            style: "background-color: #db2777;" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+          </svg>
+          <span>Partager un témoignage</span>
         <% end %>
 
       </div>
