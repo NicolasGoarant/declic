@@ -173,24 +173,6 @@ end
     <div class="story-spacing-2"></div>
   <% end %>
 
-  <%# ========== CONTEXTE (après la citation, texte explicatif) ========== %>
-  <% if @story.body.present? %>
-    <%
-    # Extraire les 2 premiers paragraphes du body comme contexte introductif
-    paragraphs = @story.body.to_s.split("\n\n")
-    context_text = paragraphs.first(2).join("\n\n").strip if paragraphs.any?
-    %>
-    <% if context_text.present? %>
-      <div style="max-width: 1140px; margin: 0 auto; padding: 0 24px;">
-        <div style="max-width: 860px; margin: 0 auto;">
-          <div style="font-size: 18px; line-height: 1.7; color: #475569; word-wrap: break-word; overflow-wrap: break-word;">
-            <%= simple_format(context_text) %>
-          </div>
-        </div>
-      </div>
-    <% end %>
-  <% end %>
-
   <%# SÉPARATEUR %>
   <div style="max-width: 1140px; margin: 40px auto; padding: 0 24px;">
     <div class="story-separator"></div>
