@@ -3,9 +3,12 @@
 <%# HERO IMMERSIF %>
 <section class="ph-hero">
   <div class="container">
-    <div class="hero-badge">
-      <span class="pulse"></span>
-      À propos de Déclic
+    <%# CITATION TÉRENCE - En tête pour maximum impact %>
+    <div class="hero-quote">
+      <blockquote class="hero-quote-text">
+        « Tout ce qui est humain m'intéresse »
+      </blockquote>
+      <cite class="hero-quote-author">Térence</cite>
     </div>
 
     <h1 class="hero-title">
@@ -46,28 +49,6 @@
       <div class="stat">
         <div class="stat-number" data-count="10000">0</div>
         <div class="stat-label">Membres</div>
-      </div>
-    </div>
-
-    <%# Galerie d'images %>
-    <div class="hero-gallery">
-      <div class="gallery-item gallery-main">
-        <img src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1200&q=80&auto=format&fit=crop" alt="Bénévolat communautaire" loading="eager">
-        <div class="gallery-overlay">
-          <span class="gallery-tag">🤝 Bénévolat</span>
-        </div>
-      </div>
-      <div class="gallery-item">
-        <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&q=80&auto=format&fit=crop" alt="Coworking et collaboration" loading="lazy">
-        <div class="gallery-overlay">
-          <span class="gallery-tag">🚀 Entreprendre</span>
-        </div>
-      </div>
-      <div class="gallery-item">
-        <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&q=80&auto=format&fit=crop" alt="Atelier créatif" loading="lazy">
-        <div class="gallery-overlay">
-          <span class="gallery-tag">🎨 Créer</span>
-        </div>
       </div>
     </div>
   </div>
@@ -420,14 +401,14 @@
 .ph-hero {
   background: linear-gradient(135deg, var(--purple), var(--blue));
   color: white;
-  padding: clamp(60px, 10vw, 120px) 0 clamp(60px, 8vw, 100px);
+  padding: clamp(40px, 6vw, 60px) 0 clamp(60px, 8vw, 100px);
   position: relative;
   overflow: hidden;
 }
 
 @media (max-width: 768px) {
   .ph-hero {
-    padding: 40px 0 60px;
+    padding: 32px 0 60px;
   }
 }
 
@@ -497,6 +478,50 @@
 @keyframes gradient-shift {
   0%, 100% { filter: hue-rotate(0deg); }
   50% { filter: hue-rotate(20deg); }
+}
+
+/* ============================================
+   CITATION DANS LE HERO
+   ============================================ */
+.hero-quote {
+  margin: 0 auto 60px;
+  max-width: 700px;
+  text-align: center;
+  position: relative;
+  z-index: 10;
+  padding: 24px 32px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.hero-quote-text {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: clamp(24px, 3.5vw, 38px);
+  line-height: 1.4;
+  font-style: italic;
+  font-weight: 400;
+  color: white;
+  margin: 0 0 12px 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.hero-quote-author {
+  display: block;
+  font-size: clamp(14px, 1.8vw, 18px);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  font-style: normal;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .hero-quote {
+    padding: 20px 24px;
+    margin: 0 auto 36px;
+  }
 }
 
 .hero-lead {
@@ -1256,6 +1281,109 @@
   font-size: 15px;
   opacity: 0.9;
   font-weight: 600;
+}
+
+/* ============================================
+   CITATION TÉRENCE
+   ============================================ */
+.ph-quote {
+  padding: 100px 0;
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 50%, #ede9fe 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.ph-quote::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(168, 85, 247, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.12) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.quote-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.quote-decoration {
+  font-size: 180px;
+  line-height: 1;
+  color: rgba(168, 85, 247, 0.2);
+  font-family: Georgia, serif;
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  user-select: none;
+  pointer-events: none;
+}
+
+.quote-text {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 42px;
+  line-height: 1.4;
+  font-weight: 400;
+  font-style: italic;
+  color: #1e293b;
+  margin: 0 0 32px 0;
+  padding-top: 80px;
+  position: relative;
+}
+
+.quote-author {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  color: #7e22ce;
+  margin-bottom: 32px;
+  font-style: normal;
+}
+
+.quote-author em {
+  font-weight: 400;
+  color: #9333ea;
+}
+
+.quote-explanation {
+  font-size: 18px;
+  line-height: 1.7;
+  color: #475569;
+  max-width: 650px;
+  margin: 0 auto;
+  font-weight: 400;
+}
+
+@media (max-width: 768px) {
+  .ph-quote {
+    padding: 60px 0;
+  }
+
+  .quote-decoration {
+    font-size: 80px;
+    top: -20px;
+  }
+
+  .quote-text {
+    font-size: 24px;
+    padding-top: 40px;
+  }
+
+  .quote-author {
+    font-size: 14px;
+  }
+
+  .quote-explanation {
+    font-size: 16px;
+  }
 }
 
 /* ============================================
