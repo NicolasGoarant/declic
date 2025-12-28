@@ -34,8 +34,15 @@ class Api::V1::OpportunitiesController < ApplicationController
 
     rows = scope.limit(limit).select(
       :id, :slug, :title, :description, :category, :organization,
-      :location, :time_commitment, :latitude, :longitude, :image_url
+      :location, :time_commitment, :latitude, :longitude, :image_url, :image
     ).map { |o|
+      # PRIORITÉ : Active Storage > image_url
+      final_image_url = if o.respond_to?(:image) && o.image.attached?
+                          url_for(o.image) rescue nil
+                        else
+                          o.image_url
+                        end
+
       {
         id:             o.id,
         slug:           o.slug,
@@ -47,7 +54,7 @@ class Api::V1::OpportunitiesController < ApplicationController
         time_commitment:o.time_commitment,
         latitude:       o.latitude&.to_f,
         longitude:      o.longitude&.to_f,
-        image_url:      o.image_url
+        image_url:      final_image_url
       }
     }
 

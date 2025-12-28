@@ -23,7 +23,15 @@ def strip_unsplash_md(txt)
 end
 
 def thumb_for(o)
+  # 1. Priorité à l'upload Active Storage
+  if o.respond_to?(:image) && o.image.attached?
+    return url_for(o.image) rescue nil
+  end
+
+  # 2. Sinon, URL externe
   return o.image_url if o.respond_to?(:image_url) && o.image_url.present?
+
+  # 3. Fallback par catégorie
   cat = (o.respond_to?(:category) ? o.category : '').to_s.downcase
   case cat
   when 'benevolat'
@@ -44,7 +52,15 @@ def thumb_for(o)
 end
 
 def hero_fallback(obj)
+  # 1. Priorité à l'upload Active Storage
+  if obj.respond_to?(:image) && obj.image.attached?
+    return url_for(obj.image) rescue nil
+  end
+
+  # 2. Sinon, URL externe
   return obj.image_url if obj.respond_to?(:image_url) && obj.image_url.present?
+
+  # 3. Fallback
   thumb_for(obj)
 end
 %>
