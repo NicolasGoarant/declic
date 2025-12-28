@@ -155,42 +155,41 @@ end
   <div class="story-spacing-1"></div>
 
   <%# ========== CITATION - COULEUR STORIES (PURPLE/PINK) ========== %>
-  <div style="max-width: 1140px; margin: 0 auto; padding: 0 24px;">
-    <div style="max-width: 860px; margin: 0 auto;">
-      <div style="padding: 32px; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); border-radius: 20px; box-shadow: 0 10px 40px rgba(168,85,247,0.25);">
-        <div style="display: flex; align-items: start; gap: 20px;">
-          <div style="font-size: 64px; color: rgba(255,255,255,0.3); line-height: 1; user-select: none; flex-shrink: 0;">"</div>
-          <p class="story-quote-text" style="color: white; font-size: 22px; font-weight: 500; line-height: 1.6; margin: 0; word-wrap: break-word;">
-            Je ne me voyais pas passer ma vie derrière un ordinateur. J'avais besoin d'une activité tournée vers le partage, qui me ressemble.
-          </p>
+  <% if @story.chapo.present? %>
+    <div style="max-width: 1140px; margin: 0 auto; padding: 0 24px;">
+      <div style="max-width: 860px; margin: 0 auto;">
+        <div style="padding: 32px; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); border-radius: 20px; box-shadow: 0 10px 40px rgba(168,85,247,0.25);">
+          <div style="display: flex; align-items: start; gap: 20px;">
+            <div style="font-size: 64px; color: rgba(255,255,255,0.3); line-height: 1; user-select: none; flex-shrink: 0;">"</div>
+            <p class="story-quote-text" style="color: white; font-size: 22px; font-weight: 500; line-height: 1.6; margin: 0; word-wrap: break-word;">
+              <%= @story.chapo %>
+            </p>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <%# ESPACEMENT 2 %>
-  <div class="story-spacing-2"></div>
+    <%# ESPACEMENT 2 %>
+    <div class="story-spacing-2"></div>
+  <% end %>
 
-  <%# ========== CHAPO ========== %>
-  <div style="max-width: 1140px; margin: 0 auto; padding: 0 24px;">
-    <div style="max-width: 860px; margin: 0 auto;">
-      <%
-      chapo_text = if @story.chapo.present?
-        @story.chapo
-      elsif @story.body.present?
-        paragraphs = @story.body.to_s.split("\n\n")
-        paragraphs.first(2).join("\n\n").strip
-      else
-        ""
-      end
-      %>
-      <% if chapo_text.present? %>
-        <div style="font-size: 18px; line-height: 1.7; color: #475569; word-wrap: break-word; overflow-wrap: break-word;">
-          <%= simple_format(chapo_text) %>
+  <%# ========== CONTEXTE (après la citation, texte explicatif) ========== %>
+  <% if @story.body.present? %>
+    <%
+    # Extraire les 2 premiers paragraphes du body comme contexte introductif
+    paragraphs = @story.body.to_s.split("\n\n")
+    context_text = paragraphs.first(2).join("\n\n").strip if paragraphs.any?
+    %>
+    <% if context_text.present? %>
+      <div style="max-width: 1140px; margin: 0 auto; padding: 0 24px;">
+        <div style="max-width: 860px; margin: 0 auto;">
+          <div style="font-size: 18px; line-height: 1.7; color: #475569; word-wrap: break-word; overflow-wrap: break-word;">
+            <%= simple_format(context_text) %>
+          </div>
         </div>
-      <% end %>
-    </div>
-  </div>
+      </div>
+    <% end %>
+  <% end %>
 
   <%# SÉPARATEUR %>
   <div style="max-width: 1140px; margin: 40px auto; padding: 0 24px;">
