@@ -1,12 +1,17 @@
 # app/controllers/api/v1/stories_controller.rb
 class Api::V1::StoriesController < ApplicationController
   def index
-    stories = Story.where.not(latitude: nil, longitude: nil).order(created_at: :desc).limit(500)
+    # IMPORTANT : Précharger l'attachment image pour Active Storage
+    stories = Story.where.not(latitude: nil, longitude: nil)
+                   .includes(image_attachment: :blob)
+                   .order(created_at: :desc)
+                   .limit(500)
+
     render json: stories.map { |s|
       # PRIORITÉ : Active Storage > image_url
-      final_image_url = if s.respond_to?(:image) && s.image.attached?
-                          url_for(s.image) rescue nil
-                        elsif s.respond_to?(:image_url)
+      final_image_url = if s.image.attached?
+                          url_for(s.image)
+                        elsif s.respond_to?(:image_url) && s.image_url.present?
                           s.image_url
                         else
                           nil

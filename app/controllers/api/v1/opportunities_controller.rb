@@ -32,10 +32,19 @@ class Api::V1::OpportunitiesController < ApplicationController
 
     limit = (params[:limit].presence || 1000).to_i.clamp(1, 2000)
 
-    rows = scope.limit(limit).select(
-      :id, :slug, :title, :description, :category, :organization,
-      :location, :time_commitment, :latitude, :longitude, :image_url
-    ).map { |o|
+    # IMPORTANT : Précharger l'attachment image pour Active Storage
+    opportunities = scope.includes(image_attachment: :blob).limit(limit)
+
+    rows = opportunities.map { |o|
+      # PRIORITÉ : Active Storage > image_url
+      final_image_url = if o.image.attached?
+                          url_for(o.image)
+                        elsif o.image_url.present?
+                          o.image_url
+                        else
+                          nil
+                        end
+
       {
         id:             o.id,
         slug:           o.slug,
@@ -47,7 +56,7 @@ class Api::V1::OpportunitiesController < ApplicationController
         time_commitment:o.time_commitment,
         latitude:       o.latitude&.to_f,
         longitude:      o.longitude&.to_f,
-        image_url:      o.image_url
+        image_url:      final_image_url
       }
     }
 
