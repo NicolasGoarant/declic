@@ -1,207 +1,407 @@
+<%# app/views/admin/opportunities/_form.html.erb - VERSION ORGANISÉE %>
+
 <%= form_with model: [:admin, @opportunity],
               local: true,
-              html: { multipart: true } do |f| %>
+              html: { multipart: true, class: "admin-form-improved" } do |f| %>
 
   <% if @opportunity.errors.any? %>
-    <div class="form-errors">
-      <h2><%= pluralize(@opportunity.errors.count, "erreur") %> :</h2>
-      <ul>
+    <div class="form-errors" style="background: #fee2e2; border: 1px solid #f87171; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+      <h2 style="color: #991b1b; margin: 0 0 0.5rem 0;"><%= pluralize(@opportunity.errors.count, "erreur") %> :</h2>
+      <ul style="margin: 0; padding-left: 1.5rem;">
         <% @opportunity.errors.full_messages.each do |m| %>
-          <li><%= m %></li>
+          <li style="color: #991b1b;"><%= m %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
 
-  <div class="form-grid">
-    <div class="field">
-      <%= f.label :title, "Titre" %>
-      <%= f.text_field :title %>
-    </div>
+  <div class="form-sections">
 
-    <div class="field">
-      <%= f.label :category, "Catégorie" %>
-      <%= f.select :category,
-            [
-              ["Bénévolat", "benevolat"],
-              ["Formation", "formation"],
-              ["Rencontres", "rencontres"],
-              ["Entreprendre", "entreprendre"],
-              ["Écologiser", "ecologiser"]
-            ],
-            { include_blank: "(choisir)" } %>
-    </div>
+    <%# ========== SECTION 1 : INFORMATIONS PRINCIPALES ========== %>
+    <div class="form-section">
+      <h3 class="form-section-title">📝 Contenu Principal</h3>
+      <p class="form-section-subtitle">Informations essentielles de l'opportunité</p>
 
-    <div class="field">
-      <%= f.label :is_active, "Active ?" %>
-      <div class="checkbox-inline">
-        <%= f.check_box :is_active %>
-        <span>Visible sur le site</span>
+      <div class="form-row">
+        <div class="field" style="flex: 2;">
+          <%= f.label :title, "Titre *", class: "field-label" %>
+          <%= f.text_field :title, placeholder: "Ex: Rejoignez le Repair Café de Nancy", class: "field-input", required: true %>
+        </div>
+
+        <div class="field">
+          <%= f.label :category, "Catégorie *", class: "field-label" %>
+          <%= f.select :category,
+                [
+                  ["Bénévolat", "benevolat"],
+                  ["Formation", "formation"],
+                  ["Rencontres", "rencontres"],
+                  ["Entreprendre", "entreprendre"],
+                  ["Écologiser", "ecologiser"]
+                ],
+                { include_blank: "(choisir)" },
+                { class: "field-input", required: true } %>
+        </div>
+
+        <div class="field">
+          <%= f.label :organization, "Organisation *", class: "field-label" %>
+          <%= f.text_field :organization, placeholder: "Ex: Repair Café Nancy", class: "field-input", required: true %>
+        </div>
+      </div>
+
+      <div class="field">
+        <%= f.label :description, "Description (utilisez **texte** pour graisser) *", class: "field-label" %>
+        <%= f.text_area :description, rows: 8, placeholder: "Description complète de l'opportunité...", class: "field-input", required: true %>
+        <div class="field-hint">Utilisez **gras** pour mettre en gras. Les emojis sont autorisés : ✨ 💡 🔥</div>
+      </div>
+
+      <div class="field">
+        <label class="checkbox-field">
+          <%= f.check_box :is_active %>
+          <span>✅ Visible sur le site (publier l'opportunité)</span>
+        </label>
       </div>
     </div>
 
-    <div class="field">
-      <%= f.label :organization, "Organisation" %>
-      <%= f.text_field :organization %>
+    <%# ========== SECTION 2 : CITATION / TÉMOIGNAGE ========== %>
+    <div class="form-section">
+      <h3 class="form-section-title">💬 Citation / Témoignage</h3>
+      <p class="form-section-subtitle">Citation inspirante d'un participant (optionnel)</p>
+
+      <div class="field">
+        <%= f.label :quote, "Citation inspirante", class: "field-label" %>
+        <%= f.text_area :quote, rows: 3, placeholder: "« En 48h, j'avais 15 messages de personnes prêtes à aider... »", class: "field-input" %>
+        <div class="field-hint">Ajoutez les guillemets « » si vous le souhaitez</div>
+      </div>
+
+      <div class="field">
+        <%= f.label :quote_author, "Auteur de la citation", class: "field-label" %>
+        <%= f.text_field :quote_author, placeholder: "Marie, fondatrice du Repair Café", class: "field-input" %>
+      </div>
     </div>
 
-    <div class="field full">
-      <%= f.label :description, "Description (utilisez **texte** pour grasser)" %>
-      <%= f.text_area :description, rows: 8 %>
-      <small style="color:#64748b;font-size:0.85rem;margin-top:0.25rem">Utilisez **mot** pour mettre en gras</small>
-    </div>
+    <%# ========== SECTION 3 : STATISTIQUES D'IMPACT ========== %>
+    <div class="form-section">
+      <h3 class="form-section-title">📊 Statistiques d'impact</h3>
+      <p class="form-section-subtitle">Jusqu'à 4 statistiques clés (optionnel)</p>
 
-    <!-- NOUVEAUX CHAMPS : CITATION -->
-    <div class="field full" style="background:#f0fdf4;padding:1rem;border-radius:8px;border:1px solid #86efac">
-      <strong style="color:#16a34a;margin-bottom:0.5rem;display:block">💬 Citation / Témoignage</strong>
-      <%= f.label :quote, "Citation inspirante" %>
-      <%= f.text_area :quote, rows: 3, placeholder: "« En 48h, j'avais 15 messages de personnes prêtes à aider... »" %>
-    </div>
+      <div class="stats-grid">
+        <div class="stat-pair">
+          <div class="field">
+            <%= f.label :stat_1_number, "Stat 1 - Nombre", class: "field-label" %>
+            <%= f.text_field :stat_1_number, placeholder: "200+", class: "field-input" %>
+          </div>
+          <div class="field">
+            <%= f.label :stat_1_label, "Stat 1 - Label", class: "field-label" %>
+            <%= f.text_field :stat_1_label, placeholder: "objets réparés", class: "field-input" %>
+          </div>
+        </div>
 
-    <div class="field">
-      <%= f.label :quote_author, "Auteur de la citation" %>
-      <%= f.text_field :quote_author, placeholder: "Marie, fondatrice" %>
-    </div>
+        <div class="stat-pair">
+          <div class="field">
+            <%= f.label :stat_2_number, "Stat 2 - Nombre", class: "field-label" %>
+            <%= f.text_field :stat_2_number, placeholder: "45", class: "field-input" %>
+          </div>
+          <div class="field">
+            <%= f.label :stat_2_label, "Stat 2 - Label", class: "field-label" %>
+            <%= f.text_field :stat_2_label, placeholder: "participants réguliers", class: "field-input" %>
+          </div>
+        </div>
 
-    <!-- NOUVEAUX CHAMPS : STATISTIQUES -->
-    <div class="field full" style="background:#eff6ff;padding:1rem;border-radius:8px;border:1px solid:#93c5fd;margin-top:1rem">
-      <strong style="color:#2563eb;margin-bottom:0.5rem;display:block">📊 Statistiques d'impact (4 stats max)</strong>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.75rem">
-        <div>
-          <%= f.label :stat_1_number, "Stat 1 - Nombre" %>
-          <%= f.text_field :stat_1_number, placeholder: "200+" %>
+        <div class="stat-pair">
+          <div class="field">
+            <%= f.label :stat_3_number, "Stat 3 - Nombre", class: "field-label" %>
+            <%= f.text_field :stat_3_number, placeholder: "3 ans", class: "field-input" %>
+          </div>
+          <div class="field">
+            <%= f.label :stat_3_label, "Stat 3 - Label", class: "field-label" %>
+            <%= f.text_field :stat_3_label, placeholder: "d'existence", class: "field-input" %>
+          </div>
         </div>
-        <div>
-          <%= f.label :stat_1_label, "Stat 1 - Label" %>
-          <%= f.text_field :stat_1_label, placeholder: "objets réparés" %>
-        </div>
-        <div>
-          <%= f.label :stat_2_number, "Stat 2 - Nombre" %>
-          <%= f.text_field :stat_2_number, placeholder: "45" %>
-        </div>
-        <div>
-          <%= f.label :stat_2_label, "Stat 2 - Label" %>
-          <%= f.text_field :stat_2_label, placeholder: "participants" %>
-        </div>
-        <div>
-          <%= f.label :stat_3_number, "Stat 3 - Nombre" %>
-          <%= f.text_field :stat_3_number, placeholder: "3 ans" %>
-        </div>
-        <div>
-          <%= f.label :stat_3_label, "Stat 3 - Label" %>
-          <%= f.text_field :stat_3_label, placeholder: "d'existence" %>
-        </div>
-        <div>
-          <%= f.label :stat_4_number, "Stat 4 - Nombre" %>
-          <%= f.text_field :stat_4_number, placeholder: "2x" %>
-        </div>
-        <div>
-          <%= f.label :stat_4_label, "Stat 4 - Label" %>
-          <%= f.text_field :stat_4_label, placeholder: "par mois" %>
+
+        <div class="stat-pair">
+          <div class="field">
+            <%= f.label :stat_4_number, "Stat 4 - Nombre", class: "field-label" %>
+            <%= f.text_field :stat_4_number, placeholder: "2x", class: "field-input" %>
+          </div>
+          <div class="field">
+            <%= f.label :stat_4_label, "Stat 4 - Label", class: "field-label" %>
+            <%= f.text_field :stat_4_label, placeholder: "par mois", class: "field-input" %>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- NOUVEAUX CHAMPS : DÉFIS -->
-    <div class="field full" style="background:#fff1f2;padding:1rem;border-radius:8px;border:1px solid #fca5a5;margin-top:1rem">
-      <strong style="color:#dc2626;margin-bottom:0.5rem;display:block">💪 Défis surmontés</strong>
-      <%= f.label :challenges, "Un défi par ligne (format: **Défi:** Solution)" %>
-      <%= f.text_area :challenges, rows: 5, placeholder: "**Trouver un lieu :** Négociation avec la mairie\n**Assurance :** Souscription via l'association\n**Matériel :** Appel aux dons" %>
-      <small style="color:#64748b;font-size:0.85rem;margin-top:0.25rem">Format : **Titre du défi :** Description de la solution (un par ligne)</small>
+    <%# ========== SECTION 4 : DÉFIS SURMONTÉS ========== %>
+    <div class="form-section">
+      <h3 class="form-section-title">🔥 Défis surmontés</h3>
+      <p class="form-section-subtitle">Un défi par ligne (format: **Défi:** Solution)</p>
+
+      <div class="field">
+        <%= f.label :challenges, "Défis surmontés", class: "field-label" %>
+        <%= f.text_area :challenges, rows: 6, class: "field-input", placeholder: "**Trouver un lieu :** Négociation avec la mairie pendant 2 mois
+**Financement :** Campagne de dons qui a réuni 5000€
+**Mobiliser les bénévoles :** Réunions publiques mensuelles" %>
+        <div class="field-hint">Un défi par ligne. Utilisez **Défi:** Solution</div>
+      </div>
     </div>
 
-    <div class="field">
-      <%= f.label :location, "Adresse / lieu" %>
-      <%= f.text_field :location %>
+    <%# ========== SECTION 5 : LOCALISATION ========== %>
+    <div class="form-section">
+      <h3 class="form-section-title">📍 Localisation</h3>
+      <p class="form-section-subtitle">Adresse et coordonnées GPS</p>
+
+      <div class="field">
+        <%= f.label :location, "Adresse / Lieu *", class: "field-label" %>
+        <%= f.text_field :location, placeholder: "21 Grande-Rue, 54000 Nancy", class: "field-input", required: true %>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <%= f.label :latitude, "Latitude", class: "field-label" %>
+          <%= f.text_field :latitude, placeholder: "48.6937", step: "any", class: "field-input" %>
+        </div>
+        <div class="field">
+          <%= f.label :longitude, "Longitude", class: "field-label" %>
+          <%= f.text_field :longitude, placeholder: "6.1844", step: "any", class: "field-input" %>
+        </div>
+      </div>
+
+      <div class="field-hint">
+        💡 <a href="https://www.latlong.net/" target="_blank" rel="noopener">Trouver lat/lng sur LatLong.net</a>
+      </div>
     </div>
 
-    <div class="field">
-      <%= f.label :time_commitment, "Temps à prévoir" %>
-      <%= f.text_field :time_commitment %>
+    <%# ========== SECTION 6 : DATES & HORAIRES ========== %>
+    <div class="form-section">
+      <h3 class="form-section-title">📅 Dates & horaires</h3>
+      <p class="form-section-subtitle">Période et temps d'engagement</p>
+
+      <div class="form-row">
+        <div class="field">
+          <%= f.label :start_date, "Début", class: "field-label" %>
+          <%= f.date_field :start_date, class: "field-input" %>
+        </div>
+        <div class="field">
+          <%= f.label :end_date, "Fin", class: "field-label" %>
+          <%= f.date_field :end_date, class: "field-input" %>
+        </div>
+        <div class="field">
+          <%= f.label :time_commitment, "Temps à prévoir", class: "field-label" %>
+          <%= f.text_field :time_commitment, placeholder: "2h par semaine", class: "field-input" %>
+        </div>
+      </div>
     </div>
 
-    <div class="field">
-      <%= f.label :starts_at, "Début" %>
-      <%= f.datetime_select :starts_at, include_blank: true %>
+    <%# ========== SECTION 7 : IMAGE ========== %>
+    <div class="form-section">
+      <h3 class="form-section-title">🖼️ Image de couverture</h3>
+      <p class="form-section-subtitle">Photo principale (upload ou URL)</p>
+
+      <div class="field">
+        <%= f.label :image, "Image (upload)", class: "field-label" %>
+        <%= f.file_field :image, accept: "image/*", class: "field-input" %>
+        <% if @opportunity.image.attached? %>
+          <div class="current-image">
+            <%= image_tag @opportunity.image, style: "max-width: 200px; border-radius: 8px; margin-top: 0.5rem;" %>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="field">
+        <%= f.label :image_url, "OU Image (URL externe)", class: "field-label" %>
+        <%= f.text_field :image_url, placeholder: "https://images.unsplash.com/photo-...", class: "field-input" %>
+        <div class="field-hint">Si vous n'avez pas uploadé d'image ci-dessus</div>
+      </div>
     </div>
 
-    <div class="field">
-      <%= f.label :ends_at, "Fin" %>
-      <%= f.datetime_select :ends_at, include_blank: true %>
+    <%# ========== SECTION 8 : SOURCE & CONTACT ========== %>
+    <div class="form-section">
+      <h3 class="form-section-title">📰 Source & Contact</h3>
+      <p class="form-section-subtitle">Informations de référence et contact</p>
+
+      <div class="form-row">
+        <div class="field">
+          <%= f.label :source_name, "Nom de la source", class: "field-label" %>
+          <%= f.text_field :source_name, placeholder: "L'Est Républicain", class: "field-input" %>
+        </div>
+        <div class="field" style="flex: 2;">
+          <%= f.label :source_url, "URL source (article)", class: "field-label" %>
+          <%= f.text_field :source_url, placeholder: "https://www.estrepublicain.fr/...", class: "field-input" %>
+        </div>
+      </div>
+
+      <div class="field">
+        <%= f.label :website_url, "Site web de l'organisation", class: "field-label" %>
+        <%= f.text_field :website_url, placeholder: "https://repaircafe-nancy.fr", class: "field-input" %>
+      </div>
+
+      <div class="field">
+        <%= f.label :contact_info, "Contact (email, téléphone...)", class: "field-label" %>
+        <%= f.text_area :contact_info, rows: 2, placeholder: "contact@repaircafe.fr • 06 12 34 56 78", class: "field-input" %>
+      </div>
     </div>
 
-    <!-- Image upload / URL -->
-    <div class="field">
-      <%= f.label :image, "Image (upload)" %>
-      <%= f.file_field :image, direct_upload: true %>
-      <% if @opportunity.image.attached? %>
-        <p class="preview-label">Image actuelle :</p>
-        <%= image_tag @opportunity.image.variant(resize_to_limit: [300, 180]),
-                      class: "preview-img" rescue nil %>
-      <% end %>
+    <%# ========== SECTION 9 : SEO & TAGS ========== %>
+    <div class="form-section">
+      <h3 class="form-section-title">🏷️ SEO & Organisation</h3>
+      <p class="form-section-subtitle">Identifiant unique et mots-clés</p>
+
+      <div class="form-row">
+        <div class="field" style="flex: 2;">
+          <%= f.label :slug, "Slug (URL)", class: "field-label" %>
+          <%= f.text_field :slug, placeholder: "repair-cafe-nancy", class: "field-input" %>
+          <div class="field-hint">Laissez vide pour génération automatique depuis le titre</div>
+        </div>
+        <div class="field">
+          <%= f.label :tags, "Tags", class: "field-label" %>
+          <%= f.text_field :tags, placeholder: "réparation, écologie, bénévolat", class: "field-input" %>
+          <div class="field-hint">Séparés par des virgules</div>
+        </div>
+      </div>
     </div>
 
-    <div class="field">
-      <%= f.label :image_url, "Image (URL externe)" %>
-      <%= f.text_field :image_url, placeholder: "https://…" %>
-    </div>
-
-    <div class="field">
-      <%= f.label :website, "Site web (URL)" %>
-      <%= f.text_field :website %>
-    </div>
-
-    <div class="field">
-      <%= f.label :source_url, "Lien source / infos" %>
-      <%= f.text_field :source_url %>
-    </div>
-
-    <div class="field">
-      <%= f.label :contact_email, "Email contact" %>
-      <%= f.email_field :contact_email %>
-    </div>
-
-    <div class="field">
-      <%= f.label :contact_phone, "Téléphone contact" %>
-      <%= f.telephone_field :contact_phone %>
-    </div>
-
-    <div class="field">
-      <%= f.label :tags, "Tags (séparés par des virgules)" %>
-      <%= f.text_field :tags %>
-    </div>
-
-    <div class="field">
-      <%= f.label :latitude %>
-      <%= f.text_field :latitude %>
-    </div>
-
-    <div class="field">
-      <%= f.label :longitude %>
-      <%= f.text_field :longitude %>
-    </div>
   </div>
 
+  <%# ACTIONS %>
   <div class="form-actions">
-    <%= f.submit class: "btn" %>
-    <%= link_to "Annuler", admin_opportunities_path, class: "btn ghost" %>
+    <%= f.submit "Enregistrer", class: "btn-primary" %>
+    <%= link_to "Annuler", admin_opportunities_path, class: "btn-secondary" %>
   </div>
+
 <% end %>
 
 <style>
-.form-errors{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem}
-.form-errors h2{margin:0 0 .5rem;font-weight:700;font-size:.95rem}
-.form-errors ul{margin:0;padding-left:1.1rem}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:.5rem}
-.field{display:flex;flex-direction:column;gap:.25rem}
-.field.full{grid-column:1/-1}
-.field label{font-weight:600;font-size:.9rem;color:#334155}
-.field input,.field textarea,.field select{border:1px solid #cbd5e1;border-radius:8px;padding:.4rem .55rem;font:inherit}
-.checkbox-inline{display:flex;align-items:center;gap:.4rem;margin-top:.15rem}
-.form-actions{margin-top:1.2rem;display:flex;gap:.5rem}
-.preview-label{margin-top:.4rem;font-size:.85rem;color:#64748b}
-.preview-img{margin-top:.25rem;border-radius:8px;border:1px solid #e5e7eb;max-width:100%;height:auto}
-.btn{padding:.625rem 1.25rem;border-radius:8px;font-weight:600;text-decoration:none;display:inline-block;border:none;cursor:pointer}
-.btn:not(.ghost){background:#6366f1;color:white}
-.btn.ghost{background:transparent;border:1px solid #cbd5e1;color:#334155}
+/* Styles pour le formulaire amélioré */
+.admin-form-improved { max-width: 1200px; margin: 0 auto; }
+
+.form-sections { display: flex; flex-direction: column; gap: 2rem; }
+
+.form-section {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.form-section-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 0.25rem 0;
+}
+
+.form-section-subtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0 0 1.5rem 0;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field-label {
+  font-weight: 700;
+  color: #334155;
+  font-size: 0.875rem;
+}
+
+.field-input {
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  width: 100%;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.field-hint a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+}
+
+.checkbox-field input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.stat-pair {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 0.5rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem 0;
+  border-top: 2px solid #e2e8f0;
+  margin-top: 2rem;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+  padding: 0.75rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.btn-secondary {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 0.75rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  border: 1px solid #cbd5e1;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-secondary:hover {
+  background: #e2e8f0;
+}
 </style>

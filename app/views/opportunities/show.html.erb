@@ -218,30 +218,35 @@
           </div>
 
           <%# CITATION / TÉMOIGNAGE %>
-          <div class="opp-quote">
-            « En 48h, j'avais 15 messages de personnes prêtes à aider : électriciens à la retraite, couturières, passionnés de vélo... J'ai réalisé que les compétences étaient là, il fallait juste créer le lieu de rencontre. »
-            <div class="opp-quote-author">— Marie, fondatrice du Repair Café</div>
-          </div>
+          <% if @opportunity.quote.present? %>
+            <div class="opp-quote">
+              <%= @opportunity.quote %>
+              <% if @opportunity.quote_author.present? %>
+                <div class="opp-quote-author">— <%= @opportunity.quote_author %></div>
+              <% end %>
+            </div>
+          <% end %>
 
           <%# STATISTIQUES D'IMPACT %>
-          <div class="opp-stats">
-            <div class="opp-stat">
-              <span class="opp-stat-number">200+</span>
-              <span class="opp-stat-label">objets réparés</span>
+          <%
+            # Collecter les stats non-vides
+            stats = []
+            stats << { number: @opportunity.stat_1_number, label: @opportunity.stat_1_label } if @opportunity.stat_1_number.present?
+            stats << { number: @opportunity.stat_2_number, label: @opportunity.stat_2_label } if @opportunity.stat_2_number.present?
+            stats << { number: @opportunity.stat_3_number, label: @opportunity.stat_3_label } if @opportunity.stat_3_number.present?
+            stats << { number: @opportunity.stat_4_number, label: @opportunity.stat_4_label } if @opportunity.stat_4_number.present?
+          %>
+
+          <% if stats.any? %>
+            <div class="opp-stats">
+              <% stats.each do |stat| %>
+                <div class="opp-stat">
+                  <span class="opp-stat-number"><%= stat[:number] %></span>
+                  <span class="opp-stat-label"><%= stat[:label] %></span>
+                </div>
+              <% end %>
             </div>
-            <div class="opp-stat">
-              <span class="opp-stat-number">45</span>
-              <span class="opp-stat-label">participants réguliers</span>
-            </div>
-            <div class="opp-stat">
-              <span class="opp-stat-number">3 ans</span>
-              <span class="opp-stat-label">d'existence</span>
-            </div>
-            <div class="opp-stat">
-              <span class="opp-stat-number">2x</span>
-              <span class="opp-stat-label">par mois</span>
-            </div>
-          </div>
+          <% end %>
 
           <%# DÉFIS SURMONTÉS %>
           <div class="opp-challenge">
