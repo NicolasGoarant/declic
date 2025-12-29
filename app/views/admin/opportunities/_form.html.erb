@@ -217,7 +217,7 @@
     <%# ========== SECTION 8 : SOURCE & CONTACT ========== %>
     <div class="form-section">
       <h3 class="form-section-title">📰 Source & Contact</h3>
-      <p class="form-section-subtitle">Informations de référence et contact</p>
+      <p class="form-section-subtitle">Informations de référence et liens d'action</p>
 
       <div class="form-row">
         <div class="field">
@@ -227,17 +227,37 @@
         <div class="field" style="flex: 2;">
           <%= f.label :source_url, "URL source (article)", class: "field-label" %>
           <%= f.text_field :source_url, placeholder: "https://www.estrepublicain.fr/...", class: "field-input" %>
+          <div class="field-hint">🔗 Crée le bouton "📄 En savoir plus" dans la section CTA</div>
         </div>
       </div>
 
       <div class="field">
-        <%= f.label :website_url, "Site web de l'organisation", class: "field-label" %>
-        <%= f.text_field :website_url, placeholder: "https://repaircafe-nancy.fr", class: "field-input" %>
+        <%= f.label :website, "Site web de l'organisation", class: "field-label" %>
+        <%= f.text_field :website, placeholder: "https://sandcreation.fr", class: "field-input" %>
+        <div class="field-hint">
+          🎯 <strong>Important :</strong> Crée le bouton principal dans la section "Prêt à passer à l'action"
+          (ex: "🚀 Me lancer" pour Entreprendre, "🌱 Agir" pour Écologiser)
+        </div>
       </div>
 
       <div class="field">
-        <%= f.label :contact_info, "Contact (email, téléphone...)", class: "field-label" %>
-        <%= f.text_area :contact_info, rows: 2, placeholder: "contact@repaircafe.fr • 06 12 34 56 78", class: "field-input" %>
+        <%= f.label :contact_email, "Email de contact", class: "field-label" %>
+        <%= f.email_field :contact_email, placeholder: "contact@sandcreation.fr", class: "field-input" %>
+        <div class="field-hint">💬 Crée le bouton "Contacter l'organisation" dans la section CTA</div>
+      </div>
+
+      <div class="field">
+        <%= f.label :contact_phone, "Téléphone de contact", class: "field-label" %>
+        <%= f.telephone_field :contact_phone, placeholder: "06 12 34 56 78", class: "field-input" %>
+        <div class="field-hint">📱 Optionnel - Affiché dans l'encadré d'infos à droite</div>
+      </div>
+
+      <div class="field-note" style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem;">
+        <strong style="color: #1e40af;">💡 Astuce :</strong>
+        <p style="margin: 0.5rem 0 0 0; color: #1e3a8a;">
+          Remplissez au moins le <strong>site web</strong> et l'<strong>email</strong> pour que les visiteurs puissent
+          facilement passer à l'action via les boutons "Prêt à passer à l'action" en bas de la page.
+        </p>
       </div>
     </div>
 
