@@ -1,7 +1,7 @@
-<%# app/views/shared/_navbar.html.erb — v9 : état actif + UX mobile améliorée %>
+<%# app/views/shared/_navbar.html.erb — v10 : FIX débordement mobile %>
 
 <%
-  # Helper local pour gérer l’état "actif" des liens desktop
+  # Helper local pour gérer l'état "actif" des liens desktop
   def nav_link_classes(path, extra_classes: "")
     base = "text-sm transition-colors #{extra_classes}"
     if current_page?(path)
@@ -13,9 +13,10 @@
 %>
 
 <header class="fixed inset-x-0 top-0 z-[1000] bg-white/90 backdrop-blur border-b border-gray-200 shadow-sm">
-  <div class="mx-auto max-w-6xl h-14 px-4 flex items-center justify-between">
+  <!-- FIX: Remplacer px-4 par px-3 sur mobile pour éviter débordement -->
+  <div class="mx-auto max-w-6xl h-14 px-3 md:px-4 flex items-center justify-between">
     <!-- Logo -->
-    <%= link_to root_path, class: "flex items-center gap-2" do %>
+    <%= link_to root_path, class: "flex items-center gap-2 flex-shrink-0" do %>
       <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 grid place-content-center shadow-sm">
         <span class="text-white font-bold text-xs">D</span>
       </div>
@@ -70,9 +71,9 @@
 
 
 
-    <!-- Burger mobile -->
+    <!-- Burger mobile - FIX: Taille réduite pour éviter débordement -->
     <button id="btn-open-menu"
-            class="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white shadow ring-1 ring-violet-200 hover:ring-violet-300 hover:shadow-md transition"
+            class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white shadow ring-1 ring-violet-200 hover:ring-violet-300 hover:shadow-md transition flex-shrink-0"
             aria-controls="mobile-menu"
             aria-expanded="false"
             aria-label="Ouvrir le menu principal">

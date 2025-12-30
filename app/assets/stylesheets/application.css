@@ -1,4 +1,26 @@
-/* ========== Application global ========== */
+@import "tailwindcss";
+
+/* ========================================
+   FIX DÉBORDEMENT GLOBAL - CRITIQUE
+   ======================================== */
+html {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+header, section, main, .container {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* ========================================
+   APPLICATION GLOBAL
+   ======================================== */
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
@@ -15,7 +37,9 @@ body {
 /* Container utilitaire (si besoin dans la home) */
 .container { max-width:1140px; margin:0 auto; padding:0 24px; }
 
-/* ========== LEAFLET — POPUP "Déclic card" ========== */
+/* ========================================
+   LEAFLET — POPUP "Déclic card"
+   ======================================== */
 .leaflet-container a { color:#7e5bef; text-decoration:none; }
 .leaflet-container a:hover { text-decoration:underline; }
 
@@ -112,7 +136,9 @@ body {
 .dcpp-pill[data-cat="rencontres"]   { background:#ecfdf5; color:#047857; border-color:#bbf7d0; }
 .dcpp-pill[data-cat="entreprendre"] { background:#fff7ed; color:#c2410c; border-color:#fed7aa; }
 
-/* ========== LEAFLET — marqueurs colorés (fallback classes si besoin) ========== */
+/* ========================================
+   LEAFLET — marqueurs colorés
+   ======================================== */
 .dc-marker {
   width:26px; height:26px; border-radius:9999px;
   border:2px solid #fff; display:grid; place-items:center;
@@ -120,13 +146,12 @@ body {
 }
 
 .dc-marker.benevolat    { background:#f43f5e; }
-.dc-marker.ecologiser   { background:#16a34a; } /* vert */
+.dc-marker.ecologiser   { background:#16a34a; }
 .dc-marker.formation    { background:#3b82f6; }
-.dc-marker.rencontres   { background:#facc15; } /* jaune */
+.dc-marker.rencontres   { background:#facc15; }
 .dc-marker.entreprendre { background:#f59e0b; }
 .dc-marker.histoires    { background:#a855f7; }
 .dc-marker.default      { background:#7e5bef; }
-
 
 /* Accessibilité : focus dans le popup */
 .leaflet-popup.dc-popup .dcpp a:focus {
@@ -135,7 +160,9 @@ body {
   border-radius: 8px;
 }
 
-/* ========== RESPONSIVE — FIX POPUP MOBILE ========== */
+/* ========================================
+   RESPONSIVE — FIX POPUP MOBILE
+   ======================================== */
 
 /* Tablettes et écrans moyens */
 @media (max-width: 768px) {
@@ -230,12 +257,14 @@ body {
   }
 }
 
-/* CTA éditorial rendu depuis Markdown */
+/* ========================================
+   CTA ÉDITORIAL MARKDOWN
+   ======================================== */
 .markdown-content .md-cta{
   margin-top: 1rem;
   padding: 1rem 1rem;
   border-radius: 1rem;
-  border: 1px solid rgba(99,102,241,.18); /* indigo */
+  border: 1px solid rgba(99,102,241,.18);
   background: rgba(99,102,241,.06);
 }
 
@@ -251,13 +280,11 @@ body {
   display: inline-flex;
 }
 
-
-/* CTA éditorial (Markdown) */
 .markdown-content blockquote,
 .prose blockquote {
   margin: 1.25rem 0;
   padding: 1rem 1rem 1rem 1.1rem;
-  border-left: 4px solid rgba(99, 102, 241, 0.55); /* indigo */
+  border-left: 4px solid rgba(99, 102, 241, 0.55);
   background: rgba(99, 102, 241, 0.08);
   border-radius: 14px;
 }
@@ -273,8 +300,9 @@ body {
   margin: .25rem 0 0 1rem;
 }
 
-
-/* --- Déclic: show opportunity refinements --- */
+/* ========================================
+   DÉCLIC CARDS & CHIPS
+   ======================================== */
 .dc-card{
   background:#fff;
   border-radius: 24px;
@@ -296,7 +324,7 @@ body {
 }
 
 .dc-map{
-  height: 280px; /* évite l’effet “collé” et trop petit */
+  height: 280px;
 }
 
 .dc-raise{
@@ -307,7 +335,61 @@ body {
   filter: saturate(1.02);
 }
 
-/* Markdown: un peu plus d’air */
+/* Markdown: un peu plus d'air */
 .markdown-content h2{ margin-top: 1.8rem; margin-bottom: .6rem; }
 .markdown-content h3{ margin-top: 1.2rem; margin-bottom: .4rem; }
 .markdown-content p{ margin: .8rem 0; }
+
+
+/* ========================================
+   FIX LEAFLET POPUP Z-INDEX - MOBILE
+   ======================================== */
+.leaflet-pane {
+  z-index: 400 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 9999 !important;
+}
+
+.leaflet-popup {
+  z-index: 9999 !important;
+}
+
+/* S'assurer que le popup est cliquable sur mobile */
+@media (max-width: 768px) {
+  .leaflet-popup {
+    pointer-events: auto !important;
+  }
+
+  .leaflet-popup-content-wrapper,
+  .leaflet-popup-content {
+    pointer-events: auto !important;
+  }
+
+  /* FIX: Bouton de fermeture du popup cliquable */
+  .leaflet-popup-close-button {
+    z-index: 10001 !important;
+    pointer-events: auto !important;
+    position: absolute !important;
+    top: 8px !important;
+    right: 8px !important;
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 28px !important;
+    line-height: 44px !important;
+    text-align: center !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    color: white !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+  }
+
+  .leaflet-popup-close-button:hover {
+    background: rgba(0, 0, 0, 0.8) !important;
+  }
+}

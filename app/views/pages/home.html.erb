@@ -987,6 +987,52 @@ end
   transform: translateY(-1px);
 }
 
+/* ====== FIX POPUP MOBILE - COMPACT ====== */
+
+/* Limiter la hauteur du popup sur mobile */
+@media (max-width: 768px) {
+  .leaflet-popup-content-wrapper {
+    max-height: 60vh !important;
+    overflow: hidden !important;
+  }
+
+  .dc-pop-card {
+    max-height: 60vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Réduire la taille de l'image hero */
+  .dc-pop-hero {
+    height: 100px !important;
+  }
+
+  /* Réduire le padding du body */
+  .dc-pop-body {
+    padding: 12px !important;
+  }
+
+  /* Titre plus compact */
+  .dc-pop-title {
+    font-size: 0.9rem !important;
+    margin: 0 0 8px 0 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Meta plus compact */
+  .dc-pop-meta {
+    font-size: 0.75rem !important;
+    gap: 2px !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* Bouton plus petit */
+  .dc-pop-btn {
+    padding: 8px 0 !important;
+    font-size: 0.8rem !important;
+  }
+}
+
 /* ====== Cards opportunités ====== */
 .hm-cards{
   display:grid;
@@ -1416,10 +1462,65 @@ function plot(items){
 
     if(!lat || !lng) return; // Si la conversion échoue (lat ou lng vaut 0 ou NaN), on saute
 
-    // Le reste du code reste le même, mais utilise lat et lng (variables locales)
+// Le reste du code reste le même, mais utilise lat et lng (variables locales)
     const marker = L.marker([lat, lng], { icon:iconFor((o.category||'').toLowerCase()) })
       .addTo(dataLayer)
-      .bindPopup(popupHtml(o));
+      .bindPopup(popupHtml(o), {
+        autoPan: true,
+        autoPanPaddingTopLeft: [10, 80],
+        autoPanPaddingBottomRight: [10, 80],
+        maxWidth: 300,
+        minWidth: 280,
+        maxHeight: window.innerHeight * 0.6, // Max 60% de la hauteur d'écran
+        closeButton: true,
+        autoClose: true
+      });
+
+    // FIX: Bouton de fermeture + désactiver autoPan après ouverture
+    marker.on('popupopen', function(e) {
+      // Désactiver autoPan après 300ms pour permettre le scroll
+      setTimeout(function() {
+        e.popup.options.autoPan = false;
+      }, 300);
+
+      setTimeout(function() {
+        const popup = e.popup;
+        const closeBtn = popup._closeButton;
+
+        if (closeBtn) {
+          // Style du bouton de fermeture
+          closeBtn.style.width = '44px';
+          closeBtn.style.height = '44px';
+          closeBtn.style.fontSize = '28px';
+          closeBtn.style.lineHeight = '44px';
+          closeBtn.style.display = 'flex';
+          closeBtn.style.alignItems = 'center';
+          closeBtn.style.justifyContent = 'center';
+          closeBtn.style.cursor = 'pointer';
+          closeBtn.style.touchAction = 'manipulation';
+          closeBtn.style.zIndex = '10001';
+          closeBtn.style.position = 'absolute';
+          closeBtn.style.top = '8px';
+          closeBtn.style.right = '8px';
+          closeBtn.style.background = 'rgba(0, 0, 0, 0.7)';
+          closeBtn.style.borderRadius = '50%';
+          closeBtn.style.color = 'white';
+
+          // Événements tactiles pour mobile
+          closeBtn.addEventListener('touchstart', function(event) {
+            event.stopPropagation();
+            event.preventDefault();
+            map.closePopup();
+          }, { passive: false });
+
+          closeBtn.addEventListener('click', function(event) {
+            event.stopPropagation();
+            event.preventDefault();
+            map.closePopup();
+          });
+        }
+      }, 100);
+    });
 
     bounds.push([lat, lng]);
   });

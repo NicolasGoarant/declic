@@ -1,1448 +1,839 @@
-<%# app/views/pages/philosophie.html.erb - VERSION AMÉLIORÉE %>
-
-<%# HERO IMMERSIF %>
-<section class="ph-hero">
-  <div class="container">
-    <%# CITATION TÉRENCE - En tête pour maximum impact %>
-    <div class="hero-quote">
-      <blockquote class="hero-quote-text">
-        « Tout ce qui est humain m'intéresse »
-      </blockquote>
-      <cite class="hero-quote-author">Térence</cite>
-    </div>
-
-    <h1 class="hero-title">
-      Pourquoi <span class="gradient-text">Déclic</span> ?
-    </h1>
-
-    <p class="hero-lead">
-      <strong>À portée de main, à portée de clic</strong>, nous pouvons changer notre vie.
-      Autour de nous, les initiatives foisonnent, des opportunités palpitent,
-      des histoires inspirantes de personnalités qui ont franchi le pas aussi.
-    </p>
-
-    <p class="hero-highlight">
-      ✨ <strong>Déclic</strong> permet de les repérer et de passer à l'action.
-    </p>
-
-    <div class="hero-cta">
-      <%= link_to (url_for(controller: :opportunities, action: :index, category: 'toutes') rescue root_path(anchor:"explorer")), class: "btn btn-primary" do %>
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-        <span>Voir les actions locales</span>
-      <% end %>
-      <%= link_to root_path(anchor:"explorer"), class: "btn btn-ghost" do %>
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
-        <span>Notre carte</span>
-      <% end %>
-    </div>
-
-    <%# Statistiques Hero %>
-    <div class="hero-stats">
-      <div class="stat">
-        <div class="stat-number" data-count="15000">0</div>
-        <div class="stat-label">Opportunités</div>
-      </div>
-      <div class="stat">
-        <div class="stat-number" data-count="300">0</div>
-        <div class="stat-label">Villes</div>
-      </div>
-      <div class="stat">
-        <div class="stat-number" data-count="10000">0</div>
-        <div class="stat-label">Membres</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<%# SECTION PROBLÈME-SOLUTION-BÉNÉFICE %>
-<section class="ph-cards">
-  <div class="container">
-    <div class="section-intro">
-      <h2 class="section-title">Comment Déclic transforme ta recherche</h2>
-      <p class="section-subtitle">Du chaos à la clarté en 3 étapes</p>
-    </div>
-
-    <div class="cards-grid">
-      <article class="feature-card card-problem">
-        <div class="card-badge">
-          <span class="badge-icon">😵</span>
-          <span class="badge-text">Le problème</span>
-        </div>
-        <div class="card-emoji">🧩</div>
-        <h3>Le défi</h3>
-        <p>Des initiatives locales <strong>nombreuses</strong>, mais souvent <strong>dispersées</strong>, peu visibles.
-        Résultat : on ne sait pas par où commencer et on abandonne avant d'avoir essayé.</p>
-
-        <div class="problem-context">
-          <p class="context-text">Tu veux t'engager, mais tu passes des heures à chercher sans trouver l'opportunité parfaite pour toi.</p>
-        </div>
-
-        <ul class="pain-points">
-          <li>
-            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
-            <span>Info fragmentée sur 15 sites différents</span>
-          </li>
-          <li>
-            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
-            <span>Pas de vision d'ensemble</span>
-          </li>
-          <li>
-            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
-            <span>Découragement face à la masse d'infos</span>
-          </li>
-          <li>
-            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
-            <span>Manque de repères pour savoir quoi choisir</span>
-          </li>
-        </ul>
-        <img class="card-image" src="https://images.unsplash.com/photo-1531482615713-2afd69097998?w=900&q=80&auto=format&fit=crop" alt="Recherche complexe" loading="lazy">
-      </article>
-
-      <article class="feature-card card-solution">
-        <div class="card-badge">
-          <span class="badge-icon">🎯</span>
-          <span class="badge-text">Notre solution</span>
-        </div>
-        <div class="card-emoji">🧭</div>
-        <h3>Notre approche</h3>
-        <p>On <strong>centralise les opportunités</strong> autour de toi, puis on te guide selon ton intention :
-        entreprendre, t'engager, aider, progresser...</p>
-        <div class="solution-features">
-          <div class="feature-item">
-            <div class="feature-icon">🗺️</div>
-            <div>
-              <strong>Carte interactive</strong>
-              <span>Visualise tout en un coup d'œil</span>
-            </div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-icon">🎯</div>
-            <div>
-              <strong>Filtres intelligents</strong>
-              <span>Trouve exactement ce que tu cherches</span>
-            </div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-icon">📖</div>
-            <div>
-              <strong>Histoires inspirantes</strong>
-              <span>Découvre des parcours qui motivent</span>
-            </div>
-          </div>
-        </div>
-        <img class="card-image" src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=900&q=80&auto=format&fit=crop" alt="Collaboration d'équipe" loading="lazy">
-      </article>
-
-      <article class="feature-card card-benefit">
-        <div class="card-badge">
-          <span class="badge-icon">✨</span>
-          <span class="badge-text">Ton gain</span>
-        </div>
-        <div class="card-emoji">🌱</div>
-        <h3>Ce que tu y gagnes</h3>
-        <p>Des <strong>actions près de chez toi</strong>, un réseau bienveillant, et des <em>belles histoires</em>
-        qui donnent l'élan pour passer du "un jour" au <strong>"jour 1"</strong>.</p>
-        <div class="benefits-grid">
-          <div class="benefit-badge">⏱️ Gain de temps</div>
-          <div class="benefit-badge">🤝 Réseau local</div>
-          <div class="benefit-badge">💪 Confiance</div>
-          <div class="benefit-badge">🎯 Passage à l'action</div>
-        </div>
-        <blockquote class="testimonial-mini">
-          <p>"Déclic m'a permis de trouver ma mission de bénévolat en 10 minutes. J'avais cherché pendant des mois !"</p>
-          <cite>— Marie, 28 ans, Nancy</cite>
-        </blockquote>
-        <img class="card-image" src="https://images.unsplash.com/photo-1552581234-26160f608093?w=900&q=80&auto=format&fit=crop" alt="Personnes heureuses" loading="lazy">
-      </article>
-    </div>
-  </div>
-</section>
-
-<%# COMMENT ÇA MARCHE - VERSION INTERACTIVE %>
-<section class="ph-howto">
-  <div class="container">
-    <div class="section-intro">
-      <h2 class="section-title">Comment ça marche ?</h2>
-      <p class="section-subtitle">4 étapes pour trouver ton déclic</p>
-    </div>
-
-    <div class="steps-visual">
-      <div class="step-item" data-step="1">
-        <div class="step-number">1</div>
-        <div class="step-content">
-          <div class="step-icon-single">🎯</div>
-          <h3>Choisis ton parcours</h3>
-          <p>Entreprendre, te former, écologiser, aider, rencontrer, ou t'inspirer des histoires d'autres personnes.</p>
-        </div>
-      </div>
-
-      <div class="step-connector">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-      </div>
-
-      <div class="step-item" data-step="2">
-        <div class="step-number">2</div>
-        <div class="step-content">
-          <div class="step-icon-single">📍</div>
-          <h3>Localise-toi</h3>
-          <p>On trouve ce qui est près de toi. Ta vie privée est respectée : la géolocalisation est uniquement utilisée pour la recherche.</p>
-        </div>
-      </div>
-
-      <div class="step-connector">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-      </div>
-
-      <div class="step-item" data-step="3">
-        <div class="step-number">3</div>
-        <div class="step-content">
-          <div class="step-icon-single">🧪</div>
-          <h3>Agis en petit</h3>
-          <p>Un atelier, une mission d'essai, un café-rencontre, un pitch : commence léger, vois si ça te plaît, et vas-y !</p>
-        </div>
-      </div>
-
-      <div class="step-connector">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-      </div>
-
-      <div class="step-item" data-step="4">
-        <div class="step-number">4</div>
-        <div class="step-content">
-          <div class="step-icon-single">✍️</div>
-          <h3>Partage ton déclic</h3>
-          <p>Sois une source d'inspiration et aide d'autres à franchir le pas. Ta story peut à son tour changer des vies !</p>
-        </div>
-      </div>
-    </div>
-
-    <%# Illustration %>
-    <figure class="howto-illustration">
-      <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=1600&q=80&auto=format&fit=crop" alt="Communauté engagée" loading="lazy">
-      <figcaption>
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-        <span>La force de Déclic : une communauté bienveillante qui agit localement</span>
-      </figcaption>
-    </figure>
-  </div>
-</section>
-
-<%# NOS PRINCIPES - VERSION MODERNE %>
-<section class="ph-principles">
-  <div class="container">
-    <div class="section-intro">
-      <h2 class="section-title">Nos principes</h2>
-      <p class="section-subtitle">Les valeurs qui guident chaque décision</p>
-    </div>
-
-    <div class="principles-grid">
-      <div class="principle-card">
-        <div class="principle-icon">🤝</div>
-        <h4>Ouvert & non partisan</h4>
-        <p>Toutes les initiatives bienveillantes sont bienvenues, sans distinction politique.</p>
-      </div>
-      <div class="principle-card">
-        <div class="principle-icon">📍</div>
-        <h4>Impact local</h4>
-        <p>Priorité aux actions qui transforment concrètement ton territoire.</p>
-      </div>
-      <div class="principle-card">
-        <div class="principle-icon">💜</div>
-        <h4>Bienveillance</h4>
-        <p>Respect, entraide et encouragement dans toutes nos interactions.</p>
-      </div>
-      <div class="principle-card">
-        <div class="principle-icon">🔎</div>
-        <h4>Transparence</h4>
-        <p>Code open source, modération claire, pas de contenu caché.</p>
-      </div>
-      <div class="principle-card">
-        <div class="principle-icon">🌿</div>
-        <h4>Sobriété numérique</h4>
-        <p>Design léger, serveurs verts, respect de l'environnement.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<%# VIE PRIVÉE & CONTRIBUTION %>
-<section class="ph-trust">
-  <div class="container">
-    <div class="trust-grid">
-
-      <%# Vie privée %>
-      <article class="trust-card">
-        <div class="trust-icon">🔐</div>
-        <h3>Données & vie privée</h3>
-        <div class="trust-content">
-          <p class="trust-lead">Ta confidentialité est <strong>non-négociable</strong>.</p>
-
-          <p class="trust-intro">Nous ne vivons pas de la revente de tes données. Notre modèle est simple : tu utilises Déclic gratuitement, nous restons indépendants.</p>
-
-          <div class="privacy-points">
-            <div class="privacy-item">
-              <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-              <div>
-                <strong>Géolocalisation sur demande</strong>
-                <span>Uniquement pour te proposer des opportunités proches</span>
-              </div>
-            </div>
-            <div class="privacy-item">
-              <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-              <div>
-                <strong>Zéro revente de données</strong>
-                <span>Jamais partagé à des tiers publicitaires</span>
-              </div>
-            </div>
-            <div class="privacy-item">
-              <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-              <div>
-                <strong>Contrôle total</strong>
-                <span>Active/désactive le suivi depuis la carte à tout moment</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="trust-badge-group">
-            <span class="trust-badge">🇪🇺 RGPD compliant</span>
-            <span class="trust-badge">🔒 Données chiffrées</span>
-          </div>
-        </div>
-        <img class="trust-image" src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1000&q=80&auto=format&fit=crop" alt="Sécurité des données" loading="lazy">
-      </article>
-
-      <%# Contribution %>
-      <article class="trust-card card-contribute">
-        <div class="trust-icon">✨</div>
-        <h3>Contribuer</h3>
-        <div class="trust-content">
-          <p class="trust-lead">Tu as une opportunité à valoriser ou une histoire à raconter ?</p>
-
-          <div class="contribute-types">
-            <div class="contribute-type">
-              <div class="contribute-icon">📢</div>
-              <strong>Propose une opportunité</strong>
-              <span>Atelier, formation, mission, événement...</span>
-            </div>
-            <div class="contribute-type">
-              <div class="contribute-icon">📖</div>
-              <strong>Partage ton histoire</strong>
-              <span>Inspire d'autres personnes avec ton parcours</span>
-            </div>
-          </div>
-
-          <div class="contribute-cta">
-            <%= link_to new_opportunity_path, class: "btn btn-primary" do %>
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-              <span>Proposer une opportunité</span>
-            <% end %>
-            <%= link_to (respond_to?(:new_story_path) ? new_story_path : stories_path), class: "btn btn-ghost" do %>
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-              <span>Partager mon histoire</span>
-            <% end %>
-          </div>
-
-          <p class="contribute-note">
-            💡 <strong>Modération bienveillante</strong> : Ton contenu sera relu sous 48h pour garantir la qualité.
-          </p>
-        </div>
-        <img class="trust-image" src="https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1000&q=80&auto=format&fit=crop" alt="Partage d'expérience" loading="lazy">
-      </article>
-
-    </div>
-  </div>
-</section>
-
-<%# CTA FINAL - VERSION SPECTACULAIRE %>
-<section class="ph-final-cta">
-  <div class="cta-background"></div>
-  <div class="container">
-    <div class="cta-content">
-      <div class="cta-icon">⚡</div>
-      <h2>Prêt·e pour ton déclic ?</h2>
-      <p>Parcours la carte et choisis une première action.<br>Le reste suivra naturellement.</p>
-
-      <div class="cta-buttons">
-        <%= link_to root_path(anchor:"explorer"), class: "btn btn-primary btn-big" do %>
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
-          <span>Voir la carte interactive</span>
-        <% end %>
-      </div>
-
-      <div class="cta-stats-mini">
-        <span>Rejoins 10 000+ personnes qui ont déjà trouvé leur déclic</span>
-      </div>
-    </div>
-  </div>
-</section>
+<%# app/views/pages/philosophie.html.erb - VERSION FINALE ÉPURÉE %>
 
 <style>
 /* ============================================
    VARIABLES & RESET
    ============================================ */
 :root {
-  --purple: #7e5bef;
-  --blue: #3b82f6;
-  --pink: #ec4899;
-  --green: #10b981;
-  --slate: #0f172a;
-  --slate-light: #64748b;
+  --purple-600: #9333EA;
+  --purple-700: #7E22CE;
+  --pink-500: #EC4899;
+  --yellow-400: #FBBF24;
+  --emerald-500: #10B981;
+  --gray-900: #111827;
+  --gray-700: #374151;
+  --gray-500: #6B7280;
+  --gray-100: #F3F4F6;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
 .container {
-  max-width: 1240px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 20px;
 }
 
 /* ============================================
-   HERO IMMERSIF
+   HERO SECTION
    ============================================ */
-.ph-hero {
-  background: linear-gradient(135deg, var(--purple), var(--blue));
+.philo-hero {
+  background: linear-gradient(135deg, var(--purple-600) 0%, var(--pink-500) 100%);
   color: white;
-  padding: clamp(40px, 6vw, 60px) 0 clamp(60px, 8vw, 100px);
+  padding: 80px 20px;
+  text-align: center;
   position: relative;
   overflow: hidden;
 }
 
-@media (max-width: 768px) {
-  .ph-hero {
-    padding: 32px 0 60px;
-  }
-}
-
-.ph-hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 20% 50%, rgba(236, 72, 153, 0.3), transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.3), transparent 50%);
-  animation: pulse-bg 8s ease-in-out infinite;
-}
-
-@keyframes pulse-bg {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.8; }
-}
-
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 8px 20px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 24px;
-  position: relative;
-  z-index: 10;
-}
-
-.pulse {
-  width: 8px;
-  height: 8px;
-  background: white;
-  border-radius: 50%;
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.2); }
-}
-
-.hero-title {
-  font-family: 'Epilogue', system-ui, sans-serif;
-  font-size: clamp(48px, 7vw, 80px);
-  font-weight: 900;
-  line-height: 1.1;
-  margin: 0 0 24px;
-  position: relative;
-  z-index: 10;
-}
-
-.gradient-text {
-  background: linear-gradient(90deg, #fce7f3, #c084fc, #93c5fd);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: gradient-shift 3s ease infinite;
-}
-
-@keyframes gradient-shift {
-  0%, 100% { filter: hue-rotate(0deg); }
-  50% { filter: hue-rotate(20deg); }
-}
-
-/* ============================================
-   CITATION DANS LE HERO
-   ============================================ */
-.hero-quote {
-  margin: 0 auto 60px;
-  max-width: 700px;
-  text-align: center;
-  position: relative;
-  z-index: 10;
-  padding: 24px 32px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.hero-quote-text {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: clamp(24px, 3.5vw, 38px);
-  line-height: 1.4;
-  font-style: italic;
-  font-weight: 400;
-  color: white;
-  margin: 0 0 12px 0;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.hero-quote-author {
-  display: block;
-  font-size: clamp(14px, 1.8vw, 18px);
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  font-style: normal;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-}
-
-@media (max-width: 768px) {
-  .hero-quote {
-    padding: 20px 24px;
-    margin: 0 auto 36px;
-  }
-}
-
-.hero-lead {
-  font-size: clamp(18px, 2vw, 24px);
-  line-height: 1.7;
-  max-width: 900px;
-  margin-bottom: 16px;
-  opacity: 0.95;
-  position: relative;
-  z-index: 10;
-}
-
-.hero-highlight {
-  font-size: clamp(20px, 2.2vw, 26px);
-  font-weight: 700;
-  margin-bottom: 32px;
-  position: relative;
-  z-index: 10;
-}
-
-.hero-cta {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 48px;
-  position: relative;
-  z-index: 10;
-}
-
-/* Boutons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 32px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 16px;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  border: none;
-}
-
-.btn-primary {
-  background: white;
-  color: var(--purple);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
-}
-
-.btn-primary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
-}
-
-.btn-ghost {
-  background: transparent;
-  color: white;
-  border: 2px solid white;
-}
-
-.btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
-}
-
-.btn-big {
-  padding: 20px 48px;
-  font-size: 18px;
-}
-
-/* Stats Hero */
-.hero-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
-  max-width: 800px;
-  margin-bottom: 48px;
-  position: relative;
-  z-index: 10;
-}
-
-.stat {
-  text-align: center;
-  padding: 24px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-}
-
-.stat-number {
-  font-size: 48px;
-  font-weight: 900;
-  margin-bottom: 8px;
-  font-family: 'Epilogue', sans-serif;
-}
-
-.stat-label {
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  opacity: 0.9;
-}
-
-/* Galerie */
-.hero-gallery {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr;
-  gap: 20px;
-  position: relative;
-  z-index: 10;
-}
-
-.gallery-item {
-  position: relative;
-  border-radius: 24px;
-  overflow: hidden;
-  border: 3px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s ease;
-}
-
-.gallery-item:hover {
-  transform: translateY(-8px);
-}
-
-.gallery-main {
-  grid-row: span 1;
-}
-
-.gallery-item img {
-  width: 100%;
-  height: 240px;
-  object-fit: cover;
-  display: block;
-}
-
-.gallery-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 20px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.gallery-item:hover .gallery-overlay {
-  opacity: 1;
-}
-
-.gallery-tag {
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  padding: 8px 16px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-/* Vague */
-.wave-separator {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  overflow: hidden;
-  line-height: 0;
-}
-
-/* ============================================
-   CARDS PROBLÈME-SOLUTION-BÉNÉFICE
-   ============================================ */
-.ph-cards {
-  padding: clamp(60px, 8vw, 100px) 0;
-  background: white;
-}
-
-.section-intro {
-  text-align: center;
-  margin-bottom: 64px;
-}
-
-.section-title {
-  font-family: 'Epilogue', sans-serif;
-  font-size: clamp(36px, 5vw, 52px);
-  font-weight: 900;
-  color: var(--slate);
-  margin: 0 0 16px;
-}
-
-.section-subtitle {
-  font-size: 20px;
-  color: var(--slate-light);
-  margin: 0;
-}
-
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
-}
-
-.feature-card {
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 32px;
-  padding: 40px 32px;
-  position: relative;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-}
-
-.feature-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-}
-
-.card-problem { border-color: #fecaca; background: linear-gradient(to bottom, #fef2f2, white); }
-.card-solution { border-color: #bfdbfe; background: linear-gradient(to bottom, #eff6ff, white); }
-.card-benefit { border-color: #bbf7d0; background: linear-gradient(to bottom, #f0fdf4, white); }
-
-.card-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 20px;
-}
-
-.card-problem .card-badge { background: #fee2e2; color: #991b1b; }
-.card-solution .card-badge { background: #dbeafe; color: #1e40af; }
-.card-benefit .card-badge { background: #dcfce7; color: #166534; }
-
-.card-emoji {
-  font-size: 56px;
-  margin-bottom: 20px;
-  display: block;
-}
-
-.feature-card h3 {
-  font-family: 'Epilogue', sans-serif;
-  font-size: 28px;
-  font-weight: 900;
-  color: var(--slate);
-  margin: 0 0 16px;
-}
-
-.feature-card p {
-  font-size: 16px;
-  line-height: 1.7;
-  color: var(--slate-light);
-  margin-bottom: 24px;
-  flex-grow: 1;
-}
-
-.pain-points {
-  list-style: none;
-  padding: 0;
-  margin: 24px 0;
-}
-
-.problem-context {
-  background: #fff5f5;
-  border-left: 4px solid #f87171;
-  padding: 16px 20px;
-  border-radius: 12px;
-  margin: 20px 0;
-}
-
-.context-text {
-  font-size: 15px;
-  line-height: 1.6;
-  color: #7f1d1d;
-  margin: 0;
-  font-weight: 600;
-  font-style: italic;
-}
-
-.pain-points li {
-  display: flex;
-  align-items: start;
-  gap: 12px;
-  margin-bottom: 12px;
-  font-size: 15px;
-  color: var(--slate);
-}
-
-.solution-features,
-.privacy-points {
-  margin: 24px 0;
-}
-
-.feature-item,
-.privacy-item {
-  display: flex;
-  align-items: start;
-  gap: 16px;
-  padding: 16px;
-  background: white;
-  border-radius: 16px;
-  margin-bottom: 12px;
-  border: 1px solid #e5e7eb;
-}
-
-.feature-icon {
-  font-size: 32px;
-  flex-shrink: 0;
-}
-
-.feature-item strong,
-.privacy-item strong {
-  display: block;
-  font-size: 15px;
-  color: var(--slate);
-  margin-bottom: 4px;
-}
-
-.feature-item span,
-.privacy-item span {
-  font-size: 13px;
-  color: var(--slate-light);
-}
-
-.benefits-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin: 24px 0;
-}
-
-.benefit-badge {
-  padding: 12px 16px;
-  background: white;
-  border: 2px solid #10b981;
-  border-radius: 16px;
-  text-align: center;
-  font-weight: 700;
-  font-size: 14px;
-  color: var(--slate);
-}
-
-.testimonial-mini {
-  background: white;
-  border-left: 4px solid var(--green);
-  padding: 20px;
-  border-radius: 12px;
-  margin: 24px 0;
-}
-
-.testimonial-mini p {
-  font-style: italic;
-  margin: 0 0 8px;
-}
-
-.testimonial-mini cite {
-  font-style: normal;
-  font-size: 14px;
-  color: var(--slate-light);
-}
-
-.card-image {
-  width: calc(100% + 64px);
-  margin-left: -32px;
-  margin-right: -32px;
-  margin-bottom: -40px;
-  margin-top: auto;
-  height: 220px;
-  object-fit: cover;
-  border-radius: 0 0 32px 32px;
-  display: block;
-}
-
-/* Fix pour uniformiser la hauteur des feature-cards */
-.feature-card {
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 32px;
-  padding: 40px 32px;
-  position: relative;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-}
-.ph-howto {
-  padding: clamp(60px, 8vw, 100px) 0;
-  background: linear-gradient(180deg, #f8f7ff 0%, #faf9ff 100%);
-}
-
-.steps-visual {
-  display: flex;
-  align-items: flex-start; /* Alignement en haut pour cards au même niveau */
-  justify-content: space-between;
-  margin-bottom: 64px;
-  overflow-x: auto;
-  padding: 20px 0;
-}
-
-.step-item {
-  flex: 1;
-  min-width: 200px;
-  text-align: center;
-}
-
-.step-number {
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 20px;
-  background: linear-gradient(135deg, var(--purple), var(--pink));
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  font-weight: 900;
-  box-shadow: 0 8px 24px rgba(126, 91, 239, 0.3);
-  font-family: 'Epilogue', sans-serif;
-}
-
-.step-icon-group {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  margin-bottom: 16px;
-  min-height: 64px; /* Hauteur fixe pour alignement */
-  align-items: center;
-}
-
-.step-icon {
-  font-size: 28px;
-}
-
-.step-icon-single {
-  font-size: 48px;
-  margin-bottom: 16px;
-  min-height: 64px; /* Même hauteur que step-icon-group */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.step-content h3 {
-  font-family: 'Epilogue', sans-serif;
-  font-size: 20px;
-  font-weight: 900;
-  color: var(--slate);
-  margin: 0 0 12px;
-}
-
-.step-content p {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--slate-light);
-  margin: 0;
-}
-
-.step-connector {
-  flex-shrink: 0;
-  color: #cbd5e1;
-  margin: 0 16px;
-  margin-top: 30px; /* Aligner avec les numéros des steps */
-}
-
-.step-connector svg {
-  width: 32px;
-  height: 32px;
-}
-
-.howto-illustration {
-  margin: 0;
-  position: relative;
-}
-
-.howto-illustration img {
-  width: 100%;
-  height: 400px;
-  object-fit: cover;
-  border-radius: 32px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15);
-  border: 4px solid white;
-}
-
-.howto-illustration figcaption {
-  position: absolute;
-  bottom: 32px;
-  left: 32px;
-  right: 32px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 20px 24px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 600;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-}
-
-/* ============================================
-   PRINCIPES
-   ============================================ */
-.ph-principles {
-  padding: clamp(60px, 8vw, 100px) 0;
-  background: white;
-}
-
-.principles-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 24px;
-}
-
-.principle-card {
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 24px;
-  padding: 32px 24px;
-  text-align: center;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-}
-
-.principle-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
-  border-color: var(--purple);
-}
-
-.principle-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  display: block;
-}
-
-.principle-card h4 {
-  font-family: 'Epilogue', sans-serif;
-  font-size: 18px;
-  font-weight: 900;
-  color: var(--slate);
-  margin: 0 0 12px;
-}
-
-.principle-card p {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--slate-light);
-  margin: 0;
-}
-
-/* ============================================
-   VIE PRIVÉE & CONTRIBUTION
-   ============================================ */
-.ph-trust {
-  padding: clamp(60px, 8vw, 100px) 0;
-  background: linear-gradient(180deg, #f8f7ff 0%, #faf9ff 100%);
-}
-
-.trust-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 48px;
-}
-
-.trust-card {
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 32px;
-  padding: 48px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.trust-content {
-  flex-grow: 1;
-}
-
-.trust-icon {
-  font-size: 64px;
-  margin-bottom: 24px;
-  display: block;
-}
-
-.trust-card h3 {
-  font-family: 'Epilogue', sans-serif;
-  font-size: 32px;
-  font-weight: 900;
-  color: var(--slate);
-  margin: 0 0 24px;
-}
-
-.trust-lead {
-  font-size: 18px;
-  line-height: 1.7;
-  color: var(--slate);
-  margin-bottom: 20px;
-}
-
-.trust-intro {
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--slate-light);
-  padding: 16px 20px;
-  background: #f0f9ff;
-  border-left: 4px solid #3b82f6;
-  border-radius: 12px;
-  margin-bottom: 32px;
-}
-
-.trust-badge-group {
-  display: flex;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.trust-badge {
-  display: inline-block;
-  padding: 8px 16px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #1e40af;
-}
-
-.contribute-types {
-  margin: 32px 0;
-}
-
-.contribute-type {
-  display: flex;
-  align-items: start;
-  gap: 16px;
-  padding: 20px;
-  background: #f9fafb;
-  border-radius: 16px;
-  margin-bottom: 16px;
-  border: 1px solid #e5e7eb;
-}
-
-.contribute-icon {
-  font-size: 32px;
-  flex-shrink: 0;
-}
-
-.contribute-type strong {
-  display: block;
-  font-size: 16px;
-  color: var(--slate);
-  margin-bottom: 4px;
-}
-
-.contribute-type span {
-  font-size: 14px;
-  color: var(--slate-light);
-}
-
-.contribute-cta {
-  display: flex;
-  gap: 16px;
-  margin: 32px 0;
-  flex-wrap: wrap;
-}
-
-.contribute-note {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--slate-light);
-  padding: 16px;
-  background: #fef3c7;
-  border-left: 4px solid #f59e0b;
-  border-radius: 8px;
-}
-
-.trust-image {
-  width: calc(100% + 96px);
-  margin-left: -48px;
-  margin-right: -48px;
-  margin-bottom: -48px;
-  margin-top: auto;
-  height: 260px;
-  object-fit: cover;
-  border-radius: 0 0 32px 32px;
-  display: block;
-}
-
-/* ============================================
-   CTA FINAL
-   ============================================ */
-.ph-final-cta {
-  position: relative;
-  padding: clamp(80px, 10vw, 120px) 0;
-  background: linear-gradient(135deg, var(--purple), var(--blue));
-  color: white;
-  text-align: center;
-  overflow: hidden;
-}
-
-.cta-background {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 30% 50%, rgba(236, 72, 153, 0.4), transparent 60%),
-              radial-gradient(circle at 70% 80%, rgba(59, 130, 246, 0.4), transparent 60%);
-  animation: pulse-bg 8s ease-in-out infinite;
-}
-
-.cta-content {
-  position: relative;
-  z-index: 10;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.cta-icon {
-  font-size: 80px;
-  margin-bottom: 24px;
-  animation: bounce 2s ease-in-out infinite;
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-.cta-content h2 {
-  font-family: 'Epilogue', sans-serif;
-  font-size: clamp(40px, 6vw, 64px);
-  font-weight: 900;
-  margin: 0 0 24px;
-}
-
-.cta-content p {
-  font-size: clamp(18px, 2vw, 22px);
-  line-height: 1.6;
-  margin-bottom: 40px;
-  opacity: 0.95;
-}
-
-.cta-buttons {
-  margin-bottom: 32px;
-}
-
-.cta-stats-mini {
-  font-size: 15px;
-  opacity: 0.9;
-  font-weight: 600;
-}
-
-/* ============================================
-   CITATION TÉRENCE
-   ============================================ */
-.ph-quote {
-  padding: 100px 0;
-  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 50%, #ede9fe 100%);
-  position: relative;
-  overflow: hidden;
-}
-
-.ph-quote::before {
+.philo-hero::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background:
-    radial-gradient(circle at 20% 80%, rgba(168, 85, 247, 0.12) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.12) 0%, transparent 50%);
-  pointer-events: none;
+  background: url('data:image/svg+xml,<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="30" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
+  opacity: 0.3;
 }
 
-.quote-wrapper {
-  max-width: 900px;
-  margin: 0 auto;
-  text-align: center;
+.philo-hero > * {
   position: relative;
   z-index: 1;
 }
 
-.quote-decoration {
-  font-size: 180px;
-  line-height: 1;
-  color: rgba(168, 85, 247, 0.2);
-  font-family: Georgia, serif;
-  position: absolute;
-  top: -60px;
-  left: 50%;
-  transform: translateX(-50%);
-  user-select: none;
-  pointer-events: none;
+.philo-hero-quote {
+  font-size: 26px;
+  font-style: italic;
+  opacity: 0.95;
+  margin-bottom: 32px;
+  font-weight: 300;
+  letter-spacing: 0.3px;
+  line-height: 1.5;
 }
 
-.quote-text {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 42px;
-  line-height: 1.4;
-  font-weight: 400;
-  font-style: italic;
-  color: #1e293b;
-  margin: 0 0 32px 0;
-  padding-top: 80px;
+.philo-hero h1 {
+  font-size: 56px;
+  font-weight: 800;
+  margin-bottom: 32px;
+  line-height: 1.1;
+}
+
+.philo-hero-lead {
+  font-size: 20px;
+  max-width: 800px;
+  margin: 0 auto 32px;
+  line-height: 1.7;
+  opacity: 0.95;
+}
+
+.philo-hero-highlight {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 48px;
+}
+
+.philo-hero-cta {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 80px;
+}
+
+.philo-btn {
+  padding: 16px 36px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+}
+
+.philo-btn-primary {
+  background: white;
+  color: var(--purple-600);
+}
+
+.philo-btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+}
+
+.philo-btn-ghost {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+.philo-btn-ghost:hover {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.5);
+}
+
+.philo-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 32px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.philo-stat {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  padding: 28px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.philo-stat-number {
+  font-size: 52px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.philo-stat-label {
+  font-size: 16px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* ============================================
+   MANIFESTE SECTION
+   ============================================ */
+.philo-manifeste {
+  padding: 100px 20px;
+  background: white;
+  text-align: center;
+}
+
+.philo-manifeste-content {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.philo-manifeste h2 {
+  font-size: 48px;
+  font-weight: 800;
+  margin-bottom: 32px;
+  color: var(--gray-900);
+  line-height: 1.2;
+}
+
+.philo-manifeste-text {
+  font-size: 22px;
+  line-height: 1.8;
+  color: var(--gray-700);
+  margin-bottom: 24px;
+}
+
+.philo-manifeste-highlight {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--purple-600);
+  margin-top: 40px;
+  padding: 24px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 16px;
+  border-left: 4px solid var(--yellow-400);
+}
+
+.philo-manifeste-image {
+  margin-top: 60px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+
+.philo-manifeste-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ============================================
+   SOLUTION SECTION
+   ============================================ */
+.philo-solution {
+  padding: 100px 20px;
+  background: var(--gray-100);
+}
+
+.philo-solution h2 {
+  font-size: 48px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 20px;
+  color: var(--gray-900);
+}
+
+.philo-solution-subtitle {
+  text-align: center;
+  font-size: 20px;
+  color: var(--gray-600);
+  margin-bottom: 64px;
+}
+
+.philo-solution-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.philo-solution-card {
+  background: white;
+  padding: 48px 40px;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+  border-top: 4px solid transparent;
+}
+
+.philo-solution-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+}
+
+.philo-solution-card:nth-child(1) {
+  border-top-color: var(--yellow-400);
+}
+
+.philo-solution-card:nth-child(2) {
+  border-top-color: var(--purple-600);
+}
+
+.philo-solution-card:nth-child(3) {
+  border-top-color: var(--emerald-500);
+}
+
+.philo-solution-emoji {
+  font-size: 64px;
+  margin-bottom: 24px;
+  display: block;
+}
+
+.philo-solution-card h3 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--gray-900);
+}
+
+.philo-solution-card p {
+  color: var(--gray-700);
+  line-height: 1.7;
+  font-size: 17px;
+}
+
+/* ============================================
+   COMMENT SECTION (3 items)
+   ============================================ */
+.philo-comment {
+  padding: 100px 20px;
+  background: white;
+}
+
+.philo-comment h2 {
+  font-size: 48px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 64px;
+  color: var(--gray-900);
+}
+
+.philo-comment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 48px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.philo-comment-step {
+  text-align: center;
   position: relative;
 }
 
-.quote-author {
-  display: block;
-  font-size: 18px;
-  font-weight: 600;
-  color: #7e22ce;
-  margin-bottom: 32px;
-  font-style: normal;
+.philo-comment-number {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--purple-600) 0%, var(--pink-500) 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 800;
+  margin: 0 auto 28px;
+  box-shadow: 0 8px 24px rgba(147, 51, 234, 0.3);
 }
 
-.quote-author em {
-  font-weight: 400;
-  color: #9333ea;
+.philo-comment-step h3 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--gray-900);
 }
 
-.quote-explanation {
-  font-size: 18px;
+.philo-comment-step p {
+  color: var(--gray-700);
   line-height: 1.7;
-  color: #475569;
-  max-width: 650px;
-  margin: 0 auto;
-  font-weight: 400;
+  font-size: 16px;
 }
 
-@media (max-width: 768px) {
-  .ph-quote {
-    padding: 60px 0;
-  }
+.philo-comment-visual {
+  margin-top: 80px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 20px; /* FIX: Évite le débordement mobile */
+}
 
-  .quote-decoration {
-    font-size: 80px;
-    top: -20px;
-  }
+.philo-comment-image {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  height: 280px;
+  width: 100%; /* FIX: Force la largeur à 100% */
+}
 
-  .quote-text {
-    font-size: 24px;
-    padding-top: 40px;
-  }
+.philo-comment-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
 
-  .quote-author {
-    font-size: 14px;
-  }
+.philo-comment-image:hover img {
+  transform: scale(1.05);
+}
 
-  .quote-explanation {
-    font-size: 16px;
-  }
+/* ============================================
+   VALEURS SECTION (3 items)
+   ============================================ */
+.philo-valeurs {
+  padding: 100px 20px;
+  background: var(--gray-100);
+}
+
+.philo-valeurs h2 {
+  font-size: 48px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 20px;
+  color: var(--gray-900);
+}
+
+.philo-valeurs-subtitle {
+  text-align: center;
+  font-size: 20px;
+  color: var(--gray-600);
+  margin-bottom: 64px;
+}
+
+.philo-valeurs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.philo-valeur-card {
+  background: white;
+  padding: 44px 36px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+}
+
+.philo-valeur-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+}
+
+.philo-valeur-emoji {
+  font-size: 56px;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.philo-valeur-card h3 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--gray-900);
+}
+
+.philo-valeur-card p {
+  color: var(--gray-700);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* ============================================
+   CTA FINAL SECTION
+   ============================================ */
+.philo-final-cta {
+  padding: 120px 20px;
+  background: linear-gradient(135deg, var(--purple-600) 0%, var(--pink-500) 100%);
+  text-align: center;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.philo-final-cta::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="30" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
+  opacity: 0.3;
+}
+
+.philo-final-cta > * {
+  position: relative;
+  z-index: 1;
+}
+
+.philo-final-emoji {
+  font-size: 72px;
+  margin-bottom: 28px;
+  display: block;
+}
+
+.philo-final-cta h2 {
+  font-size: 52px;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+.philo-final-cta p {
+  font-size: 22px;
+  margin-bottom: 48px;
+  opacity: 0.95;
+}
+
+.philo-final-btn {
+  padding: 18px 52px;
+  background: white;
+  color: var(--purple-600);
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 18px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+.philo-final-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+}
+
+.philo-final-note {
+  margin-top: 36px;
+  font-size: 15px;
+  opacity: 0.85;
 }
 
 /* ============================================
    RESPONSIVE
    ============================================ */
-@media (max-width: 1024px) {
-  .cards-grid { grid-template-columns: 1fr; }
-  .trust-grid { grid-template-columns: 1fr; }
-  .principles-grid { grid-template-columns: repeat(2, 1fr); }
-  .hero-gallery { grid-template-columns: 1fr; }
-  .hero-stats { grid-template-columns: 1fr; }
-  .steps-visual { flex-direction: column; }
-  .step-connector { transform: rotate(90deg); margin: 16px 0; }
+@media (max-width: 768px) {
+  /* FIX: Réduire le padding du hero pour rapprocher de la navbar */
+  .philo-hero {
+    padding: 48px 20px 64px;
+  }
+
+  /* FIX: Citation plus petite sur mobile */
+  .philo-hero-quote {
+    font-size: 18px;
+    margin-bottom: 24px;
+  }
+
+  .philo-hero h1 {
+    font-size: 40px;
+  }
+
+  .philo-hero-lead {
+    font-size: 18px;
+  }
+
+  /* FIX: Stats en une colonne sur mobile */
+  .philo-stats {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .philo-manifeste h2,
+  .philo-solution h2,
+  .philo-comment h2,
+  .philo-valeurs h2 {
+    font-size: 36px;
+  }
+
+  .philo-manifeste-text {
+    font-size: 18px;
+  }
+
+  .philo-final-cta h2 {
+    font-size: 36px;
+  }
+
+  /* FIX: Grids en une colonne sur mobile */
+  .philo-solution-grid,
+  .philo-comment-grid,
+  .philo-valeurs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* FIX: Photos en une colonne sur mobile pour éviter débordement */
+  .philo-comment-visual {
+    grid-template-columns: 1fr;
+    padding: 0;
+  }
+
+  .philo-comment-image {
+    height: 220px;
+  }
 }
 
-@media (max-width: 640px) {
-  .hero-title { font-size: 40px; }
-  .principles-grid { grid-template-columns: 1fr; }
-  .benefits-grid { grid-template-columns: 1fr; }
+/* FIX: Container global pour éviter débordement navbar */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px; /* Au lieu de 20px */
+  }
+
+  /* FIX: Réduire padding des sections sur mobile */
+  .philo-manifeste,
+  .philo-solution,
+  .philo-comment,
+  .philo-valeurs {
+    padding: 60px 16px;
+  }
+
+  .philo-final-cta {
+    padding: 80px 16px;
+  }
 }
 </style>
 
-<script>
-// Animation des compteurs
-function animateCounter(element, target) {
-  const duration = 2000;
-  const start = 0;
-  const increment = target / (duration / 16);
-  let current = start;
+<%# ============================================
+    1. HERO
+    ============================================ %>
+<section class="philo-hero">
+  <div class="container">
+    <p class="philo-hero-quote">
+      « Tout ce qui est humain m'intéresse » — Térence
+    </p>
 
-  const timer = setInterval(() => {
-    current += increment;
-    if (current >= target) {
-      element.textContent = target.toLocaleString('fr-FR');
-      clearInterval(timer);
-    } else {
-      element.textContent = Math.floor(current).toLocaleString('fr-FR');
-    }
-  }, 16);
-}
+    <h1>
+      Pourquoi Déclic ?
+    </h1>
 
-// Démarrer l'animation au scroll
-const observerOptions = {
-  threshold: 0.5,
-  rootMargin: '0px'
-};
+    <p class="philo-hero-lead">
+      À portée de main, à portée de clic, nous pouvons changer notre vie.
+      Autour de nous, les initiatives foisonnent, des opportunités palpitent,
+      des histoires inspirantes de personnes qui ont franchi le pas aussi.
+    </p>
 
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting && !entry.target.dataset.animated) {
-      const number = entry.target;
-      const target = parseInt(number.dataset.count);
-      animateCounter(number, target);
-      number.dataset.animated = 'true';
-    }
-  });
-}, observerOptions);
+    <p class="philo-hero-highlight">
+      ✨ Déclic permet de les repérer et de passer à l'action.
+    </p>
 
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.stat-number').forEach(el => observer.observe(el));
-});
-</script>
+    <div class="philo-hero-cta">
+      <%= link_to opportunities_path, class: "philo-btn philo-btn-primary" do %>
+        <span>🔍</span>
+        <span>Explorer les opportunités</span>
+      <% end %>
+      <%= link_to stories_path, class: "philo-btn philo-btn-ghost" do %>
+        <span>✨</span>
+        <span>Lire les histoires</span>
+      <% end %>
+    </div>
+
+    <div class="philo-stats">
+      <div class="philo-stat">
+        <div class="philo-stat-number">15 000+</div>
+        <div class="philo-stat-label">Opportunités</div>
+      </div>
+      <div class="philo-stat">
+        <div class="philo-stat-number">300+</div>
+        <div class="philo-stat-label">Villes</div>
+      </div>
+      <div class="philo-stat">
+        <div class="philo-stat-number">10k</div>
+        <div class="philo-stat-label">Communauté</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%# ============================================
+    2. MANIFESTE (remplace "le problème")
+    ============================================ %>
+<section class="philo-manifeste">
+  <div class="container">
+    <div class="philo-manifeste-content">
+      <h2>Un déclic peut tout changer</h2>
+
+      <p class="philo-manifeste-text">
+        Parfois, il suffit d'une <strong>rencontre</strong>. D'une <strong>conversation</strong>
+        qui nous ouvre les yeux. D'une <strong>histoire</strong> qui résonne en nous.
+        D'un <strong>lieu</strong> où l'on se sent enfin à notre place.
+      </p>
+
+      <p class="philo-manifeste-text">
+        Ce moment où tout bascule — ce <strong>déclic</strong> — arrive rarement par hasard.
+        Il naît quand l'inspiration rencontre l'opportunité. Quand le désir d'agir
+        trouve un chemin concret pour s'exprimer.
+      </p>
+
+      <p class="philo-manifeste-text">
+        <strong>Déclic</strong> existe pour multiplier ces moments.
+        Pour que chacun, là où il est, puisse trouver <strong>son</strong> déclic.
+        L'histoire qui l'inspire. L'opportunité qui l'attend.
+        La communauté qui l'accueille.
+      </p>
+
+      <div class="philo-manifeste-highlight">
+        🌟 Parce qu'une vie peut changer en quelques clics
+      </div>
+    </div>
+
+    <div class="philo-manifeste-image">
+      <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&q=80&auto=format&fit=crop" alt="Personnes qui discutent et échangent" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<%# ============================================
+    3. NOTRE SOLUTION (3 piliers)
+    ============================================ %>
+<section class="philo-solution">
+  <div class="container">
+    <h2>Comment ça marche</h2>
+    <p class="philo-solution-subtitle">
+      Trois piliers qui connectent l'inspiration et l'action
+    </p>
+
+    <div class="philo-solution-grid">
+      <div class="philo-solution-card">
+        <span class="philo-solution-emoji">📚</span>
+        <h3>Des histoires qui inspirent</h3>
+        <p>
+          Portraits authentiques de personnes qui ont osé franchir le pas.
+          Leur parcours crée le déclic émotionnel qui donne envie d'agir.
+        </p>
+      </div>
+
+      <div class="philo-solution-card">
+        <span class="philo-solution-emoji">🎯</span>
+        <h3>Des opportunités concrètes</h3>
+        <p>
+          Événements, formations, projets à rejoindre. Tout est géolocalisé,
+          filtrable par centre d'intérêt, et actionnable en un clic.
+        </p>
+      </div>
+
+      <div class="philo-solution-card">
+        <span class="philo-solution-emoji">👥</span>
+        <h3>Une communauté qui partage</h3>
+        <p>
+          Chaque utilisateur peut proposer une histoire ou une opportunité.
+          Celui qui trouve son déclic devient contributeur à son tour.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%# ============================================
+    4. TON PARCOURS (3 étapes simplifiées)
+    ============================================ %>
+<section class="philo-comment">
+  <div class="container">
+    <h2>Ton parcours en 3 étapes</h2>
+
+    <div class="philo-comment-grid">
+      <div class="philo-comment-step">
+        <div class="philo-comment-number">1</div>
+        <h3>Découvre & Inspire-toi</h3>
+        <p>
+          Parcours des histoires inspirantes de personnes qui ont changé leur vie.
+          Identifie ce qui résonne avec tes envies : entreprendre, écologiser, se former, rencontrer.
+        </p>
+      </div>
+
+      <div class="philo-comment-step">
+        <div class="philo-comment-number">2</div>
+        <h3>Explore & Agis</h3>
+        <p>
+          Découvre les opportunités près de chez toi : événements, formations, projets.
+          Inscris-toi en un clic. Tout est géolocalisé et actionnable immédiatement.
+        </p>
+      </div>
+
+      <div class="philo-comment-step">
+        <div class="philo-comment-number">3</div>
+        <h3>Vis & Partage</h3>
+        <p>
+          Une fois ton projet lancé, partage ton histoire pour inspirer d'autres personnes.
+          Propose de nouvelles opportunités. Deviens acteur du réseau.
+        </p>
+      </div>
+    </div>
+
+    <%# Photos illustratives %>
+    <div class="philo-comment-visual">
+      <div class="philo-comment-image">
+        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&q=80&auto=format&fit=crop" alt="Personnes qui collaborent" loading="lazy">
+      </div>
+      <div class="philo-comment-image">
+        <img src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=600&q=80&auto=format&fit=crop" alt="Jardin partagé" loading="lazy">
+      </div>
+      <div class="philo-comment-image">
+        <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?w=600&q=80&auto=format&fit=crop" alt="Atelier créatif" loading="lazy">
+      </div>
+    </div>
+  </div>
+</section>
+
+<%# ============================================
+    5. NOS VALEURS (3 principes essentiels)
+    ============================================ %>
+<section class="philo-valeurs">
+  <div class="container">
+    <h2>Nos valeurs</h2>
+    <p class="philo-valeurs-subtitle">
+      Les principes qui guident chacune de nos décisions
+    </p>
+
+    <div class="philo-valeurs-grid">
+      <div class="philo-valeur-card">
+        <span class="philo-valeur-emoji">🤝</span>
+        <h3>Ouvert & Accessible</h3>
+        <p>
+          Gratuit, sans inscription obligatoire, pour tous.
+          Tout le monde peut contribuer et partager ses opportunités.
+        </p>
+      </div>
+
+      <div class="philo-valeur-card">
+        <span class="philo-valeur-emoji">💜</span>
+        <h3>Bienveillant & Authentique</h3>
+        <p>
+          Nous croyons en la force de l'encouragement et des histoires vraies.
+          Pas de filtre, pas de pose, juste des parcours inspirants.
+        </p>
+      </div>
+
+      <div class="philo-valeur-card">
+        <span class="philo-valeur-emoji">📈</span>
+        <h3>Local & Concret</h3>
+        <p>
+          Chaque action compte. Nous valorisons l'impact territorial
+          et facilitons l'engagement de proximité.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%# ============================================
+    6. CTA FINAL
+    ============================================ %>
+<section class="philo-final-cta">
+  <div class="container">
+    <span class="philo-final-emoji">⚡</span>
+    <h2>Prêt·e pour ton déclic ?</h2>
+    <p>
+      Rejoins les milliers de personnes qui passent à l'action près de chez toi.
+    </p>
+
+    <%= link_to root_path, class: "philo-final-btn" do %>
+      <span>🚀</span>
+      <span>Commencer maintenant</span>
+    <% end %>
+
+    <p class="philo-final-note">
+      Gratuit • Sans inscription • 2 minutes pour trouver ton opportunité
+    </p>
+  </div>
+</section>
