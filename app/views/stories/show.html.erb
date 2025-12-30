@@ -307,7 +307,7 @@ end
               end
             %>
 
-            <%= raw(CommonMarker.render_html(rendered_body, :DEFAULT)) %>
+            <%= raw(Kramdown::Document.new(rendered_body).to_html) %>
           </div>
         </div>
 
