@@ -3,7 +3,7 @@
 
 class OpportunitiesController < ApplicationController
   # GET /opportunities
-def index
+  def index
     # 1. Commence avec le scope de base (actives)
     opportunities = Opportunity.active
 
@@ -46,21 +46,20 @@ def index
   #
   # - bouton "Prévisualiser ma fiche" -> params[:preview] présent
   # - bouton "Valider et envoyer à Déclic" -> pas de :preview -> on enregistre + on envoie le mail
-def create
-  @opportunity = Opportunity.new(opportunity_params)
+  def create
+    @opportunity = Opportunity.new(opportunity_params)
 
-  if @opportunity.save
-    OpportunityProposalMailer.with(opportunity: @opportunity)
-                             .proposal_email
-                             .deliver_later
+    if @opportunity.save
+      OpportunityProposalMailer.with(opportunity: @opportunity)
+                               .proposal_email
+                               .deliver_later
 
-    redirect_to @opportunity,
-      notice: "Merci ! Votre proposition a bien été envoyée à l’équipe Déclic. Elle sera relue avant publication."
-  else
-    render :new, status: :unprocessable_entity
+      redirect_to @opportunity,
+        notice: "Merci ! Votre proposition a bien été envoyée à l'équipe Déclic. Elle sera relue avant publication."
+    else
+      render :new, status: :unprocessable_entity
+    end
   end
-end
-
 
   private
 
@@ -80,7 +79,7 @@ end
                                .deliver_later
 
       redirect_to @opportunity,
-                  notice: "Merci ! Votre proposition a bien été envoyée à l’équipe Déclic. Elle sera relue avant publication."
+                  notice: "Merci ! Votre proposition a bien été envoyée à l'équipe Déclic. Elle sera relue avant publication."
     else
       flash.now[:alert] = @opportunity.errors.full_messages.to_sentence
       render :new, status: :unprocessable_entity
@@ -101,7 +100,12 @@ end
       :latitude,
       :longitude,
       :is_active,
-      :image_url,
+      :image,           # Image hero (Active Storage)
+      :image_url,       # Ou URL externe
+      :gallery_image_1, # Galerie photo 1
+      :gallery_image_2, # Galerie photo 2
+      :gallery_image_3, # Galerie photo 3
+       # Galerie photo 4
       :source_url,
       :tags,
       :website,

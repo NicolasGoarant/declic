@@ -139,11 +139,17 @@ def story_params
     :title, :chapo, :body, :description,
     :happened_on, :location, :latitude, :longitude,
     :image, :image_url,
+    :inline_image_1,      # Photo inline 1 (Active Storage)
+    :inline_caption_1,    # Légende 1
+    :inline_image_2,      # Photo inline 2 (Active Storage)
+    :inline_caption_2,    # Légende 2
+    :inline_image_3,      # Photo inline 3 (Active Storage)
+    :inline_caption_3,    # Légende 3
     :source_name, :source_url,
     :slug, :tags, :active, :is_active, :published,
-    :highlights_title,     # ← NOUVEAU
-    :highlights_text,      # ← NOUVEAU
-    :highlights_items,      # ← NOUVEAU
+    :highlights_title,
+    :highlights_text,
+    :highlights_items,
     :contact_info
   )
 end

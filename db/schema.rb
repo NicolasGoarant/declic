@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_28_084556) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_30_144536) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -141,6 +141,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_28_084556) do
     t.text "highlights_items"
     t.string "tags"
     t.text "contact_info"
+    t.string "inline_caption_1"
+    t.string "inline_caption_2"
+    t.string "inline_caption_3"
   end
 
   create_table "testimonials", force: :cascade do |t|

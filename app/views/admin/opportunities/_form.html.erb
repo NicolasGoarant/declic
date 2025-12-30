@@ -192,25 +192,86 @@
       </div>
     </div>
 
-    <%# ========== SECTION 7 : IMAGE ========== %>
+    <%# ========== SECTION 7 : IMAGES ========== %>
     <div class="form-section">
-      <h3 class="form-section-title">🖼️ Image de couverture</h3>
-      <p class="form-section-subtitle">Photo principale (upload ou URL)</p>
+      <h3 class="form-section-title">🖼️ Images</h3>
+      <p class="form-section-subtitle">Photos pour illustrer l'opportunité</p>
 
-      <div class="field">
-        <%= f.label :image, "Image (upload)", class: "field-label" %>
-        <%= f.file_field :image, accept: "image/*", class: "field-input" %>
-        <% if @opportunity.image.attached? %>
-          <div class="current-image">
-            <%= image_tag @opportunity.image, style: "max-width: 200px; border-radius: 8px; margin-top: 0.5rem;" %>
-          </div>
-        <% end %>
+      <%# IMAGE HERO %>
+      <div style="background: #f8fafc; padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 2rem;">
+        <h4 style="font-weight: 700; color: #0f172a; margin: 0 0 1rem 0; font-size: 1rem;">
+          📸 Image principale (bandeau)
+        </h4>
+
+        <div class="field">
+          <%= f.label :image, "Image (upload)", class: "field-label" %>
+          <%= f.file_field :image, accept: "image/*", class: "field-input" %>
+          <% if @opportunity.image.attached? %>
+            <div class="current-image">
+              <%= image_tag @opportunity.image, style: "max-width: 200px; border-radius: 8px; margin-top: 0.5rem;" %>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="field">
+          <%= f.label :image_url, "OU Image (URL externe)", class: "field-label" %>
+          <%= f.text_field :image_url, placeholder: "https://images.unsplash.com/photo-...", class: "field-input" %>
+          <div class="field-hint">Si vous n'avez pas uploadé d'image ci-dessus</div>
+        </div>
       </div>
 
-      <div class="field">
-        <%= f.label :image_url, "OU Image (URL externe)", class: "field-label" %>
-        <%= f.text_field :image_url, placeholder: "https://images.unsplash.com/photo-...", class: "field-input" %>
-        <div class="field-hint">Si vous n'avez pas uploadé d'image ci-dessus</div>
+      <%# GALERIE 3 PHOTOS %>
+      <div style="background: #f0f9ff; padding: 1.5rem; border-radius: 0.75rem; border: 2px solid #3b82f6;">
+        <h4 style="font-weight: 700; color: #1e40af; margin: 0 0 0.5rem 0; font-size: 1rem;">
+          📸 Galerie photos (bloc sous le bandeau)
+        </h4>
+        <p style="color: #475569; font-size: 0.875rem; margin: 0 0 1.5rem 0;">
+          Ajoutez jusqu'à 3 photos pour illustrer l'initiative. Elles s'afficheront juste sous l'image principale dans un grid élégant 2+1.
+        </p>
+
+        <div class="field">
+          <%= f.label :gallery_image_1, "Photo 1 de la galerie", class: "field-label" %>
+          <%= f.file_field :gallery_image_1, accept: "image/*", class: "field-input" %>
+          <% if @opportunity.respond_to?(:gallery_image_1) && @opportunity.gallery_image_1.attached? %>
+            <div class="current-image">
+              <%= image_tag @opportunity.gallery_image_1, style: "max-width: 150px; border-radius: 8px; margin-top: 0.5rem;" %>
+            </div>
+          <% end %>
+          <div class="field-hint">🖼️ Première photo de la galerie</div>
+        </div>
+
+        <div class="field">
+          <%= f.label :gallery_image_2, "Photo 2 de la galerie", class: "field-label" %>
+          <%= f.file_field :gallery_image_2, accept: "image/*", class: "field-input" %>
+          <% if @opportunity.respond_to?(:gallery_image_2) && @opportunity.gallery_image_2.attached? %>
+            <div class="current-image">
+              <%= image_tag @opportunity.gallery_image_2, style: "max-width: 150px; border-radius: 8px; margin-top: 0.5rem;" %>
+            </div>
+          <% end %>
+          <div class="field-hint">🖼️ Deuxième photo de la galerie</div>
+        </div>
+
+        <div class="field">
+          <%= f.label :gallery_image_3, "Photo 3 de la galerie", class: "field-label" %>
+          <%= f.file_field :gallery_image_3, accept: "image/*", class: "field-input" %>
+          <% if @opportunity.respond_to?(:gallery_image_3) && @opportunity.gallery_image_3.attached? %>
+            <div class="current-image">
+              <%= image_tag @opportunity.gallery_image_3, style: "max-width: 150px; border-radius: 8px; margin-top: 0.5rem;" %>
+            </div>
+          <% end %>
+          <div class="field-hint">🖼️ Troisième photo (sera centrée en dessous des 2 premières)</div>
+        </div>
+
+        <div class="field-note" style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem;">
+          <strong style="color: #1e40af;">💡 Recommandation :</strong>
+          <ul style="margin: 0.5rem 0 0 1.5rem; color: #1e3a8a;">
+            <li><strong>3 photos maximum</strong> pour un équilibre optimal entre visuel et contenu</li>
+            <li>La 3e photo sera élégamment centrée sous les 2 premières</li>
+            <li>Choisissez des photos complémentaires : équipe → lieu → résultat</li>
+            <li>Format idéal : 800x600px, ratio 4:3</li>
+            <li>Privilégiez des photos qui racontent une histoire progressive</li>
+          </ul>
+        </div>
       </div>
     </div>
 

@@ -3,10 +3,16 @@ class Opportunity < ApplicationRecord
   # --- Stockage JSON (SQLite/Postgres) ---
   attribute :raw_payload, :json
 
-  # Pièce jointe principale (image de couverture)
+  # --- Images ---
+  # Image principale (bandeau hero)
   has_one_attached :image
 
-  # Tu peux garder ça si tu veux d'autres photos plus tard
+  # Galerie de 3 photos sous le bandeau (recommandé pour équilibre optimal)
+  has_one_attached :gallery_image_1
+  has_one_attached :gallery_image_2
+  has_one_attached :gallery_image_3
+
+  # Autres photos (si besoin ultérieur)
   has_many_attached :photos
 
   # --- Slug ---
@@ -89,7 +95,7 @@ class Opportunity < ApplicationRecord
   end
   # ======================================
 
-  # --- Choix intelligent d’image pour le front ---
+  # --- Choix intelligent d'image pour le front ---
   def hero_image_url(view_context)
     if image.attached?
       view_context.url_for(image)

@@ -1,6 +1,11 @@
 class Story < ApplicationRecord
-  # Image principale
+  # Image principale (hero)
   has_one_attached :image
+
+  # Photos inline dans le récit (3 max pour style éditorial)
+  has_one_attached :inline_image_1
+  has_one_attached :inline_image_2
+  has_one_attached :inline_image_3
 
   validates :title, presence: true
   validates :slug, uniqueness: true, allow_blank: true

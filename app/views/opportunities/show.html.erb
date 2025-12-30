@@ -46,6 +46,46 @@
 
   # 3. Fallback par défaut si rien
   hero_img ||= "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80"
+
+  # Images pour la galerie (placeholders thématiques selon catégorie)
+  gallery_images = case @opportunity.category.to_s.downcase
+  when "benevolat"
+    [
+      "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800&q=80", # Bénévoles
+      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&q=80", # Équipe
+      "https://images.unsplash.com/photo-1531206715517-5c0ba140b2b8?w=800&q=80"  # Collaboration
+    ]
+  when "entreprendre"
+    [
+      "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800&q=80", # Entrepreneur
+      "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80", # Bureau startup
+      "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80"  # Meeting
+    ]
+  when "ecologiser"
+    [
+      "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&q=80", # Vélo
+      "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=800&q=80", # Nature
+      "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&q=80"  # Jardin
+    ]
+  when "formation"
+    [
+      "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80", # Étudiant
+      "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=80", # Présentation
+      "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?w=800&q=80"  # Ordinateur
+    ]
+  when "rencontres"
+    [
+      "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&q=80", # Groupe
+      "https://images.unsplash.com/photo-1528605105345-5344ea20e269?w=800&q=80", # Café
+      "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=800&q=80"  # Discussion
+    ]
+  else
+    [
+      "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=800&q=80",
+      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&q=80",
+      "https://images.unsplash.com/photo-1531206715517-5c0ba140b2b8?w=800&q=80"
+    ]
+  end
 %>
 
 <style>
@@ -160,6 +200,84 @@
 .opp-btn-save:hover { background: #fef3c7; }
 .opp-btn-share { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; border-radius: 9999px; background: <%= btn_gradient %>; color: white; font-weight: 700; font-size: 0.875rem; text-decoration: none; border: none; cursor: pointer; }
 .opp-btn-share:hover { opacity: 0.9; }
+
+/* Galerie d'images - Positionnée après hero */
+.opp-image-gallery {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.opp-image-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+/* 1 photo : pleine largeur */
+.opp-image-grid.grid-1 {
+  grid-template-columns: 1fr;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* 2 photos : 2 colonnes */
+.opp-image-grid.grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* 3 photos : 2 colonnes, 3e centrée */
+.opp-image-grid.grid-3 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.opp-image-grid.grid-3 .opp-image-item:nth-child(3) {
+  grid-column: 1 / -1;
+  max-width: 50%;
+  margin: 0 auto;
+}
+
+.opp-image-item {
+  position: relative;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  aspect-ratio: 4/3;
+  background: #f3f4f6;
+}
+
+.opp-image-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.opp-image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.opp-image-item:hover img {
+  transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+  .opp-image-grid,
+  .opp-image-grid.grid-2,
+  .opp-image-grid.grid-3 {
+    grid-template-columns: 1fr;
+  }
+  .opp-image-grid.grid-1 {
+    max-width: 100%;
+  }
+  .opp-image-grid.grid-3 .opp-image-item:nth-child(3) {
+    max-width: 100%;
+  }
+}
 </style>
 
 <div class="opp-wrap">
@@ -203,6 +321,45 @@
           <% end %>
         </div>
       </div>
+
+      <%# GALERIE 3 PHOTOS (si présentes) %>
+      <%
+        # Collecter les images de galerie disponibles
+        gallery_images_available = []
+
+        # Image 1 - gallery_image_1
+        if @opportunity.respond_to?(:gallery_image_1) && @opportunity.gallery_image_1.attached?
+          gallery_images_available << url_for(@opportunity.gallery_image_1)
+        elsif gallery_images && gallery_images[0]
+          gallery_images_available << gallery_images[0]
+        end
+
+        # Image 2 - gallery_image_2
+        if @opportunity.respond_to?(:gallery_image_2) && @opportunity.gallery_image_2.attached?
+          gallery_images_available << url_for(@opportunity.gallery_image_2)
+        elsif gallery_images && gallery_images[1]
+          gallery_images_available << gallery_images[1]
+        end
+
+        # Image 3 - gallery_image_3
+        if @opportunity.respond_to?(:gallery_image_3) && @opportunity.gallery_image_3.attached?
+          gallery_images_available << url_for(@opportunity.gallery_image_3)
+        elsif gallery_images && gallery_images[2]
+          gallery_images_available << gallery_images[2]
+        end
+      %>
+
+      <% if gallery_images_available.any? %>
+        <div class="opp-image-gallery">
+          <div class="opp-image-grid grid-<%= gallery_images_available.length %>">
+            <% gallery_images_available.each do |img_url| %>
+              <div class="opp-image-item">
+                <%= image_tag img_url, alt: @opportunity.title, loading: "lazy" %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
     </div>
   </div>
 
@@ -247,7 +404,10 @@
               <% end %>
             </div>
           <% end %>
+        </div>
 
+        <%# Card défis %>
+        <div class="opp-card">
           <%# DÉFIS SURMONTÉS %>
           <div class="opp-challenge">
             <h3 class="opp-challenge-title">💪 Les défis surmontés</h3>
@@ -454,5 +614,58 @@ function initOppMap() {
 }
 document.addEventListener("turbo:load", initOppMap);
 document.addEventListener("DOMContentLoaded", initOppMap);
+
+// Lightbox pour les images de la galerie
+function initImageLightbox() {
+  document.querySelectorAll('.opp-image-item').forEach(item => {
+    item.addEventListener('click', function() {
+      const img = this.querySelector('img');
+      if (!img) return;
+
+      const lightbox = document.createElement('div');
+      lightbox.style.cssText = `
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.9); z-index: 9999;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; padding: 2rem; animation: fadeIn 0.2s ease;
+      `;
+
+      const bigImg = document.createElement('img');
+      bigImg.src = img.src;
+      bigImg.style.cssText = `
+        max-width: 90%; max-height: 90%;
+        border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        animation: zoomIn 0.3s ease;
+      `;
+
+      lightbox.appendChild(bigImg);
+      lightbox.addEventListener('click', () => {
+        lightbox.style.animation = 'fadeOut 0.2s ease';
+        setTimeout(() => lightbox.remove(), 200);
+      });
+
+      document.body.appendChild(lightbox);
+    });
+  });
+}
+
+document.addEventListener("turbo:load", initImageLightbox);
+document.addEventListener("DOMContentLoaded", initImageLightbox);
 </script>
+
+<style>
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes zoomIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+</style>
+
 <% end %>

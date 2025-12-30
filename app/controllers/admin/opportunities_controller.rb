@@ -154,8 +154,12 @@ class Admin::OpportunitiesController < Admin::BaseController
       :ends_at,
 
       # Images
-      :image,
-      :image_url,
+      :image,              # Image hero (Active Storage)
+      :image_url,          # Ou URL externe
+      :gallery_image_1,    # Galerie photo 1
+      :gallery_image_2,    # Galerie photo 2
+      :gallery_image_3,    # Galerie photo 3
+          # Galerie photo 4
 
       # Liens et contact
       :website,
@@ -166,7 +170,7 @@ class Admin::OpportunitiesController < Admin::BaseController
       # Métadonnées
       :tags,
 
-      # Nouveaux champs pour la show
+      # Champs pour la show enrichie
       :quote,
       :quote_author,
       :stat_1_number,

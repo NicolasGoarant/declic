@@ -162,6 +162,107 @@
   </div>
 
   <%# ========================================
+      SECTION 3.5 : PHOTOS INLINE DANS LE RÉCIT
+      ======================================== %>
+  <div class="form-section" style="background: #f0f9ff; border: 2px solid #3b82f6;">
+    <div class="section-header">
+      <h3>📸 Photos Inline dans le Récit (Style Éditorial)</h3>
+      <p class="section-help">
+        Ajoutez jusqu'à 3 photos qui s'intègreront dans le texte pour un style magazine.
+        Insérez <code>&lt;!-- IMAGE_1 --&gt;</code>, <code>&lt;!-- IMAGE_2 --&gt;</code>, <code>&lt;!-- IMAGE_3 --&gt;</code> dans le body pour positionner les photos.
+      </p>
+    </div>
+
+    <div class="form-grid">
+      <%# PHOTO INLINE 1 %>
+      <div class="field full" style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <h4 style="margin: 0 0 12px; color: #1e40af; font-size: 16px;">📸 Photo 1 (float gauche)</h4>
+
+        <%= f.label :inline_image_1, "Upload photo 1" %>
+        <%= f.file_field :inline_image_1, direct_upload: true, accept: "image/*" %>
+        <% if @story.respond_to?(:inline_image_1) && @story.inline_image_1.attached? %>
+          <div style="margin-top: 8px;">
+            <%= image_tag @story.inline_image_1.variant(resize_to_limit: [300, 200]), style: "border-radius: 8px;" %>
+          </div>
+        <% end %>
+        <span class="field-help">💡 S'affichera à gauche du texte (40% de largeur)</span>
+
+        <div style="margin-top: 12px;">
+          <%= f.label :inline_caption_1, "Légende (optionnel)" %>
+          <%= f.text_field :inline_caption_1, placeholder: "Ex: Matthieu dans sa fromagerie", style: "margin-top: 4px;" %>
+          <span class="field-help">Texte sous la photo en italique</span>
+        </div>
+      </div>
+
+      <%# PHOTO INLINE 2 %>
+      <div class="field full" style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <h4 style="margin: 0 0 12px; color: #1e40af; font-size: 16px;">📸 Photo 2 (float droite)</h4>
+
+        <%= f.label :inline_image_2, "Upload photo 2" %>
+        <%= f.file_field :inline_image_2, direct_upload: true, accept: "image/*" %>
+        <% if @story.respond_to?(:inline_image_2) && @story.inline_image_2.attached? %>
+          <div style="margin-top: 8px;">
+            <%= image_tag @story.inline_image_2.variant(resize_to_limit: [300, 200]), style: "border-radius: 8px;" %>
+          </div>
+        <% end %>
+        <span class="field-help">💡 S'affichera à droite du texte (40% de largeur)</span>
+
+        <div style="margin-top: 12px;">
+          <%= f.label :inline_caption_2, "Légende (optionnel)" %>
+          <%= f.text_field :inline_caption_2, placeholder: "Ex: Les fromages affinés", style: "margin-top: 4px;" %>
+          <span class="field-help">Texte sous la photo en italique</span>
+        </div>
+      </div>
+
+      <%# PHOTO INLINE 3 %>
+      <div class="field full" style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <h4 style="margin: 0 0 12px; color: #1e40af; font-size: 16px;">📸 Photo 3 (pleine largeur)</h4>
+
+        <%= f.label :inline_image_3, "Upload photo 3" %>
+        <%= f.file_field :inline_image_3, direct_upload: true, accept: "image/*" %>
+        <% if @story.respond_to?(:inline_image_3) && @story.inline_image_3.attached? %>
+          <div style="margin-top: 8px;">
+            <%= image_tag @story.inline_image_3.variant(resize_to_limit: [600, 300]), style: "border-radius: 8px; width: 100%;" %>
+          </div>
+        <% end %>
+        <span class="field-help">💡 S'affichera en pleine largeur (100%)</span>
+
+        <div style="margin-top: 12px;">
+          <%= f.label :inline_caption_3, "Légende (optionnel)" %>
+          <%= f.text_field :inline_caption_3, placeholder: "Ex: L'intérieur chaleureux de la boutique", style: "margin-top: 4px;" %>
+          <span class="field-help">Texte sous la photo en italique</span>
+        </div>
+      </div>
+
+      <%# GUIDE D'UTILISATION %>
+      <div class="field full" style="background: #dbeafe; padding: 16px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+        <strong style="color: #1e40af;">💡 Comment utiliser les photos inline :</strong>
+        <ol style="margin: 8px 0 0 20px; color: #334155;">
+          <li>Uploadez 1 à 3 photos ci-dessus</li>
+          <li>Dans le champ "Corps de l'histoire" (body), insérez les marqueurs :</li>
+          <ul style="margin-left: 20px; font-family: monospace; font-size: 14px;">
+            <li><code>&lt;!-- IMAGE_1 --&gt;</code> pour la photo 1 (gauche)</li>
+            <li><code>&lt;!-- IMAGE_2 --&gt;</code> pour la photo 2 (droite)</li>
+            <li><code>&lt;!-- IMAGE_3 --&gt;</code> pour la photo 3 (pleine largeur)</li>
+          </ul>
+          <li>Les photos s'afficheront automatiquement à ces endroits dans le récit</li>
+        </ol>
+        <p style="margin: 12px 0 0; font-size: 14px; color: #475569;">
+          <strong>Exemple d'utilisation dans le body :</strong><br>
+          <code style="background: white; padding: 2px 6px; border-radius: 4px;">
+            Matthieu a toujours aimé le fromage...<br><br>
+            &lt;!-- IMAGE_1 --&gt;<br><br>
+            Après sa formation, il a ouvert sa boutique...<br><br>
+            &lt;!-- IMAGE_2 --&gt;<br><br>
+            Le succès est au rendez-vous...<br><br>
+            &lt;!-- IMAGE_3 --&gt;
+          </code>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <%# ========================================
       SECTION 4 : SOURCE & ATTRIBUTION + CONTACT
       ======================================== %>
   <div class="form-section">

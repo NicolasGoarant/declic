@@ -1,19 +1,36 @@
-<%# app/views/stories/show.html.erb - VERSION FINALE RESPONSIVE + COULEURS STORIES %>
+<%# app/views/stories/show.html.erb - VERSION FINALE RESPONSIVE + PHOTOS INLINE INTELLIGENTES %>
 
 <%
-# Configuration thème
+# Configuration thème - Détection plus stricte
 story_haystack = @story.title.to_s.downcase
-is_eco = story_haystack.include?('jardin') || story_haystack.include?('laiterie') || story_haystack.include?('écologie')
-is_social = story_haystack.include?('rencontr') || story_haystack.include?('café')
-is_entreprendre = story_haystack.include?('entreprise') || story_haystack.include?('fromag') || story_haystack.include?('commerce')
+story_body = @story.body.to_s.downcase[0..500] # Premiers 500 chars du body
 
-theme = if is_eco
+# Comptage de mots-clés par thème
+eco_score = 0
+eco_score += 1 if story_haystack.include?('jardin') && (story_haystack.include?('urbain') || story_haystack.include?('cultiv') || story_haystack.include?('permaculture'))
+eco_score += 1 if story_haystack.include?('écolog')
+eco_score += 1 if story_haystack.include?('bio') || story_haystack.include?('durable')
+eco_score += 1 if story_body.include?('environnement') || story_body.include?('permaculture')
+
+social_score = 0
+social_score += 1 if story_haystack.include?('rencontr') || story_haystack.include?('café')
+social_score += 1 if story_haystack.include?('lien') && story_haystack.include?('social')
+social_score += 1 if story_body.include?('partage') || story_body.include?('convivial')
+
+entreprendre_score = 0
+entreprendre_score += 1 if story_haystack.include?('entreprise') || story_haystack.include?('fromag') || story_haystack.include?('commerce')
+entreprendre_score += 1 if story_haystack.include?('créer') || story_haystack.include?('lancer')
+entreprendre_score += 1 if story_body.include?('boutique') || story_body.include?('startup')
+
+# Thème gagnant (minimum 2 points pour être sélectionné)
+theme = if eco_score >= 2
   { name: "Écologiser", color: "emerald", gradient: "from-emerald-500 to-teal-500", bg: "bg-emerald-50", icon: "🌱" }
-elsif is_social
+elsif social_score >= 2
   { name: "Rencontres", color: "amber", gradient: "from-amber-500 to-orange-500", bg: "bg-amber-50", icon: "☕" }
-elsif is_entreprendre
+elsif entreprendre_score >= 2
   { name: "Entreprendre", color: "orange", gradient: "from-orange-500 to-red-500", bg: "bg-orange-50", icon: "🚀" }
 else
+  # Fallback : Belle Histoire (par défaut)
   { name: "Belle Histoire", color: "purple", gradient: "from-purple-500 to-pink-500", bg: "bg-purple-50", icon: "✨" }
 end
 
@@ -47,6 +64,69 @@ end
   margin: 30px 0;
 }
 
+/* PHOTOS INLINE DANS LE RÉCIT - MODE FLOAT (textes longs) */
+.inline-photo-left {
+  float: left;
+  width: 45%;
+  margin: 8px 24px 16px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.inline-photo-right {
+  float: right;
+  width: 45%;
+  margin: 8px 0 16px 24px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.inline-photo-full {
+  width: 100%;
+  margin: 32px 0;
+  clear: both;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* MODE STACK (textes courts) */
+.inline-photo-stack {
+  width: 100%;
+  margin: 32px 0;
+  clear: both;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.inline-photo-left img,
+.inline-photo-right img,
+.inline-photo-full img,
+.inline-photo-stack img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.inline-photo-caption {
+  background: #f8fafc;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #64748b;
+  font-style: italic;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Clearfix après le body */
+.markdown-content::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
 /* RESPONSIVE FIXES */
 @media (max-width: 1024px) {
   .story-grid {
@@ -76,6 +156,14 @@ end
   .story-cta-title {
     font-size: 24px !important;
   }
+
+  /* Mobile : photos inline en pleine largeur */
+  .inline-photo-left,
+  .inline-photo-right {
+    float: none;
+    width: 100%;
+    margin: 16px 0;
+  }
 }
 </style>
 
@@ -84,69 +172,36 @@ end
   <%# ========== HÉROS AVEC PHOTO ========== %>
   <div style="position: relative; height: 500px; overflow: hidden; background: #1e293b;">
 
-    <%# PHOTO - Vérifie image_url, puis image, puis photo, puis fallback %>
-    <%
-    image_src = nil
-
-    if @story.image_url.present? && @story.image_url.start_with?('http')
-      image_src = @story.image_url
-    elsif @story.respond_to?(:image) && @story.image.attached?
-      image_src = url_for(@story.image) rescue nil
-    elsif @story.respond_to?(:photo) && @story.photo.attached?
-      image_src = url_for(@story.photo) rescue nil
-    end
-    %>
-
-    <% if image_src.present? %>
-      <img src="<%= image_src %>"
-           class="story-hero-image"
-           alt="<%= @story.title %>"
-           loading="eager"
-           onerror="this.src='https://images.unsplash.com/photo-1452195100486-9cc805987862?w=1920&q=80'" />
+    <%# Photo hero %>
+    <% if @story.image_url.present? %>
+      <%= image_tag @story.image_url, class: 'story-hero-image', alt: @story.title, style: 'position: absolute; top: 0; left: 0;' %>
+      <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.7));"></div>
     <% else %>
-      <img src="https://images.unsplash.com/photo-1452195100486-9cc805987862?w=1920&q=80"
-           class="story-hero-image"
-           alt="Fromages artisanaux" />
+      <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #7e22ce, #c026d3);"></div>
     <% end %>
 
-    <%# Overlay %>
-    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.75) 100%);"></div>
-
-    <%# Contenu %>
-    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 40px 24px;">
-      <div style="max-width: 1140px; margin: 0 auto;">
-
-        <%# Badge %>
-        <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); padding: 8px 16px; border-radius: 999px; margin-bottom: 16px;">
-          <span style="font-size: 20px;"><%= theme[:icon] %></span>
-          <span style="color: white; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;"><%= theme[:name] %></span>
-        </div>
-
-        <%# Titre %>
-        <h1 class="story-hero-title" style="color: white; font-size: 42px; font-weight: 800; line-height: 1.2; margin: 0 0 20px 0; max-width: 900px; word-wrap: break-word;">
-          <%= @story.title %>
-        </h1>
-
-        <%# Date en français %>
+    <%# Contenu hero %>
+    <div style="position: relative; z-index: 10; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding: 48px 24px; max-width: 1200px; margin: 0 auto;">
+      <div style="display: inline-block; align-self: flex-start; background: linear-gradient(135deg, #a855f7, #ec4899); padding: 8px 20px; border-radius: 999px; font-size: 13px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(168,85,247,0.3);">
+        <%= theme[:icon] %> <%= theme[:name] %>
+      </div>
+      <h1 class="story-hero-title" style="font-size: 52px; font-weight: 800; color: white; margin: 0 0 16px 0; line-height: 1.1; text-shadow: 0 4px 20px rgba(0,0,0,0.5); word-wrap: break-word;">
+        <span class="story-hero-emoji" style="display: inline-block; margin-right: 12px; font-size: 48px;"><%= story_emoji %></span>
+        <%= @story.title %>
+      </h1>
+      <div style="display: flex; flex-wrap: wrap; gap: 20px; color: rgba(255,255,255,0.9); font-size: 15px; font-weight: 600;">
         <% if date_fr.present? %>
-          <div style="display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,0.95); font-size: 15px; margin-bottom: 12px; flex-wrap: wrap;">
-            <svg style="width: 18px; height: 18px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-            <span style="font-weight: 600;"><%= date_fr %></span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 18px;">📅</span>
+            <span><%= date_fr %></span>
           </div>
         <% end %>
-
-        <%# Source %>
         <% if @story.source_name.present? %>
-          <div style="display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.85); font-size: 14px; flex-wrap: wrap;">
-            <svg style="width: 16px; height: 16px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
-            </svg>
-            <span>Source : <strong><%= @story.source_name %></strong></span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 18px;">📍</span>
+            <span>Source : <%= @story.source_name %></span>
           </div>
         <% end %>
-
       </div>
     </div>
   </div>
@@ -154,109 +209,147 @@ end
   <%# ESPACEMENT 1 %>
   <div class="story-spacing-1"></div>
 
-  <%# ========== CITATION - COULEUR STORIES (PURPLE/PINK) ========== %>
-  <% if @story.chapo.present? %>
-    <div style="max-width: 1140px; margin: 0 auto; padding: 0 24px;">
-      <div style="max-width: 860px; margin: 0 auto;">
-        <div style="padding: 32px; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); border-radius: 20px; box-shadow: 0 10px 40px rgba(168,85,247,0.25);">
-          <div style="display: flex; align-items: start; gap: 20px;">
-            <div style="font-size: 64px; color: rgba(255,255,255,0.3); line-height: 1; user-select: none; flex-shrink: 0;">"</div>
-            <p class="story-quote-text" style="color: white; font-size: 22px; font-weight: 500; line-height: 1.6; margin: 0; word-wrap: break-word;">
+  <%# ========== CONTENU PRINCIPAL ========== %>
+  <div style="max-width: 1400px; margin: 0 auto; padding: 0 24px;">
+
+    <div class="story-grid" style="display: grid; grid-template-columns: 1fr 380px; gap: 48px; align-items: start;">
+
+      <%# COLONNE PRINCIPALE %>
+      <div style="min-width: 0;">
+
+        <%# Chapo %>
+        <% if @story.chapo.present? %>
+          <div style="background: linear-gradient(135deg, #faf5ff, #f3e8ff); border-left: 6px solid #a855f7; padding: 28px 32px; border-radius: 16px; margin-bottom: 40px; box-shadow: 0 4px 20px rgba(168,85,247,0.15);">
+            <p style="font-size: 22px; line-height: 1.6; color: #1e293b; font-weight: 600; margin: 0; font-style: italic; word-wrap: break-word;">
               <%= @story.chapo %>
             </p>
           </div>
-        </div>
-      </div>
-    </div>
+        <% end %>
 
-    <%# ESPACEMENT 2 %>
-    <div class="story-spacing-2"></div>
-  <% end %>
+        <%# Le récit de l'action avec PHOTOS INLINE INTELLIGENTES %>
+        <div style="background: white; border-radius: 20px; padding: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); border: 2px solid #f1f5f9; margin-bottom: 32px;">
+          <h2 class="story-section-title" style="font-size: 28px; font-weight: 700; color: #1e293b; margin: 0 0 24px 0; display: flex; align-items: center; gap: 12px; word-wrap: break-word;">
+            <span style="font-size: 32px;">👉</span>
+            Le récit de l'action
+          </h2>
 
-  <%# SÉPARATEUR %>
-  <div style="max-width: 1140px; margin: 40px auto; padding: 0 24px;">
-    <div class="story-separator"></div>
-  </div>
+          <div class="markdown-content" style="font-size: 18px; line-height: 1.8; color: #1e293b; word-wrap: break-word;">
+            <%
+              # Collecter les photos inline attachées
+              inline_photos = []
+              if @story.respond_to?(:inline_image_1) && @story.inline_image_1.attached?
+                inline_photos << {
+                  url: url_for(@story.inline_image_1),
+                  caption: @story.respond_to?(:inline_caption_1) ? @story.inline_caption_1 : nil,
+                  position: 'left'
+                }
+              end
+              if @story.respond_to?(:inline_image_2) && @story.inline_image_2.attached?
+                inline_photos << {
+                  url: url_for(@story.inline_image_2),
+                  caption: @story.respond_to?(:inline_caption_2) ? @story.inline_caption_2 : nil,
+                  position: 'right'
+                }
+              end
+              if @story.respond_to?(:inline_image_3) && @story.inline_image_3.attached?
+                inline_photos << {
+                  url: url_for(@story.inline_image_3),
+                  caption: @story.respond_to?(:inline_caption_3) ? @story.inline_caption_3 : nil,
+                  position: 'full'
+                }
+              end
 
-  <%# ========== CONTENU ========== %>
-  <div style="max-width: 1140px; margin: 0 auto; padding: 0 24px 60px;">
-    <div class="story-grid" style="display: grid; grid-template-columns: 1fr 320px; gap: 40px;">
+              # Détecter si le texte est court (moins de 500 caractères sans les marqueurs)
+              text_length = @story.body.to_s.gsub(/<!--.*?-->/, '').strip.length
+              is_short_text = text_length < 500
 
-      <%# COLONNE PRINCIPALE %>
-      <div style="min-width: 0; overflow-wrap: break-word;">
+              # Rendu du body avec injection des photos
+              rendered_body = @story.body.to_s
 
-        <%# Titre section %>
-        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #e2e8f0; flex-wrap: wrap;">
-          <div style="font-size: 40px; flex-shrink: 0;"><%= story_emoji %></div>
-          <h2 class="story-section-title" style="font-size: 32px; font-weight: 700; color: #0f172a; margin: 0; word-wrap: break-word;">Le récit de l'action</h2>
-        </div>
+              inline_photos.each_with_index do |photo, index|
+                marker = "<!-- IMAGE_#{index + 1} -->"
 
-        <%# CONTENU DYNAMIQUE - Rendu du body Markdown %>
-        <div class="markdown-content prose prose-lg max-w-none" style="font-size: 18px; line-height: 1.7; color: #475569;">
-          <%= raw Kramdown::Document.new(@story.body || "").to_html %>
-        </div>
+                if is_short_text
+                  # MODE STACK : Photos pleine largeur pour textes courts
+                  photo_html = %Q{
+                    <figure class="inline-photo-stack">
+                      <img src="#{photo[:url]}" alt="Photo #{index + 1}" loading="lazy" />
+                      #{"<figcaption class=\"inline-photo-caption\">#{photo[:caption]}</figcaption>" if photo[:caption].present?}
+                    </figure>
+                  }.html_safe
+                else
+                  # MODE FLOAT : Layout magazine pour textes longs
+                  case photo[:position]
+                  when 'left'
+                    photo_html = %Q{
+                      <figure class="inline-photo-left">
+                        <img src="#{photo[:url]}" alt="Photo #{index + 1}" loading="lazy" />
+                        #{"<figcaption class=\"inline-photo-caption\">#{photo[:caption]}</figcaption>" if photo[:caption].present?}
+                      </figure>
+                    }.html_safe
+                  when 'right'
+                    photo_html = %Q{
+                      <figure class="inline-photo-right">
+                        <img src="#{photo[:url]}" alt="Photo #{index + 1}" loading="lazy" />
+                        #{"<figcaption class=\"inline-photo-caption\">#{photo[:caption]}</figcaption>" if photo[:caption].present?}
+                      </figure>
+                    }.html_safe
+                  else # 'full'
+                    photo_html = %Q{
+                      <figure class="inline-photo-full">
+                        <img src="#{photo[:url]}" alt="Photo #{index + 1}" loading="lazy" />
+                        #{"<figcaption class=\"inline-photo-caption\">#{photo[:caption]}</figcaption>" if photo[:caption].present?}
+                      </figure>
+                    }.html_safe
+                  end
+                end
 
-        <div class="story-separator"></div>
+                rendered_body = rendered_body.sub(marker, photo_html)
+              end
+            %>
 
-        <%# Section 4 %>
-        <% if @story.respond_to?(:highlights_title) && @story.highlights_title.present? %>
-        <div style="margin-bottom: 50px;">
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
-            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #a855f7, #ec4899); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(168,85,247,0.3); flex-shrink: 0;">
-              <span style="font-size: 24px;">🎯</span>
-            </div>
-            <h3 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0; word-wrap: break-word;"><%= @story.highlights_title %></h3>
+            <%= raw(rendered_body) %>
           </div>
-          <div style="background: linear-gradient(135deg, #faf5ff 0%, #fff 100%); padding: 24px; border-radius: 16px; border-left: 4px solid #a855f7; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        </div>
+
+        <%# Points clés / Highlights %>
+        <% if @story.highlights_title.present? || @story.highlights_text.present? || @story.highlights_items.present? %>
+          <div style="background: linear-gradient(135deg, #fefce8, #fef3c7); border-left: 6px solid #f59e0b; padding: 32px; border-radius: 20px; margin-bottom: 32px; box-shadow: 0 8px 30px rgba(245,158,11,0.2);">
+            <h3 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0 0 20px 0; display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 28px;">⚡</span>
+              <%= @story.highlights_title.presence || "Points clés" %>
+            </h3>
             <% if @story.highlights_text.present? %>
-              <p style="font-size: 18px; line-height: 1.7; color: #475569; margin: 0 0 20px 0; word-wrap: break-word; overflow-wrap: break-word;">
-                <%= @story.highlights_text %>
+              <p style="font-size: 18px; line-height: 1.7; color: #1e293b; margin: 0 0 16px 0; word-wrap: break-word;">
+                <%= simple_format(@story.highlights_text) %>
               </p>
             <% end %>
             <% if @story.highlights_items.present? %>
-              <ul style="list-style: none; padding: 0; margin: 0;">
-                <% @story.highlights_items.to_s.split("\n").reject(&:blank?).each do |item| %>
-                  <li style="display: flex; align-items: start; gap: 10px; margin-bottom: 12px;">
-                    <span style="flex-shrink: 0; width: 24px; height: 24px; background: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;">✓</span>
-                    <span style="color: #475569; word-wrap: break-word;"><%= item.strip %></span>
-                  </li>
+              <ul style="margin: 0; padding-left: 24px; font-size: 17px; line-height: 1.8; color: #1e293b;">
+                <% @story.highlights_items.split("\n").each do |item| %>
+                  <li style="margin-bottom: 8px; word-wrap: break-word;"><%= item.strip %></li>
                 <% end %>
               </ul>
             <% end %>
           </div>
-        </div>
         <% end %>
 
-        <div class="story-separator"></div>
-
-        <%# CTA - COULEUR STORIES %>
-        <div style="background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); padding: 48px 32px; border-radius: 24px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 20px 50px rgba(168,85,247,0.3);">
-          <div style="position: absolute; top: -80px; right: -80px; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
-          <div style="position: absolute; bottom: -60px; left: -60px; width: 160px; height: 160px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
-          <div style="position: relative;">
-            <div style="font-size: 64px; margin-bottom: 16px;">✨</div>
-            <h3 class="story-cta-title" style="color: white; font-size: 30px; font-weight: 700; margin: 0 0 16px 0; word-wrap: break-word;">
-              Et moi, comment je peux avoir le Déclic ?
-            </h3>
-            <p style="color: rgba(255,255,255,0.95); font-size: 18px; margin: 0 auto 32px; max-width: 600px; line-height: 1.6; word-wrap: break-word; overflow-wrap: break-word;">
-              Cette histoire vous inspire ? Des dizaines d'opportunités similaires vous attendent près de chez vous pour entreprendre, vous former ou vous engager.
-            </p>
-            <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;">
-              <% if @story.source_name.present? && @story.source_url.present? %>
-                <a href="<%= @story.source_url %>" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 10px; background: white; color: #a855f7; padding: 16px 32px; border-radius: 999px; font-weight: 700; font-size: 16px; text-decoration: none; box-shadow: 0 8px 24px rgba(0,0,0,0.15); transition: transform 0.2s; white-space: nowrap;">
-                  <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                  </svg>
-                  <span style="overflow: hidden; text-overflow: ellipsis;">Lire sur <%= @story.source_name %></span>
-                </a>
-              <% end %>
-              <a href="/opportunities" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); color: white; padding: 16px 32px; border-radius: 999px; border: 2px solid white; font-weight: 700; font-size: 16px; text-decoration: none; transition: background 0.2s; white-space: nowrap;">
-                <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-                <span>Explorer</span>
-              </a>
-            </div>
+        <%# CTA Opportunités %>
+        <div style="background: linear-gradient(135deg, #a855f7, #ec4899); border-radius: 24px; padding: 48px; text-align: center; box-shadow: 0 20px 60px rgba(168,85,247,0.4); margin-bottom: 32px;">
+          <div style="font-size: 56px; margin-bottom: 20px;">✨</div>
+          <h2 class="story-cta-title" style="font-size: 32px; font-weight: 700; color: white; margin: 0 0 16px 0; word-wrap: break-word;">
+            Et moi, comment je peux avoir le Déclic ?
+          </h2>
+          <p style="font-size: 19px; color: rgba(255,255,255,0.95); margin: 0 auto 28px; max-width: 600px; line-height: 1.6; word-wrap: break-word;">
+            Cette histoire vous inspire ? Des dizaines d'opportunités similaires vous attendent près de chez vous pour entreprendre, vous former ou vous engager.
+          </p>
+          <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 16px;">
+            <a href="/opportunities" style="display: inline-flex; align-items: center; gap: 10px; background: white; color: #a855f7; padding: 18px 36px; border-radius: 999px; font-weight: 700; font-size: 17px; text-decoration: none; box-shadow: 0 8px 20px rgba(0,0,0,0.2); white-space: nowrap;">
+              <span>🔍 Partager un témoignage</span>
+            </a>
+            <a href="/opportunities" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); color: white; padding: 18px 36px; border-radius: 999px; font-weight: 700; font-size: 17px; text-decoration: none; border: 2px solid rgba(255,255,255,0.3); white-space: nowrap;">
+              <span>➕ Proposer une opportunité</span>
+            </a>
           </div>
         </div>
 
