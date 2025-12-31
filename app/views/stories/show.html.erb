@@ -237,32 +237,33 @@ end
 
           <div class="markdown-content" style="font-size: 18px; line-height: 1.8; color: #1e293b; word-wrap: break-word;">
             <%
-              # Collecter les photos inline attachées
-              inline_photos = []
-              if @story.respond_to?(:inline_image_1) && @story.inline_image_1.attached?
-                inline_photos << {
-                  url: url_for(@story.inline_image_1),
-                  caption: @story.respond_to?(:inline_caption_1) ? @story.inline_caption_1 : nil,
-                  position: 'left'
-                }
-              end
-              if @story.respond_to?(:inline_image_2) && @story.inline_image_2.attached?
-                inline_photos << {
-                  url: url_for(@story.inline_image_2),
-                  caption: @story.respond_to?(:inline_caption_2) ? @story.inline_caption_2 : nil,
-                  position: 'right'
-                }
-              end
-              if @story.respond_to?(:inline_image_3) && @story.inline_image_3.attached?
-                inline_photos << {
-                  url: url_for(@story.inline_image_3),
-                  caption: @story.respond_to?(:inline_caption_3) ? @story.inline_caption_3 : nil,
-                  position: 'full'
-                }
-              end
+  # Collecter les photos inline attachées
+  inline_photos = []
+  if @story.respond_to?(:inline_image_1) && @story.inline_image_1.attached?
+    inline_photos << {
+      url: url_for(@story.inline_image_1),
+      caption: @story.respond_to?(:inline_caption_1) ? @story.inline_caption_1 : nil,
+      position: 'left'
+    }
+  end
+  if @story.respond_to?(:inline_image_2) && @story.inline_image_2.attached?
+    inline_photos << {
+      url: url_for(@story.inline_image_2),
+      caption: @story.respond_to?(:inline_caption_2) ? @story.inline_caption_2 : nil,
+      position: 'right'
+    }
+  end
+  if @story.respond_to?(:inline_image_3) && @story.inline_image_3.attached?
+    inline_photos << {
+      url: url_for(@story.inline_image_3),
+      caption: @story.respond_to?(:inline_caption_3) ? @story.inline_caption_3 : nil,
+      position: 'full'
+    }
+  end
+
 
               # Détecter si le texte est court (moins de 500 caractères sans les marqueurs)
-              text_length = @story.body.to_s.gsub(/<!--.*?-->/, '').strip.length
+              text_length   = @story.body.to_s.gsub(/<!--.*?-->/, '').strip.length
               is_short_text = text_length < 500
 
               # Rendu du body avec injection des photos
@@ -270,47 +271,43 @@ end
 
               inline_photos.each_with_index do |photo, index|
                 marker = "<!-- IMAGE_#{index + 1} -->"
+                next unless rendered_body.include?(marker)
+
+                # Légende sécurisée
+                caption_html =
+                  if photo[:caption].present?
+                    %Q(<figcaption class="inline-photo-caption">#{ERB::Util.html_escape(photo[:caption])}</figcaption>)
+                  else
+                    ""
+                  end
 
                 if is_short_text
                   # MODE STACK : Photos pleine largeur pour textes courts
-                  photo_html = %Q{
-                    <figure class="inline-photo-stack">
-                      <img src="#{photo[:url]}" alt="Photo #{index + 1}" loading="lazy" />
-                      #{"<figcaption class=\"inline-photo-caption\">#{photo[:caption]}</figcaption>" if photo[:caption].present?}
-                    </figure>
-                  }.html_safe
+                  core_html = %Q(<figure class="inline-photo-stack"><img src="#{photo[:url]}" alt="Photo #{index + 1}" loading="lazy" />#{caption_html}</figure>)
                 else
                   # MODE FLOAT : Layout magazine pour textes longs
                   case photo[:position]
                   when 'left'
-                    photo_html = %Q{
-                      <figure class="inline-photo-left">
-                        <img src="#{photo[:url]}" alt="Photo #{index + 1}" loading="lazy" />
-                        #{"<figcaption class=\"inline-photo-caption\">#{photo[:caption]}</figcaption>" if photo[:caption].present?}
-                      </figure>
-                    }.html_safe
+                    core_html = %Q(<figure class="inline-photo-left"><img src="#{photo[:url]}" alt="Photo #{index + 1}" loading="lazy" />#{caption_html}</figure>)
                   when 'right'
-                    photo_html = %Q{
-                      <figure class="inline-photo-right">
-                        <img src="#{photo[:url]}" alt="Photo #{index + 1}" loading="lazy" />
-                        #{"<figcaption class=\"inline-photo-caption\">#{photo[:caption]}</figcaption>" if photo[:caption].present?}
-                      </figure>
-                    }.html_safe
+                    core_html = %Q(<figure class="inline-photo-right"><img src="#{photo[:url]}" alt="Photo #{index + 1}" loading="lazy" />#{caption_html}</figure>)
                   else # 'full'
-                    photo_html = %Q{
-                      <figure class="inline-photo-full">
-                        <img src="#{photo[:url]}" alt="Photo #{index + 1}" loading="lazy" />
-                        #{"<figcaption class=\"inline-photo-caption\">#{photo[:caption]}</figcaption>" if photo[:caption].present?}
-                      </figure>
-                    }.html_safe
+                    core_html = %Q(<figure class="inline-photo-full"><img src="#{photo[:url]}" alt="Photo #{index + 1}" loading="lazy" />#{caption_html}</figure>)
                   end
                 end
+
+                # IMPORTANT : on entoure la figure de sauts de ligne
+                # pour que le Markdown avant / après soit bien interprété
+                photo_html = "\n\n#{core_html}\n\n"
 
                 rendered_body = rendered_body.sub(marker, photo_html)
               end
             %>
 
             <%= raw(Kramdown::Document.new(rendered_body).to_html) %>
+
+
+
           </div>
         </div>
 
