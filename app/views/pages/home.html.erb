@@ -1466,29 +1466,60 @@ function plot(items){
     const marker = L.marker([lat, lng], { icon:iconFor((o.category||'').toLowerCase()) })
       .addTo(dataLayer)
       .bindPopup(popupHtml(o), {
-        autoPan: true,
-        autoPanPaddingTopLeft: [10, 80],
-        autoPanPaddingBottomRight: [10, 80],
+        autoPan: false,
         maxWidth: 300,
         minWidth: 280,
-        maxHeight: window.innerHeight * 0.6, // Max 60% de la hauteur d'écran
+        maxHeight: window.innerHeight * 0.65,
         closeButton: true,
-        autoClose: true
+        autoClose: true,
+        offset: [0, 0]
       });
 
-    // FIX: Bouton de fermeture + désactiver autoPan après ouverture
+    // FIX: Centrer le popup avec padding pour navbar
     marker.on('popupopen', function(e) {
-      // Désactiver autoPan après 300ms pour permettre le scroll
-      setTimeout(function() {
-        e.popup.options.autoPan = false;
-      }, 300);
+      const popup = e.popup;
 
       setTimeout(function() {
-        const popup = e.popup;
+        const popupEl = popup._container;
+        if (!popupEl) return;
+
+        // 1. Récupérer les dimensions
+        const popupHeight = popupEl.offsetHeight;
+        const mapSize = map.getSize();
+
+        // 2. Calculer l'espace disponible (navbar + padding)
+        const navbarHeight = window.innerWidth <= 640 ? 64 : 72;
+        const topPadding = 20;
+        const totalTopSpace = navbarHeight + topPadding;
+
+        // 3. Centre de la zone visible
+        const visibleHeight = mapSize.y - totalTopSpace;
+        const mapCenterX = mapSize.x / 2;
+        const mapCenterY = totalTopSpace + (visibleHeight / 2);
+
+        // 4. Position actuelle du popup
+        const markerPoint = map.latLngToContainerPoint(marker.getLatLng());
+        const popupCenterY = markerPoint.y - (popupHeight / 2);
+        const popupCenterX = markerPoint.x;
+
+        // 5. Calculer le décalage nécessaire
+        const offsetX = mapCenterX - popupCenterX;
+        const offsetY = mapCenterY - popupCenterY;
+
+        // 6. Pan pour centrer
+        map.panBy([-offsetX, -offsetY], {
+          animate: true,
+          duration: 0.3
+        });
+
+        // 7. Désactiver autoPan après animation
+        setTimeout(function() {
+          popup.options.autoPan = false;
+        }, 400);
+
+        // 8. Style du bouton de fermeture
         const closeBtn = popup._closeButton;
-
         if (closeBtn) {
-          // Style du bouton de fermeture
           closeBtn.style.width = '44px';
           closeBtn.style.height = '44px';
           closeBtn.style.fontSize = '28px';
@@ -1506,7 +1537,7 @@ function plot(items){
           closeBtn.style.borderRadius = '50%';
           closeBtn.style.color = 'white';
 
-          // Événements tactiles pour mobile
+          // Événements tactiles
           closeBtn.addEventListener('touchstart', function(event) {
             event.stopPropagation();
             event.preventDefault();
