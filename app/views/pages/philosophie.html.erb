@@ -1,839 +1,789 @@
-<%# app/views/pages/philosophie.html.erb - VERSION FINALE ÉPURÉE %>
+<%# app/views/pages/philosophie.html.erb — version ajustée (citation + boutons) %>
 
 <style>
-/* ============================================
-   VARIABLES & RESET
-   ============================================ */
-:root {
-  --purple-600: #9333EA;
-  --purple-700: #7E22CE;
-  --pink-500: #EC4899;
-  --yellow-400: #FBBF24;
-  --emerald-500: #10B981;
-  --gray-900: #111827;
-  --gray-700: #374151;
-  --gray-500: #6B7280;
-  --gray-100: #F3F4F6;
+/* =========================================================
+   Palette locale (scopée)
+   ========================================================= */
+.philo-page {
+  --philo-purple-600: #9333ea;
+  --philo-purple-700: #7e22ce;
+  --philo-pink-500:   #ec4899;
+  --philo-yellow-400: #fbbf24;
+  --philo-emerald-500:#10b981;
+  --philo-gray-900:   #111827;
+  --philo-gray-700:   #374151;
+  --philo-gray-600:   #4b5563;
+  --philo-gray-100:   #f3f4f6;
+  --philo-white:      #ffffff;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* Wrapper général de la page (pour ne rien polluer autour) */
+.philo-page {
+  background: #ffffff;
+  color: var(--philo-gray-900);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-}
-
-.container {
-  max-width: 1200px;
+/* Conteneur local (ne touche pas .container globale) */
+.philo-container {
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 1.25rem;
 }
 
-/* ============================================
-   HERO SECTION
-   ============================================ */
+/* =========================================================
+   HERO
+   ========================================================= */
 .philo-hero {
-  background: linear-gradient(135deg, var(--purple-600) 0%, var(--pink-500) 100%);
-  color: white;
-  padding: 80px 20px;
-  text-align: center;
   position: relative;
   overflow: hidden;
+  padding: 5.2rem 0 4.2rem;
+  text-align: center;
+  color: var(--philo-white);
+  background: linear-gradient(135deg, var(--philo-purple-600), var(--philo-pink-500));
 }
 
 .philo-hero::before {
-  content: '';
+  content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="30" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
-  opacity: 0.3;
+  inset: 0;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0);
+  background-size: 26px 26px;
+  opacity: .35;
+  pointer-events: none;
 }
 
-.philo-hero > * {
+.philo-hero-inner {
   position: relative;
   z-index: 1;
 }
 
+/* CITA–TION   (texte dans la pastille, auteur en dessous) */
 .philo-hero-quote {
-  font-size: 26px;
+  display: flex;
+  align-items: center;               /* guillemets alignés au texte */
+  justify-content: center;
+  gap: 0.18rem;                      /* guillemets rapprochés mais sans toucher */
+  padding: 0.4rem 1.4rem;
+  margin: 0 auto 0.6rem;             /* centré horizontalement */
+  max-width: calc(100% - 2.5rem);    /* évite de toucher les bords sur mobile */
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.26);
+  background: rgba(255,255,255,.14);
+  backdrop-filter: blur(12px);
   font-style: italic;
-  opacity: 0.95;
-  margin-bottom: 32px;
-  font-weight: 300;
-  letter-spacing: 0.3px;
-  line-height: 1.5;
+  opacity: .97;
+  box-sizing: border-box;
 }
 
-.philo-hero h1 {
-  font-size: 56px;
+.philo-hero-quote-mark {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.philo-hero-quote-text {
+  font-size: 0.95rem;
+  white-space: nowrap;               /* une seule ligne */
+}
+
+/* auteur centré sous la pastille */
+.philo-hero-quote-author {
+  font-size: 0.95rem;
+  font-weight: 500;
+  opacity: .9;
+  margin-bottom: 1.6rem;
+}
+
+.philo-hero-title {
+  font-size: 3rem;
+  line-height: 1.05;
   font-weight: 800;
-  margin-bottom: 32px;
-  line-height: 1.1;
+  margin-bottom: 1.75rem;
+  letter-spacing: -0.02em;
 }
 
 .philo-hero-lead {
-  font-size: 20px;
-  max-width: 800px;
-  margin: 0 auto 32px;
+  font-size: 1.1rem;
+  max-width: 46rem;
+  margin: 0 auto 1.75rem;
   line-height: 1.7;
-  opacity: 0.95;
+  opacity: .96;
 }
 
 .philo-hero-highlight {
-  font-size: 22px;
+  font-size: 1.2rem;
   font-weight: 600;
-  margin-bottom: 48px;
+  margin-bottom: 3rem;
 }
 
+/* CTA hero */
 .philo-hero-cta {
   display: flex;
-  gap: 16px;
-  justify-content: center;
   flex-wrap: wrap;
-  margin-bottom: 80px;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 3rem;
 }
 
+/* Boutons */
 .philo-btn {
-  padding: 16px 36px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 16px;
-  text-decoration: none;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  transition: all 0.3s ease;
+  justify-content: center;       /* centre le groupe emoji + texte */
+  gap: 0.55rem;                  /* espace suffisant entre emoji et texte */
+  padding: .9rem 1.9rem;
+  border-radius: .9rem;
+  font-weight: 600;
+  font-size: .98rem;
+  text-decoration: none;
+  border: 2px solid transparent;
+  cursor: pointer;
+  text-align: center;
+  transition: transform .16s ease, box-shadow .16s ease,
+              background .16s ease, border-color .16s ease;
 }
 
 .philo-btn-primary {
-  background: white;
-  color: var(--purple-600);
+  background: #ffffff;
+  color: var(--philo-purple-600);
+  box-shadow: 0 14px 30px rgba(15,23,42,.25);
 }
 
 .philo-btn-primary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(15,23,42,.35);
 }
 
 .philo-btn-ghost {
-  background: rgba(255,255,255,0.15);
-  color: white;
-  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,.14);
+  color: #ffffff;
+  border-color: rgba(255,255,255,.38);
 }
 
 .philo-btn-ghost:hover {
-  background: rgba(255,255,255,0.25);
-  border-color: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,.22);
 }
 
+/* Stats */
 .philo-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 32px;
-  max-width: 900px;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  max-width: 40rem;
   margin: 0 auto;
 }
 
 .philo-stat {
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(10px);
-  padding: 28px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,.18);
+  backdrop-filter: blur(14px);
+  border-radius: 1rem;
+  padding: 1.4rem 1.3rem;
+  border: 1px solid rgba(255,255,255,.28);
 }
 
 .philo-stat-number {
-  font-size: 52px;
+  font-size: 2.4rem;
   font-weight: 800;
-  margin-bottom: 8px;
+  margin-bottom: .15rem;
 }
 
 .philo-stat-label {
-  font-size: 16px;
-  opacity: 0.9;
-  font-weight: 500;
+  font-size: .95rem;
+  opacity: .95;
 }
 
-/* ============================================
-   MANIFESTE SECTION
-   ============================================ */
+/* =========================================================
+   MANIFESTE
+   ========================================================= */
 .philo-manifeste {
-  padding: 100px 20px;
-  background: white;
+  padding: 4.5rem 0;
+  background: var(--philo-white);
+}
+
+.philo-manifeste-inner {
+  max-width: 46rem;
+  margin: 0 auto;
   text-align: center;
 }
 
-.philo-manifeste-content {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.philo-manifeste h2 {
-  font-size: 48px;
+.philo-manifeste-title {
+  font-size: 2.4rem;
   font-weight: 800;
-  margin-bottom: 32px;
-  color: var(--gray-900);
-  line-height: 1.2;
+  margin-bottom: 2rem;
+  letter-spacing: -0.02em;
 }
 
 .philo-manifeste-text {
-  font-size: 22px;
+  font-size: 1.1rem;
+  color: var(--philo-gray-700);
   line-height: 1.8;
-  color: var(--gray-700);
-  margin-bottom: 24px;
+  margin-bottom: 1.2rem;
 }
 
 .philo-manifeste-highlight {
-  font-size: 24px;
+  margin-top: 2rem;
+  padding: 1.1rem 1.4rem;
+  border-radius: 1rem;
+  border-left: 4px solid var(--philo-yellow-400);
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
   font-weight: 600;
-  color: var(--purple-600);
-  margin-top: 40px;
-  padding: 24px;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border-radius: 16px;
-  border-left: 4px solid var(--yellow-400);
 }
 
-.philo-manifeste-image {
-  margin-top: 60px;
-  border-radius: 24px;
+.philo-manifeste-img {
+  margin-top: 3rem;
+  border-radius: 1.5rem;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  box-shadow: 0 18px 50px rgba(15,23,42,.18);
 }
 
-.philo-manifeste-image img {
+.philo-manifeste-img img {
   width: 100%;
   height: auto;
   display: block;
 }
 
-/* ============================================
-   SOLUTION SECTION
-   ============================================ */
+/* =========================================================
+   SOLUTION
+   ========================================================= */
 .philo-solution {
-  padding: 100px 20px;
-  background: var(--gray-100);
+  padding: 4.5rem 0;
+  background: var(--philo-gray-100);
 }
 
-.philo-solution h2 {
-  font-size: 48px;
+.philo-section-title {
+  font-size: 2.4rem;
   font-weight: 800;
   text-align: center;
-  margin-bottom: 20px;
-  color: var(--gray-900);
+  margin-bottom: .8rem;
+  letter-spacing: -0.02em;
 }
 
-.philo-solution-subtitle {
+.philo-section-subtitle {
   text-align: center;
-  font-size: 20px;
-  color: var(--gray-600);
-  margin-bottom: 64px;
+  font-size: 1.05rem;
+  color: var(--philo-gray-600);
+  margin-bottom: 3rem;
 }
 
 .philo-solution-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 40px;
-  max-width: 1200px;
-  margin: 0 auto;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
 }
 
 .philo-solution-card {
-  background: white;
-  padding: 48px 40px;
-  border-radius: 24px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  transition: all 0.3s ease;
+  background: #ffffff;
+  border-radius: 1.4rem;
+  padding: 2.3rem 2rem;
+  box-shadow: 0 4px 16px rgba(15,23,42,.08);
   border-top: 4px solid transparent;
+  transition: transform .16s ease, box-shadow .16s ease;
 }
 
 .philo-solution-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 14px 40px rgba(15,23,42,.14);
 }
 
-.philo-solution-card:nth-child(1) {
-  border-top-color: var(--yellow-400);
-}
-
-.philo-solution-card:nth-child(2) {
-  border-top-color: var(--purple-600);
-}
-
-.philo-solution-card:nth-child(3) {
-  border-top-color: var(--emerald-500);
-}
+.philo-solution-card:nth-child(1) { border-top-color: var(--philo-yellow-400); }
+.philo-solution-card:nth-child(2) { border-top-color: var(--philo-purple-600); }
+.philo-solution-card:nth-child(3) { border-top-color: var(--philo-emerald-500); }
 
 .philo-solution-emoji {
-  font-size: 64px;
-  margin-bottom: 24px;
-  display: block;
+  font-size: 2.6rem;
+  margin-bottom: .75rem;
 }
 
 .philo-solution-card h3 {
-  font-size: 26px;
+  font-size: 1.3rem;
   font-weight: 700;
-  margin-bottom: 16px;
-  color: var(--gray-900);
+  margin-bottom: .4rem;
 }
 
 .philo-solution-card p {
-  color: var(--gray-700);
+  font-size: .98rem;
+  color: var(--philo-gray-700);
   line-height: 1.7;
-  font-size: 17px;
 }
 
-/* ============================================
-   COMMENT SECTION (3 items)
-   ============================================ */
+/* =========================================================
+   COMMENT (3 étapes)
+   ========================================================= */
 .philo-comment {
-  padding: 100px 20px;
-  background: white;
-}
-
-.philo-comment h2 {
-  font-size: 48px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 64px;
-  color: var(--gray-900);
+  padding: 4.5rem 0;
+  background: #ffffff;
 }
 
 .philo-comment-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 48px;
-  max-width: 1200px;
-  margin: 0 auto;
+  gap: 2.3rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  margin-top: 2.5rem;
 }
 
 .philo-comment-step {
   text-align: center;
-  position: relative;
 }
 
-.philo-comment-number {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, var(--purple-600) 0%, var(--pink-500) 100%);
-  color: white;
-  border-radius: 50%;
+.philo-step-number {
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: 0 auto 1.2rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--philo-purple-600), var(--philo-pink-500));
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 36px;
+  font-size: 2rem;
   font-weight: 800;
-  margin: 0 auto 28px;
-  box-shadow: 0 8px 24px rgba(147, 51, 234, 0.3);
+  box-shadow: 0 10px 30px rgba(147,51,234,.35);
 }
 
 .philo-comment-step h3 {
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  color: var(--gray-900);
+  font-size: 1.25rem;
+  margin-bottom: .4rem;
 }
 
 .philo-comment-step p {
-  color: var(--gray-700);
+  font-size: .97rem;
+  color: var(--philo-gray-700);
   line-height: 1.7;
-  font-size: 16px;
 }
 
+/* visuels */
 .philo-comment-visual {
-  margin-top: 80px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0 20px; /* FIX: Évite le débordement mobile */
+  gap: 1.4rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  margin-top: 3rem;
 }
 
-.philo-comment-image {
-  border-radius: 20px;
+.philo-comment-img {
+  border-radius: 1.25rem;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-  height: 280px;
-  width: 100%; /* FIX: Force la largeur à 100% */
+  height: 11.5rem;
+  box-shadow: 0 4px 16px rgba(15,23,42,.18);
 }
 
-.philo-comment-image img {
+.philo-comment-img img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.3s ease;
+  transition: transform .18s ease;
 }
 
-.philo-comment-image:hover img {
-  transform: scale(1.05);
+.philo-comment-img:hover img {
+  transform: scale(1.04);
 }
 
-/* ============================================
-   VALEURS SECTION (3 items)
-   ============================================ */
+/* =========================================================
+   VALEURS
+   ========================================================= */
 .philo-valeurs {
-  padding: 100px 20px;
-  background: var(--gray-100);
-}
-
-.philo-valeurs h2 {
-  font-size: 48px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 20px;
-  color: var(--gray-900);
-}
-
-.philo-valeurs-subtitle {
-  text-align: center;
-  font-size: 20px;
-  color: var(--gray-600);
-  margin-bottom: 64px;
+  padding: 4.5rem 0;
+  background: var(--philo-gray-100);
 }
 
 .philo-valeurs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 40px;
-  max-width: 1200px;
-  margin: 0 auto;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  margin-top: 3rem;
 }
 
 .philo-valeur-card {
-  background: white;
-  padding: 44px 36px;
-  border-radius: 20px;
+  background: #ffffff;
+  border-radius: 1.3rem;
+  padding: 2.1rem 1.8rem;
   text-align: center;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(15,23,42,.08);
+  transition: transform .16s ease, box-shadow .16s ease;
 }
 
 .philo-valeur-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 14px 38px rgba(15,23,42,.14);
 }
 
 .philo-valeur-emoji {
-  font-size: 56px;
-  margin-bottom: 20px;
-  display: block;
+  font-size: 2.6rem;
+  margin-bottom: .9rem;
 }
 
 .philo-valeur-card h3 {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 12px;
-  color: var(--gray-900);
+  font-size: 1.2rem;
+  margin-bottom: .35rem;
 }
 
 .philo-valeur-card p {
-  color: var(--gray-700);
-  font-size: 16px;
+  font-size: .97rem;
+  color: var(--philo-gray-700);
   line-height: 1.6;
 }
 
-/* ============================================
-   CTA FINAL SECTION
-   ============================================ */
-.philo-final-cta {
-  padding: 120px 20px;
-  background: linear-gradient(135deg, var(--purple-600) 0%, var(--pink-500) 100%);
+/* =========================================================
+   CTA FINAL
+   ========================================================= */
+.philo-final {
+  padding: 5rem 0 4.8rem;
   text-align: center;
-  color: white;
+  color: #ffffff;
   position: relative;
   overflow: hidden;
+  background: linear-gradient(135deg, var(--philo-purple-600), var(--philo-pink-500));
 }
 
-.philo-final-cta::before {
-  content: '';
+.philo-final::before {
+  content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="30" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
-  opacity: 0.3;
+  inset: 0;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0);
+  background-size: 26px 26px;
+  opacity: .3;
+  pointer-events: none;
 }
 
-.philo-final-cta > * {
+.philo-final-inner {
   position: relative;
   z-index: 1;
 }
 
 .philo-final-emoji {
-  font-size: 72px;
-  margin-bottom: 28px;
-  display: block;
+  font-size: 3rem;
+  margin-bottom: 1.2rem;
 }
 
-.philo-final-cta h2 {
-  font-size: 52px;
+.philo-final-title {
+  font-size: 2.4rem;
   font-weight: 800;
-  margin-bottom: 20px;
+  margin-bottom: .8rem;
+  letter-spacing: -0.02em;
 }
 
-.philo-final-cta p {
-  font-size: 22px;
-  margin-bottom: 48px;
-  opacity: 0.95;
+.philo-final-text {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
 }
 
 .philo-final-btn {
-  padding: 18px 52px;
-  background: white;
-  color: var(--purple-600);
-  border-radius: 14px;
-  font-weight: 700;
-  font-size: 18px;
-  text-decoration: none;
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  transition: all 0.3s ease;
+  gap: .6rem;
+  padding: .95rem 2.6rem;
+  border-radius: 1rem;
+  background: #ffffff;
+  color: var(--philo-purple-600);
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  box-shadow: 0 14px 34px rgba(15,23,42,.3);
+  transition: transform .16s ease, box-shadow .16s ease;
 }
 
 .philo-final-btn:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 18px 46px rgba(15,23,42,.4);
 }
 
 .philo-final-note {
-  margin-top: 36px;
-  font-size: 15px;
-  opacity: 0.85;
+  margin-top: 1.4rem;
+  font-size: .85rem;
+  opacity: .9;
 }
 
-/* ============================================
+/* =========================================================
    RESPONSIVE
-   ============================================ */
+   ========================================================= */
 @media (max-width: 768px) {
-  /* FIX: Réduire le padding du hero pour rapprocher de la navbar */
   .philo-hero {
-    padding: 48px 20px 64px;
+    padding-top: 2.6rem;   /* moins d’air au-dessus de la citation */
+    padding-bottom: 3rem;
   }
 
-  /* FIX: Citation plus petite sur mobile */
   .philo-hero-quote {
-    font-size: 18px;
-    margin-bottom: 24px;
+    margin-bottom: 0.4rem;
+    padding: 0.35rem 1.1rem;
   }
 
-  .philo-hero h1 {
-    font-size: 40px;
+  .philo-hero-quote-mark {
+    font-size: 1.1rem;
+  }
+
+  .philo-hero-quote-text {
+    font-size: 0.9rem;
+  }
+
+  .philo-hero-quote-author {
+    margin-bottom: 1.4rem;
+  }
+
+  .philo-hero-title {
+    font-size: 2.2rem;          /* pour que “Pourquoi Déclic ?” tienne sur une ligne */
   }
 
   .philo-hero-lead {
-    font-size: 18px;
+    font-size: 1rem;
   }
 
-  /* FIX: Stats en une colonne sur mobile */
-  .philo-stats {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  .philo-manifeste h2,
-  .philo-solution h2,
-  .philo-comment h2,
-  .philo-valeurs h2 {
-    font-size: 36px;
-  }
-
-  .philo-manifeste-text {
-    font-size: 18px;
-  }
-
-  .philo-final-cta h2 {
-    font-size: 36px;
-  }
-
-  /* FIX: Grids en une colonne sur mobile */
-  .philo-solution-grid,
-  .philo-comment-grid,
-  .philo-valeurs-grid {
-    grid-template-columns: 1fr;
-  }
-
-  /* FIX: Photos en une colonne sur mobile pour éviter débordement */
-  .philo-comment-visual {
-    grid-template-columns: 1fr;
-    padding: 0;
-  }
-
-  .philo-comment-image {
-    height: 220px;
-  }
-}
-
-/* FIX: Container global pour éviter débordement navbar */
-@media (max-width: 768px) {
-  .container {
-    padding: 0 16px; /* Au lieu de 20px */
-  }
-
-  /* FIX: Réduire padding des sections sur mobile */
   .philo-manifeste,
   .philo-solution,
   .philo-comment,
   .philo-valeurs {
-    padding: 60px 16px;
+    padding: 3.5rem 0;
   }
 
-  .philo-final-cta {
-    padding: 80px 16px;
+  .philo-final {
+    padding: 4rem 0 3.8rem;
+  }
+
+  .philo-section-title,
+  .philo-manifeste-title {
+    font-size: 2rem;
   }
 }
 </style>
 
-<%# ============================================
-    1. HERO
-    ============================================ %>
-<section class="philo-hero">
-  <div class="container">
-    <p class="philo-hero-quote">
-      « Tout ce qui est humain m'intéresse » — Térence
-    </p>
+<div class="philo-page">
+  <%# ===================== HERO ===================== %>
+  <section class="philo-hero">
+    <div class="philo-container philo-hero-inner">
+      <div class="philo-hero-quote">
+        <span class="philo-hero-quote-mark">«</span>
+        <span class="philo-hero-quote-text">Tout ce qui est humain m'intéresse</span>
+        <span class="philo-hero-quote-mark">»</span>
+      </div>
+      <div class="philo-hero-quote-author">— Térence, dramaturge latin</div>
 
-    <h1>
-      Pourquoi Déclic ?
-    </h1>
+      <h1 class="philo-hero-title">Pourquoi Déclic&nbsp;?</h1>
 
-    <p class="philo-hero-lead">
-      À portée de main, à portée de clic, nous pouvons changer notre vie.
-      Autour de nous, les initiatives foisonnent, des opportunités palpitent,
-      des histoires inspirantes de personnes qui ont franchi le pas aussi.
-    </p>
+      <p class="philo-hero-lead">
+        À portée de main, à portée de clic, nous pouvons changer notre vie.
+        Autour de nous, les initiatives foisonnent, des opportunités palpitent,
+        des histoires inspirantes de personnes qui ont franchi le pas aussi.
+      </p>
 
-    <p class="philo-hero-highlight">
-      ✨ Déclic permet de les repérer et de passer à l'action.
-    </p>
+      <p class="philo-hero-highlight">
+        ✨ Déclic permet de les repérer et de passer à l'action.
+      </p>
 
-    <div class="philo-hero-cta">
-      <%= link_to opportunities_path, class: "philo-btn philo-btn-primary" do %>
-        <span>🔍</span>
-        <span>Explorer les opportunités</span>
+      <div class="philo-hero-cta">
+        <%= link_to opportunities_path, class: "philo-btn philo-btn-primary" do %>
+          <span>🔍</span>
+          <span>Explorer les opportunités</span>
+        <% end %>
+
+        <%= link_to stories_path, class: "philo-btn philo-btn-ghost" do %>
+          <span>✨</span>
+          <span>Lire les histoires</span>
+        <% end %>
+      </div>
+
+      <div class="philo-stats">
+        <div class="philo-stat">
+          <div class="philo-stat-number">15&nbsp;000+</div>
+          <div class="philo-stat-label">Opportunités</div>
+        </div>
+        <div class="philo-stat">
+          <div class="philo-stat-number">300+</div>
+          <div class="philo-stat-label">Villes</div>
+        </div>
+        <div class="philo-stat">
+          <div class="philo-stat-number">10k</div>
+          <div class="philo-stat-label">Communauté</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <%# ===================== MANIFESTE ===================== %>
+  <section class="philo-manifeste">
+    <div class="philo-container">
+      <div class="philo-manifeste-inner">
+        <h2 class="philo-manifeste-title">Un déclic peut tout changer</h2>
+
+        <p class="philo-manifeste-text">
+          Parfois, il suffit d'une <strong>rencontre</strong>. D'une <strong>conversation</strong>
+          qui nous ouvre les yeux. D'une <strong>histoire</strong> qui résonne en nous.
+          D'un <strong>lieu</strong> où l'on se sent enfin à notre place.
+        </p>
+
+        <p class="philo-manifeste-text">
+          Ce moment où tout bascule — ce <strong>déclic</strong> — arrive rarement par hasard.
+          Il naît quand l'inspiration rencontre l'opportunité. Quand le désir d'agir
+          trouve un chemin concret pour s'exprimer.
+        </p>
+
+        <p class="philo-manifeste-text">
+          <strong>Déclic</strong> existe pour multiplier ces moments.
+          Pour que chacun, là où il est, puisse trouver <strong>son</strong> déclic :
+          l'histoire qui l'inspire, l'opportunité qui l'attend,
+          la communauté qui l'accueille.
+        </p>
+
+        <div class="philo-manifeste-highlight">
+          🌟 Parce qu'une vie peut changer en quelques clics.
+        </div>
+      </div>
+
+      <div class="philo-manifeste-img">
+        <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&q=80&auto=format&fit=crop"
+             alt="Personnes qui discutent et échangent" loading="lazy">
+      </div>
+    </div>
+  </section>
+
+  <%# ===================== SOLUTION ===================== %>
+  <section class="philo-solution">
+    <div class="philo-container">
+      <h2 class="philo-section-title">Comment ça marche</h2>
+      <p class="philo-section-subtitle">
+        Trois piliers qui connectent l'inspiration et l'action
+      </p>
+
+      <div class="philo-solution-grid">
+        <div class="philo-solution-card">
+          <span class="philo-solution-emoji">📚</span>
+          <h3>Des histoires qui inspirent</h3>
+          <p>
+            Portraits authentiques de personnes qui ont osé franchir le pas.
+            Leur parcours crée le déclic émotionnel qui donne envie d'agir.
+          </p>
+        </div>
+
+        <div class="philo-solution-card">
+          <span class="philo-solution-emoji">🎯</span>
+          <h3>Des opportunités concrètes</h3>
+          <p>
+            Événements, formations, projets à rejoindre. Tout est géolocalisé,
+            filtrable par centre d'intérêt, et actionnable en un clic.
+          </p>
+        </div>
+
+        <div class="philo-solution-card">
+          <span class="philo-solution-emoji">👥</span>
+          <h3>Une communauté qui partage</h3>
+          <p>
+            Chaque utilisateur peut proposer une histoire ou une opportunité.
+            Celui qui trouve son déclic devient contributeur à son tour.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <%# ===================== PARCOURS (3 étapes) ===================== %>
+  <section class="philo-comment">
+    <div class="philo-container">
+      <h2 class="philo-section-title">Ton parcours en 3 étapes</h2>
+
+      <div class="philo-comment-grid">
+        <div class="philo-comment-step">
+          <div class="philo-step-number">1</div>
+          <h3>Découvre & Inspire-toi</h3>
+          <p>
+            Parcours des histoires inspirantes de personnes qui ont changé leur vie.
+            Identifie ce qui résonne avec tes envies : entreprendre, écologiser,
+            te former, rencontrer.
+          </p>
+        </div>
+
+        <div class="philo-comment-step">
+          <div class="philo-step-number">2</div>
+          <h3>Explore & Agis</h3>
+          <p>
+            Découvre les opportunités près de chez toi : événements, formations,
+            projets. Inscris-toi en un clic. Tout est géolocalisé et actionnable
+            immédiatement.
+          </p>
+        </div>
+
+        <div class="philo-comment-step">
+          <div class="philo-step-number">3</div>
+          <h3>Vis & Partage</h3>
+          <p>
+            Une fois ton projet lancé, partage ton histoire pour inspirer d'autres
+            personnes. Propose de nouvelles opportunités. Deviens acteur du réseau.
+          </p>
+        </div>
+      </div>
+
+      <div class="philo-comment-visual">
+        <div class="philo-comment-img">
+          <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80&auto=format&fit=crop"
+               alt="Personnes qui collaborent" loading="lazy">
+        </div>
+        <div class="philo-comment-img">
+          <img src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800&q=80&auto=format&fit=crop"
+               alt="Jardin partagé" loading="lazy">
+        </div>
+        <div class="philo-comment-img">
+          <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800&q=80&auto=format&fit=crop"
+               alt="Atelier créatif" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <%# ===================== VALEURS ===================== %>
+  <section class="philo-valeurs">
+    <div class="philo-container">
+      <h2 class="philo-section-title">Nos valeurs</h2>
+      <p class="philo-section-subtitle">
+        Les principes qui guident chacune de nos décisions
+      </p>
+
+      <div class="philo-valeurs-grid">
+        <div class="philo-valeur-card">
+          <span class="philo-valeur-emoji">🤝</span>
+          <h3>Ouvert & Accessible</h3>
+          <p>
+            Gratuit, sans inscription obligatoire, pour tous.
+            Tout le monde peut contribuer et partager ses opportunités.
+          </p>
+        </div>
+
+        <div class="philo-valeur-card">
+          <span class="philo-valeur-emoji">💜</span>
+          <h3>Bienveillant & Authentique</h3>
+          <p>
+            Nous croyons en la force de l'encouragement et des histoires vraies.
+            Pas de filtre, pas de pose, juste des parcours inspirants.
+          </p>
+        </div>
+
+        <div class="philo-valeur-card">
+          <span class="philo-valeur-emoji">📈</span>
+          <h3>Local & Concret</h3>
+          <p>
+            Chaque action compte. Nous valorisons l'impact territorial
+            et facilitons l'engagement de proximité.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <%# ===================== CTA FINAL ===================== %>
+  <section class="philo-final">
+    <div class="philo-container philo-final-inner">
+      <span class="philo-final-emoji">⚡</span>
+      <h2 class="philo-final-title">Prêt·e pour ton déclic ?</h2>
+      <p class="philo-final-text">
+        Rejoins les milliers de personnes qui passent à l'action près de chez toi.
+      </p>
+
+      <%= link_to root_path, class: "philo-final-btn" do %>
+        <span>🚀</span>
+        <span>Commencer maintenant</span>
       <% end %>
-      <%= link_to stories_path, class: "philo-btn philo-btn-ghost" do %>
-        <span>✨</span>
-        <span>Lire les histoires</span>
-      <% end %>
-    </div>
 
-    <div class="philo-stats">
-      <div class="philo-stat">
-        <div class="philo-stat-number">15 000+</div>
-        <div class="philo-stat-label">Opportunités</div>
-      </div>
-      <div class="philo-stat">
-        <div class="philo-stat-number">300+</div>
-        <div class="philo-stat-label">Villes</div>
-      </div>
-      <div class="philo-stat">
-        <div class="philo-stat-number">10k</div>
-        <div class="philo-stat-label">Communauté</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<%# ============================================
-    2. MANIFESTE (remplace "le problème")
-    ============================================ %>
-<section class="philo-manifeste">
-  <div class="container">
-    <div class="philo-manifeste-content">
-      <h2>Un déclic peut tout changer</h2>
-
-      <p class="philo-manifeste-text">
-        Parfois, il suffit d'une <strong>rencontre</strong>. D'une <strong>conversation</strong>
-        qui nous ouvre les yeux. D'une <strong>histoire</strong> qui résonne en nous.
-        D'un <strong>lieu</strong> où l'on se sent enfin à notre place.
+      <p class="philo-final-note">
+        Gratuit • Sans inscription • 2 minutes pour trouver ton opportunité
       </p>
-
-      <p class="philo-manifeste-text">
-        Ce moment où tout bascule — ce <strong>déclic</strong> — arrive rarement par hasard.
-        Il naît quand l'inspiration rencontre l'opportunité. Quand le désir d'agir
-        trouve un chemin concret pour s'exprimer.
-      </p>
-
-      <p class="philo-manifeste-text">
-        <strong>Déclic</strong> existe pour multiplier ces moments.
-        Pour que chacun, là où il est, puisse trouver <strong>son</strong> déclic.
-        L'histoire qui l'inspire. L'opportunité qui l'attend.
-        La communauté qui l'accueille.
-      </p>
-
-      <div class="philo-manifeste-highlight">
-        🌟 Parce qu'une vie peut changer en quelques clics
-      </div>
     </div>
-
-    <div class="philo-manifeste-image">
-      <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&q=80&auto=format&fit=crop" alt="Personnes qui discutent et échangent" loading="lazy">
-    </div>
-  </div>
-</section>
-
-<%# ============================================
-    3. NOTRE SOLUTION (3 piliers)
-    ============================================ %>
-<section class="philo-solution">
-  <div class="container">
-    <h2>Comment ça marche</h2>
-    <p class="philo-solution-subtitle">
-      Trois piliers qui connectent l'inspiration et l'action
-    </p>
-
-    <div class="philo-solution-grid">
-      <div class="philo-solution-card">
-        <span class="philo-solution-emoji">📚</span>
-        <h3>Des histoires qui inspirent</h3>
-        <p>
-          Portraits authentiques de personnes qui ont osé franchir le pas.
-          Leur parcours crée le déclic émotionnel qui donne envie d'agir.
-        </p>
-      </div>
-
-      <div class="philo-solution-card">
-        <span class="philo-solution-emoji">🎯</span>
-        <h3>Des opportunités concrètes</h3>
-        <p>
-          Événements, formations, projets à rejoindre. Tout est géolocalisé,
-          filtrable par centre d'intérêt, et actionnable en un clic.
-        </p>
-      </div>
-
-      <div class="philo-solution-card">
-        <span class="philo-solution-emoji">👥</span>
-        <h3>Une communauté qui partage</h3>
-        <p>
-          Chaque utilisateur peut proposer une histoire ou une opportunité.
-          Celui qui trouve son déclic devient contributeur à son tour.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<%# ============================================
-    4. TON PARCOURS (3 étapes simplifiées)
-    ============================================ %>
-<section class="philo-comment">
-  <div class="container">
-    <h2>Ton parcours en 3 étapes</h2>
-
-    <div class="philo-comment-grid">
-      <div class="philo-comment-step">
-        <div class="philo-comment-number">1</div>
-        <h3>Découvre & Inspire-toi</h3>
-        <p>
-          Parcours des histoires inspirantes de personnes qui ont changé leur vie.
-          Identifie ce qui résonne avec tes envies : entreprendre, écologiser, se former, rencontrer.
-        </p>
-      </div>
-
-      <div class="philo-comment-step">
-        <div class="philo-comment-number">2</div>
-        <h3>Explore & Agis</h3>
-        <p>
-          Découvre les opportunités près de chez toi : événements, formations, projets.
-          Inscris-toi en un clic. Tout est géolocalisé et actionnable immédiatement.
-        </p>
-      </div>
-
-      <div class="philo-comment-step">
-        <div class="philo-comment-number">3</div>
-        <h3>Vis & Partage</h3>
-        <p>
-          Une fois ton projet lancé, partage ton histoire pour inspirer d'autres personnes.
-          Propose de nouvelles opportunités. Deviens acteur du réseau.
-        </p>
-      </div>
-    </div>
-
-    <%# Photos illustratives %>
-    <div class="philo-comment-visual">
-      <div class="philo-comment-image">
-        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&q=80&auto=format&fit=crop" alt="Personnes qui collaborent" loading="lazy">
-      </div>
-      <div class="philo-comment-image">
-        <img src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=600&q=80&auto=format&fit=crop" alt="Jardin partagé" loading="lazy">
-      </div>
-      <div class="philo-comment-image">
-        <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?w=600&q=80&auto=format&fit=crop" alt="Atelier créatif" loading="lazy">
-      </div>
-    </div>
-  </div>
-</section>
-
-<%# ============================================
-    5. NOS VALEURS (3 principes essentiels)
-    ============================================ %>
-<section class="philo-valeurs">
-  <div class="container">
-    <h2>Nos valeurs</h2>
-    <p class="philo-valeurs-subtitle">
-      Les principes qui guident chacune de nos décisions
-    </p>
-
-    <div class="philo-valeurs-grid">
-      <div class="philo-valeur-card">
-        <span class="philo-valeur-emoji">🤝</span>
-        <h3>Ouvert & Accessible</h3>
-        <p>
-          Gratuit, sans inscription obligatoire, pour tous.
-          Tout le monde peut contribuer et partager ses opportunités.
-        </p>
-      </div>
-
-      <div class="philo-valeur-card">
-        <span class="philo-valeur-emoji">💜</span>
-        <h3>Bienveillant & Authentique</h3>
-        <p>
-          Nous croyons en la force de l'encouragement et des histoires vraies.
-          Pas de filtre, pas de pose, juste des parcours inspirants.
-        </p>
-      </div>
-
-      <div class="philo-valeur-card">
-        <span class="philo-valeur-emoji">📈</span>
-        <h3>Local & Concret</h3>
-        <p>
-          Chaque action compte. Nous valorisons l'impact territorial
-          et facilitons l'engagement de proximité.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<%# ============================================
-    6. CTA FINAL
-    ============================================ %>
-<section class="philo-final-cta">
-  <div class="container">
-    <span class="philo-final-emoji">⚡</span>
-    <h2>Prêt·e pour ton déclic ?</h2>
-    <p>
-      Rejoins les milliers de personnes qui passent à l'action près de chez toi.
-    </p>
-
-    <%= link_to root_path, class: "philo-final-btn" do %>
-      <span>🚀</span>
-      <span>Commencer maintenant</span>
-    <% end %>
-
-    <p class="philo-final-note">
-      Gratuit • Sans inscription • 2 minutes pour trouver ton opportunité
-    </p>
-  </div>
-</section>
+  </section>
+</div>
