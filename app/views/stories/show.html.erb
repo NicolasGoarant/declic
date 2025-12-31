@@ -157,6 +157,21 @@ end
     font-size: 24px !important;
   }
 
+  /* FIX: Réduire l'espacement du bandeau "Belles Histoires" sur mobile */
+  .story-discovery-section {
+    padding: 40px 24px !important;
+  }
+
+  /* FIX: Réduire la hauteur du hero et l'espacement sur mobile */
+  .story-hero-container {
+    height: 340px !important;
+  }
+
+  .story-hero-content {
+    padding: 16px 16px !important;
+  }
+}
+
   /* Mobile : photos inline en pleine largeur */
   .inline-photo-left,
   .inline-photo-right {
@@ -170,7 +185,7 @@ end
 <div style="background: white; min-height: 100vh;">
 
   <%# ========== HÉROS AVEC PHOTO ========== %>
-  <div style="position: relative; height: 500px; overflow: hidden; background: #1e293b;">
+  <div class="story-hero-container" style="position: relative; height: 500px; overflow: hidden; background: #1e293b;">
 
     <%# Photo hero - PRIORITÉ : Upload > URL externe > Fallback %>
     <% if @story.image.attached? %>
@@ -184,7 +199,7 @@ end
     <% end %>
 
     <%# Contenu hero %>
-    <div style="position: relative; z-index: 10; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding: 48px 24px; max-width: 1200px; margin: 0 auto;">
+    <div class="story-hero-content" style="position: relative; z-index: 10; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding: 48px 24px; max-width: 1200px; margin: 0 auto;">
       <div style="display: inline-block; align-self: flex-start; background: linear-gradient(135deg, #a855f7, #ec4899); padding: 8px 20px; border-radius: 999px; font-size: 13px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(168,85,247,0.3);">
         <%= theme[:icon] %> <%= theme[:name] %>
       </div>
@@ -457,7 +472,7 @@ end
 
   <%# ========== DÉCOUVERTE ========== %>
   <div style="border-top: 2px solid #e2e8f0;">
-    <div style="background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); padding: 80px 24px;">
+    <div class="story-discovery-section" style="background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); padding: 80px 24px;">
       <div style="max-width: 900px; margin: 0 auto; text-align: center;">
         <div style="font-size: 64px; margin-bottom: 20px;">🌟</div>
         <h2 style="color: white; font-size: 38px; font-weight: 700; margin: 0 0 16px 0; word-wrap: break-word;">
