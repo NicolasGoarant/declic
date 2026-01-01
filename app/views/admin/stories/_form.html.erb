@@ -1,5 +1,3 @@
-
-
 <%= form_with model: [:admin, @story],
               local: true,
               html: { multipart: true, class: 'story-admin-form' } do |f| %>
@@ -16,6 +14,28 @@
   <% end %>
 
   <%# ========================================
+      IMPORT RAPIDE (1 copier-coller)
+      ======================================== %>
+  <div class="form-section" style="background:#fff7ed;border:2px solid #fb923c;">
+    <div class="section-header">
+      <h3>⚡ Import Story (bêta)</h3>
+      <p class="section-help">Collez un bloc complet (frontmatter + body). À l’enregistrement, les champs seront pré-remplis.</p>
+    </div>
+
+    <div class="form-grid">
+      <div class="field full">
+        <label for="import_blob">Bloc Import</label>
+        <textarea id="import_blob"
+                  name="import_blob"
+                  rows="10"
+                  placeholder="---&#10;title: ...&#10;chapo: ...&#10;date: 2023-06-03&#10;location: ...&#10;tags: a, b, c&#10;source_name: ...&#10;source_url: ...&#10;image_hero: ...&#10;lat: 48.69&#10;lng: 6.18&#10;---&#10;Body markdown..."
+        ><%= params[:import_blob].to_s %></textarea>
+        <div class="field-help">💡 Si ce bloc est renseigné, il est prioritaire sur les champs ci-dessous.</div>
+      </div>
+    </div>
+  </div>
+
+  <%# ========================================
       SECTION 1 : CONTENU PRINCIPAL
       ======================================== %>
   <div class="form-section">
@@ -27,7 +47,7 @@
     <div class="form-grid">
       <div class="field full">
         <%= f.label :title, "Titre *" %>
-        <%= f.text_field :title, placeholder: "Ex: Elle plaque la finance à Paris pour devenir fromagère...", required: true %>
+        <%= f.text_field :title, placeholder: "Ex: Elle plaque la finance à Paris pour devenir fromagère...", required: false %>
         <span class="field-help">🎯 Apparaît en grand dans le héros avec emoji</span>
       </div>
 
@@ -88,13 +108,13 @@
     <div class="form-grid">
       <div class="field">
         <%= f.label :happened_on, "Date de l'histoire *" %>
-        <%= f.date_field :happened_on, required: true %>
+        <%= f.date_field :happened_on, required: false %>
         <span class="field-help">📅 Format : "Samedi 03 juin 2023" (avec jour de la semaine)</span>
       </div>
 
       <div class="field">
         <%= f.label :location, "Lieu *" %>
-        <%= f.text_field :location, placeholder: "21 Grande-Rue, 54000 Nancy", required: true %>
+        <%= f.text_field :location, placeholder: "21 Grande-Rue, 54000 Nancy", required: false %>
         <span class="field-help">🏪 Adresse complète affichée dans la sidebar</span>
       </div>
 
@@ -274,7 +294,7 @@
     <div class="form-grid">
       <div class="field">
         <%= f.label :source_name, "Nom de la source *" %>
-        <%= f.text_field :source_name, placeholder: "Ex: L'Est Républicain", required: true %>
+        <%= f.text_field :source_name, placeholder: "Ex: L'Est Républicain", required: false %>
         <span class="field-help">📰 Nom du média (affiché dans le héros ET dans "Informations clés")</span>
       </div>
 

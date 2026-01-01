@@ -34,7 +34,10 @@ class Admin::StoriesController < Admin::BaseController
   # POST /admin/stories
   def create
     @story = Story.new(story_params)
-    if @story.save
+
+    apply_import_blob(@story)
+
+    if @story.errors.none? && @story.save
       redirect_to admin_stories_path, notice: "Histoire créée."
     else
       flash.now[:alert] = @story.errors.full_messages.to_sentence
@@ -47,7 +50,11 @@ class Admin::StoriesController < Admin::BaseController
 
   # PATCH/PUT /admin/stories/:id
   def update
-    if @story.update(story_params)
+    @story.assign_attributes(story_params)
+
+    apply_import_blob(@story)
+
+    if @story.errors.none? && @story.save
       redirect_to admin_stories_path(request.query_parameters), notice: "Histoire mise à jour."
     else
       flash.now[:alert] = @story.errors.full_messages.to_sentence
@@ -100,24 +107,15 @@ class Admin::StoriesController < Admin::BaseController
   end
 
   # POST /admin/stories/geocode_missing
-# POST /admin/stories/geocode_missing
   def geocode_missing
-    # On sélectionne toutes les stories qui manquent de latitude OU de longitude
     scope = Story.where(latitude: nil).or(Story.where(longitude: nil))
     done  = 0
 
     scope.find_each do |s|
-      # On s'assure qu'une adresse est présente pour géocoder
       if s.location.present?
-
-        # 1. FORCER LE GÉOCODAGE
-        # On appelle la méthode `geocode` fournie par la gemme Geocoder
         s.geocode
 
-        # 2. VÉRIFIER SI LES COORDONNÉES ONT ÉTÉ TROUVÉES
         if s.latitude.present? && s.longitude.present?
-          # 3. SAUVEGARDER UNIQUEMENT LES COORDONNÉES
-          # update_columns est plus rapide et évite de relancer des validations inutiles.
           s.update_columns(latitude: s.latitude, longitude: s.longitude, updated_at: Time.current)
           done += 1
         end
@@ -134,23 +132,51 @@ class Admin::StoriesController < Admin::BaseController
     @story = Story.find_by(id: params[:id]) || Story.find_by!(slug: params[:id])
   end
 
-def story_params
-  params.require(:story).permit(
-    :title, :chapo, :body, :description,
-    :happened_on, :location, :latitude, :longitude,
-    :image, :image_url,
-    :inline_image_1,      # Photo inline 1 (Active Storage)
-    :inline_caption_1,    # Légende 1
-    :inline_image_2,      # Photo inline 2 (Active Storage)
-    :inline_caption_2,    # Légende 2
-    :inline_image_3,      # Photo inline 3 (Active Storage)
-    :inline_caption_3,    # Légende 3
-    :source_name, :source_url,
-    :slug, :tags, :active, :is_active, :published,
-    :highlights_title,
-    :highlights_text,
-    :highlights_items,
-    :contact_info
-  )
-end
+  def story_params
+    params.require(:story).permit(
+      :title, :chapo, :body, :description,
+      :happened_on, :location, :latitude, :longitude,
+      :image, :image_url,
+      :inline_image_1,
+      :inline_caption_1,
+      :inline_image_2,
+      :inline_caption_2,
+      :inline_image_3,
+      :inline_caption_3,
+      :source_name, :source_url,
+      :slug, :tags, :active, :is_active, :published,
+      :highlights_title,
+      :highlights_text,
+      :highlights_items,
+      :contact_info
+    )
+  end
+
+  # Si params[:import_blob] est présent :
+  # - parse frontmatter + body
+  # - remplit les champs (prioritaire sur le formulaire)
+  # - tente un géocodage si location présente mais coords absentes
+  def apply_import_blob(story)
+    blob = params[:import_blob].to_s
+    return if blob.blank?
+
+    begin
+      attrs, body = ImportStoryParser.call(blob)
+
+      # Import prioritaire sur les champs du formulaire
+      story.assign_attributes(attrs)
+      story.body = body if body.present?
+
+      # Géocodage automatique si on a une adresse mais pas de coords
+      if story.location.present? &&
+         (story.latitude.blank? || story.longitude.blank?) &&
+         story.respond_to?(:geocode)
+        story.geocode
+      end
+    rescue ImportStoryParser::ParseError => e
+      story.errors.add(:base, "Import Story : #{e.message}")
+    rescue => e
+      story.errors.add(:base, "Import Story : erreur inattendue (#{e.class})")
+    end
+  end
 end

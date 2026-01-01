@@ -3,9 +3,11 @@ class StoriesController < ApplicationController
     @stories = Story.order(created_at: :desc)
   end
 
-  def show
-    @story = Story.find_by!(slug: params[:id])
-  end
+def show
+  @story = Story.find_by!(id: params[:id]) if params[:id].to_s.match?(/\A\d+\z/)
+  @story ||= Story.find_by!(slug: params[:id])
+end
+
 
   def new
     @story = Story.new

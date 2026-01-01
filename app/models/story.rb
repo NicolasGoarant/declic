@@ -10,19 +10,13 @@ class Story < ApplicationRecord
   validates :title, presence: true
   validates :slug, uniqueness: true, allow_blank: true
 
-  # --- DÉBUT DU CODE À AJOUTER ---
   # Configure la géolocalisation
   geocoded_by :location
-  # Déclenche la méthode geocode (qui calcule lat/lng) avant de sauver,
-  # uniquement si le champ 'location' a été modifié
-  before_validation :geocode, if: :will_save_change_to_location?
-  # --- FIN DU CODE À AJOUTER ---
+
+  # ✅ Modif demandée : ne géocoder automatiquement que si coords manquantes
+  before_validation :geocode, if: -> { location.present? && (latitude.blank? || longitude.blank?) && will_save_change_to_location? }
 
   before_validation :ensure_slug
-
-  def to_param
-    slug.presence || super
-  end
 
   # Choix d’image pour le front (upload > URL > fallback)
   def hero_image_url(view_context)
