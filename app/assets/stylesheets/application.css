@@ -14,9 +14,9 @@ body {
   max-width: 100vw;
 }
 
-main, section, .container {
+/* IMPORTANT : Ne pas mettre overflow-x: hidden sur main/section car ça casse position: sticky */
+main, .container {
   max-width: 100vw;
-  overflow-x: hidden;
 }
 
 /* ========================================
@@ -394,5 +394,12 @@ body {
 
   .leaflet-popup-close-button:hover {
     background: rgba(0, 0, 0, 0.8) !important;
+  }
+}
+
+
+@media (max-width: 960px) {
+  .hm-explore-grid {
+    max-height: none;
   }
 }

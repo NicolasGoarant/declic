@@ -106,7 +106,7 @@ end
               <option value="ecologiser">🌱 Écologiser</option>
               <option value="formation">📘 Formation</option>
               <option value="rencontres">👥 Rencontres</option>
-              <option value="entreprendre">💼 Entreprendre</option>
+              <option value="entreprendre">🚀 Entreprendre</option>
               <option value="histoires">✨ Belles histoires</option>
             </select>
 
@@ -117,7 +117,7 @@ end
               <button class="chip" data-cat="ecologiser">🌱 Écologiser</button>
               <button class="chip" data-cat="formation">📘 Formation</button>
               <button class="chip" data-cat="rencontres">👥 Rencontres</button>
-              <button class="chip" data-cat="entreprendre">💼 Entreprendre</button>
+              <button class="chip" data-cat="entreprendre">🚀 Entreprendre</button>
               <button class="chip" data-cat="histoires">✨ Belles histoires</button>
             </div>
           </div>
@@ -573,17 +573,36 @@ end
   .hm-grid-cards{ grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @media (max-width:560px){
-  .hm-grid-cards{ grid-template-columns:1fr; }
+  .hm-grid-cards{
+    grid-template-columns:1fr !important;
+    gap: 16px !important;
+    padding: 0 !important; /* Pas de padding interne, on gère avec container */
+  }
   .hm-card{
     grid-template-columns:80px 1fr;
     padding:22px 18px;
     min-height:192px;
     border-radius:22px;
+    max-width: none !important; /* CRITIQUE: pas de limite de largeur */
+    width: 100% !important; /* CRITIQUE: prendre toute la largeur disponible */
+    justify-self: stretch !important; /* CRITIQUE: s'étirer dans la grid */
   }
   .hm-emoji{
     width:72px; height:72px;
     border-radius:18px;
     font-size:36px;
+  }
+
+  /* FIX CRITIQUE: Réduire le padding du container sur mobile */
+  #parcours .container,
+  .hm-slice .container {
+    padding: 0 12px !important; /* Encore plus petit pour être sûr */
+  }
+
+  /* FIX: Ajouter de l'espace au-dessus de la section parcours sur mobile */
+  #parcours {
+    margin-top: 20px !important;
+    padding-top: 20px !important;
   }
 }
 
@@ -773,13 +792,17 @@ end
   display:grid;
   grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);
   gap:22px;
-  /* Correction Sticky : pas de align-items flex-start ici */
+  /* IMPORTANT : align-items start pour permettre au sticky de fonctionner */
+  align-items: start;
   margin-top:18px;
   /* Pleine largeur sur desktop */
   max-width:1650px;
   margin-left:auto;
   margin-right:auto;
   padding:0 2rem;
+  /* Hauteur maximale pour que le sticky s'arrête avant la section parcours */
+  /* Cette hauteur = hauteur viewport * 1.5 pour donner de l'espace de scroll */
+
 }
 
 @media (max-width:960px){
@@ -796,7 +819,9 @@ end
   }
 }
 
-.hm-explore-left{ min-width:0; }
+.hm-explore-left{
+  min-width:0;
+}
 .hm-explore-right{ min-width:0; }
 .hm-explore-header{
   display:flex;
@@ -877,7 +902,7 @@ end
 
 .hm-map-sticky {
   position: sticky;
-  top: 80px; /* Réduit pour coller plus au header */
+  top: 80px;
   z-index: 10;
 }
 @media (max-width:960px){
@@ -1284,6 +1309,18 @@ end
   border:2px solid #fff;
   color:#fff;
 }
+
+/* Réduction de l'espace avant les gros boutons */
+#parcours {
+  padding-top: clamp(1.2rem, 2.5vw, 2.2rem);
+}
+
+@media (max-width: 768px) {
+  #parcours {
+    padding-top: 1rem;
+  }
+}
+
 </style>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -1694,6 +1731,79 @@ function plot(items){
     if (window._declicWatchId) { navigator.geolocation.clearWatch(window._declicWatchId); window._declicWatchId=null; }
     if (window._declicButton) window._declicButton.innerHTML = '<span>📍</span> <span>Me localiser</span>';
   }
+
+  // ========== STICKY CARTE AVEC TRANSFORM (CORRIGÉ MOBILE + DESKTOP) ==========
+  (function() {
+    const mapSticky = document.querySelector('.hm-map-sticky');
+    const rightColumn = document.querySelector('.hm-explore-right');
+    const parcoursSection = document.getElementById('parcours');
+
+    // Vérifier la largeur à chaque appel pour gérer le resize
+    function isDesktop() {
+      return window.innerWidth > 960;
+    }
+
+    if (!mapSticky || !rightColumn) return;
+
+    const stickyTop = 80;
+
+    function handleScroll() {
+      // Ne rien faire sur mobile
+      if (!isDesktop()) {
+        mapSticky.style.transform = '';
+        mapSticky.style.willChange = '';
+        return;
+      }
+
+      const scrollY = window.pageYOffset;
+      const mapRect = mapSticky.getBoundingClientRect();
+const mapBox = document.querySelector(".hm-map");
+const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.height);
+
+      const rightColumnRect = rightColumn.getBoundingClientRect();
+
+      // Position initiale de la carte (sans transform)
+      const currentTransform = parseFloat(mapSticky.style.transform?.match(/translateY\((.+?)px\)/)?.[1] || 0);
+      const mapOriginalTop = mapRect.top + scrollY - currentTransform;
+
+      // Point d'arrêt : s'aligne avec le bas de la colonne de droite
+      const rightColumnBottom = rightColumnRect.top + scrollY + rightColumnRect.height;
+      const stopPoint = rightColumnBottom - mapHeight;
+
+      // Calculer le translateY pour que la carte reste à stickyTop du viewport
+      let translateY = scrollY - mapOriginalTop + stickyTop;
+
+      // Limiter pour ne pas dépasser le bas de la colonne de droite
+      const maxY = stopPoint - mapOriginalTop;
+      if (translateY > maxY) {
+        translateY = maxY;
+      }
+
+      // Ne pas descendre en dessous de 0
+      if (translateY < 0) {
+        translateY = 0;
+      }
+
+      // Appliquer le transform
+      if (translateY > 0) {
+        mapSticky.style.transform = `translateY(${translateY}px)`;
+        mapSticky.style.willChange = 'transform';
+      } else {
+        mapSticky.style.transform = '';
+        mapSticky.style.willChange = '';
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', () => {
+      // Reset au resize puis recalculer
+      mapSticky.style.transform = '';
+      setTimeout(handleScroll, 100);
+    });
+
+    // Premier check
+    setTimeout(handleScroll, 100);
+  })();
 }
 </script>
 <% end %>

@@ -34,8 +34,6 @@ else
   { name: "Belle Histoire", color: "purple", gradient: "from-purple-500 to-pink-500", bg: "bg-purple-50", icon: "✨" }
 end
 
-story_emoji = defined?(emoji_for) ? emoji_for(@story.title) : "👍"
-
 # Format date français
 date_fr = if @story.happened_on.present?
   day_names = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
@@ -173,13 +171,116 @@ end
 }
 
   /* Mobile : photos inline en pleine largeur */
+/* Mobile : photos inline en pleine largeur */
+@media (max-width: 640px) {
   .inline-photo-left,
   .inline-photo-right {
     float: none;
     width: 100%;
     margin: 16px 0;
   }
+
+  /* Bonus lisibilité: éviter les "1 mot par ligne" si une règle force une largeur bizarre */
+  .markdown-content {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
 }
+@media (max-width: 640px) {
+  .story-cta-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .story-cta-actions a {
+    width: 100%;
+    justify-content: center;
+    white-space: normal !important;
+    padding: 14px 18px !important;
+    text-align: center;
+  }
+}
+
+}
+
+@media (max-width: 640px) {
+  /* la card du récit : moins de padding pour laisser respirer le texte */
+  .story-body-card {
+    padding: 22px !important;
+  }
+
+  /* neutraliser les floats qui compressent le texte */
+  .inline-photo-left,
+  .inline-photo-right {
+    float: none !important;
+    width: 100% !important;
+    margin: 16px 0 !important;
+  }
+
+  .markdown-content {
+    max-width: 100% !important;
+  }
+}
+@media (max-width: 640px) {
+  .story-cta-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .story-cta-actions a {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+    white-space: normal !important;
+    padding: 14px 16px !important;
+    text-align: center;
+  }
+}
+
+/* ===== FIX LISIBILITÉ TEXTE STORY — MOBILE ONLY ===== */
+@media (max-width: 640px) {
+
+  /* 1. Le wrapper principal ne doit plus manger la largeur */
+  .story-grid {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* 2. Le conteneur parent */
+  .story-grid > div:first-child {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* 3. La carte du récit prend toute la largeur utile */
+  .story-body-card {
+    padding: 20px 16px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* 4. Le texte utilise toute la largeur */
+  .story-body-card .markdown-content {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+}
+
+/* ===== PLEINE LARGEUR TEXTE — MOBILE ONLY (SHOW STORY) ===== */
+@media (max-width: 640px) {
+  /* réduit le padding global qui rétrécit tout le contenu */
+  .story-main-wrap { padding: 0 12px !important; }
+
+  /* la card du récit : padding raisonnable sur mobile */
+  .story-body-card { padding: 18px 14px !important; }
+
+  /* garantir que le texte prend toute la largeur utile */
+  .story-body-card .markdown-content { width: 100% !important; max-width: 100% !important; }
+}
+
 </style>
 
 <div style="background: white; min-height: 100vh;">
@@ -227,7 +328,7 @@ end
   <div class="story-spacing-1"></div>
 
   <%# ========== CONTENU PRINCIPAL ========== %>
-  <div style="max-width: 1400px; margin: 0 auto; padding: 0 24px;">
+  <div class="story-main-wrap" style="max-width: 1400px; margin: 0 auto; padding: 0 24px;">
 
     <div class="story-grid" style="display: grid; grid-template-columns: 1fr 380px; gap: 48px; align-items: start;">
 
@@ -244,7 +345,7 @@ end
         <% end %>
 
         <%# Le récit de l'action avec PHOTOS INLINE INTELLIGENTES %>
-        <div style="background: white; border-radius: 20px; padding: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); border: 2px solid #f1f5f9; margin-bottom: 32px;">
+        <div class="story-body-card" style="background: white; border-radius: 20px; padding: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); border: 2px solid #f1f5f9; margin-bottom: 32px;">
           <h2 class="story-section-title" style="font-size: 28px; font-weight: 700; color: #1e293b; margin: 0 0 24px 0; display: flex; align-items: center; gap: 12px; word-wrap: break-word;">
             <span style="font-size: 32px;">👉</span>
             Le récit de l'action
@@ -354,7 +455,7 @@ end
           <p style="font-size: 19px; color: rgba(255,255,255,0.95); margin: 0 auto 28px; max-width: 600px; line-height: 1.6; word-wrap: break-word;">
             Cette histoire vous inspire ? Des dizaines d'opportunités similaires vous attendent près de chez vous pour entreprendre, vous former ou vous engager.
           </p>
-          <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 16px;">
+          <div class="story-cta-actions" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 16px;">
             <a href="/opportunities" style="display: inline-flex; align-items: center; gap: 10px; background: white; color: #a855f7; padding: 18px 36px; border-radius: 999px; font-weight: 700; font-size: 17px; text-decoration: none; box-shadow: 0 8px 20px rgba(0,0,0,0.2); white-space: nowrap;">
               <span>🔍 Partager un témoignage</span>
             </a>
