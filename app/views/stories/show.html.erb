@@ -281,6 +281,32 @@ end
   .story-body-card .markdown-content { width: 100% !important; max-width: 100% !important; }
 }
 
+/* ===== HIGHLIGHTS : COCHES VERTES ===== */
+.hl-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hl-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.hl-check {
+  color: #16a34a; /* vert */
+  font-weight: 900;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+.hl-text {
+  flex: 1;
+  word-wrap: break-word;
+}
+
 </style>
 
 <div style="background: white; min-height: 100vh;">
@@ -437,15 +463,18 @@ end
               </p>
             <% end %>
             <% if @story.highlights_items.present? %>
-              <ul style="margin: 0; padding-left: 24px; font-size: 17px; line-height: 1.8; color: #1e293b;">
-                <% @story.highlights_items.split("\n").each do |item| %>
-                  <li style="margin-bottom: 8px; word-wrap: break-word;"><%= item.strip %></li>
+              <ul class="hl-list" style="font-size: 17px; line-height: 1.8; color: #1e293b;">
+                <% @story.highlights_items.to_s.split("\n").each do |item| %>
+                  <% next if item.strip.blank? %>
+                  <li class="hl-item">
+                    <span class="hl-check">✓</span>
+                    <span class="hl-text"><%= item.strip %></span>
+                  </li>
                 <% end %>
               </ul>
             <% end %>
           </div>
         <% end %>
-
         <%# CTA Opportunités %>
         <div style="background: linear-gradient(135deg, #a855f7, #ec4899); border-radius: 24px; padding: 48px; text-align: center; box-shadow: 0 20px 60px rgba(168,85,247,0.4); margin-bottom: 32px;">
           <div style="font-size: 56px; margin-bottom: 20px;">✨</div>
