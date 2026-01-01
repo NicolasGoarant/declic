@@ -24,9 +24,16 @@ class ImportStoryParser
       aliases: false
     ) || {}
 
-    [normalize(data), body]
+    [normalize(data), clean_body(body)]
   rescue Psych::Exception
     raise ParseError, "YAML invalide"
+  end
+
+  def self.clean_body(text)
+  text.to_s
+      .gsub(/:contentReference\[.*?\]\{.*?\}/, "")
+      .gsub(/\n{3,}/, "\n\n")
+      .strip
   end
 
   def self.normalize(data)
