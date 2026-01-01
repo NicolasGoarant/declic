@@ -65,17 +65,21 @@ class Admin::OpportunitiesController < Admin::BaseController
   def toggle_active
     new_state = ActiveModel::Type::Boolean.new.cast(params[:is_active])
 
-    if @opportunity.update(is_active: new_state)
+    begin
+      # IMPORTANT: on bypass les validations (sinon une fiche importée "incomplète"
+      # peut empêcher de juste activer/désactiver)
+      @opportunity.update_column(:is_active, new_state)
+
       render json: {
         success:   true,
         message:   "Opportunité #{new_state ? 'activée' : 'désactivée'}",
         is_active: @opportunity.is_active
       }
-    else
+    rescue => e
       render json: {
         success: false,
         message: "Erreur lors de la mise à jour",
-        errors:  @opportunity.errors.full_messages
+        errors:  [e.message]
       }, status: :unprocessable_entity
     end
   end

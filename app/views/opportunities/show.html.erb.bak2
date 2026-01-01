@@ -360,25 +360,17 @@ end
         </div>
 
         <%# Card défis %>
-        <% if @opportunity.challenges.present? %>
-          <div class="opp-card">
-            <%# DÉFIS SURMONTÉS %>
-            <div class="opp-challenge">
-              <h3 class="opp-challenge-title">💪 Les défis surmontés</h3>
-              <ul>
-                <% @opportunity.challenges.to_s.split("\n").map(&:strip).reject(&:blank?).each do |line| %>
-                  <% clean = line.gsub("**", "").strip %>
-                  <% if clean.include?(":") %>
-                    <% label, rest = clean.split(":", 2) %>
-                    <li><strong><%= label.strip %> :</strong> <%= rest.strip %></li>
-                  <% else %>
-                    <li><%= clean %></li>
-                  <% end %>
-                <% end %>
-              </ul>
-            </div>
+        <div class="opp-card">
+          <%# DÉFIS SURMONTÉS %>
+          <div class="opp-challenge">
+            <h3 class="opp-challenge-title">💪 Les défis surmontés</h3>
+            <ul>
+              <li><strong>Trouver un lieu :</strong> Négociation avec la mairie pendant 2 mois, puis accord pour une salle municipale gratuite</li>
+              <li><strong>Assurance :</strong> Souscription d'une assurance responsabilité civile via l'association de quartier (120€/an)</li>
+              <li><strong>Matériel :</strong> Appel aux dons qui a permis de collecter outils, fer à souder et machines à coudre d'occasion</li>
+            </ul>
           </div>
-        <% end %>
+        </div>
 
         <%# APPELS À L'ACTION VIOLETS %>
         <div class="opp-action-section">

@@ -15,6 +15,47 @@
     </div>
   <% end %>
 
+  <%# ========== IMPORT OPPORTUNITÉ (BÊTA) ========== %>
+  <div class="form-section" style="border: 2px dashed #fb923c; background: #fff7ed;">
+    <h3 class="form-section-title">⚡ Import Opportunité (bêta)</h3>
+    <p class="form-section-subtitle">
+      Collez un bloc complet (frontmatter + description). À l’enregistrement, les champs seront pré-remplis.
+    </p>
+
+    <div class="field">
+      <label class="field-label">Bloc Import</label>
+      <%= text_area_tag :import_blob, params[:import_blob],
+            rows: 12,
+            placeholder: <<~TXT,
+---
+title: "🧶 Aidez à acheminer des tricots solidaires"
+category: benevolat
+organization: Collectif solidaire de Fraize
+location: "Fraize, Vosges"
+lat: 48.1736
+lng: 6.9987
+time_commitment: "Selon disponibilité"
+quote: "À 99 ans, je tricote pour les enfants."
+quote_author: "Marie-Louise"
+source_name: "Vosges Matin"
+source_url: "https://www.vosgesmatin.fr/..."
+website: "https://..."
+contact_email: "contact@..."
+contact_phone: "06 12 34 56 78"
+tags:
+  - solidarité
+  - bénévolat
+  - Ukraine
+---
+Ici la **description complète** de l’opportunité, réécrite, claire et actionnable.
+TXT
+            class: "field-input",
+            style: "font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;" %>
+
+      <div class="field-hint">💡 Si ce bloc est renseigné, il est prioritaire sur les champs ci-dessous.</div>
+    </div>
+  </div>
+
   <div class="form-sections">
 
     <%# ========== SECTION 1 : INFORMATIONS PRINCIPALES ========== %>
@@ -25,7 +66,7 @@
       <div class="form-row">
         <div class="field" style="flex: 2;">
           <%= f.label :title, "Titre *", class: "field-label" %>
-          <%= f.text_field :title, placeholder: "Ex: Rejoignez le Repair Café de Nancy", class: "field-input", required: true %>
+          <%= f.text_field :title, placeholder: "Ex: Rejoignez le Repair Café de Nancy", class: "field-input" %>
         </div>
 
         <div class="field">
@@ -39,18 +80,18 @@
                   ["Écologiser", "ecologiser"]
                 ],
                 { include_blank: "(choisir)" },
-                { class: "field-input", required: true } %>
+                { class: "field-input" } %>
         </div>
 
         <div class="field">
           <%= f.label :organization, "Organisation *", class: "field-label" %>
-          <%= f.text_field :organization, placeholder: "Ex: Repair Café Nancy", class: "field-input", required: true %>
+          <%= f.text_field :organization, placeholder: "Ex: Repair Café Nancy", class: "field-input" %>
         </div>
       </div>
 
       <div class="field">
         <%= f.label :description, "Description (utilisez **texte** pour graisser) *", class: "field-label" %>
-        <%= f.text_area :description, rows: 8, placeholder: "Description complète de l'opportunité...", class: "field-input", required: true %>
+        <%= f.text_area :description, rows: 8, placeholder: "Description complète de l'opportunité...", class: "field-input" %>
         <div class="field-hint">Utilisez **gras** pour mettre en gras. Les emojis sont autorisés : ✨ 💡 🔥</div>
       </div>
 
@@ -152,7 +193,7 @@
 
       <div class="field">
         <%= f.label :location, "Adresse / Lieu *", class: "field-label" %>
-        <%= f.text_field :location, placeholder: "21 Grande-Rue, 54000 Nancy", class: "field-input", required: true %>
+        <%= f.text_field :location, placeholder: "21 Grande-Rue, 54000 Nancy", class: "field-input" %>
       </div>
 
       <div class="form-row">
