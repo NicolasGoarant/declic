@@ -98,7 +98,8 @@
           <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-200 border-dashed rounded-3xl cursor-pointer bg-slate-50 hover:bg-violet-50 hover:border-violet-300 transition-all">
             <div class="flex flex-col items-center justify-center pt-5 pb-6">
               <span class="text-2xl mb-1">📁</span>
-              <p class="text-sm text-slate-600 font-bold">Sélectionner une photo</p>
+              <p class="text-sm text-slate-600 font-bold">Sélectionner une ou plusieurs photos</p>
+              <p class="text-xs text-slate-400 mt-1">Vous pouvez ajouter des photos en plusieurs fois</p>
             </div>
             <%= f.file_field :photos, multiple: true, id: "photo-upload-input", class: "hidden" %>
           </label>
@@ -120,18 +121,68 @@
 </div>
 
 <script>
+  // Garder un cumul de tous les fichiers sélectionnés
+  let allFiles = [];
+
   document.addEventListener('change', function(e) {
     if (e.target && e.target.id === 'photo-upload-input') {
+      const input = e.target;
       const zone = document.getElementById('image-preview-zone');
+
+      // Ajouter les nouveaux fichiers au cumul (sans doublons)
+      const newFiles = Array.from(input.files);
+      newFiles.forEach(file => {
+        // Vérifier si le fichier n'est pas déjà présent (basé sur nom + taille)
+        const isDuplicate = allFiles.some(f => f.name === file.name && f.size === file.size);
+        if (!isDuplicate) {
+          allFiles.push(file);
+        }
+      });
+
+      // Mettre à jour l'input avec TOUS les fichiers
+      const dataTransfer = new DataTransfer();
+      allFiles.forEach(file => dataTransfer.items.add(file));
+      input.files = dataTransfer.files;
+
+      // Réafficher TOUTES les previews
       zone.innerHTML = '';
-      Array.from(e.target.files).forEach(file => {
+      allFiles.forEach((file, index) => {
         const reader = new FileReader();
         reader.onload = function(event) {
+          const wrapper = document.createElement('div');
+          wrapper.className = "relative group";
+
           const img = document.createElement('img');
           img.src = event.target.result;
-          // Style polaroïd pour l'esprit Déclic
           img.className = "h-28 w-28 object-cover rounded-2xl border-4 border-white shadow-xl rotate-3 hover:rotate-0 transition-transform duration-300 shadow-slate-200";
-          zone.appendChild(img);
+
+          // Bouton pour supprimer une photo
+          const deleteBtn = document.createElement('button');
+          deleteBtn.type = 'button';
+          deleteBtn.innerHTML = '×';
+          deleteBtn.className = "absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600";
+          deleteBtn.onclick = function() {
+            // Retirer ce fichier du cumul
+            allFiles.splice(index, 1);
+
+            // Mettre à jour l'input
+            const dt = new DataTransfer();
+            allFiles.forEach(f => dt.items.add(f));
+            input.files = dt.files;
+
+            // Retirer visuellement
+            wrapper.remove();
+
+            // Si plus de fichiers, recréer la preview complète pour réindexer
+            if (allFiles.length > 0) {
+              zone.innerHTML = '';
+              input.dispatchEvent(new Event('change'));
+            }
+          };
+
+          wrapper.appendChild(img);
+          wrapper.appendChild(deleteBtn);
+          zone.appendChild(wrapper);
         }
         reader.readAsDataURL(file);
       });
