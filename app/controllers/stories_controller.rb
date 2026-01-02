@@ -16,16 +16,17 @@ class StoriesController < ApplicationController
 
 def create
   @story = Story.new(story_params)
-
   if @story.save
-    # Envoi du mail à l'équipe
     StoryProposalMailer.with(story: @story).proposal_email.deliver_later
-
-    # Redirection vers la page merci au lieu de l'index
-    redirect_to merci_opportunities_path
+    # On passe le nom en paramètre pour la page Merci
+    redirect_to merci_stories_path(name: @story.name)
   else
     render :new, status: :unprocessable_entity
   end
+end
+
+def merci
+  @name = params[:name]
 end
 
   private

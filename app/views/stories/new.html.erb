@@ -17,14 +17,14 @@
     </div>
 
     <% if @story.errors.any? %>
-      <div class="rounded-xl border border-red-200 bg-red-50 p-4 mb-8">
-        <div class="flex">
-          <div class="shrink-0 text-red-400">⚠️</div>
-          <div class="ml-3">
-            <h3 class="text-sm font-medium text-red-800">
+      <div class=\"rounded-xl border border-red-200 bg-red-50 p-4 mb-8\">
+        <div class=\"flex\">
+          <div class=\"shrink-0 text-red-400\">⚠️</div>
+          <div class=\"ml-3\">
+            <h3 class=\"text-sm font-medium text-red-800\">
               Merci de corriger les <%= pluralize(@story.errors.count, "erreur") %> :
             </h3>
-            <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+            <ul class=\"mt-2 list-disc list-inside text-sm text-red-700\">
               <% @story.errors.full_messages.each do |msg| %>
                 <li><%= msg %></li>
               <% end %>
@@ -40,39 +40,45 @@
 
           <div class="space-y-6">
             <div>
-              <%= f.label :title, "Le titre de votre histoire", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.text_field :title, placeholder: "Ex: De la finance à la permaculture...", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-            </div>
-
-            <div>
-              <%= f.label :chapo, "Résumé court (en quelques lignes)", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.text_area :chapo, rows: 3, placeholder: "Présentez brièvement le sujet...", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-            </div>
-
-            <div>
-              <%= f.label :body, "Votre récit", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.text_area :body, rows: 12, placeholder: "Racontez-nous tout...", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
+              <%= f.label :name, "Votre Nom ou Pseudo", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.text_field :name, placeholder: "Ex: Marie-Louise G.", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <%= f.label :author_name, "Votre nom / Pseudo", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.text_field :author_name, class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
+                <%= f.label :email, "Votre email (Obligatoire)", class: "block text-sm font-bold text-slate-700 mb-1" %>
+                <%= f.email_field :email, required: true, placeholder: "votre@email.com", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
               </div>
               <div>
-                <%= f.label :city, "Ville / Région", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.text_field :city, class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
+                <%= f.label :phone, "Téléphone", class: "block text-sm font-bold text-slate-700 mb-1" %>
+                <%= f.text_field :phone, placeholder: "06 00 00 00 00", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
               </div>
             </div>
 
             <div>
-              <%= f.label :author_email, "Votre email (ne sera pas publié)", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.email_field :author_email, class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
+              <%= f.label :address, "Adresse postale (Optionnel)", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.text_field :address, placeholder: "Rue, Ville, Code Postal", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
             </div>
 
             <div>
-              <%= f.label :photos, "Ajouter des photos", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.file_field :photos, multiple: true, class: "block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" %>
+              <%= f.label :title, "Le titre de votre histoire", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.text_field :title, placeholder: "Ex: Ma nouvelle vie de maraîchère", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
+            </div>
+
+            <div>
+              <%= f.label :chapo, "En quelques mots (chapeau)", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.text_area :chapo, rows: 3, placeholder: "Un résumé court pour accrocher le lecteur...", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
+            </div>
+
+            <div>
+              <%= f.label :content, "Racontez votre Déclic", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.text_area :content, rows: 10, placeholder: "Votre parcours, vos défis, votre réussite...", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
+            </div>
+
+            <div class="field">
+              <%= f.label :photos, "Ajouter une photo", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.file_field :photos, multiple: true, id: "photo-upload-input", class: "block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" %>
+              <div id="image-preview-zone" class="mt-4 flex flex-wrap gap-2"></div>
             </div>
           </div>
 
@@ -88,11 +94,15 @@
           <ul class="text-sm text-slate-600 space-y-3">
             <li class="flex gap-2">
               <span class="text-violet-500 font-bold">•</span>
-              <span>Racontez la bascule : Qu'est-ce qui a été le vrai *déclic* ?</span>
+              <span>Concentrez-vous sur le moment où vous avez eu le "Déclic".</span>
             </li>
             <li class="flex gap-2">
               <span class="text-violet-500 font-bold">•</span>
-              <span>Soyez honnête sur les difficultés rencontrées.</span>
+              <span>Partagez un conseil pratique pour ceux qui voudraient suivre votre voie.</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="text-violet-500 font-bold">•</span>
+              <span>Une photo de vous en action rend l'histoire beaucoup plus humaine !</span>
             </li>
           </ul>
         </div>
@@ -100,3 +110,22 @@
     </div>
   </main>
 </div>
+
+<script>
+  document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'photo-upload-input') {
+      const zone = document.getElementById('image-preview-zone');
+      zone.innerHTML = '';
+      Array.from(e.target.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const img = document.createElement('img');
+          img.src = event.target.result;
+          img.className = "h-20 w-20 object-cover rounded-lg border border-slate-200 shadow-sm";
+          zone.appendChild(img);
+        }
+        reader.readAsDataURL(file);
+      });
+    }
+  });
+</script>

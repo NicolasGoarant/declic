@@ -1,0 +1,12 @@
+<div class="bg-white min-h-screen flex items-center justify-center">
+  <div class="max-w-md w-full text-center px-6">
+    <div class="text-6?l mb-6">✨</div>
+    <h1 class="text-3xl font-extrabold text-slate-900 font-epilogue mb-4">
+      Merci <%= @name.presence || "à vous" %> pour votre Déclic !
+    </h1>
+    <p class="text-slate-600 text-lg mb-8">
+      Votre témoignage a bien été reçu. Notre équipe va le relire avec attention avant sa publication.
+    </p>
+    <%= link_to "Retour à l'accueil", root_path, class: "inline-block bg-slate-900 text-white px-8 py-3 rounded-full font-bold transition-transform hover:scale-105" %>
+  </div>
+</div>
