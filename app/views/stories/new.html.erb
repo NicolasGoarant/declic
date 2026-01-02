@@ -1,23 +1,23 @@
 <%# app/views/stories/new.html.erb %>
 
 <div class="bg-slate-50 min-h-screen font-sans text-slate-900 pb-20 animate-in fade-in duration-700">
-  <%# Header restreint et animé %>
+  <%# Header avec animation %>
   <div class="bg-white border-b border-slate-200 mb-10 py-12 slide-in-from-top-4 animate-in duration-500">
-    <div class="max-w-2xl mx-auto px-6 text-center">
+    <div class="max-w-3xl mx-auto px-6 text-center">
       <div class="inline-block px-4 py-1.5 mb-4 text-xs font-bold tracking-widest text-violet-600 uppercase bg-violet-50 rounded-full">
         ✨ Partager mon parcours
       </div>
       <h1 class="text-4xl md:text-5xl font-black tracking-tight font-epilogue italic mb-4">
         Racontez votre <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">Déclic</span>
       </h1>
-      <p class="text-slate-500 text-lg">
+      <p class="text-slate-500 text-lg max-w-xl mx-auto">
         Votre expérience peut devenir l'étincelle qui inspirera d'autres personnes. ⚡
       </p>
     </div>
   </div>
 
-  <%# Container étroit (max-w-2xl) pour éviter l'effet étiré sur Desktop %>
-  <main class="max-w-2xl mx-auto px-6 slide-in-from-bottom-4 animate-in duration-700 fill-mode-both">
+  <%# Container restreint pour le Desktop %>
+  <main class="max-w-3xl mx-auto px-6 slide-in-from-bottom-4 animate-in duration-700 fill-mode-both">
     <%= form_with model: @story, local: true, class: "space-y-8" do |f| %>
 
       <% if @story.errors.any? %>
@@ -38,27 +38,25 @@
           Qui êtes-vous ? 😉
         </h2>
 
-        <div class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="field">
             <%= f.label :name, "Votre Nom ou Pseudo", class: "block text-sm font-bold text-slate-700 mb-2" %>
             <%= f.text_field :name, placeholder: "Marie-Louise G.", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-4" %>
           </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="field">
-              <%= f.label :email, "Email (Obligatoire)", class: "block text-sm font-bold text-slate-700 mb-2" %>
-              <%= f.email_field :email, required: true, placeholder: "votre@email.com", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4" %>
-            </div>
-            <div class="field">
-              <%= f.label :phone, "Téléphone", class: "block text-sm font-bold text-slate-700 mb-2" %>
-              <%= f.text_field :phone, placeholder: "06 00 00 00 00", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4" %>
-            </div>
-          </div>
-
           <div class="field">
-            <%= f.label :address, "Adresse (Obligatoire)", class: "block text-sm font-bold text-slate-700 mb-2" %>
-            <%= f.text_field :address, required: true, placeholder: "Ex: 3 impasse du canal, Nancy", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4" %>
-            <p class="mt-2 text-xs text-slate-400 italic italic">Merci d'indiquer au minimum la rue ou la ville 📍</p>
+            <%= f.label :email, "Email (Obligatoire)", class: "block text-sm font-bold text-slate-700 mb-2" %>
+            <%= f.email_field :email, required: true, placeholder: "votre@email.com", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-4" %>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div class="field">
+            <%= f.label :phone, "Téléphone", class: "block text-sm font-bold text-slate-700 mb-2" %>
+            <%= f.text_field :phone, placeholder: "06 00 00 00 00", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-4" %>
+          </div>
+          <div class="field">
+            <%= f.label :address, "Ville ou Adresse (Optionnel)", class: "block text-sm font-bold text-slate-700 mb-2" %>
+            <%= f.text_field :address, placeholder: "Ex: Nancy 🇫🇷", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-4" %>
           </div>
         </div>
       </section>
@@ -78,7 +76,7 @@
 
           <div>
             <%= f.label :chapo, "Résumé court (Chapeau)", class: "block text-sm font-bold text-slate-700 mb-2" %>
-            <%= f.text_area :chapo, rows: 2, placeholder: "Une brève introduction...", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4 italic text-slate-600 shadow-inner bg-slate-50/50" %>
+            <%= f.text_area :chapo, rows: 2, placeholder: "Une brève introduction...", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4 italic text-slate-600" %>
           </div>
 
           <div>
@@ -92,29 +90,28 @@
       <section class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 transition-all hover:shadow-md">
         <h2 class="text-xl font-bold mb-2 flex items-center gap-3">
           <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 text-white text-sm">3</span>
-          Les images 📸
+          L'image 📸
         </h2>
-        <p class="text-slate-500 text-sm mb-6 italic">Vous pouvez sélectionner plusieurs photos pour illustrer votre récit.</p>
+        <p class="text-slate-500 text-sm mb-6 italic">Une photo pour donner vie à votre récit.</p>
 
         <div class="field">
-          <label class="flex flex-col items-center justify-center w-full h-40 border-2 border-slate-200 border-dashed rounded-3xl cursor-pointer bg-slate-50 hover:bg-violet-50 hover:border-violet-300 transition-all group">
+          <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-200 border-dashed rounded-3xl cursor-pointer bg-slate-50 hover:bg-violet-50 hover:border-violet-300 transition-all">
             <div class="flex flex-col items-center justify-center pt-5 pb-6">
-              <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">🖼️</span>
-              <p class="text-sm text-slate-600 font-bold">Cliquez pour ajouter des photos</p>
-              <p class="text-xs text-slate-400 mt-1">Plusieurs sélections possibles</p>
+              <span class="text-2xl mb-1">📁</span>
+              <p class="text-sm text-slate-600 font-bold">Sélectionner une photo</p>
             </div>
             <%= f.file_field :photos, multiple: true, id: "photo-upload-input", class: "hidden" %>
           </label>
-          <%# Zone de prévisualisation dynamique %>
-          <div id="image-preview-zone" class="mt-8 flex flex-wrap gap-4 justify-center"></div>
+          <div id="image-preview-zone" class="mt-6 flex flex-wrap gap-4 justify-center"></div>
         </div>
       </section>
 
-      <%# Bouton de validation %>
+      <%# Bouton de validation optimisé pour le mobile %>
       <div class="pt-6">
         <%= f.submit "🚀 Valider et envoyer mon témoignage",
-            class: "w-full py-5 px-4 rounded-full text-lg md:text-xl font-black text-white bg-slate-900 hover:bg-violet-600 shadow-2xl shadow-violet-200 transition-all transform hover:-translate-y-1 cursor-pointer whitespace-normal break-words leading-tight" %>
+            class: "w-full py-5 px-4 md:px-8 rounded-full text-lg md:text-xl font-black text-white bg-slate-900 hover:bg-violet-600 shadow-2xl shadow-violet-200 transition-all transform hover:-translate-y-1 cursor-pointer whitespace-normal break-words leading-tight" %>
         <p class="text-center text-slate-400 text-[10px] md:text-xs mt-6 uppercase tracking-widest font-bold">
+          ❤️ Transmis avec bienveillance à l'équipe Déclic
         </p>
       </div>
 
@@ -126,27 +123,18 @@
   document.addEventListener('change', function(e) {
     if (e.target && e.target.id === 'photo-upload-input') {
       const zone = document.getElementById('image-preview-zone');
-      zone.innerHTML = ''; // On vide pour la nouvelle sélection
-
-      if (e.target.files) {
-        Array.from(e.target.files).forEach((file, index) => {
-          const reader = new FileReader();
-          reader.onload = function(event) {
-            const div = document.createElement('div');
-            div.className = "relative";
-
-            const img = document.createElement('img');
-            img.src = event.target.result;
-            // Style polaroïd empilé
-            const rotation = (index % 2 === 0) ? 'rotate-3' : '-rotate-2';
-            img.className = `h-24 w-24 md:h-28 md:w-28 object-cover rounded-2xl border-4 border-white shadow-xl ${rotation} hover:rotate-0 transition-transform duration-300 shadow-slate-200`;
-
-            div.appendChild(img);
-            zone.appendChild(div);
-          }
-          reader.readAsDataURL(file);
-        });
-      }
+      zone.innerHTML = '';
+      Array.from(e.target.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const img = document.createElement('img');
+          img.src = event.target.result;
+          // Style polaroïd pour l'esprit Déclic
+          img.className = "h-28 w-28 object-cover rounded-2xl border-4 border-white shadow-xl rotate-3 hover:rotate-0 transition-transform duration-300 shadow-slate-200";
+          zone.appendChild(img);
+        }
+        reader.readAsDataURL(file);
+      });
     }
   });
 </script>
