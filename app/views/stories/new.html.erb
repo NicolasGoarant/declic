@@ -24,7 +24,7 @@
             <h3 class="text-sm font-medium text-red-800">
               Merci de corriger les <%= pluralize(@story.errors.count, "erreur") %> :
             </h3>
-            <ul class="mt-2 list-disc list-inside text-sm text-red-700">
+            <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
               <% @story.errors.full_messages.each do |msg| %>
                 <li><%= msg %></li>
               <% end %>
@@ -34,121 +34,69 @@
       </div>
     <% end %>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div class="lg:col-span-2">
+        <%= form_with model: @story, local: true, class: "space-y-8 bg-white p-8 rounded-3xl shadow-sm border border-slate-200" do |f| %>
 
-      <div class="lg:col-span-2 space-y-8">
-
-        <%= form_with(model: @story, url: stories_path, local: true, html: { multipart: true }, class: "space-y-8") do |f| %>
-
-          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-5">
-            <h2 class="text-lg font-bold text-slate-900 mb-2 font-epilogue">1. Votre histoire</h2>
-
+          <div class="space-y-6">
             <div>
-              <%= f.label :title, "Titre du témoignage", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.text_field :title, required: true, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "Ex: J'ai quitté mon CDI pour lancer ma fromagerie" %>
+              <%= f.label :title, "Le titre de votre histoire", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.text_field :title, placeholder: "Ex: De la finance à la permaculture...", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
             </div>
 
             <div>
-              <%= f.label :excerpt, "Résumé (facultatif) — Utile pour les aperçus", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.text_area :excerpt, rows: 2, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "Une phrase courte qui résume votre parcours..." %>
+              <%= f.label :chapo, "Résumé court (en quelques lignes)", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.text_area :chapo, rows: 3, placeholder: "Présentez brièvement le sujet...", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
             </div>
 
             <div>
-              <%= f.label :body, "Racontez votre histoire complète", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.text_area :body, rows: 8, required: true, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "Expliquez ce qui a été le 'déclic', les défis rencontrés, et ce que cela vous a apporté." %>
+              <%= f.label :body, "Votre récit", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.text_area :body, rows: 12, placeholder: "Racontez-nous tout...", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
             </div>
-          </div>
 
-          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-5">
-            <h2 class="text-lg font-bold text-slate-900 mb-2 font-epilogue">2. À propos de vous</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <%= f.label :author_name, "Votre prénom (tel qu'il sera publié)", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.text_field :author_name, required: true, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "Ex: Bénédicte" %>
+                <%= f.label :author_name, "Votre nom / Pseudo", class: "block text-sm font-bold text-slate-700 mb-1" %>
+                <%= f.text_field :author_name, class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
               </div>
               <div>
-                <%= f.label :city, "Ville (facultatif)", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.text_field :city, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "Ex: Nancy" %>
+                <%= f.label :city, "Ville / Région", class: "block text-sm font-bold text-slate-700 mb-1" %>
+                <%= f.text_field :city, class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
               </div>
             </div>
-             <div>
-                <%= f.label :author_email, "Votre email de contact (non publié)", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.email_field :author_email, required: true, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "votre-adresse@email.com" %>
-              </div>
-          </div>
 
-          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h2 class="text-lg font-bold text-slate-900 mb-4 font-epilogue">3. Photos</h2>
+            <div>
+              <%= f.label :author_email, "Votre email (ne sera pas publié)", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.email_field :author_email, class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
+            </div>
 
-            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl hover:bg-slate-50 transition-colors">
-              <div class="space-y-1 text-center">
-                <svg class="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <div class="flex text-sm text-slate-600 justify-center">
-                  <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-violet-600 hover:text-violet-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-violet-500">
-                    <%= f.file_field :photos, multiple: true, accept: "image/*", id: "file-upload", class: "sr-only" %>
-                    <span>Télécharger vos photos</span>
-                  </label>
-                  <p class="pl-1">ou glisser-déposer</p>
-                </div>
-                <p class="text-xs text-slate-500">
-                  JPG, PNG, GIF jusqu'à 5MB
-                </p>
-              </div>
+            <div>
+              <%= f.label :photos, "Ajouter des photos", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.file_field :photos, multiple: true, class: "block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" %>
             </div>
           </div>
 
-          <div class="flex items-center gap-4 pt-4">
-            <%= f.submit "Valider et envoyer à Déclic", class: "cursor-pointer btn-primary w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold rounded-full shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all", data: { disable_with: "Envoi en cours..." } %>
+          <div class="pt-6 border-t border-slate-100">
+            <%= f.submit "Valider et envoyer à Déclic", class: "w-full flex justify-center py-4 px-6 border border-transparent rounded-full shadow-lg text-lg font-bold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all transform hover:-translate-y-1" %>
           </div>
-
-          <p class="text-xs text-slate-400 text-center sm:text-left mt-2">
-            En envoyant, vous acceptez que votre proposition soit modérée avant publication.
-          </p>
-
         <% end %>
       </div>
 
-
-      <aside class="hidden lg:block lg:col-span-1 space-y-6">
-        <div class="sticky top-6">
-
-          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
-            <h2 class="font-bold text-slate-900 flex items-center gap-2">
-              <span class="text-xl">💡</span> Conseils pour un témoignage réussi
-            </h2>
-            <ul class="mt-4 text-sm text-slate-600 space-y-3">
-              <li class="flex gap-2">
-                <span class="text-violet-500 font-bold">•</span>
-                <span>**Racontez la bascule** : Qu'est-ce qui a été le vrai *déclic* ?</span>
-              </li>
-              <li class="flex gap-2">
-                <span class="text-violet-500 font-bold">•</span>
-                <span>**Soyez honnête** sur les difficultés rencontrées (c'est inspirant !).</span>
-              </li>
-              <li class="flex gap-2">
-                <span class="text-violet-500 font-bold">•</span>
-                <span>**Ajoutez de belles photos** illustrant votre nouvelle activité.</span>
-              </li>
-              <li class="flex gap-2">
-                <span class="text-violet-500 font-bold">•</span>
-                <span>Utilisez des **paragraphes courts** pour faciliter la lecture.</span>
-              </li>
-            </ul>
-          </div>
-
-          <div class="bg-gradient-to-br from-indigo-50 to-violet-50 rounded-2xl border border-indigo-100 p-6">
-            <h3 class="font-bold text-indigo-900 text-sm uppercase tracking-wide mb-2">Modération</h3>
-            <p class="text-sm text-indigo-800/80 leading-relaxed">
-              Les contenus à caractère politique, purement commercial ou contraires à la loi ne seront pas publiés.
-              Nous nous réservons le droit d'ajuster la mise en forme.
-            </p>
-          </div>
-
+      <div class="space-y-6">
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+          <h3 class="font-bold text-slate-900 mb-4">Conseils de rédaction</h3>
+          <ul class="text-sm text-slate-600 space-y-3">
+            <li class="flex gap-2">
+              <span class="text-violet-500 font-bold">•</span>
+              <span>Racontez la bascule : Qu'est-ce qui a été le vrai *déclic* ?</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="text-violet-500 font-bold">•</span>
+              <span>Soyez honnête sur les difficultés rencontrées.</span>
+            </li>
+          </ul>
         </div>
-      </aside>
-
+      </div>
     </div>
   </main>
 </div>
