@@ -12,17 +12,21 @@ class StoriesController < ApplicationController
     @story = Story.new
   end
 
-  def create
-    @story = Story.new(story_params)
+# app/controllers/stories_controller.rb
 
-    if @story.save
-      StoryProposalMailer.with(story: @story).proposal_email.deliver_later
-      redirect_to stories_path,
-                  notice: "Merci ! Votre témoignage a bien été envoyé à l’équipe Déclic."
-    else
-      render :new, status: :unprocessable_entity
-    end
+def create
+  @story = Story.new(story_params)
+
+  if @story.save
+    # Envoi du mail à l'équipe
+    StoryProposalMailer.with(story: @story).proposal_email.deliver_later
+
+    # Redirection vers la page merci au lieu de l'index
+    redirect_to merci_opportunities_path
+  else
+    render :new, status: :unprocessable_entity
   end
+end
 
   private
 
