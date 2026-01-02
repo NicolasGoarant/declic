@@ -21,7 +21,11 @@ Rails.application.routes.draw do
   get "sponsors",    to: "pages#sponsors",    as: :sponsors
 
   # Belles histoires publiques
-  resources :stories, only: %i[index show new create]
+  resources :stories, only: %i[index show new create] do
+    collection do
+      get :merci
+    end
+  end
 
   # Mentions légales / infos
   get "/mentions-legales", to: "pages#legal",           as: :mentions_legales
@@ -46,25 +50,14 @@ Rails.application.routes.draw do
   # --- ADMIN ---
 
   namespace :admin do
-    # tableau de bord par défaut : index des opportunités
     root to: "opportunities#index"
 
-  resources :opportunities, except: [:show] do
-    member do
-      patch :toggle_active
+    resources :opportunities, except: [:show] do
+      member do
+        patch :toggle_active
+      end
     end
-    collection do
-      post :bulk
-      post :geocode_missing
-    end
-  end
 
-
-  resources :stories, except: [:show] do
-    collection do
-      post :bulk
-      post :geocode_missing
-    end
+    resources :stories, except: [:show]
   end
-end
 end

@@ -65,21 +65,20 @@ class OpportunitiesController < ApplicationController
     render :new, status: status
   end
 
-  # ----- Flux "valider et envoyer à Déclic" -----
-  def handle_final_submit
-    if @opportunity.save
-      # Envoi du mail à l'équipe
-      OpportunityProposalMailer.with(opportunity: @opportunity)
-                               .proposal_email
-                               .deliver_later
+def handle_final_submit
+  if @opportunity.save
+    # Envoi du mail (vos logs montrent que cela fonctionne déjà)
+    OpportunityProposalMailer.with(opportunity: @opportunity)
+                             .proposal_email
+                             .deliver_later
 
-      # REDIRECTION : Vers la page "Merci" au lieu de la fiche directe
-      redirect_to merci_opportunities_path
-    else
-      flash.now[:alert] = @opportunity.errors.full_messages.to_sentence
-      render :new, status: :unprocessable_entity
-    end
+    # REDIRECTION vers la nouvelle page merci
+    redirect_to merci_opportunities_path
+  else
+    flash.now[:alert] = @opportunity.errors.full_messages.to_sentence
+    render :new, status: :unprocessable_entity
   end
+end
 
   # ----- Strong params -----
   def opportunity_params
