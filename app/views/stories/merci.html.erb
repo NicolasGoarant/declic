@@ -1,12 +1,91 @@
-<div class="bg-white min-h-screen flex items-center justify-center">
-  <div class="max-w-md w-full text-center px-6">
-    <div class="text-6?l mb-6">✨</div>
-    <h1 class="text-3xl font-extrabold text-slate-900 font-epilogue mb-4">
-      Merci <%= @name.presence || "à vous" %> pour votre Déclic !
+<div class="bg-gradient-to-br from-violet-50 via-white to-indigo-50 min-h-screen flex items-center justify-center p-6">
+  <div class="max-w-2xl w-full text-center">
+
+    <%# Animations CSS %>
+    <style>
+      @keyframes sparkle {
+        0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        50% { transform: scale(1.2) rotate(180deg); opacity: 0.8; }
+      }
+      @keyframes slideInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+      }
+      @keyframes gradientShift {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+      }
+
+      .sparkle-icon {
+        animation: sparkle 2s ease-in-out infinite;
+        display: inline-block;
+      }
+      .slide-up {
+        animation: slideInUp 0.6s ease-out;
+      }
+      .slide-up-delay-1 {
+        animation: slideInUp 0.8s ease-out;
+      }
+      .slide-up-delay-2 {
+        animation: slideInUp 1s ease-out;
+      }
+      .float-animation {
+        animation: float 3s ease-in-out infinite;
+      }
+      .gradient-text {
+        background: linear-gradient(135deg, #7e5bef, #ec4899, #f59e0b, #7e5bef);
+        background-size: 300% 300%;
+        animation: gradientShift 3s ease infinite;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+    </style>
+
+    <%# Icône étincelle animée %>
+    <div class="text-8xl mb-8 sparkle-icon">
+      ✨
+    </div>
+
+    <%# Titre avec prénom coloré %>
+    <h1 class="text-4xl md:text-5xl font-black tracking-tight mb-6 slide-up">
+      <span class="text-slate-900">Merci </span>
+      <span class="gradient-text font-epilogue italic">
+        <%= @name.presence || "à vous" %>
+      </span>
+      <span class="text-slate-900"> pour votre Déclic !</span>
     </h1>
-    <p class="text-slate-600 text-lg mb-8">
+
+    <%# Message de confirmation %>
+    <p class="text-slate-600 text-lg md:text-xl leading-relaxed mb-4 slide-up-delay-1 max-w-xl mx-auto">
       Votre témoignage a bien été reçu. Notre équipe va le relire avec attention avant sa publication.
     </p>
-    <%= link_to "Retour à l'accueil", root_path, class: "inline-block bg-slate-900 text-white px-8 py-3 rounded-full font-bold transition-transform hover:scale-105" %>
+
+    <%# Petit message encourageant %>
+    <p class="text-violet-600 font-semibold mb-10 slide-up-delay-2 flex items-center justify-center gap-2">
+      <span class="text-2xl">💜</span>
+      <span>Votre histoire va inspirer d'autres personnes</span>
+    </p>
+
+    <%# Bouton de retour avec animation %>
+    <div class="slide-up-delay-2">
+      <%= link_to root_path, class: "inline-flex items-center gap-3 bg-slate-900 text-white px-10 py-4 rounded-full font-bold text-lg transition-all hover:bg-violet-600 hover:scale-105 hover:shadow-2xl shadow-lg float-animation" do %>
+        <span>←</span>
+        <span>Retour à l'accueil</span>
+      <% end %>
+    </div>
+
+    <%# Petits confettis décoratifs %>
+    <div class="mt-16 flex justify-center gap-4 text-3xl opacity-50">
+      <span style="animation: float 2s ease-in-out infinite;">🎉</span>
+      <span style="animation: float 2.5s ease-in-out infinite 0.3s;">🌟</span>
+      <span style="animation: float 2.2s ease-in-out infinite 0.6s;">💫</span>
+      <span style="animation: float 2.8s ease-in-out infinite 0.9s;">⚡</span>
+    </div>
+
   </div>
 </div>

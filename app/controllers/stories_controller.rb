@@ -17,7 +17,6 @@ class StoriesController < ApplicationController
 
     if @story.save
       StoryProposalMailer.with(story: @story).proposal_email.deliver_later
-      # On redirige avec le nom pour le message personnalisé
       redirect_to merci_stories_path(name: @story.author_name)
     else
       render :new, status: :unprocessable_entity
@@ -31,17 +30,16 @@ class StoriesController < ApplicationController
   private
 
   def story_params
-    # 1. On autorise tout ce qui vient du formulaire
     params.require(:story).permit(
-      :title, :chapo, :content, :name, :email, :phone, :address, photos: []
+      :title, :chapo, :content, :name, :email, :phone, :address, :city, :postal_code,
+      photos: []
     ).tap do |whitelisted|
-      # 2. On branche les champs du formulaire sur les vraies colonnes de votre DB
+      # Mapper les champs du formulaire vers les colonnes DB
       whitelisted[:body] = whitelisted.delete(:content) if whitelisted[:content].present?
       whitelisted[:author_name] = whitelisted.delete(:name) if whitelisted[:name].present?
       whitelisted[:author_email] = whitelisted.delete(:email) if whitelisted[:email].present?
 
-      # 3. Sécurité : On ne garde que ce qui existe VRAIMENT dans la table stories
-      # Cela empêchera toute erreur "UnknownAttributeError" quoi qu'il arrive
+      # Sécurité : ne garder que les colonnes qui existent
       whitelisted.select! { |key| Story.column_names.include?(key.to_s) || key.to_s == "photos" }
     end
   end
