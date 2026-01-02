@@ -121,25 +121,92 @@
 </div>
 
 <script>
-  // Garder un cumul de tous les fichiers sélectionnés
+  // Garder un cumul de tous les fichiers sélectionnés (compressés)
   let allFiles = [];
 
-  document.addEventListener('change', function(e) {
+  // Fonction pour compresser une image
+  function compressImage(file, maxWidth = 1920, quality = 0.85) {
+    return new Promise((resolve) => {
+      // Si ce n'est pas une image, retourner tel quel
+      if (!file.type.startsWith('image/')) {
+        resolve(file);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Redimensionner si trop large
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convertir en blob avec compression
+          canvas.toBlob(
+            (blob) => {
+              // Créer un nouveau File à partir du blob compressé
+              const compressedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+              });
+
+              // Log de la compression
+              const originalSizeMB = (file.size / 1024 / 1024).toFixed(2);
+              const compressedSizeMB = (compressedFile.size / 1024 / 1024).toFixed(2);
+              console.log(`📸 ${file.name}: ${originalSizeMB}MB → ${compressedSizeMB}MB`);
+
+              resolve(compressedFile);
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  document.addEventListener('change', async function(e) {
     if (e.target && e.target.id === 'photo-upload-input') {
       const input = e.target;
       const zone = document.getElementById('image-preview-zone');
 
-      // Ajouter les nouveaux fichiers au cumul (sans doublons)
+      // Afficher un message de chargement
+      const loader = document.createElement('div');
+      loader.className = 'text-center text-violet-600 font-bold animate-pulse my-4';
+      loader.textContent = '🔄 Compression des images en cours...';
+      zone.appendChild(loader);
+
+      // Compresser tous les nouveaux fichiers
       const newFiles = Array.from(input.files);
-      newFiles.forEach(file => {
-        // Vérifier si le fichier n'est pas déjà présent (basé sur nom + taille)
+      const compressedFiles = await Promise.all(
+        newFiles.map(file => compressImage(file))
+      );
+
+      // Retirer le loader
+      loader.remove();
+
+      // Ajouter au cumul (sans doublons)
+      compressedFiles.forEach(file => {
         const isDuplicate = allFiles.some(f => f.name === file.name && f.size === file.size);
         if (!isDuplicate) {
           allFiles.push(file);
         }
       });
 
-      // Mettre à jour l'input avec TOUS les fichiers
+      // Mettre à jour l'input avec TOUS les fichiers compressés
       const dataTransfer = new DataTransfer();
       allFiles.forEach(file => dataTransfer.items.add(file));
       input.files = dataTransfer.files;
@@ -156,30 +223,30 @@
           img.src = event.target.result;
           img.className = "h-28 w-28 object-cover rounded-2xl border-4 border-white shadow-xl rotate-3 hover:rotate-0 transition-transform duration-300 shadow-slate-200";
 
+          // Badge taille
+          const sizeBadge = document.createElement('div');
+          const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+          sizeBadge.className = "absolute -top-1 -left-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-bold";
+          sizeBadge.textContent = `${sizeMB}MB`;
+
           // Bouton pour supprimer une photo
           const deleteBtn = document.createElement('button');
           deleteBtn.type = 'button';
           deleteBtn.innerHTML = '×';
-          deleteBtn.className = "absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600";
+          deleteBtn.className = "absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10";
           deleteBtn.onclick = function() {
-            // Retirer ce fichier du cumul
             allFiles.splice(index, 1);
-
-            // Mettre à jour l'input
             const dt = new DataTransfer();
             allFiles.forEach(f => dt.items.add(f));
             input.files = dt.files;
-
-            // Retirer visuellement
             wrapper.remove();
-
-            // Si plus de fichiers, recréer la preview complète pour réindexer
             if (allFiles.length > 0) {
               zone.innerHTML = '';
               input.dispatchEvent(new Event('change'));
             }
           };
 
+          wrapper.appendChild(sizeBadge);
           wrapper.appendChild(img);
           wrapper.appendChild(deleteBtn);
           zone.appendChild(wrapper);
