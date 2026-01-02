@@ -1,38 +1,28 @@
+# app/mailers/opportunity_proposal_mailer.rb
+
 class OpportunityProposalMailer < ApplicationMailer
-  # Tu peux changer le `to:` si besoin
+  # Configuration de l'expéditeur et du destinataire par défaut
   default to:   "nicolas.goarant@hotmail.fr",
           from: "nicolas.goarant@hotmail.fr"
 
   def proposal_email
     @opportunity = params[:opportunity]
 
-    Rails.logger.info("[OPP MAILER] opportunity id=#{@opportunity&.id} " \
-                      "photos_attached?=#{@opportunity.photos.attached?} " \
-                      "photos_size=#{@opportunity.photos.size}")
+    # Log pour le débogage dans la console
+    Rails.logger.info("[MAILER] Tentative d'envoi pour l'opportunité : #{@opportunity.title}")
 
+    # Gestion des pièces jointes (photos)
     if @opportunity.photos.attached?
       @opportunity.photos.each_with_index do |photo, index|
-        Rails.logger.info("[OPP MAILER] attaching photo ##{index + 1} " \
-                          "filename=#{photo.filename} " \
-                          "content_type=#{photo.blob.content_type} " \
-                          "byte_size=#{photo.blob.byte_size}")
-
-        attachments["opportunity_#{@opportunity.id}_photo_#{index + 1}_#{photo.filename}"] = {
+        attachments["photo_#{index + 1}_#{photo.filename}"] = {
           mime_type: photo.blob.content_type,
           content: photo.blob.download
         }
       end
-    else
-      Rails.logger.info("[OPP MAILER] no photos attached to opportunity")
     end
-
-    Rails.logger.info("[OPP MAILER] attachments count before mail: #{attachments.size}")
-
 
     mail(
       subject: "Nouvelle opportunité proposée – #{@opportunity.title.presence || 'Sans titre'}"
-    ) do |format|
-      format.html
-    end
+    )
   end
 end

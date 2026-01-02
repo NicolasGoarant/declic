@@ -2,6 +2,8 @@ class Story < ApplicationRecord
   # Image principale (hero)
   has_one_attached :image
 
+  # Cette ligne permet à Story d'accepter plusieurs fichiers via Active Storage
+  has_many_attached :photos
   # Photos inline dans le récit (3 max pour style éditorial)
   has_one_attached :inline_image_1
   has_one_attached :inline_image_2
