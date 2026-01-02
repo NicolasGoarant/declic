@@ -16,8 +16,8 @@
     </div>
   </div>
 
-  <%# Container étroit (max-w-2xl) pour éviter l'effet étiré sur Desktop %>
-  <main class="max-w-2xl mx-auto px-6 slide-in-from-bottom-4 animate-in duration-700 fill-mode-both">
+  <%# Container optimisé pour la lisibilité sur Desktop - plus compact %>
+  <main class="max-w-lg mx-auto px-6 slide-in-from-bottom-4 animate-in duration-700 fill-mode-both">
     <%= form_with model: @story, local: true, class: "space-y-8" do |f| %>
 
       <% if @story.errors.any? %>
@@ -32,7 +32,7 @@
       <% end %>
 
       <%# Section 1 : Identité %>
-      <section class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 transition-all hover:shadow-md">
+      <section class="bg-white p-6 md:p-7 rounded-[2rem] shadow-sm border border-slate-100 transition-all hover:shadow-md">
         <h2 class="text-xl font-bold mb-6 flex items-center gap-3">
           <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 text-white text-sm">1</span>
           Qui êtes-vous ? 😉
@@ -44,7 +44,7 @@
             <%= f.text_field :name, placeholder: "Marie-Louise G.", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-4" %>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-6">
             <div class="field">
               <%= f.label :email, "Email (Obligatoire)", class: "block text-sm font-bold text-slate-700 mb-2" %>
               <%= f.email_field :email, required: true, placeholder: "votre@email.com", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4" %>
@@ -57,14 +57,25 @@
 
           <div class="field">
             <%= f.label :address, "Adresse (Obligatoire)", class: "block text-sm font-bold text-slate-700 mb-2" %>
-            <%= f.text_field :address, required: true, placeholder: "Ex: 3 impasse du canal, Nancy", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4" %>
-            <p class="mt-2 text-xs text-slate-400 italic italic">Merci d'indiquer au minimum la rue ou la ville 📍</p>
+            <%= f.text_field :address, required: true, placeholder: "Ex: 3 impasse du canal", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4" %>
+            <p class="mt-2 text-xs text-slate-400 italic">Rue et numéro 📍</p>
+          </div>
+
+          <div class="space-y-6">
+            <div class="field">
+              <%= f.label :city, "Ville (Obligatoire)", class: "block text-sm font-bold text-slate-700 mb-2" %>
+              <%= f.text_field :city, required: true, placeholder: "Nancy", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4" %>
+            </div>
+            <div class="field">
+              <%= f.label :postal_code, "Code Postal (Obligatoire)", class: "block text-sm font-bold text-slate-700 mb-2" %>
+              <%= f.text_field :postal_code, required: true, placeholder: "54000", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4" %>
+            </div>
           </div>
         </div>
       </section>
 
       <%# Section 2 : Récit %>
-      <section class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 transition-all hover:shadow-md">
+      <section class="bg-white p-6 md:p-7 rounded-[2rem] shadow-sm border border-slate-100 transition-all hover:shadow-md">
         <h2 class="text-xl font-bold mb-6 flex items-center gap-3">
           <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 text-white text-sm">2</span>
           Votre Histoire 📖
@@ -89,7 +100,7 @@
       </section>
 
       <%# Section 3 : Photo %>
-      <section class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 transition-all hover:shadow-md">
+      <section class="bg-white p-6 md:p-7 rounded-[2rem] shadow-sm border border-slate-100 transition-all hover:shadow-md">
         <h2 class="text-xl font-bold mb-2 flex items-center gap-3">
           <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 text-white text-sm">3</span>
           Les images 📸
@@ -103,7 +114,7 @@
               <p class="text-sm text-slate-600 font-bold">Cliquez pour ajouter des photos</p>
               <p class="text-xs text-slate-400 mt-1">Plusieurs sélections possibles</p>
             </div>
-            <%= f.file_field :photos, multiple: true, id: "photo-upload-input", class: "hidden" %>
+            <%= f.file_field :photos, multiple: true, name: "story[photos][]", id: "photo-upload-input", class: "hidden" %>
           </label>
           <%# Zone de prévisualisation dynamique %>
           <div id="image-preview-zone" class="mt-8 flex flex-wrap gap-4 justify-center"></div>
