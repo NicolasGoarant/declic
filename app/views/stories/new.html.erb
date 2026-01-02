@@ -1,113 +1,124 @@
 <%# app/views/stories/new.html.erb %>
 
-<div class="bg-gray-50 min-h-screen font-sans text-slate-800">
-  <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-
-    <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 font-epilogue">
-          Proposer un témoignage
-        </h1>
-        <p class="mt-2 text-slate-600">
-          Partagez votre parcours de vie ou votre reconversion.
-          Elle sera relue par l'équipe avant publication.
-        </p>
+<div class="bg-slate-50 min-h-screen font-sans text-slate-900 pb-20 animate-in fade-in duration-700">
+  <%# Header restreint et animé %>
+  <div class="bg-white border-b border-slate-200 mb-10 py-12 slide-in-from-top-4 animate-in duration-500">
+    <div class="max-w-2xl mx-auto px-6 text-center">
+      <div class="inline-block px-4 py-1.5 mb-4 text-xs font-bold tracking-widest text-violet-600 uppercase bg-violet-50 rounded-full">
+        ✨ Partager mon parcours
       </div>
-      <%= link_to "← Annuler", stories_path, class: "text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors" %>
+      <h1 class="text-4xl md:text-5xl font-black tracking-tight font-epilogue italic mb-4">
+        Racontez votre <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">Déclic</span>
+      </h1>
+      <p class="text-slate-500 text-lg">
+        Votre expérience peut devenir l'étincelle qui inspirera d'autres personnes. ⚡
+      </p>
     </div>
+  </div>
 
-    <% if @story.errors.any? %>
-      <div class=\"rounded-xl border border-red-200 bg-red-50 p-4 mb-8\">
-        <div class=\"flex\">
-          <div class=\"shrink-0 text-red-400\">⚠️</div>
-          <div class=\"ml-3\">
-            <h3 class=\"text-sm font-medium text-red-800\">
-              Merci de corriger les <%= pluralize(@story.errors.count, "erreur") %> :
-            </h3>
-            <ul class=\"mt-2 list-disc list-inside text-sm text-red-700\">
-              <% @story.errors.full_messages.each do |msg| %>
-                <li><%= msg %></li>
-              <% end %>
-            </ul>
-          </div>
-        </div>
-      </div>
-    <% end %>
+  <%# Container étroit (max-w-2xl) pour éviter l'effet étiré sur Desktop %>
+  <main class="max-w-2xl mx-auto px-6 slide-in-from-bottom-4 animate-in duration-700 fill-mode-both">
+    <%= form_with model: @story, local: true, class: "space-y-8" do |f| %>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-      <div class="lg:col-span-2">
-        <%= form_with model: @story, local: true, class: "space-y-8 bg-white p-8 rounded-3xl shadow-sm border border-slate-200" do |f| %>
-
-          <div class="space-y-6">
-            <div>
-              <%= f.label :name, "Votre Nom ou Pseudo", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.text_field :name, placeholder: "Ex: Marie-Louise G.", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <%= f.label :email, "Votre email (Obligatoire)", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.email_field :email, required: true, placeholder: "votre@email.com", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-              </div>
-              <div>
-                <%= f.label :phone, "Téléphone", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.text_field :phone, placeholder: "06 00 00 00 00", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-              </div>
-            </div>
-
-            <div>
-              <%= f.label :address, "Adresse postale (Optionnel)", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.text_field :address, placeholder: "Rue, Ville, Code Postal", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-            </div>
-
-            <div>
-              <%= f.label :title, "Le titre de votre histoire", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.text_field :title, placeholder: "Ex: Ma nouvelle vie de maraîchère", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-            </div>
-
-            <div>
-              <%= f.label :chapo, "En quelques mots (chapeau)", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.text_area :chapo, rows: 3, placeholder: "Un résumé court pour accrocher le lecteur...", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-            </div>
-
-            <div>
-              <%= f.label :content, "Racontez votre Déclic", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.text_area :content, rows: 10, placeholder: "Votre parcours, vos défis, votre réussite...", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-            </div>
-
-            <div class="field">
-              <%= f.label :photos, "Ajouter une photo", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.file_field :photos, multiple: true, id: "photo-upload-input", class: "block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" %>
-              <div id="image-preview-zone" class="mt-4 flex flex-wrap gap-2"></div>
-            </div>
-          </div>
-
-          <div class="pt-6 border-t border-slate-100">
-            <%= f.submit "Valider et envoyer à Déclic", class: "w-full flex justify-center py-4 px-6 border border-transparent rounded-full shadow-lg text-lg font-bold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all transform hover:-translate-y-1" %>
-          </div>
-        <% end %>
-      </div>
-
-      <div class="space-y-6">
-        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-          <h3 class="font-bold text-slate-900 mb-4">Conseils de rédaction</h3>
-          <ul class="text-sm text-slate-600 space-y-3">
-            <li class="flex gap-2">
-              <span class="text-violet-500 font-bold">•</span>
-              <span>Concentrez-vous sur le moment où vous avez eu le "Déclic".</span>
-            </li>
-            <li class="flex gap-2">
-              <span class="text-violet-500 font-bold">•</span>
-              <span>Partagez un conseil pratique pour ceux qui voudraient suivre votre voie.</span>
-            </li>
-            <li class="flex gap-2">
-              <span class="text-violet-500 font-bold">•</span>
-              <span>Une photo de vous en action rend l'histoire beaucoup plus humaine !</span>
-            </li>
+      <% if @story.errors.any? %>
+        <div class="rounded-2xl border border-red-200 bg-red-50 p-6 mb-8">
+          <h3 class="text-sm font-bold text-red-800 mb-2">Oups ! Quelques corrections nécessaires :</h3>
+          <ul class="list-disc list-inside text-sm text-red-700">
+            <% @story.errors.full_messages.each do |msg| %>
+              <li><%= msg %></li>
+            <% end %>
           </ul>
         </div>
+      <% end %>
+
+      <%# Section 1 : Identité %>
+      <section class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 transition-all hover:shadow-md">
+        <h2 class="text-xl font-bold mb-6 flex items-center gap-3">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 text-white text-sm">1</span>
+          Qui êtes-vous ? 😉
+        </h2>
+
+        <div class="space-y-6">
+          <div class="field">
+            <%= f.label :name, "Votre Nom ou Pseudo", class: "block text-sm font-bold text-slate-700 mb-2" %>
+            <%= f.text_field :name, placeholder: "Marie-Louise G.", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-4" %>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="field">
+              <%= f.label :email, "Email (Obligatoire)", class: "block text-sm font-bold text-slate-700 mb-2" %>
+              <%= f.email_field :email, required: true, placeholder: "votre@email.com", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4" %>
+            </div>
+            <div class="field">
+              <%= f.label :phone, "Téléphone", class: "block text-sm font-bold text-slate-700 mb-2" %>
+              <%= f.text_field :phone, placeholder: "06 00 00 00 00", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4" %>
+            </div>
+          </div>
+
+          <div class="field">
+            <%= f.label :address, "Adresse (Obligatoire)", class: "block text-sm font-bold text-slate-700 mb-2" %>
+            <%= f.text_field :address, required: true, placeholder: "Ex: 3 impasse du canal, Nancy", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4" %>
+            <p class="mt-2 text-xs text-slate-400 italic italic">Merci d'indiquer au minimum la rue ou la ville 📍</p>
+          </div>
+        </div>
+      </section>
+
+      <%# Section 2 : Récit %>
+      <section class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 transition-all hover:shadow-md">
+        <h2 class="text-xl font-bold mb-6 flex items-center gap-3">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 text-white text-sm">2</span>
+          Votre Histoire 📖
+        </h2>
+
+        <div class="space-y-6">
+          <div>
+            <%= f.label :title, "Titre de votre témoignage", class: "block text-sm font-bold text-slate-700 mb-2" %>
+            <%= f.text_field :title, placeholder: "Le jour où j'ai tout plaqué pour...", class: "w-full text-lg font-bold rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4" %>
+          </div>
+
+          <div>
+            <%= f.label :chapo, "Résumé court (Chapeau)", class: "block text-sm font-bold text-slate-700 mb-2" %>
+            <%= f.text_area :chapo, rows: 2, placeholder: "Une brève introduction...", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4 italic text-slate-600 shadow-inner bg-slate-50/50" %>
+          </div>
+
+          <div>
+            <%= f.label :content, "Votre Déclic en détails", class: "block text-sm font-bold text-slate-700 mb-2" %>
+            <%= f.text_area :content, rows: 10, placeholder: "Décrivez votre parcours, vos doutes et vos réussites...", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 p-4 leading-relaxed" %>
+          </div>
+        </div>
+      </section>
+
+      <%# Section 3 : Photo %>
+      <section class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 transition-all hover:shadow-md">
+        <h2 class="text-xl font-bold mb-2 flex items-center gap-3">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 text-white text-sm">3</span>
+          Les images 📸
+        </h2>
+        <p class="text-slate-500 text-sm mb-6 italic">Vous pouvez sélectionner plusieurs photos pour illustrer votre récit.</p>
+
+        <div class="field">
+          <label class="flex flex-col items-center justify-center w-full h-40 border-2 border-slate-200 border-dashed rounded-3xl cursor-pointer bg-slate-50 hover:bg-violet-50 hover:border-violet-300 transition-all group">
+            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+              <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">🖼️</span>
+              <p class="text-sm text-slate-600 font-bold">Cliquez pour ajouter des photos</p>
+              <p class="text-xs text-slate-400 mt-1">Plusieurs sélections possibles</p>
+            </div>
+            <%= f.file_field :photos, multiple: true, id: "photo-upload-input", class: "hidden" %>
+          </label>
+          <%# Zone de prévisualisation dynamique %>
+          <div id="image-preview-zone" class="mt-8 flex flex-wrap gap-4 justify-center"></div>
+        </div>
+      </section>
+
+      <%# Bouton de validation %>
+      <div class="pt-6">
+        <%= f.submit "🚀 Valider et envoyer mon témoignage",
+            class: "w-full py-5 px-4 rounded-full text-lg md:text-xl font-black text-white bg-slate-900 hover:bg-violet-600 shadow-2xl shadow-violet-200 transition-all transform hover:-translate-y-1 cursor-pointer whitespace-normal break-words leading-tight" %>
+        <p class="text-center text-slate-400 text-[10px] md:text-xs mt-6 uppercase tracking-widest font-bold">
+        </p>
       </div>
-    </div>
+
+    <% end %>
   </main>
 </div>
 
@@ -115,17 +126,27 @@
   document.addEventListener('change', function(e) {
     if (e.target && e.target.id === 'photo-upload-input') {
       const zone = document.getElementById('image-preview-zone');
-      zone.innerHTML = '';
-      Array.from(e.target.files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          const img = document.createElement('img');
-          img.src = event.target.result;
-          img.className = "h-20 w-20 object-cover rounded-lg border border-slate-200 shadow-sm";
-          zone.appendChild(img);
-        }
-        reader.readAsDataURL(file);
-      });
+      zone.innerHTML = ''; // On vide pour la nouvelle sélection
+
+      if (e.target.files) {
+        Array.from(e.target.files).forEach((file, index) => {
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            const div = document.createElement('div');
+            div.className = "relative";
+
+            const img = document.createElement('img');
+            img.src = event.target.result;
+            // Style polaroïd empilé
+            const rotation = (index % 2 === 0) ? 'rotate-3' : '-rotate-2';
+            img.className = `h-24 w-24 md:h-28 md:w-28 object-cover rounded-2xl border-4 border-white shadow-xl ${rotation} hover:rotate-0 transition-transform duration-300 shadow-slate-200`;
+
+            div.appendChild(img);
+            zone.appendChild(div);
+          }
+          reader.readAsDataURL(file);
+        });
+      }
     }
   });
 </script>
