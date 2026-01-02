@@ -23,7 +23,7 @@
             <h3 class="text-sm font-medium text-red-800">
               Merci de corriger les <%= pluralize(@opportunity.errors.count, "erreur") %> :
             </h3>
-            <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+            <ul class="mt-2 list-disc list-inside text-sm text-red-700">
               <% @opportunity.errors.full_messages.each do |msg| %>
                 <li><%= msg %></li>
               <% end %>
@@ -33,128 +33,188 @@
       </div>
     <% end %>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-      <%# --- COLONNE FORMULAIRE (GAUCHE) --- %>
-      <div class="lg:col-span-2">
-        <%= form_with model: @opportunity, local: true, class: "space-y-8 bg-white p-8 rounded-3xl shadow-sm border border-slate-200" do |f| %>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          <div class="space-y-6">
-            <%# Titre & Catégorie %>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <%= f.label :title, "Titre de l'opportunité", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.text_field :title, placeholder: "Ex: Atelier compostage urbain", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-              </div>
-              <div>
-                <%= f.label :category, "Catégorie", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.select :category,
-                    [["Bénévolat", "benevolat"], ["Formation", "formation"], ["Rencontres", "rencontres"], ["Entreprendre", "entreprendre"], ["Écologiser", "ecologiser"]],
-                    { include_blank: "Choisir..." },
-                    { class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" } %>
-              </div>
-            </div>
+      <div class="lg:col-span-2 space-y-8">
 
-            <%# Description %>
-            <div>
-              <%= f.label :description, "Description détaillée", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.text_area :description, rows: 6, placeholder: "Expliquez en quoi consiste cette opportunité...", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-            </div>
+        <%= form_with(model: @opportunity, local: true, html: { multipart: true }, class: "space-y-8") do |f| %>
 
-            <%# Organisation & Lieu %>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <%= f.label :organization, "Structure / Organisateur", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.text_field :organization, placeholder: "Nom de l'asso, du collectif...", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-              </div>
-              <div>
-                <%= f.label :location, "Lieu (Ville ou Adresse)", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.text_field :location, placeholder: "Ex: Nancy, Plateau de Haye", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-              </div>
-            </div>
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <h2 class="text-lg font-bold text-slate-900 mb-4 font-epilogue">1. De quoi s'agit-il ?</h2>
 
-            <%# Photo avec Feedback Visuel %>
-            <div class="field">
-              <%= f.label :photos, "Ajouter des photos", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <div class="relative">
-                <%= f.file_field :photos,
-                    multiple: true,
-                    id: "photo-upload",
-                    class: "block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 cursor-pointer" %>
-
-                <%# Zone de feedback qui s'affiche via JS %>
-                <div id="file-chosen-container" class="mt-3 hidden">
-                  <div class="flex items-center p-3 bg-green-50 border border-green-100 rounded-xl">
-                    <span class="text-green-600 mr-2 text-lg">✓</span>
-                    <span id="file-chosen-text" class="text-sm text-green-700 font-semibold"></span>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <% [
+                { val: 'benevolat', label: 'Bénévolat', icon: '❤️', color: 'peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-700' },
+                { val: 'ecologiser', label: 'Écologiser', icon: '🌱', color: 'peer-checked:bg-green-50 peer-checked:border-green-500 peer-checked:text-green-700' },
+                { val: 'formation', label: 'Formation', icon: '📘', color: 'peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700' },
+                { val: 'rencontres', label: 'Rencontres', icon: '🤝', color: 'peer-checked:bg-amber-50 peer-checked:border-amber-500 peer-checked:text-amber-700' },
+                { val: 'entreprendre', label: 'Entreprendre', icon: '🚀', color: 'peer-checked:bg-orange-50 peer-checked:border-orange-500 peer-checked:text-orange-700' }
+              ].each do |cat| %>
+                <label class="cursor-pointer group relative">
+                  <%= f.radio_button :category, cat[:val], class: "peer sr-only" %>
+                  <div class="<%= cat[:color] %> border-2 border-slate-100 rounded-xl p-3 flex flex-col items-center justify-center gap-2 text-center transition-all hover:border-slate-300 h-full">
+                    <span class="text-2xl group-hover:scale-110 transition-transform"><%= cat[:icon] %></span>
+                    <span class="font-bold text-sm text-slate-600 group-hover:text-slate-900"><%= cat[:label] %></span>
                   </div>
-                </div>
+                  <div class="absolute top-2 right-2 hidden peer-checked:block text-current">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                  </div>
+                </label>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-5">
+            <h2 class="text-lg font-bold text-slate-900 mb-2 font-epilogue">2. Les détails</h2>
+
+            <div>
+              <%= f.label :title, "Titre de l'opportunité", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.text_field :title, required: true, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "Ex: Atelier réparation vélo participatif" %>
+            </div>
+
+            <div>
+              <%= f.label :organization, "Organisateur (Association, Collectif...)", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.text_field :organization, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "Ex: Nancy à Vélo" %>
+            </div>
+
+            <div>
+              <%= f.label :description, "Description complète", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.text_area :description, rows: 5, required: true, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "Expliquez en quelques phrases l'objectif, le déroulé et pourquoi c'est génial..." %>
+            </div>
+
+            <div>
+              <%= f.label :website, "Site web (facultatif)", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.url_field :website, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "https://..." %>
+            </div>
+
+            <div>
+               <%= f.label :tags, "Tags (séparés par des virgules)", class: "block text-sm font-bold text-slate-700 mb-1" %>
+               <%= f.text_field :tags, placeholder: "solidarité, jeunesse, numérique…", class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500" %>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-5">
+            <h2 class="text-lg font-bold text-slate-900 mb-2 font-epilogue">3. C'est où et quand ?</h2>
+
+            <div>
+              <%= f.label :address, "Adresse", class: "block text-sm font-bold text-slate-700 mb-1" %>
+              <%= f.text_field :address, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "Ex: 12 rue des Tiercelins" %>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <%= f.label :postcode, "Code postal", class: "block text-sm font-bold text-slate-700 mb-1" %>
+                <%= f.text_field :postcode, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "54000" %>
+              </div>
+              <div>
+                <%= f.label :city, "Ville", class: "block text-sm font-bold text-slate-700 mb-1" %>
+                <%= f.text_field :city, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "Nancy" %>
               </div>
             </div>
 
-            <%# Email de contact %>
-            <div>
-              <%= f.label :contact_email, "Votre email de contact", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.email_field :contact_email, placeholder: "Pour vous recontacter si besoin", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <%= f.label :time_commitment, "Temps à prévoir", class: "block text-sm font-bold text-slate-700 mb-1" %>
+                <%= f.text_field :time_commitment, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "ex: 3h/semaine" %>
+              </div>
+              <div>
+                <%= f.label :effort_level, "Niveau d'engagement", class: "block text-sm font-bold text-slate-700 mb-1" %>
+                <%= f.select :effort_level, [["Léger", "leger"], ["Modéré", "modere"], ["Intensif", "intensif"]], { include_blank: "— Choisir —" }, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500" %>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2 border-t border-slate-100">
+               <div>
+                  <%= f.label :starts_at, "Date de début (optionnel)", class: "block text-sm font-bold text-slate-700 mb-1" %>
+                  <%= f.datetime_local_field :starts_at, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500" %>
+               </div>
+               <div>
+                  <%= f.label :ends_at, "Date de fin (optionnel)", class: "block text-sm font-bold text-slate-700 mb-1" %>
+                  <%= f.datetime_local_field :ends_at, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500" %>
+               </div>
             </div>
           </div>
 
-          <%# Validation %>
-          <div class="pt-6 border-t border-slate-100">
-            <%= f.submit "Valider et envoyer à Déclic", class: "w-full flex justify-center py-4 px-6 border border-transparent rounded-full shadow-lg text-lg font-bold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all transform hover:-translate-y-1" %>
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-5">
+            <h2 class="text-lg font-bold text-slate-900 mb-2 font-epilogue">4. Contact</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <%= f.label :contact_email, "Email de contact", class: "block text-sm font-bold text-slate-700 mb-1" %>
+                <%= f.email_field :contact_email, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "contact@asso.com" %>
+              </div>
+              <div>
+                <%= f.label :contact_phone, "Téléphone", class: "block text-sm font-bold text-slate-700 mb-1" %>
+                <%= f.telephone_field :contact_phone, class: "w-full rounded-lg border-slate-300 focus:border-violet-500 focus:ring-violet-500", placeholder: "06 00 00 00 00" %>
+              </div>
+            </div>
           </div>
-        <% end %>
-      </div>
 
-      <%# --- COLONNE CONSEILS (DROITE) --- %>
-      <div class="space-y-6">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-          <h2 class="font-bold text-slate-900 flex items-center gap-2 text-lg">
-            <span>💡</span> Conseils
-          </h2>
-          <ul class="mt-4 text-sm text-slate-600 space-y-3 leading-relaxed">
-            <li class="flex gap-2">
-              <span class="text-violet-500 font-bold">•</span>
-              <span>Soyez précis sur le lieu et les horaires.</span>
-            </li>
-            <li class="flex gap-2">
-              <span class="text-violet-500 font-bold">•</span>
-              <span>Ajoutez un lien vers un site officiel ou une billetterie dans la description.</span>
-            </li>
-            <li class="flex gap-2">
-              <span class="text-violet-500 font-bold">•</span>
-              <span>Choisissez une belle image, c'est ce qui attire l'œil en premier !</span>
-            </li>
-          </ul>
-        </div>
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <h2 class="text-lg font-bold text-slate-900 mb-4 font-epilogue">5. Photos</h2>
 
-        <div class="bg-gradient-to-br from-indigo-50 to-violet-50 rounded-2xl border border-indigo-100 p-6 text-sm">
-          <h3 class="font-bold text-indigo-900 uppercase tracking-wide mb-2">Modération</h3>
-          <p class="text-indigo-800/80 leading-relaxed">
-            Votre proposition sera examinée par notre équipe. Nous nous réservons le droit de reformuler le texte ou d'ajuster la catégorie pour qu'elle corresponde au mieux à l'audience de Déclic.
+            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl hover:bg-slate-50 transition-colors">
+              <div class="space-y-1 text-center">
+                <svg class="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <div class="flex text-sm text-slate-600 justify-center">
+                  <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-violet-600 hover:text-violet-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-violet-500">
+                    <%= f.file_field :photos, multiple: true, accept: "image/*", id: "file-upload", class: "sr-only" %>
+                    <span>Télécharger des photos</span>
+                  </label>
+                  <p class="pl-1">ou glisser-déposer</p>
+                </div>
+                <p class="text-xs text-slate-500">
+                  JPG, PNG, GIF jusqu'à 5MB
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4 pt-4">
+            <%= f.submit "Valider et envoyer à Déclic", class: "cursor-pointer btn-primary w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold rounded-full shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all", data: { disable_with: "Envoi en cours..." } %>
+          </div>
+
+          <p class="text-xs text-slate-400 text-center sm:text-left mt-2">
+            En envoyant, vous acceptez que votre proposition soit modérée avant publication.
           </p>
+
+        <% end %> </div>
+
+
+      <aside class="hidden lg:block lg:col-span-1 space-y-6">
+        <div class="sticky top-6">
+
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+            <h2 class="font-bold text-slate-900 flex items-center gap-2">
+              <span class="text-xl">💡</span> Conseils
+            </h2>
+            <ul class="mt-4 text-sm text-slate-600 space-y-3">
+              <li class="flex gap-2">
+                <span class="text-violet-500 font-bold">•</span>
+                <span>Soyez précis sur le lieu et les horaires.</span>
+              </li>
+              <li class="flex gap-2">
+                <span class="text-violet-500 font-bold">•</span>
+                <span>Ajoutez un lien vers un site officiel ou une billetterie.</span>
+              </li>
+              <li class="flex gap-2">
+                <span class="text-violet-500 font-bold">•</span>
+                <span>Choisissez une belle image, c'est ce qui attire l'œil en premier !</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="bg-gradient-to-br from-indigo-50 to-violet-50 rounded-2xl border border-indigo-100 p-6">
+            <h3 class="font-bold text-indigo-900 text-sm uppercase tracking-wide mb-2">Modération</h3>
+            <p class="text-sm text-indigo-800/80 leading-relaxed">
+              Les contenus à caractère politique, purement commercial ou contraires à la loi ne seront pas publiés. Nous nous réservons le droit d'ajuster la mise en forme.
+            </p>
+          </div>
+
         </div>
-      </div>
+      </aside>
+
     </div>
   </main>
 </div>
-
-<script>
-  // Script de feedback pour le chargement de fichiers
-  document.addEventListener('turbo:load', function() {
-    const input = document.getElementById('photo-upload');
-    if (input) {
-      input.addEventListener('change', function() {
-        const container = document.getElementById('file-chosen-container');
-        const textLabel = document.getElementById('file-chosen-text');
-
-        if (this.files.length > 0) {
-          container.classList.remove('hidden');
-          const count = this.files.length;
-          textLabel.textContent = count + (count > 1 ? " photos prêtes à l'envoi" : " photo prête à l'envoi");
-        } else {
-          container.classList.add('hidden');
-        }
-      });
-    }
-  });
-</script>

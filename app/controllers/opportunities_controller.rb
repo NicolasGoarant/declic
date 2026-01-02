@@ -9,11 +9,10 @@ class OpportunitiesController < ApplicationController
 
     # 2. Ajoute un filtre par catégorie si le paramètre est présent dans l'URL
     if params[:category].present?
-      # Assurez-vous que le paramètre correspond à une catégorie valide
       opportunities = opportunities.where(category: params[:category])
     end
 
-    # 3. Applique l'ordre et la limite au jeu de données filtré (ou non)
+    # 3. Applique l'ordre et la limite
     @opportunities =
       opportunities.order(Arel.sql("COALESCE(starts_at, created_at) DESC"))
                    .limit(1000)
@@ -21,7 +20,6 @@ class OpportunitiesController < ApplicationController
     respond_to do |format|
       format.html
       format.json do
-        # La réponse JSON utilise maintenant le jeu de données potentiellement filtré
         render json: @opportunities.as_json(
           only: %i[
             id slug title description category organization location
@@ -42,22 +40,19 @@ class OpportunitiesController < ApplicationController
     @opportunity = Opportunity.new
   end
 
+  # Action pour la page de remerciement (Route: get :merci dans routes.rb)
+  def merci
+    # Cette action rend simplement la vue app/views/opportunities/merci.html.erb
+  end
+
   # POST /opportunities
-  #
-  # - bouton "Prévisualiser ma fiche" -> params[:preview] présent
-  # - bouton "Valider et envoyer à Déclic" -> pas de :preview -> on enregistre + on envoie le mail
   def create
     @opportunity = Opportunity.new(opportunity_params)
 
-    if @opportunity.save
-      OpportunityProposalMailer.with(opportunity: @opportunity)
-                               .proposal_email
-                               .deliver_later
-
-      redirect_to @opportunity,
-        notice: "Merci ! Votre proposition a bien été envoyée à l'équipe Déclic. Elle sera relue avant publication."
+    if params[:preview]
+      handle_preview
     else
-      render :new, status: :unprocessable_entity
+      handle_final_submit
     end
   end
 
@@ -73,13 +68,13 @@ class OpportunitiesController < ApplicationController
   # ----- Flux "valider et envoyer à Déclic" -----
   def handle_final_submit
     if @opportunity.save
-      # Mail de confirmation à Nicolas
+      # Envoi du mail à l'équipe
       OpportunityProposalMailer.with(opportunity: @opportunity)
                                .proposal_email
                                .deliver_later
 
-      redirect_to @opportunity,
-                  notice: "Merci ! Votre proposition a bien été envoyée à l'équipe Déclic. Elle sera relue avant publication."
+      # REDIRECTION : Vers la page "Merci" au lieu de la fiche directe
+      redirect_to merci_opportunities_path
     else
       flash.now[:alert] = @opportunity.errors.full_messages.to_sentence
       render :new, status: :unprocessable_entity
@@ -100,12 +95,11 @@ class OpportunitiesController < ApplicationController
       :latitude,
       :longitude,
       :is_active,
-      :image,           # Image hero (Active Storage)
-      :image_url,       # Ou URL externe
-      :gallery_image_1, # Galerie photo 1
-      :gallery_image_2, # Galerie photo 2
-      :gallery_image_3, # Galerie photo 3
-       # Galerie photo 4
+      :image,           # Image hero
+      :image_url,
+      :gallery_image_1,
+      :gallery_image_2,
+      :gallery_image_3,
       :source_url,
       :tags,
       :website,
@@ -114,7 +108,7 @@ class OpportunitiesController < ApplicationController
       :city,
       :contact_email,
       :contact_phone,
-      photos: []
+      photos: []        # Pour l'upload multiple que vous avez ajouté
     )
   end
 end
