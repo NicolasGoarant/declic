@@ -3,7 +3,7 @@
 
 <%
   is_eco = @opportunity.category.to_s.downcase == "ecologiser"
-  opportunity_emoji = (defined?(emoji_for_category) ? emoji_for_category(@opportunity.category) : "✨")
+  opportunity_emoji = (defined?(emoji_for_category) ? emoji_for_category(@opportunity.category) : "")
 
   # Couleurs selon catégorie
   case @opportunity.category.to_s.downcase
