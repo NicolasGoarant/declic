@@ -1,0 +1,19 @@
+<h1>Nouveau témoignage reçu sur Déclic</h1>
+
+<p><strong>Titre :</strong> <%= @story.title %></p>
+<p><strong>Auteur :</strong> <%= @story.author_name %> (<%= @story.author_email %>)</p>
+<p><strong>Ville :</strong> <%= @story.city %></p>
+
+<hr>
+
+<p><strong>Résumé (Chapo) :</strong></p>
+<p><%= @story.chapo %></p>
+
+<hr>
+
+<p><strong>Contenu du récit :</strong></p>
+<p><%= simple_format @story.body %></p>
+
+<% if @story.photos.attached? %>
+  <p><em>Note : Les <%= @story.photos.count %> photo(s) sont jointes à cet email.</em></p>
+<% end %>
