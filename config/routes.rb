@@ -2,13 +2,13 @@
 Rails.application.routes.draw do
   # --- SITE PUBLIC ---
 
-  # Page d’accueil
+  # Page d'accueil
   root "pages#home"
 
   # Opportunités publiques
   resources :opportunities, only: %i[index show new create] do
     collection do
-      # Page de remerciement après validation d’une proposition
+      # Page de remerciement après validation d'une proposition
       get :merci
     end
   end
@@ -58,6 +58,11 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :stories, except: [:show]
+    resources :stories, except: [:show] do
+      collection do
+        post :geocode_missing
+        post :bulk
+      end
+    end
   end
 end
