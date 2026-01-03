@@ -1,11 +1,20 @@
 class StoriesController < ApplicationController
   def index
-    @stories = Story.order(created_at: :desc)
+    # Filtrer uniquement les stories actives
+    @stories = Story.where(is_active: true)
+                    .order(happened_on: :desc, created_at: :desc)
+                    .limit(100)
   end
 
   def show
     @story = Story.find_by!(id: params[:id]) if params[:id].to_s.match?(/\A\d+\z/)
     @story ||= Story.find_by!(slug: params[:id])
+
+    # Rediriger si la story n'est pas active (sauf pour les admins)
+    # Optionnel : enlève ce check si tu veux permettre l'aperçu via lien direct
+    unless @story.is_active
+      redirect_to stories_path, alert: "Cette histoire n'est pas encore publiée."
+    end
   end
 
   def new
@@ -34,12 +43,10 @@ class StoriesController < ApplicationController
       :title, :chapo, :content, :name, :email, :phone, :address, :city, :postal_code,
       photos: []
     ).tap do |whitelisted|
-      # Mapper les champs du formulaire vers les colonnes DB
       whitelisted[:body] = whitelisted.delete(:content) if whitelisted[:content].present?
       whitelisted[:author_name] = whitelisted.delete(:name) if whitelisted[:name].present?
       whitelisted[:author_email] = whitelisted.delete(:email) if whitelisted[:email].present?
 
-      # Sécurité : ne garder que les colonnes qui existent
       whitelisted.select! { |key| Story.column_names.include?(key.to_s) || key.to_s == "photos" }
     end
   end

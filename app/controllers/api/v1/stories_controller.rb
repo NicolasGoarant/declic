@@ -1,34 +1,28 @@
-# app/controllers/api/v1/stories_controller.rb
-class Api::V1::StoriesController < ApplicationController
-  def index
-    # IMPORTANT : Précharger l'attachment image pour Active Storage
-    stories = Story.where.not(latitude: nil, longitude: nil)
-                   .includes(image_attachment: :blob)
-                   .order(created_at: :desc)
-                   .limit(500)
+module Api
+  module V1
+    class StoriesController < ApplicationController
+      def index
+        # Filtrer uniquement les stories actives pour l'API
+        stories = Story.where(is_active: true)
+                       .where.not(latitude: nil, longitude: nil)
+                       .order(happened_on: :desc, created_at: :desc)
+                       .limit(100)
 
-    render json: stories.map { |s|
-      # PRIORITÉ : Active Storage > image_url
-      final_image_url = if s.image.attached?
-                          url_for(s.image)
-                        elsif s.respond_to?(:image_url) && s.image_url.present?
-                          s.image_url
-                        else
-                          nil
-                        end
-
-      {
-        id: s.id,
-        slug: s.respond_to?(:slug) ? s.slug : nil,
-        title: s.title,
-        description: s.try(:chapo).presence || s.try(:description).to_s,
-        category: "histoires",                # important pour le marker violet 📖
-        organization: s.try(:source_name).to_s,
-        location: s.location.to_s,
-        latitude: s.latitude.to_f,
-        longitude: s.longitude.to_f,
-        image_url: final_image_url
-      }
-    }
+        render json: stories.map { |s|
+          {
+            id: s.id,
+            title: s.title,
+            chapo: s.chapo,
+            description: s.description,
+            location: s.location,
+            latitude: s.latitude,
+            longitude: s.longitude,
+            happened_on: s.happened_on,
+            category: 'histoires',
+            url: story_url(s)
+          }
+        }
+      end
+    end
   end
 end

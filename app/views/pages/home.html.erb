@@ -239,7 +239,7 @@ end
       </div>
 
       <div class="hm-stories-grid">
-        <% stories_collection = (@latest_stories || Story.order(happened_on: :desc).limit(3)) %>
+        <% stories_collection = (@latest_stories || Story.where(is_active: true).order(happened_on: :desc).limit(3)) %>
         <% stories_collection.each do |story| %>
           <%= link_to story_path(story), class: "hm-story-card" do %>
             <div class="hm-story-img" style="background-image:url('<%= hero_fallback(story) %>')"></div>

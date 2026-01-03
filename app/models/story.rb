@@ -20,7 +20,13 @@ class Story < ApplicationRecord
 
   before_validation :ensure_slug
 
-  # Choix d’image pour le front (upload > URL > fallback)
+  # ✅ Par défaut, les nouvelles stories sont inactives (en attente de validation)
+  before_validation :set_default_active, on: :create
+
+  # Scope pour ne récupérer que les stories actives
+  scope :active, -> { where(is_active: true) }
+
+  # Choix d'image pour le front (upload > URL > fallback)
   def hero_image_url(view_context)
     if image.attached?
       view_context.url_for(image)
@@ -35,5 +41,9 @@ class Story < ApplicationRecord
 
   def ensure_slug
     self.slug = title.to_s.parameterize if slug.blank? && title.present?
+  end
+
+  def set_default_active
+    self.is_active = false if is_active.nil?
   end
 end
