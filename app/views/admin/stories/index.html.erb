@@ -1,176 +1,83 @@
 <%# app/views/admin/stories/index.html.erb %>
-
-<div class="admin-wrap">
+<div class="admin-container">
   <div class="admin-header">
-    <h1>Stories — Admin</h1>
-
-    <%= link_to "➕ Nouvelle story",
-                new_admin_story_path,
-                class: "btn" %>
+    <h1 class="title">Gestion des Stories</h1>
+    <%= link_to "➕ Nouvelle Story", new_admin_story_path, class: "btn-main" %>
   </div>
 
-  <div class="stats">
-    <span>Total : <b><%= @counts[:total] %></b></span>
-    <span>Sans coordonnées : <b><%= @counts[:missing_coords] %></b></span>
+  <div class="filter-bar">
+    <%= form_with url: admin_stories_path, method: :get, local: true, class: "flex-form" do %>
+      <input type="text" name="q" value="<%= @q %>" placeholder="Rechercher...">
+      <label>
+        <input type="checkbox" name="missing_coords" value="1" <%= "checked" if @missing %>> 📍 Coords manquantes
+      </label>
+      <button type="submit" class="btn-dark">Filtrer</button>
+      <%= link_to "Reset", admin_stories_path, class: "reset-link" %>
+    <% end %>
   </div>
 
-  <%= form_with url: admin_stories_path, method: :get, local: true, class: "filters" do %>
-    <input type="text"
-           name="q"
-           placeholder="Rechercher (titre, chapo, texte…)"
-           value="<%= h @q %>">
-    <label class="ck">
-      <input type="checkbox"
-             name="missing_coords"
-             value="1"
-             <%= "checked" if @missing %>>
-      Manque de coordonnées
-    </label>
-    <button type="submit" class="btn small">Filtrer</button>
-    <%= link_to "Réinitialiser", admin_stories_path, class: "btn-secondary" %>
-  <% end %>
-
-  <div class="toolbar">
-    <%= button_to "Géocoder les fiches sans coords",
-                  geocode_missing_admin_stories_path(request.query_parameters),
-                  method: :post,
-                  form: { data: { turbo_confirm: "Tenter le géocodage pour les stories sans coordonnées ?" } },
-                  class: "btn small" %>
-  </div>
-
-  <%= form_with url: bulk_admin_stories_path(request.query_parameters), method: :post, local: true do %>
-    <div class="bulkbar">
-      <select name="bulk_action">
-        <option value="">Action groupée…</option>
-        <% if Story.column_names.include?("is_active") %>
-          <option value="activate">Activer</option>
-          <option value="deactivate">Désactiver</option>
-        <% end %>
-        <option value="destroy">Supprimer</option>
-      </select>
-      <button type="submit" class="btn small">Appliquer</button>
-    </div>
-
-    <table class="admin-table">
-      <thead>
+  <table class="modern-table">
+    <thead>
+      <tr>
+        <th>Statut</th>
+        <th>Titre & Auteur</th>
+        <th>Lieu</th>
+        <th>Date</th>
+        <th class="text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @stories.each do |s| %>
         <tr>
-          <th><input type="checkbox" id="check_all"></th>
-          <th>ID</th>
-          <th>Titre</th>
-          <th>Lieu</th>
-          <th>Coords</th>
-          <th>Source</th>
-          <th>Mise à jour</th>
-          <th></th>
+          <td>
+            <%= button_to toggle_active_admin_story_path(s),
+                          method: :patch,
+                          class: "status-badge #{s.is_active ? 'active' : 'draft'}" do %>
+              <%= s.is_active ? "PUBLIÉ" : "BROUILLON" %>
+            <% end %>
+          </td>
+          <td>
+            <div class="row-title"><%= s.title %></div>
+            <div class="row-subtitle"><%= s.author_name %></div>
+          </td>
+          <td>
+            <span class="<%= 'warning' if s.latitude.blank? %>">
+              <%= s.location.presence || "—" %>
+            </span>
+          </td>
+          <td class="date-cell"><%= s.created_at.strftime("%d/%m/%Y") %></td>
+          <td class="text-right">
+            <div class="action-links">
+              <%= link_to "✏️", edit_admin_story_path(s) %>
+              <%= button_to "🗑️", admin_story_path(s), method: :delete, data: { confirm: "Supprimer ?" }, class: "btn-delete" %>
+            </div>
+          </td>
         </tr>
-      </thead>
-      <tbody>
-        <% @stories.each do |s| %>
-          <tr>
-            <td><input type="checkbox" name="ids[]" value="<%= s.id %>"></td>
-            <td><code><%= s.id %></code></td>
-            <td class="td-title">
-              <%= link_to s.title, edit_admin_story_path(s, request.query_parameters) %>
-            </td>
-            <td><%= s.location.presence || "—" %></td>
-            <td>
-              <% if s.latitude.present? && s.longitude.present? %>
-                ✅
-              <% else %>
-                <span style="color:#b91c1c">—</span>
-              <% end %>
-            </td>
-            <td>
-              <% if s.source_url.present? %>
-                <a href="<%= s.source_url %>" target="_blank" rel="noopener">Lien</a>
-              <% else %>—<% end %>
-            </td>
-            <td><%= l(s.updated_at, format: :short) rescue s.updated_at.to_s(:short) %></td>
-            <td class="td-actions">
-              <%= link_to "Voir", story_path(s), class: "btn small", target: "_blank" %>
-              <%= link_to "Éditer", edit_admin_story_path(s, request.query_parameters), class: "btn small" %>
-              <a href="#"
-                 class="btn small danger delete-story-btn"
-                 data-story-id="<%= s.id %>"
-                 data-story-title="<%= h s.title %>"
-                 data-delete-url="<%= admin_story_path(s, request.query_parameters) %>">
-                Supprimer
-              </a>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  <% end %>
+      <% end %>
+    </tbody>
+  </table>
 </div>
 
-<script>
-  // coche/décoche tout
-  document.addEventListener('DOMContentLoaded', function(){
-    var all = document.getElementById('check_all');
-    if(!all) return;
-    all.addEventListener('change', function(){
-      document.querySelectorAll('input[name="ids[]"]').forEach(cb => cb.checked = all.checked);
-    });
-
-    // Gestion suppression individuelle (HORS du formulaire bulk)
-    document.querySelectorAll('.delete-story-btn').forEach(btn => {
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        e.stopPropagation();
-
-        const storyTitle = this.dataset.storyTitle;
-        const deleteUrl = this.dataset.deleteUrl;
-
-        if (confirm(`Confirmer la suppression de « ${storyTitle} » ?`)) {
-          // Créer un formulaire temporaire HORS du bulk form
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = deleteUrl;
-
-          // Token CSRF
-          const csrfToken = document.querySelector('meta[name="csrf-token"]');
-          if (csrfToken) {
-            const tokenInput = document.createElement('input');
-            tokenInput.type = 'hidden';
-            tokenInput.name = 'authenticity_token';
-            tokenInput.value = csrfToken.content;
-            form.appendChild(tokenInput);
-          }
-
-          // Method DELETE
-          const methodInput = document.createElement('input');
-          methodInput.type = 'hidden';
-          methodInput.name = '_method';
-          methodInput.value = 'delete';
-          form.appendChild(methodInput);
-
-          // Ajouter au body et soumettre
-          document.body.appendChild(form);
-          form.submit();
-        }
-      });
-    });
-  });
-</script>
-
 <style>
-.admin-wrap{font-family:Inter,system-ui,sans-serif;color:#0f172a;}
-.admin-header{display:flex;align-items:center;justify-content:space-between;margin:0 0 .5rem;}
-.stats{display:flex;gap:12px;margin:8px 0 12px;}
-.filters{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px;}
-.filters input[type="text"]{padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;min-width:280px;}
-.filters .ck{display:inline-flex;gap:6px;align-items:center}
-.btn,
-.btn-secondary{display:inline-block;padding:.5rem .8rem;border-radius:8px;text-decoration:none;font-weight:800;border:1px solid #cbd5e1;background:#fff;color:#0f172a;}
-.btn.small{padding:.4rem .6rem;font-size:.92rem}
-.btn.danger{border-color:#ef4444;color:#b91c1c}
-.btn-secondary{background:#f8fafc}
-.bulkbar{display:flex;gap:8px;align-items:center;margin:6px 0 10px}
-.admin-table{width:100%;border-collapse:separate;border-spacing:0 6px}
-.admin-table thead th{font:800 .85rem/1 "Epilogue",Inter;color:#64748b;text-transform:uppercase;letter-spacing:.04em;text-align:left}
-.admin-table tbody tr{background:#fff;border:1px solid #e5e7eb}
-.admin-table td,.admin-table th{padding:10px 12px;vertical-align:top}
-.td-title a{font-weight:800}
-.td-actions{white-space:nowrap;display:flex;gap:6px}
+  .admin-container { padding: 20px; max-width: 1200px; margin: 0 auto; font-family: sans-serif; }
+  .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+  .title { font-size: 24px; font-weight: 900; color: #1e293b; }
+  .btn-main { background: #7c3aed; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; }
+
+  .filter-bar { background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+  .flex-form { display: flex; gap: 15px; align-items: center; }
+
+  .modern-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; }
+  .modern-table th { background: #f8fafc; padding: 12px; font-size: 11px; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+  .modern-table td { padding: 15px 12px; border-bottom: 1px solid #f1f5f9; }
+
+  .status-badge { border: none; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; cursor: pointer; }
+  .status-badge.active { background: #dcfce7; color: #15803d; }
+  .status-badge.draft { background: #fef3c7; color: #b45309; }
+
+  .row-title { font-weight: bold; color: #0f172a; }
+  .row-subtitle { font-size: 12px; color: #64748b; }
+  .warning { color: #ef4444; font-weight: bold; }
+  .action-links { display: flex; gap: 10px; justify-content: flex-end; }
+  .btn-delete { background: none; border: none; cursor: pointer; color: #ef4444; }
 </style>

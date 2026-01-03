@@ -58,10 +58,12 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :stories, except: [:show] do
+    resources :stories do
+      member do
+        patch :toggle_active # Crée toggle_active_admin_story_path(id)
+      end
       collection do
         post :geocode_missing
-        post :bulk
       end
     end
   end

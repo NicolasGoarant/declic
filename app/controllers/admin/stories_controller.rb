@@ -1,5 +1,6 @@
 class Admin::StoriesController < Admin::BaseController
-  before_action :set_story, only: [:edit, :update, :destroy]
+  # Ajout de toggle_active dans le before_action
+  before_action :set_story, only: [:edit, :update, :destroy, :toggle_active]
 
   # GET /admin/stories
   def index
@@ -66,6 +67,17 @@ class Admin::StoriesController < Admin::BaseController
   def destroy
     @story.destroy
     redirect_to admin_stories_path(request.query_parameters), notice: "Histoire supprimée."
+  end
+
+  # Action pour publier/dépublier (Brouillon)
+  def toggle_active
+    # Inversion de l'état
+    if @story.update(is_active: !@story.is_active)
+      flash[:notice] = "Statut de la story mis à jour."
+    else
+      flash[:alert] = "Impossible de mettre à jour la story."
+    end
+    redirect_back fallback_location: admin_stories_path
   end
 
   # POST /admin/stories/bulk
@@ -152,10 +164,6 @@ class Admin::StoriesController < Admin::BaseController
     )
   end
 
-  # Si params[:import_blob] est présent :
-  # - parse frontmatter + body
-  # - remplit les champs (prioritaire sur le formulaire)
-  # - tente un géocodage si location présente mais coords absentes
   def apply_import_blob(story)
     blob = params[:import_blob].to_s
     return if blob.blank?
@@ -163,11 +171,9 @@ class Admin::StoriesController < Admin::BaseController
     begin
       attrs, body = ImportStoryParser.call(blob)
 
-      # Import prioritaire sur les champs du formulaire
       story.assign_attributes(attrs)
       story.body = body if body.present?
 
-      # Géocodage automatique si on a une adresse mais pas de coords
       if story.location.present? &&
          (story.latitude.blank? || story.longitude.blank?) &&
          story.respond_to?(:geocode)
