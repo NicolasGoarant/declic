@@ -1,31 +1,37 @@
 <%# app/views/opportunities/new.html.erb %>
 
-<div class="bg-gray-50 min-h-screen font-sans text-slate-800">
-  <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+<div class="bg-gradient-to-br from-violet-50 via-white to-indigo-50 min-h-screen font-sans">
+  <main class="max-w-3xl mx-auto px-4 py-10">
 
-    <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 font-epilogue">
-          Proposer une opportunité
-        </h1>
-        <p class="mt-2 text-slate-600">
-          Partagez une initiative locale. Elle sera relue par l'équipe avant publication.
-        </p>
+    <%# En-tête %>
+    <div class="text-center mb-10">
+      <div class="inline-block mb-4">
+        <span class="text-xs uppercase tracking-widest text-violet-600 font-bold">✨ Partager mon initiative</span>
       </div>
-      <%= link_to "← Annuler", opportunities_path, class: "text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors" %>
+      <h1 class="text-4xl md:text-5xl font-black text-slate-900 mb-4 font-epilogue">
+        Proposer une <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600 italic">opportunité</span>
+      </h1>
+      <p class="text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
+        Votre initiative locale peut inspirer d'autres personnes. ⚡
+      </p>
+      <p class="text-sm text-slate-500 mt-2">L'équipe Déclic la relira avant publication.</p>
     </div>
 
+    <%# Erreurs %>
     <% if @opportunity.errors.any? %>
-      <div class="rounded-xl border border-red-200 bg-red-50 p-4 mb-8">
-        <div class="flex">
-          <div class="shrink-0 text-red-400">⚠️</div>
-          <div class="ml-3">
-            <h3 class="text-sm font-medium text-red-800">
-              Merci de corriger les <%= pluralize(@opportunity.errors.count, "erreur") %> :
+      <div class="rounded-2xl border-2 border-red-300 bg-red-50 p-6 mb-8 shadow-sm">
+        <div class="flex gap-3">
+          <div class="text-2xl">😅</div>
+          <div class="flex-1">
+            <h3 class="text-lg font-bold text-red-900 mb-2">
+              Oups, quelques petits ajustements...
             </h3>
-            <ul class="mt-2 list-disc list-inside text-sm text-red-700">
+            <ul class="space-y-1 text-sm text-red-800">
               <% @opportunity.errors.full_messages.each do |msg| %>
-                <li><%= msg %></li>
+                <li class="flex items-start gap-2">
+                  <span class="text-red-500 mt-0.5">→</span>
+                  <span><%= msg.gsub("can't be blank", "est nécessaire").gsub("Description", "La description").gsub("Title", "Le titre").gsub("Category", "La catégorie") %></span>
+                </li>
               <% end %>
             </ul>
           </div>
@@ -33,104 +39,136 @@
       </div>
     <% end %>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-      <div class="lg:col-span-2">
-        <%= form_with model: @opportunity, local: true, class: "space-y-8 bg-white p-8 rounded-3xl shadow-sm border border-slate-200" do |f| %>
+    <%= form_with model: @opportunity, local: true do |f| %>
 
-          <div class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <%= f.label :title, "Titre de l'opportunité", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.text_field :title, placeholder: "Ex: Atelier compostage urbain", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-              </div>
-              <div>
-                <%= f.label :category, "Catégorie", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.select :category,
-                    [["🤝 Bénévolat", "benevolat"], ["🎓 Formation", "formation"], ["👋 Rencontres", "rencontres"], ["🚀 Entreprendre", "entreprendre"], ["🌱 Écologiser", "ecologiser"]],
-                    { include_blank: "Choisir..." },
-                    class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-              </div>
-            </div>
+      <%# Section 1 : Qui êtes-vous ? %>
+      <section class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 mb-6 transition-all hover:shadow-md">
+        <h2 class="text-xl font-bold mb-2 flex items-center gap-3">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 text-white text-sm">1</span>
+          L'essentiel 🎯
+        </h2>
+        <p class="text-slate-500 text-sm mb-6 italic">Titre, catégorie et description</p>
 
+        <div class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <%= f.label :description, "Description", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.text_area :description, rows: 5, placeholder: "Décrivez en quelques lignes votre initiative...", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
+              <%= f.label :title, class: "block text-sm font-bold text-slate-700 mb-2" do %>
+                Titre de l'opportunité <span class="text-red-500">*</span>
+              <% end %>
+              <%= f.text_field :title, placeholder: "Ex: Atelier compostage urbain", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-4" %>
             </div>
-
             <div>
-              <%= f.label :organization, "Organisation", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.text_field :organization, placeholder: "Ex: Maison de la Nature", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-            </div>
-
-            <%# NOUVEAUX CHAMPS ADRESSE SÉPARÉS %>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <%= f.label :address, "Adresse (Obligatoire)", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.text_field :address, required: true, placeholder: "Ex: 3 rue de la République", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-              </div>
-              <div>
-                <%= f.label :city, "Ville (Obligatoire)", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.text_field :city, required: true, placeholder: "Nancy", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <%= f.label :postal_code, "Code Postal (Obligatoire)", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.text_field :postal_code, required: true, placeholder: "54000", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-              </div>
-              <div>
-                <%= f.label :website, "Site web (optionnel)", class: "block text-sm font-bold text-slate-700 mb-1" %>
-                <%= f.url_field :website, placeholder: "https://...", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
-              </div>
-            </div>
-
-            <%# SECTION PHOTOS AVEC COMPRESSION %>
-            <div class="field">
-              <%= f.label :photos, "Ajouter des images (optionnel)", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <p class="text-xs text-slate-500 mb-2">Vous pouvez sélectionner plusieurs photos en une ou plusieurs fois</p>
-              <%= f.file_field :photos, multiple: true, id: "photo-upload-input", class: "block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" %>
-              <div id="image-preview-zone" class="mt-4 flex flex-wrap gap-3"></div>
-            </div>
-
-            <div>
-              <%= f.label :contact_email, "Votre email de contact", class: "block text-sm font-bold text-slate-700 mb-1" %>
-              <%= f.email_field :contact_email, placeholder: "Pour vous recontacter si besoin", class: "w-full rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 shadow-sm" %>
+              <%= f.label :category, class: "block text-sm font-bold text-slate-700 mb-2" do %>
+                Catégorie <span class="text-red-500">*</span>
+              <% end %>
+              <%= f.select :category,
+                  [["🤝 Bénévolat", "benevolat"], ["🎓 Formation", "formation"], ["👋 Rencontres", "rencontres"], ["🚀 Entreprendre", "entreprendre"], ["🌱 Écologiser", "ecologiser"]],
+                  { include_blank: "Choisir..." },
+                  class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-4" %>
             </div>
           </div>
 
-          <div class="pt-6 border-t border-slate-100">
-            <%= f.submit "Valider et envoyer à Déclic", class: "w-full flex justify-center py-4 px-6 border border-transparent rounded-full shadow-lg text-lg font-bold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all transform hover:-translate-y-1" %>
+          <div>
+            <%= f.label :description, class: "block text-sm font-bold text-slate-700 mb-2" do %>
+              Description <span class="text-red-500">*</span>
+            <% end %>
+            <%= f.text_area :description, rows: 5, placeholder: "Décrivez en quelques lignes votre initiative...", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-4" %>
           </div>
-        <% end %>
-      </div>
 
-      <aside class="space-y-6">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
-          <h2 class="font-bold text-slate-900 flex items-center gap-2">
-            <span class="text-xl">💡</span> Conseils
-          </h2>
-          <ul class="mt-4 space-y-2 text-sm text-slate-600">
-            <li class="flex items-start gap-2">
-              <span>✓</span>
-              <span>Titre court et accrocheur</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span>✓</span>
-              <span>Description claire : qui, quoi, où, quand</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span>✓</span>
-              <span>Choisissez de belles images compressées automatiquement</span>
-            </li>
-          </ul>
+          <div>
+            <%= f.label :organization, "Organisation", class: "block text-sm font-bold text-slate-700 mb-2" %>
+            <%= f.text_field :organization, placeholder: "Ex: Maison de la Nature", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-4" %>
+          </div>
         </div>
-      </aside>
-    </div>
+      </section>
+
+      <%# Section 2 : Localisation %>
+      <section class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 mb-6 transition-all hover:shadow-md">
+        <h2 class="text-xl font-bold mb-2 flex items-center gap-3">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 text-white text-sm">2</span>
+          Localisation 📍
+        </h2>
+        <p class="text-slate-500 text-sm mb-6 italic">Où se passe votre initiative ?</p>
+
+        <div class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <%= f.label :address, class: "block text-sm font-bold text-slate-700 mb-2" do %>
+                Adresse <span class="text-red-500">*</span>
+              <% end %>
+              <%= f.text_field :address, required: true, placeholder: "Ex: 3 rue de la République", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-4" %>
+            </div>
+            <div>
+              <%= f.label :city, class: "block text-sm font-bold text-slate-700 mb-2" do %>
+                Ville <span class="text-red-500">*</span>
+              <% end %>
+              <%= f.text_field :city, required: true, placeholder: "Nancy", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-4" %>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <%= f.label :postal_code, class: "block text-sm font-bold text-slate-700 mb-2" do %>
+                Code Postal <span class="text-red-500">*</span>
+              <% end %>
+              <%= f.text_field :postal_code, required: true, placeholder: "54000", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-4" %>
+            </div>
+            <div>
+              <%= f.label :website, "Site web (si vous en avez)", class: "block text-sm font-bold text-slate-700 mb-2" %>
+              <%= f.url_field :website, placeholder: "https://...", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-4" %>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <%# Section 3 : Photos %>
+      <section class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 mb-6 transition-all hover:shadow-md">
+        <h2 class="text-xl font-bold mb-2 flex items-center gap-3">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 text-white text-sm">3</span>
+          Les images 📸
+        </h2>
+        <p class="text-slate-500 text-sm mb-6 italic">Des images pour donner vie à votre initiative</p>
+
+        <div>
+          <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-200 border-dashed rounded-3xl cursor-pointer bg-slate-50 hover:bg-violet-50 hover:border-violet-300 transition-all">
+            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+              <span class="text-2xl mb-1">📁</span>
+              <p class="text-sm text-slate-600 font-bold">Sélectionner une ou plusieurs photos</p>
+              <p class="text-xs text-slate-400 mt-1">Vous pouvez ajouter des photos en plusieurs fois</p>
+            </div>
+            <%= f.file_field :photos, multiple: true, id: "photo-upload-input", class: "hidden" %>
+          </label>
+          <div id="image-preview-zone" class="mt-6 flex flex-wrap gap-4 justify-center"></div>
+        </div>
+      </section>
+
+      <%# Section 4 : Contact %>
+      <section class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 mb-6 transition-all hover:shadow-md">
+        <h2 class="text-xl font-bold mb-2 flex items-center gap-3">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 text-white text-sm">4</span>
+          Contact 💌
+        </h2>
+        <p class="text-slate-500 text-sm mb-6 italic">Pour qu'on puisse vous recontacter si besoin</p>
+
+        <div>
+          <%= f.label :contact_email, "Votre email", class: "block text-sm font-bold text-slate-700 mb-2" %>
+          <%= f.email_field :contact_email, placeholder: "votre@email.com", class: "w-full rounded-2xl border-slate-200 focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-4" %>
+        </div>
+      </section>
+
+      <%# Bouton %>
+      <div class="text-center">
+        <p class="text-xs text-slate-500 mb-4 italic">
+          <span class="text-red-500">*</span> On en a besoin !
+        </p>
+        <%= f.submit "🚀 Valider et envoyer mon opportunité", class: "w-full py-5 px-4 rounded-full text-lg md:text-xl font-black text-white bg-slate-900 hover:bg-violet-600 shadow-2xl shadow-violet-200 transition-all transform hover:-translate-y-1 cursor-pointer" %>
+      </div>
+    <% end %>
+
   </main>
 </div>
 
-<%# SCRIPT DE COMPRESSION ET CUMUL D'IMAGES %>
+<%# Script compression images %>
 <script>
   let allFiles = [];
 
@@ -184,8 +222,8 @@
       const zone = document.getElementById('image-preview-zone');
 
       const loader = document.createElement('div');
-      loader.className = 'text-sm text-violet-600 font-semibold animate-pulse';
-      loader.textContent = '🔄 Compression...';
+      loader.className = 'text-center text-violet-600 font-bold animate-pulse my-4';
+      loader.textContent = '🔄 Compression des images...';
       zone.appendChild(loader);
 
       const newFiles = Array.from(input.files);
@@ -215,17 +253,17 @@
 
           const img = document.createElement('img');
           img.src = event.target.result;
-          img.className = "h-24 w-24 object-cover rounded-xl border-2 border-slate-200 shadow-md";
+          img.className = "h-28 w-28 object-cover rounded-2xl border-4 border-white shadow-xl rotate-3 hover:rotate-0 transition-transform duration-300 shadow-slate-200";
 
           const sizeBadge = document.createElement('div');
           const sizeMB = (file.size / 1024 / 1024).toFixed(1);
-          sizeBadge.className = "absolute -top-2 -left-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-bold";
+          sizeBadge.className = "absolute -top-1 -left-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-bold";
           sizeBadge.textContent = `${sizeMB}MB`;
 
           const deleteBtn = document.createElement('button');
           deleteBtn.type = 'button';
           deleteBtn.innerHTML = '×';
-          deleteBtn.className = "absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600";
+          deleteBtn.className = "absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10";
           deleteBtn.onclick = function() {
             allFiles.splice(index, 1);
             const dt = new DataTransfer();
