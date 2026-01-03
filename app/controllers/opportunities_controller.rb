@@ -13,44 +13,27 @@ class OpportunitiesController < ApplicationController
     @opportunity = Opportunity.new
   end
 
-  def merci
-    # Rend la vue merci.html.erb
-  end
-
+  # MODIFICATION : Forcer is_active à false pour modération
   def create
     @opportunity = Opportunity.new(opportunity_params)
+    @opportunity.is_active = false
 
-    if params[:preview]
-      handle_preview
-    else
-      handle_final_submit
-    end
-  end
-
-  private
-
-  def handle_preview
-    @preview = @opportunity.valid?
-    render :new, status: @preview ? :ok : :unprocessable_entity
-  end
-
-  def handle_final_submit
     if @opportunity.save
-      # Envoi immédiat à Mailtrap (ou en queue selon config)
       OpportunityProposalMailer.with(opportunity: @opportunity).proposal_email.deliver_later
       redirect_to merci_opportunities_path
     else
-      flash.now[:alert] = "Veuillez corriger les erreurs ci-dessous."
       render :new, status: :unprocessable_entity
     end
   end
 
-def opportunity_params
-  params.require(:opportunity).permit(
-    :title, :description, :category, :organization,
-    :address, :city, :postal_code, :location,  # ← Ajouter ces champs
-    :image, :gallery_image_1, :gallery_image_2, :gallery_image_3,
-    :contact_email, :website, photos: []
-  )
-end
+  def merci; end
+
+  private
+
+  def opportunity_params
+    params.require(:opportunity).permit(
+      :title, :description, :category, :organization,
+      :location, :contact_email, :website
+    )
+  end
 end

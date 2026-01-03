@@ -1,267 +1,87 @@
 <%# app/views/admin/opportunities/index.html.erb %>
-
-<div class="admin-wrap">
+<div class="admin-container">
   <div class="admin-header">
-    <h1>Opportunités — Admin</h1>
-
-    <%= link_to "➕ Nouvelle opportunité",
-                new_admin_opportunity_path,
-                class: "btn" %>
+    <h1 class="title">Gestion des Opportunités</h1>
+    <%= link_to "➕ Nouvelle Opportunité", new_admin_opportunity_path, class: "btn-main" %>
   </div>
 
-  <div class="stats">
-    <span>Total: <strong><%= @counts[:total] %></strong></span>
-    <span>Actives: <strong><%= @counts[:active] %></strong></span>
-    <span>Sans coordonnées: <strong><%= @counts[:missing_coords] %></strong></span>
-  </div>
-
-  <!-- Filtres rapides -->
-  <div class="filters">
-    <%= form_with url: admin_opportunities_path, method: :get, local: true do |f| %>
-      <%= f.label :q, "Recherche" %>
-      <%= f.text_field :q, value: @q, placeholder: "mot-clé dans le titre" %>
-
-      <%= f.label :category, "Cat." %>
-      <%= select_tag :category,
-            options_for_select(
-              [
-                ["(toutes)", ""],
-                ["Bénévolat", "benevolat"],
-                ["Formation", "formation"],
-                ["Rencontres", "rencontres"],
-                ["Entreprendre", "entreprendre"],
-                ["Écologiser", "ecologiser"]
-              ],
-              @cat
-            ),
-            include_blank: false %>
-
-      <label>
-        <%= check_box_tag :only_inactive, "1", @only_in %> Uniquement inactives
+  <div class="filter-bar">
+    <%= form_with url: admin_opportunities_path, method: :get, local: true, class: "flex-form" do %>
+      <input type="text" name="q" value="<%= @q %>" placeholder="Rechercher...">
+      <select name="category">
+        <option value="">Toutes les catégories</option>
+        <% Opportunity::CATEGORIES.each do |c| %>
+          <option value="<%= c %>" <%= 'selected' if @cat == c %>><%= c.capitalize %></option>
+        <% end %>
+      </select>
+      <label class="checkbox-label">
+        <input type="checkbox" name="only_inactive" value="1" <%= "checked" if @only_in %>> ⏳ Brouillons
       </label>
-      <label>
-        <%= check_box_tag :missing_coords, "1", @missing %> Sans coordonnées
-      </label>
-
-      <%= f.submit "Filtrer", class: "btn" %>
-      <%= link_to "Réinitialiser", admin_opportunities_path, class: "btn ghost" %>
+      <button type="submit" class="btn-dark">Filtrer</button>
+      <%= link_to "Reset", admin_opportunities_path, class: "reset-link" %>
     <% end %>
   </div>
 
-  <!-- Formulaire d'actions groupées -->
-  <%= form_with url: bulk_admin_opportunities_path, method: :post, local: true do %>
-    <div class="bulk-bar">
-      <select name="bulk_action" required>
-        <option value="">— Action groupée —</option>
-        <option value="activate">Activer</option>
-        <option value="deactivate">Désactiver</option>
-        <option value="destroy">Supprimer</option>
-      </select>
-      <button class="btn">Appliquer</button>
-
-      <%= button_to "Géocoder les fiches sans coordonnées",
-                    geocode_missing_admin_opportunities_path,
-                    method: :post,
-                    form: { data: { turbo: false } },
-                    class: "btn ghost",
-                    form_class: "inline-form" %>
-    </div>
-
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-          <tr>
-            <th><input type="checkbox" id="chk-all"></th>
-            <th>ID</th>
-            <th>Titre</th>
-            <th>Cat.</th>
-            <th>Active</th>
-            <th>Lieu</th>
-            <th>Début</th>
-            <th>Fin</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @opportunities.each do |o| %>
-            <tr data-opportunity-id="<%= o.id %>">
-              <td><input type="checkbox" name="ids[]" value="<%= o.id %>"></td>
-              <td class="mono"><%= o.id %></td>
-              <td class="tight">
-                <div class="title"><%= o.title %></div>
-                <% if o.organization.present? %>
-                  <div class="muted"><%= o.organization %></div>
-                <% end %>
-              </td>
-              <td><%= o.category.presence || "—" %></td>
-              <td class="active-toggle">
-                <label class="toggle-switch">
-                  <input
-                    type="checkbox"
-                    class="toggle-active"
-                    data-opportunity-id="<%= o.id %>"
-                    <%= 'checked' if o.is_active? %>
-                  >
-                  <span class="toggle-slider"></span>
-                </label>
-              </td>
-              <td><%= o.location.presence || "—" %></td>
-              <td><%= o.starts_at ? l(o.starts_at, format: :short) : "—" %></td>
-              <td><%= o.ends_at ? l(o.ends_at, format: :short) : "—" %></td>
-              <td class="actions">
-                <%= link_to "Éditer", edit_admin_opportunity_path(o), class: "btn xs" %>
-                <%= link_to "Voir", opportunity_path(o), class: "btn xs ghost", target: "_blank" %>
-                <%= button_to "Supprimer",
-                              admin_opportunity_path(o),
-                              method: :delete,
-                              form: { data: { turbo_confirm: "Supprimer cette opportunité ?" }, class: "inline-form" },
-                              class: "btn xs danger" %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-  <% end %>
-
-  <% if @opportunities.blank? %>
-    <p class="muted" style="margin-top:12px">Aucune opportunité avec ces critères.</p>
-  <% end %>
+  <table class="modern-table">
+    <thead>
+      <tr>
+        <th>Statut</th>
+        <th>Titre & Catégorie</th>
+        <th>Lieu</th>
+        <th>Date</th>
+        <th class="text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @opportunities.each do |o| %>
+        <tr>
+          <td>
+            <%= button_to toggle_active_admin_opportunity_path(o), method: :patch, style: "border:none; cursor:pointer; font-weight:800; font-size:10px; padding:4px 12px; border-radius:20px; #{o.is_active ? 'background:#dcfce7;color:#15803d;' : 'background:#fef3c7;color:#b45309;'}" do %>
+              <%= o.is_active ? "PUBLIÉ" : "BROUILLON" %>
+            <% end %>
+          </td>
+          <td>
+            <div class="row-title"><%= o.title %></div>
+            <div class="row-subtitle"><%= o.category %></div>
+          </td>
+          <td>
+            <span class="<%= 'warning' if o.latitude.blank? %>">
+              <%= o.location.presence || "—" %>
+            </span>
+          </td>
+          <td class="date-cell"><%= o.created_at.strftime("%d/%m/%Y") %></td>
+          <td class="text-right">
+            <div class="action-links">
+              <%= link_to "✏️", edit_admin_opportunity_path(o) %>
+              <%= button_to "🗑️", admin_opportunity_path(o), method: :delete, data: { confirm: "Supprimer ?" }, class: "btn-delete" %>
+            </div>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
 </div>
 
 <style>
-.admin-wrap{font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;color:#0f172a}
-.admin-header{display:flex;align-items:center;justify-content:space-between;margin:0 0 .5rem}
-.stats{display:flex;gap:16px;margin:.5rem 0 1rem}
-.stats span{background:#f1f5f9;border:1px solid #e2e8f0;padding:.35rem .6rem;border-radius:8px}
-.filters form{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.5rem 0 1rem}
-.filters input[type="text"], .filters select{padding:.4rem .55rem;border:1px solid #cbd5e1;border-radius:8px}
-.btn{display:inline-block;background:#4f46e5;color:#fff;border-radius:8px;padding:.45rem .7rem;text-decoration:none;border:0;cursor:pointer;font-weight:600}
-.btn.ghost{background:#fff;color:#334155;border:1px solid #cbd5e1}
-.btn.danger{background:#dc2626}
-.btn.xs{font-size:.85rem;padding:.3rem .5rem;border-radius:6px}
-.bulk-bar{display:flex;gap:8px;align-items:center;margin:.25rem 0 .5rem}
-.bulk-bar select{padding:.4rem .55rem;border:1px solid #cbd5e1;border-radius:8px}
-.inline-form{display:inline}
-.table-wrap{overflow:auto;border:1px solid #e2e8f0;border-radius:10px}
-.table{width:100%;border-collapse:separate;border-spacing:0}
-.table th,.table td{padding:.5rem .6rem;border-bottom:1px solid #e2e8f0;vertical-align:top;white-space:nowrap}
-.table thead th{position:sticky;top:0;background:#f8fafc;z-index:1}
-.table td.tight .title{font-weight:600;white-space:normal}
-.table td.tight .muted{color:#64748b;font-size:.85em;white-space:normal}
-.table td.actions{display:flex;gap:6px;align-items:center}
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
-
-/* Toggle Switch Styles */
-.active-toggle{text-align:center}
-.toggle-switch{position:relative;display:inline-block;width:44px;height:24px}
-.toggle-switch input{opacity:0;width:0;height:0}
-.toggle-slider{
-  position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;
-  background:#cbd5e1;border-radius:24px;transition:.3s;
-}
-.toggle-slider:before{
-  position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;
-  background:#fff;border-radius:50%;transition:.3s;
-}
-.toggle-switch input:checked + .toggle-slider{background:#10b981}
-.toggle-switch input:checked + .toggle-slider:before{transform:translateX(20px)}
-.toggle-switch input:disabled + .toggle-slider{opacity:0.5;cursor:not-allowed}
-
-/* Loading state */
-tr.toggling .toggle-switch{opacity:0.6;pointer-events:none}
-</style>
-
-<script>
-  document.addEventListener('turbo:load', initAdminOps);
-  document.addEventListener('DOMContentLoaded', initAdminOps);
-
-  function initAdminOps(){
-    const all = document.getElementById('chk-all');
-    if(!all) return;
-    all.addEventListener('change', ()=>{
-      document.querySelectorAll('input[name="ids[]"]').forEach(c=> c.checked = all.checked);
-    });
-
-    initActiveToggles();
-  }
-
-  function initActiveToggles() {
-    document.querySelectorAll('.toggle-active').forEach(checkbox => {
-      checkbox.addEventListener('change', async function(e) {
-        const opportunityId = this.dataset.opportunityId;
-        const isActive = this.checked;
-        const row = this.closest('tr');
-
-        row.classList.add('toggling');
-
-        try {
-          const response = await fetch(`/admin/opportunities/${opportunityId}/toggle_active`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-Token': getCsrfToken()
-            },
-            body: JSON.stringify({ is_active: isActive })
-          });
-
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-
-          const data = await response.json();
-          showNotification(data.message || 'Statut mis à jour', 'success');
-
-        } catch (error) {
-          console.error('Error:', error);
-          this.checked = !isActive;
-          showNotification('Erreur lors de la mise à jour', 'error');
-        } finally {
-          row.classList.remove('toggling');
-        }
-      });
-    });
-  }
-
-  function getCsrfToken() {
-    const token = document.querySelector('meta[name="csrf-token"]');
-    return token ? token.content : '';
-  }
-
-  function showNotification(message, type = 'success') {
-    const notif = document.createElement('div');
-    notif.className = `notification notification-${type}`;
-    notif.textContent = message;
-    notif.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 12px 20px;
-      background: ${type === 'success' ? '#10b981' : '#dc2626'};
-      color: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 9999;
-      font-weight: 500;
-      animation: slideIn 0.3s ease;
-    `;
-
-    document.body.appendChild(notif);
-
-    setTimeout(() => {
-      notif.style.animation = 'slideOut 0.3s ease';
-      setTimeout(() => notif.remove(), 300);
-    }, 3000);
-  }
-</script>
-
-<style>
-@keyframes slideIn {
-  from { transform: translateX(400px); opacity: 0; }
-  to   { transform: translateX(0);     opacity: 1; }
-}
-@keyframes slideOut {
-  from { transform: translateX(0);     opacity: 1; }
-  to   { transform: translateX(400px); opacity: 0; }
-}
+  .admin-container { padding: 20px; max-width: 1200px; margin: 0 auto; font-family: sans-serif; }
+  .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+  .title { font-size: 24px; font-weight: 900; color: #1e293b; }
+  .btn-main { background: #7c3aed; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; }
+  .filter-bar { background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+  .flex-form { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+  .flex-form input, .flex-form select { border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px; }
+  .checkbox-label { font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; }
+  .modern-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; }
+  .modern-table th { background: #f8fafc; padding: 12px; font-size: 11px; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #e2e8f0; text-align: left; }
+  .modern-table td { padding: 15px 12px; border-bottom: 1px solid #f1f5f9; }
+  .status-badge { border: none; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; cursor: pointer; transition: transform 0.1s; }
+  .status-badge.active { background: #dcfce7; color: #15803d; }
+  .status-badge.draft { background: #fef3c7; color: #b45309; }
+  .status-badge:hover { transform: scale(1.05); }
+  .row-title { font-weight: bold; color: #0f172a; font-size: 14px; }
+  .row-subtitle { font-size: 12px; color: #94a3b8; text-transform: capitalize; }
+  .warning { color: #ef4444; font-weight: bold; }
+  .action-links { display: flex; gap: 10px; justify-content: flex-end; }
+  .btn-delete { background: none; border: none; cursor: pointer; color: #ef4444; font-size: 1.1rem; }
+  .date-cell { font-size: 12px; color: #64748b; }
 </style>
