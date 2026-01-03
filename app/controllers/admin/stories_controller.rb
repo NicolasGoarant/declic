@@ -23,7 +23,8 @@ class Admin::StoriesController < Admin::BaseController
 
     @counts = {
       total:          Story.count,
-      missing_coords: Story.where(latitude: nil).or(Story.where(longitude: nil)).count
+      missing_coords: Story.where(latitude: nil).or(Story.where(longitude: nil)).count,
+      active:         Story.where(is_active: true).count
     }
   end
 
@@ -69,15 +70,14 @@ class Admin::StoriesController < Admin::BaseController
     redirect_to admin_stories_path(request.query_parameters), notice: "Histoire supprimée."
   end
 
-  # Action pour publier/dépublier (Brouillon)
+  # PATCH /admin/stories/:id/toggle_active
   def toggle_active
-    # Inversion de l'état
     if @story.update(is_active: !@story.is_active)
-      flash[:notice] = "Statut de la story mis à jour."
+      flash[:notice] = "Story #{@story.is_active ? 'activée' : 'désactivée'} : #{@story.title}"
     else
       flash[:alert] = "Impossible de mettre à jour la story."
     end
-    redirect_back fallback_location: admin_stories_path
+    redirect_to admin_stories_path(request.query_parameters)
   end
 
   # POST /admin/stories/bulk
@@ -160,7 +160,9 @@ class Admin::StoriesController < Admin::BaseController
       :highlights_title,
       :highlights_text,
       :highlights_items,
-      :contact_info
+      :contact_info,
+      :author_name, :author_email, :phone, :address, :city, :postal_code,
+      photos: []
     )
   end
 

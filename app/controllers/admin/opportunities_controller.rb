@@ -83,7 +83,12 @@ class Admin::OpportunitiesController < ApplicationController
 
   def opportunity_params
     params.require(:opportunity).permit(
-      :title, :category, :organization, :description, :is_active, :location, :latitude, :longitude, :tags
+      :title, :category, :organization, :description, :is_active,
+      :location, :latitude, :longitude, :tags,
+      :address, :city, :postal_code, :website, :contact_email, :phone,
+      :image, :image_url,
+      :gallery_image_1, :gallery_image_2, :gallery_image_3,
+      photos: []
     )
   end
 
