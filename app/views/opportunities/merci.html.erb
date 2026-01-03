@@ -1,16 +1,68 @@
-<div class="min-h-screen bg-slate-50 flex items-center justify-center px-6">
-  <div class="max-w-md w-full bg-white rounded-3xl shadow-xl p-10 text-center border border-slate-100 transform transition-all hover:scale-[1.01]">
-    <div class="text-6xl mb-6 animate-bounce">🎉</div>
-    <h1 class="text-3xl font-black text-slate-900 mb-4 font-epilogue italic">Merci pour ce Déclic !</h1>
-    <p class="text-slate-600 mb-8 leading-relaxed">
-      Votre proposition d'opportunité a bien été transmise. Notre équipe va la relire avec attention avant de la mettre en ligne.
+<div class="bg-gradient-to-br from-violet-50 via-white to-indigo-50 min-h-screen flex items-center justify-center p-6">
+  <div class="max-w-2xl w-full text-center">
+
+    <style>
+      @keyframes sparkle {
+        0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        50% { transform: scale(1.2) rotate(180deg); opacity: 0.8; }
+      }
+      @keyframes slideInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+      }
+
+      .sparkle-icon {
+        animation: sparkle 2s ease-in-out infinite;
+        display: inline-block;
+      }
+      .slide-up {
+        animation: slideInUp 0.6s ease-out;
+      }
+      .slide-up-delay-1 {
+        animation: slideInUp 0.8s ease-out;
+      }
+      .slide-up-delay-2 {
+        animation: slideInUp 1s ease-out;
+      }
+      .float-animation {
+        animation: float 3s ease-in-out infinite;
+      }
+    </style>
+
+    <div class="text-8xl mb-8 sparkle-icon">
+      🎉
+    </div>
+
+    <h1 class="text-4xl md:text-5xl font-black tracking-tight mb-6 slide-up text-slate-900">
+      Merci pour votre <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">opportunité</span> !
+    </h1>
+
+    <p class="text-slate-600 text-lg md:text-xl leading-relaxed mb-4 slide-up-delay-1 max-w-xl mx-auto">
+      Votre proposition a bien été reçue. Notre équipe va la relire avec attention avant publication sur la carte.
     </p>
 
-    <div class="space-y-4">
-      <%= link_to "Retour à l'accueil", root_path,
-          class: "block w-full py-4 bg-slate-900 text-white rounded-full font-bold hover:bg-violet-600 transition-all shadow-lg shadow-slate-200" %>
-      <%= link_to "Parcourir les opportunités", opportunities_path,
-          class: "block w-full py-4 text-slate-500 font-semibold hover:text-slate-800 transition-colors" %>
+    <p class="text-violet-600 font-semibold mb-10 slide-up-delay-2 flex items-center justify-center gap-2">
+      <span class="text-2xl">💜</span>
+      <span>Chaque initiative compte pour transformer Nancy</span>
+    </p>
+
+    <div class="slide-up-delay-2">
+      <%= link_to root_path, class: "inline-flex items-center gap-3 bg-slate-900 text-white px-10 py-4 rounded-full font-bold text-lg transition-all hover:bg-violet-600 hover:scale-105 hover:shadow-2xl shadow-lg float-animation" do %>
+        <span>←</span>
+        <span>Retour à l'accueil</span>
+      <% end %>
     </div>
+
+    <div class="mt-16 flex justify-center gap-4 text-3xl opacity-50">
+      <span style="animation: float 2s ease-in-out infinite;">🌟</span>
+      <span style="animation: float 2.5s ease-in-out infinite 0.3s;">✨</span>
+      <span style="animation: float 2.2s ease-in-out infinite 0.6s;">💫</span>
+      <span style="animation: float 2.8s ease-in-out infinite 0.9s;">🚀</span>
+    </div>
+
   </div>
 </div>

@@ -45,11 +45,12 @@ class OpportunitiesController < ApplicationController
     end
   end
 
-  def opportunity_params
-    params.require(:opportunity).permit(
-      :title, :description, :category, :organization, :location,
-      :image, :gallery_image_1, :gallery_image_2, :gallery_image_3,
-      :contact_email, :website, photos: []
-    )
-  end
+def opportunity_params
+  params.require(:opportunity).permit(
+    :title, :description, :category, :organization,
+    :address, :city, :postal_code, :location,  # ← Ajouter ces champs
+    :image, :gallery_image_1, :gallery_image_2, :gallery_image_3,
+    :contact_email, :website, photos: []
+  )
+end
 end
