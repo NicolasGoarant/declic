@@ -429,18 +429,38 @@ end
               <%= link_to "💬 Contacter l'organisation", "mailto:#{@opportunity.contact_email}", class: "opp-action-btn secondary" %>
             <% end %>
 
-<% link_to_display = @opportunity.source_url.presence || @opportunity.website_url.presence || @opportunity.website.presence rescue nil %>
 
-<% if link_to_display %>
-  <div class="mt-8">
-    <%= link_to link_to_display,
-        class: "inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 transition-colors",
-        target: "_blank" do %>
-      <span>🔗 Lire l'article complet</span>
-      <span class="text-sm opacity-75">(sur <%= @opportunity.source_name.presence || "le site source" %>)</span>
-    <% end %>
+
+            <%# Bloc Source & Crédits - Respect du droit d'auteur %>
+<% if @opportunity.source_url.present? || @opportunity.website_url.present? %>
+  <% final_url = @opportunity.source_url.presence || @opportunity.website_url %>
+
+  <div class="mt-10 p-6 bg-slate-50 rounded-2xl border border-slate-200">
+    <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Source</h4>
+
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <p class="text-slate-900 font-medium">
+          Article publié par : <span class="font-bold"><%= @opportunity.source_name.presence || "Média inconnu" %></span>
+        </p>
+        <% if @opportunity.source_author.present? %>
+          <p class="text-slate-600 text-sm italic">Rédaction : <%= @opportunity.source_author %></p>
+        <% end %>
+      </div>
+
+      <%= link_to final_url, class: "inline-flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-sm", target: "_blank" do %>
+        <span>Lire l'article d'origine</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        </svg>
+      <% end %>
+    </div>
   </div>
 <% end %>
+
+
+
+
           </div>
         </div>
 
