@@ -429,9 +429,18 @@ end
               <%= link_to "💬 Contacter l'organisation", "mailto:#{@opportunity.contact_email}", class: "opp-action-btn secondary" %>
             <% end %>
 
-            <% if @opportunity.source_url.present? %>
-              <%= link_to "📄 En savoir plus", @opportunity.source_url, target: "_blank", rel: "noopener", class: "opp-action-btn secondary" %>
-            <% end %>
+<% link_to_display = @opportunity.source_url.presence || @opportunity.website_url.presence || @opportunity.website.presence rescue nil %>
+
+<% if link_to_display %>
+  <div class="mt-8">
+    <%= link_to link_to_display,
+        class: "inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 transition-colors",
+        target: "_blank" do %>
+      <span>🔗 Lire l'article complet</span>
+      <span class="text-sm opacity-75">(sur <%= @opportunity.source_name.presence || "le site source" %>)</span>
+    <% end %>
+  </div>
+<% end %>
           </div>
         </div>
 

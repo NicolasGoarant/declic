@@ -58,6 +58,7 @@ class OpportunitiesController < ApplicationController
       :postal_code,
       :contact_email,
       :website,
+      :source_name, :source_url, # <--- Ajoutez ces deux-là ici
       photos: []
     )
   end
