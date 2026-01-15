@@ -87,9 +87,13 @@ end
       </div>
     </div>
 
-    <% hero_src = (asset_path('hero_home.jpg') rescue nil)
-       hero_src ||= "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2400&auto=format&fit=crop" %>
-    <div class="hm-hero-img" style="--hero:url('<%= hero_src %>')"></div>
+<% # On définit la source sur ton image locale pousse.jpg %>
+    <% hero_src = asset_path('pousse.jpg') %>
+
+    <div class="hm-hero-img" style="--hero:url('<%= hero_src %>')">
+      <%# Conteneur pour tes futures étoiles scintillantes %>
+      <div id="stars-container"></div>
+    </div>
   </header>
 
   <%# ========== SECTION CARTE (MAINTENANT EN PREMIER !) ========== %>
@@ -2225,5 +2229,52 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
 
   observer.observe(stats);
 })();
+
+
+
+// Graine qui pousse
+(function() {
+  if (window.innerWidth <= 768) return;
+
+  function growSeed() {
+    // Créer le conteneur
+    const container = document.createElement('div');
+    container.className = 'seed-growth';
+
+    // Créer la graine
+    const seed = document.createElement('div');
+    seed.className = 'seed';
+    seed.textContent = '🌰';
+
+    container.appendChild(seed);
+    document.body.appendChild(container);
+
+    // Animer les changements d'emoji
+    const stages = ['🌰', '🌱', '🌿', '🪴', '🌳'];
+    const timings = [0, 2800, 4400, 6000, 6800];
+
+    stages.forEach((emoji, index) => {
+      setTimeout(() => {
+        seed.textContent = emoji;
+      }, timings[index]);
+    });
+
+    // Supprimer après l'animation
+    setTimeout(() => {
+      container.remove();
+    }, 8000);
+  }
+
+  // Première pousse après 3 secondes
+  setTimeout(growSeed, 3000);
+
+  // Puis toutes les 15 secondes
+  setInterval(growSeed, 15000);
+
+  console.log('🌱 Graine animée activée');
+})();
+
+
+
 </script>
 <% end %>
