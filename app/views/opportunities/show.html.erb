@@ -459,6 +459,17 @@ end
 <% end %>
 
 
+<% if @opportunity.cta_button_url.present? %>
+  <div class="mb-8">
+    <%= link_to @opportunity.cta_button_url,
+        class: "btn-declic block w-full text-center py-4 px-6 rounded-2xl text-white font-bold text-lg shadow-xl hover:shadow-2xl transition-all",
+        style: "background: #{badge_color || '#8b5cf6'}",
+        target: "_blank" do %>
+      <span class="mr-2">🚀</span> <%= @opportunity.cta_button_text.presence || "Passer à l'action" %>
+    <% end %>
+  </div>
+<% end %>
+
 
 
           </div>

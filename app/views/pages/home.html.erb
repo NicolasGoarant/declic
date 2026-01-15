@@ -339,9 +339,80 @@ end
 [id]{ scroll-margin-top:96px; }
 
 /* ====== HERO ====== */
-.hm-hero{ position:relative; color:#fff; overflow:hidden; background:linear-gradient(160deg,var(--a1),var(--a2)); }
-.hm-hero-inner{ position:relative;
-  padding-top:clamp(72px,8vw,120px); padding-bottom:clamp(44px,6.5vw,84px); z-index:10; }
+/* Hero full-screen avec animations */
+.hm-hero{
+  position:relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color:#fff;
+  overflow:hidden;
+  background:linear-gradient(160deg,var(--a1),var(--a2));
+}
+
+.hm-hero-inner{
+  position:relative;
+  padding: 2rem 0;
+  z-index:10;
+  animation: fadeInUp 1s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+.hm-hero{
+  position:relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color:#fff;
+  overflow:hidden;
+  background:linear-gradient(160deg,var(--a1),var(--a2));
+}
+
+.hm-hero-inner{
+  position:relative;
+  padding: 2rem 0;
+  z-index:10;
+  animation: fadeInUp 1s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .hm-hero {
+    min-height: 80vh;
+  }
+}
+
+@media (max-width: 640px) {
+  .hm-hero {
+    min-height: 70vh;
+  }
+}
+
+
+
 .hm-hero::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(7,9,22,.62),rgba(7,9,22,.62)); mix-blend:multiply; z-index:2; }
 .hm-hero-img{ position:absolute; inset:0; background:var(--hero,none) center/cover no-repeat; filter:blur(2px) saturate(1.05) brightness(0.9); opacity:.85; z-index:1; }
 
@@ -410,10 +481,16 @@ end
   font-size:clamp(2.8rem,5vw,4.6rem);
   margin:.2rem 0 .5rem; text-shadow:0 2px 16px rgba(0,0,0,.25);
 }
+
+/* Texte doré simple et élégant */
 .hm-title .grad{
   background:linear-gradient(90deg,#f472b6,#a855f7,#6366f1);
-  -webkit-background-clip:text; background-clip:text; color:transparent;
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
 }
+
+
 .hm-chapo{
   max-width:980px;
   font:600 clamp(1.12rem,1.05vw + .9rem,1.5rem)/1.65 "Inter";
