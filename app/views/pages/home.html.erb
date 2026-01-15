@@ -339,7 +339,6 @@ end
 [id]{ scroll-margin-top:96px; }
 
 /* ====== HERO ====== */
-/* Hero full-screen avec animations */
 .hm-hero{
   position:relative;
   min-height: 100vh;
@@ -369,39 +368,14 @@ end
   }
 }
 
-
-.hm-hero{
-  position:relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color:#fff;
-  overflow:hidden;
-  background:linear-gradient(160deg,var(--a1),var(--a2));
-}
-
-.hm-hero-inner{
-  position:relative;
-  padding: 2rem 0;
-  z-index:10;
-  animation: fadeInUp 1s ease-out;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
+/* Responsive mobile - plus d'espace en haut pour le badge */
 @media (max-width: 768px) {
   .hm-hero {
     min-height: 80vh;
+  }
+
+  .hm-hero-inner {
+    padding: 4rem 0 2rem 0;
   }
 }
 
@@ -409,16 +383,36 @@ end
   .hm-hero {
     min-height: 70vh;
   }
+
+  .hm-hero-inner {
+    padding: 5rem 0 2rem 0;
+  }
 }
 
+.hm-hero::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,rgba(7,9,22,.62),rgba(7,9,22,.62));
+  mix-blend-mode:multiply;
+  z-index:2;
+}
 
-
-.hm-hero::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(7,9,22,.62),rgba(7,9,22,.62)); mix-blend:multiply; z-index:2; }
-.hm-hero-img{ position:absolute; inset:0; background:var(--hero,none) center/cover no-repeat; filter:blur(2px) saturate(1.05) brightness(0.9); opacity:.85; z-index:1; }
+.hm-hero-img{
+  position:absolute;
+  inset:0;
+  background:var(--hero,none) center/cover no-repeat;
+  filter:blur(2px) saturate(1.05) brightness(0.9);
+  opacity:.85;
+  z-index:1;
+}
 
 /* Badge - En haut à droite sur desktop ET mobile */
 .hm-badge{
-  position:absolute; top:14px; right:calc(18px + env(safe-area-inset-right)); z-index:30;
+  position:absolute;
+  top:14px;
+  right:calc(18px + env(safe-area-inset-right));
+  z-index:30;
   display:inline-flex;
   align-items:center;
   gap:.55rem;
@@ -464,8 +458,10 @@ end
 
 @media (max-width:480px){
   .hm-badge{
-    top:10px;
-    right:10px;
+    top: 10px;
+    right: 10px;
+    font-size: 0.92rem;
+    padding: 0.55rem 0.85rem;
   }
 }
 
@@ -474,20 +470,36 @@ end
   display:none;
 }
 
-
 .hm-title{
-  font-family:"Epilogue",Inter; font-weight:900;
-  letter-spacing:-.02em; line-height:1.03;
+  font-family:"Epilogue",Inter;
+  font-weight:900;
+  letter-spacing:-.02em;
+  line-height:1.03;
   font-size:clamp(2.8rem,5vw,4.6rem);
-  margin:.2rem 0 .5rem; text-shadow:0 2px 16px rgba(0,0,0,.25);
+  margin:.2rem 0 .5rem;
+  text-shadow:0 2px 16px rgba(0,0,0,.25);
 }
 
-/* Texte doré simple et élégant */
 .hm-title .grad{
   background:linear-gradient(90deg,#f472b6,#a855f7,#6366f1);
   -webkit-background-clip:text;
   background-clip:text;
   color:transparent;
+  display: inline-block;
+  animation: focusIn 2.5s cubic-bezier(0.22, 1, 0.36, 1) 1s both;
+}
+
+@keyframes focusIn {
+  0% {
+    opacity: 0;
+    filter: blur(12px);
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0px);
+    transform: scale(1);
+  }
 }
 
 
@@ -498,27 +510,308 @@ end
 }
 
 .hm-stats{
-  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:16px; margin-top:18px;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px;
+  margin-top:18px;
 }
+
 .hm-stats>div{
-  background:rgba(255,255,255,.92); backdrop-filter: blur(6px);
-  border:1px solid #e6e8ee; border-radius:18px;
+  background:rgba(255,255,255,.92);
+  backdrop-filter: blur(6px);
+  border:1px solid #e6e8ee;
+  border-radius:18px;
   padding:16px 18px;
   box-shadow:0 12px 34px rgba(15,23,42,.18);
-  color:#0f172a; text-align:center;
+  color:#0f172a;
+  text-align:center;
 }
+
 .hm-stats dt{
-  font:700 .82rem/1 "Inter"; color:#6b7280;
+  font:700 .82rem/1 "Inter";
+  color:#6b7280;
   text-transform:uppercase;
   letter-spacing:.04em;
 }
-.hm-stats dd{ margin:.25rem 0 0; font:900 1.8rem/1 "Epilogue"; }
-@media (max-width:640px){
-  .hm-stats{ grid-template-columns:1fr; gap:10px; }
-  .hm-stats>div{ padding:12px 14px; }
-  .hm-stats dd{ font-size:1.4rem; }
+
+.hm-stats dd{
+  margin:.25rem 0 0;
+  font:900 1.8rem/1 "Epilogue";
 }
+
+@media (max-width:640px){
+  .hm-stats{
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+  .hm-stats>div{
+    padding:12px 14px;
+  }
+  .hm-stats dd{
+    font-size:1.4rem;
+  }
+}
+
+
+/* Animation des compteurs */
+.hm-stats dd {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.hm-stats.animated dd {
+  animation: countUp 0.6s ease-out forwards;
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+
+/* ========================================
+   EFFETS HOVER SUR LES CARTES
+   ======================================== */
+
+/* Cartes opportunités - Effet shimmer au hover */
+.hm-card-op {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hm-card-op::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s ease;
+  z-index: 1;
+}
+
+.hm-card-op:hover::before {
+  left: 100%;
+}
+
+.hm-card-op:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+}
+
+/* Cartes catégories - Rotation emoji + gradient overlay */
+.hm-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hm-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.hm-card:hover::after {
+  opacity: 1;
+}
+
+.hm-card .hm-emoji {
+  display: inline-block;
+  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.hm-card:hover .hm-emoji {
+  transform: scale(1.3) rotate(10deg);
+}
+
+.hm-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+}
+
+/* Cartes stories - Zoom image au hover */
+.hm-story-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hm-story-img {
+  transition: transform 0.5s ease;
+}
+
+.hm-story-card:hover .hm-story-img {
+  transform: scale(1.1);
+}
+
+.hm-story-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+}
+
+/* Témoignages - Effet glow */
+.hm-testi {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hm-testi:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+/* Badge - Animation pulse plus visible au hover */
+.hm-badge:hover {
+  animation: badge-pulse-hover 0.6s ease-in-out;
+}
+
+@keyframes badge-pulse-hover {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+/* Statistiques - Ligne animée au hover */
+.hm-stats > div {
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hm-stats > div::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f472b6, #a855f7, #6366f1);
+  transition: width 0.4s ease;
+  border-radius: 2px;
+}
+
+.hm-stats > div:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.2);
+}
+
+.hm-stats > div:hover::after {
+  width: 80%;
+}
+
+/* Chips de filtre - Effet pulse au clic */
+.chip {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.chip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.chip:hover::before {
+  opacity: 0.08;
+}
+
+.chip:active {
+  transform: scale(0.96);
+}
+
+.chip.is-active {
+  animation: chipPulse 0.4s ease;
+}
+
+@keyframes chipPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Bouton localisation - Effet ripple */
+.hm-locate {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.hm-locate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 70%
+  );
+  transform: scale(0);
+  transition: transform 0.5s ease;
+}
+
+.hm-locate:active::before {
+  transform: scale(2);
+}
+
+.hm-locate:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Désactiver les effets sur mobile/tactile */
+@media (max-width: 768px) {
+  .hm-card-op:hover,
+  .hm-card:hover,
+  .hm-story-card:hover,
+  .hm-testi:hover,
+  .hm-stats > div:hover,
+  .hm-locate:hover {
+    transform: none;
+  }
+
+  .hm-card:hover .hm-emoji {
+    transform: none;
+  }
+
+  .hm-story-card:hover .hm-story-img {
+    transform: none;
+  }
+}
+
+
+
 
 /* ====== Slices ====== */
 .hm-slice{ padding:clamp(2rem,4.8vw,4rem) 0; }
@@ -1882,5 +2175,55 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
     setTimeout(handleScroll, 100);
   })();
 }
+
+// Animation des compteurs
+(function() {
+  const stats = document.querySelector('.hm-stats');
+  if (!stats) return;
+
+  const counters = stats.querySelectorAll('dd');
+  const duration = 2000; // 2 secondes
+
+  function animateCounter(element) {
+    const text = element.textContent.trim();
+    const value = parseInt(text.replace(/[^\d]/g, ''));
+    const suffix = text.replace(/[\d\s]/g, '');
+
+    if (isNaN(value)) return;
+
+    const startTime = Date.now();
+    const endTime = startTime + duration;
+
+    function update() {
+      const now = Date.now();
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+      const current = Math.floor(eased * value);
+
+      element.textContent = current.toLocaleString('fr-FR') + suffix;
+
+      if (progress < 1) {
+        requestAnimationFrame(update);
+      } else {
+        element.textContent = value.toLocaleString('fr-FR') + suffix;
+      }
+    }
+
+    update();
+  }
+
+  // Observer pour déclencher quand visible
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        stats.classList.add('animated');
+        counters.forEach(counter => animateCounter(counter));
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  observer.observe(stats);
+})();
 </script>
 <% end %>
