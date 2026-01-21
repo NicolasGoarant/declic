@@ -65,9 +65,13 @@ class Admin::StoriesController < Admin::BaseController
   end
 
   # DELETE /admin/stories/:id
+
   def destroy
     @story.destroy
-    redirect_to admin_stories_path(request.query_parameters), notice: "Histoire supprimée."
+    # On force Rails à vider le cache de la home
+    expire_fragment('home_map_data')
+
+    redirect_to admin_stories_path, notice: "Story supprimée avec succès."
   end
 
   # PATCH /admin/stories/:id/toggle_active
