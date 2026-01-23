@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_15_124107) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_23_152634) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -120,6 +120,11 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_15_124107) do
     t.string "source_author"
     t.string "cta_button_text"
     t.string "cta_button_url"
+    t.string "start_date"
+    t.string "end_date"
+    t.string "inline_caption_1"
+    t.string "inline_caption_2"
+    t.string "inline_caption_3"
     t.index ["ends_at"], name: "index_opportunities_on_ends_at"
     t.index ["slug"], name: "index_opportunities_on_slug", unique: true
     t.index ["source", "external_id"], name: "index_opportunities_on_source_and_external_id", unique: true

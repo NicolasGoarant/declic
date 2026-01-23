@@ -83,11 +83,73 @@ class Admin::OpportunitiesController < ApplicationController
 
   def opportunity_params
     params.require(:opportunity).permit(
-      :title, :category, :organization, :description, :is_active,
-      :location, :latitude, :longitude, :tags,
-      :address, :city, :postal_code, :website, :contact_email, :phone,
-      :image, :image_url,
-      :gallery_image_1, :gallery_image_2, :gallery_image_3,
+      # Contenu principal
+      :title,
+      :category,
+      :organization,
+      :description,
+      :is_active,
+
+      # Citation / Témoignage
+      :quote,
+      :quote_author,
+
+      # Statistiques d'impact
+      :stat_1_number,
+      :stat_1_label,
+      :stat_2_number,
+      :stat_2_label,
+      :stat_3_number,
+      :stat_3_label,
+      :stat_4_number,
+      :stat_4_label,
+
+      # Défis surmontés
+      :challenges,
+
+      # Localisation
+      :location,
+      :latitude,
+      :longitude,
+      :address,
+      :city,
+      :postal_code,
+
+      # Dates & horaires
+      :start_date,
+      :end_date,
+      :time_commitment,
+
+      # Images
+      :image,
+      :image_url,
+
+      # Images inline (système <!-- IMAGE_1/2/3 -->)
+      :inline_image_1,
+      :inline_image_2,
+      :inline_image_3,
+      :inline_caption_1,
+      :inline_caption_2,
+      :inline_caption_3,
+
+      # Anciennes images galerie (pour compatibilité si encore utilisées)
+      :gallery_image_1,
+      :gallery_image_2,
+      :gallery_image_3,
+
+      # Source & Contact
+      :source_name,
+      :source_url,
+      :website,
+      :contact_email,
+      :contact_phone,
+      :phone,
+
+      # SEO & Organisation
+      :slug,
+      :tags,
+
+      # Photos multiples (si utilisé)
       photos: []
     )
   end
@@ -95,17 +157,36 @@ class Admin::OpportunitiesController < ApplicationController
   def apply_import_blob!(opportunity)
     blob = params[:import_blob].to_s
     return if blob.strip.blank?
+
     # Logique d'import simplifiée pour éviter les erreurs de mapping complexes
     require "yaml"
+
     begin
       parts = blob.split(/^---\s*$\n?/, 3)
+
       if parts.size >= 3
         data = YAML.safe_load(parts[1]) || {}
         opportunity.assign_attributes(data.slice(*Opportunity.column_names))
         opportunity.description = parts[2].strip if parts[2].present?
       end
-    rescue
+    rescue => e
+      Rails.logger.error("[apply_import_blob!] Erreur: #{e.message}")
       opportunity.errors.add(:base, "Erreur lors de l'import du bloc")
     end
   end
+
+  def filtered_opportunity_params
+  # Ne garde que les paramètres dont la colonne existe
+  permitted = opportunity_params
+  existing_columns = Opportunity.column_names.map(&:to_sym)
+
+  permitted.select do |key, value|
+    # Les uploads sont toujours autorisés
+    value.is_a?(ActionDispatch::Http::UploadedFile) ||
+    key == :photos ||
+    existing_columns.include?(key.to_sym)
+  end
+end
+
+
 end

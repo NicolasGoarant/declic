@@ -7,10 +7,11 @@ class Opportunity < ApplicationRecord
   # Image principale (bandeau hero)
   has_one_attached :image
 
-  # Galerie de 3 photos sous le bandeau (recommandé pour équilibre optimal)
-  has_one_attached :gallery_image_1
-  has_one_attached :gallery_image_2
-  has_one_attached :gallery_image_3
+  # Photos inline dans le texte (système <!-- IMAGE_1 -->, <!-- IMAGE_2 -->, <!-- IMAGE_3 -->)
+  # Identique au système des stories pour un style éditorial magazine
+  has_one_attached :inline_image_1
+  has_one_attached :inline_image_2
+  has_one_attached :inline_image_3
 
   # Autres photos (si besoin ultérieur)
   has_many_attached :photos
@@ -66,7 +67,7 @@ class Opportunity < ApplicationRecord
            },
            allow_nil: true
 
-  # --- Défauts ---
+  # --- Defaults ---
   before_validation :apply_defaults
 
   # =========== Helpers « virage » CSV ===========
@@ -127,10 +128,9 @@ class Opportunity < ApplicationRecord
 
   before_validation :build_location
 
-
   def build_location
     if address.present? && city.present? && postal_code.present?
-    self.location = "#{address}, #{postal_code} #{city}, France"
+      self.location = "#{address}, #{postal_code} #{city}, France"
     end
   end
 end
