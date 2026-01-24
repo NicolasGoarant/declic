@@ -217,7 +217,7 @@ function initStoriesMap() {
 
   const layer = L.layerGroup().addTo(map);
 
-  // Icône Livre 📖
+  // Icône Etoiles ✨
   const icon = () => L.divIcon({
     className: '',
     html: `<div style="
@@ -225,7 +225,7 @@ function initStoriesMap() {
       display:grid;place-items:center;color:#fff;font-size:16px;
       box-shadow:0 3px 8px rgba(0,0,0,.3);
       background:linear-gradient(135deg,#a855f7,#d946ef);
-    "><span>📖</span></div>`,
+    "><span>✨</span></div>`,
     iconSize: [32, 32], iconAnchor: [16, 16], popupAnchor: [0, -12]
   });
 
