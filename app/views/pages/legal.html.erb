@@ -1,37 +1,355 @@
-<main class="max-w-3xl mx-auto px-6 py-10 prose prose-slate">
-  <h1>Mentions légales</h1>
+<div class="legal-page">
+  <div class="legal-container">
 
-  <h2>Éditeur</h2>
-  <p>
-    <strong>Déclic</strong><br>
-    Projet citoyen (association en formation)<br>
-    Contact : <a href="mailto:nicolas.goarant@hotmail.fr">nicolas.goarant@hotmail.fr</a> — +33&nbsp;6&nbsp;67&nbsp;06&nbsp;31&nbsp;79
-  </p>
+    <!-- Bandeau retour -->
+    <div class="legal-backline">
+      <%= link_to root_path, class: "legal-back" do %>
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Retour à l'accueil
+      <% end %>
+    </div>
 
-  <h2>Responsable de la publication</h2>
-  <p>Nicolas Goarant.</p>
+    <!-- Header -->
+    <header class="legal-header">
+      <h1>Mentions légales</h1>
+      <p class="legal-date">Dernière mise à jour : <%= Date.today.strftime("%d %B %Y") %></p>
+    </header>
 
-  <h2>Hébergement</h2>
-  <p>
-    <strong>Heroku (Salesforce, Inc.)</strong><br>
-    Salesforce Tower, 415 Mission Street, 3rd Floor, San Francisco, CA 94105, USA<br>
-    <a href="https://www.heroku.com/policy/security">Politique de sécurité Heroku</a>
-  </p>
+    <!-- 1. ÉDITEUR DU SITE -->
+    <section class="legal-section">
+      <h2>1. Éditeur du site</h2>
+      <div class="legal-card">
+        <p><strong>Nom :</strong> Nicolas Goarant</p>
+        <p><strong>Statut :</strong> Entrepreneur individuel</p>
+        <p><strong>Adresse :</strong> Nancy, Grand Est, France</p>
+        <p><strong>Email :</strong> <%= mail_to "contact@declic.site", "contact@declic.site", class: "legal-link" %></p>
+        <p><strong>Responsable de la publication :</strong> Nicolas Goarant</p>
+      </div>
+    </section>
 
-  <h2>Propriété intellectuelle</h2>
-  <p>
-    Sauf mention contraire, les textes et éléments graphiques sont © Déclic. Les logos et marques de tiers
-    restent la propriété de leurs détenteurs. Toute reproduction non autorisée est interdite.
-  </p>
+    <!-- 2. HÉBERGEMENT -->
+    <section class="legal-section">
+      <h2>2. Hébergement</h2>
+      <div class="legal-card">
+        <p><strong>Hébergeur :</strong> Heroku (Salesforce, Inc.)</p>
+        <p><strong>Adresse :</strong> 415 Mission Street, Suite 300, San Francisco, CA 94105, USA</p>
+        <p><strong>Site web :</strong> <%= link_to "https://www.heroku.com", "https://www.heroku.com", target: "_blank", rel: "noopener", class: "legal-link" %></p>
+        <p><strong>Localisation des données :</strong> Union Européenne</p>
+      </div>
+    </section>
 
-  <h2>Liens sortants</h2>
-  <p>
-    Des liens vers des sites tiers peuvent être proposés. Déclic n’exerce aucun contrôle sur leur contenu et
-    décline toute responsabilité s’y rapportant.
-  </p>
+    <!-- 3. PROPRIÉTÉ INTELLECTUELLE -->
+    <section class="legal-section">
+      <h2>3. Propriété intellectuelle</h2>
+      <div class="legal-prose">
+        <p>L'ensemble de ce site relève de la législation française et internationale sur le droit d'auteur et la propriété intellectuelle.</p>
+        <p>Tous les droits de reproduction sont réservés, y compris pour les documents téléchargeables et les représentations iconographiques et photographiques.</p>
+        <p>La reproduction de tout ou partie de ce site sur un support électronique quel qu'il soit est formellement interdite sauf autorisation expresse de l'éditeur.</p>
+        <p><strong>Contenus publiés :</strong> Les opportunités et informations publiées sur Déclic sont sourcées et attribuées à leurs auteurs originaux. Déclic ne revendique aucun droit sur ces contenus et respecte les droits d'auteur des créateurs originaux.</p>
+      </div>
+    </section>
 
-  <h2>Signalement</h2>
-  <p>
-    Pour signaler un contenu ou une erreur : <a href="mailto:nicolas.goarant@hotmail.fr">nous écrire</a>.
-  </p>
-</main>
+    <!-- 4. DONNÉES PERSONNELLES -->
+    <section class="legal-section">
+      <h2>4. Protection des données personnelles (RGPD)</h2>
+
+      <div class="legal-prose">
+        <h3>4.1. Responsable du traitement</h3>
+        <p>Le responsable du traitement des données personnelles collectées sur declic.site est Nicolas Goarant, joignable à l'adresse : <%= mail_to "contact@declic.site", "contact@declic.site", class: "legal-link" %></p>
+
+        <h3>4.2. Données collectées</h3>
+        <p>Actuellement, Déclic ne collecte <strong>aucune donnée personnelle</strong> des visiteurs du site.</p>
+        <p>Le site ne dispose pas de :</p>
+        <ul>
+          <li>Système de création de compte utilisateur</li>
+          <li>Formulaire de contact intégré collectant des données</li>
+          <li>Newsletter ou inscription</li>
+          <li>Cookies de suivi ou de publicité</li>
+        </ul>
+
+        <h3>4.3. Données de navigation (logs)</h3>
+        <p>Comme tout site web, declic.site collecte automatiquement certaines données techniques via son hébergeur (Heroku) :</p>
+        <ul>
+          <li>Adresse IP (anonymisée après 24h)</li>
+          <li>Type de navigateur et système d'exploitation</li>
+          <li>Pages visitées et durée de visite</li>
+          <li>Date et heure de connexion</li>
+        </ul>
+        <p><strong>Finalité :</strong> Ces données sont utilisées uniquement à des fins statistiques et de sécurité du site. Elles ne sont jamais partagées avec des tiers.</p>
+        <p><strong>Durée de conservation :</strong> 12 mois maximum</p>
+
+        <h3>4.4. Cookies</h3>
+        <p>Le site declic.site utilise un <strong>cookie de session technique</strong> strictement nécessaire au fonctionnement du site (Rails session cookie). Ce cookie ne collecte aucune donnée personnelle et est supprimé à la fermeture du navigateur.</p>
+        <p><strong>Aucun cookie publicitaire ou de tracking n'est utilisé.</strong></p>
+
+        <h3>4.5. Vos droits (RGPD)</h3>
+        <p>Conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés, vous disposez des droits suivants :</p>
+        <ul>
+          <li><strong>Droit d'accès :</strong> Vous pouvez demander quelles données personnelles nous détenons sur vous</li>
+          <li><strong>Droit de rectification :</strong> Vous pouvez demander la correction de données inexactes</li>
+          <li><strong>Droit à l'effacement :</strong> Vous pouvez demander la suppression de vos données</li>
+          <li><strong>Droit à la limitation :</strong> Vous pouvez demander la limitation du traitement de vos données</li>
+          <li><strong>Droit à la portabilité :</strong> Vous pouvez demander de récupérer vos données dans un format structuré</li>
+          <li><strong>Droit d'opposition :</strong> Vous pouvez vous opposer au traitement de vos données</li>
+        </ul>
+        <p>Pour exercer ces droits, contactez-nous à : <%= mail_to "contact@declic.site", "contact@declic.site", class: "legal-link" %></p>
+        <p>Vous disposez également du droit d'introduire une réclamation auprès de la CNIL : <%= link_to "www.cnil.fr", "https://www.cnil.fr", target: "_blank", rel: "noopener", class: "legal-link" %></p>
+
+        <h3>4.6. Sécurité des données</h3>
+        <p>Nous mettons en œuvre toutes les mesures techniques et organisationnelles appropriées afin de garantir un niveau de sécurité adapté au risque, notamment :</p>
+        <ul>
+          <li>Chiffrement HTTPS (SSL/TLS) sur l'ensemble du site</li>
+          <li>Hébergement sécurisé (Heroku) avec sauvegarde automatique</li>
+          <li>Accès restreint aux données backend</li>
+          <li>Mises à jour régulières de sécurité</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 5. LIENS EXTERNES -->
+    <section class="legal-section">
+      <h2>5. Liens externes</h2>
+      <div class="legal-prose">
+        <p>Le site declic.site contient des liens hypertextes vers d'autres sites internet (sites d'opportunités, articles de presse, réseaux sociaux, etc.).</p>
+        <p>Ces liens sont fournis à titre informatif. Déclic n'exerce aucun contrôle sur le contenu de ces sites tiers et décline toute responsabilité quant à leur contenu, leur disponibilité ou leurs pratiques en matière de protection des données.</p>
+        <p>L'utilisateur reconnaît que l'accès à ces sites se fait sous sa seule responsabilité.</p>
+      </div>
+    </section>
+
+    <!-- 6. LIMITATION DE RESPONSABILITÉ -->
+    <section class="legal-section">
+      <h2>6. Limitation de responsabilité</h2>
+      <div class="legal-prose">
+        <p>Les informations publiées sur declic.site sont fournies à titre informatif et peuvent contenir des inexactitudes ou des erreurs.</p>
+        <p>Déclic s'efforce de maintenir les informations à jour mais ne peut garantir l'exactitude, la complétude ou l'actualité des opportunités publiées.</p>
+        <p>L'utilisateur est invité à vérifier directement auprès des organisateurs la validité des informations (dates, lieux, tarifs, conditions d'accès).</p>
+        <p>Déclic ne saurait être tenu responsable de :</p>
+        <ul>
+          <li>Informations erronées ou obsolètes</li>
+          <li>Annulation d'événements ou d'opportunités</li>
+          <li>Interruptions temporaires du service</li>
+          <li>Dommages directs ou indirects résultant de l'utilisation du site</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 7. LOI APPLICABLE -->
+    <section class="legal-section">
+      <h2>7. Loi applicable et juridiction</h2>
+      <div class="legal-prose">
+        <p>Les présentes mentions légales sont régies par la loi française.</p>
+        <p>En cas de litige, et à défaut d'accord amiable, les tribunaux français seront seuls compétents.</p>
+      </div>
+    </section>
+
+    <!-- 8. CONTACT -->
+    <section class="legal-section">
+      <h2>8. Contact</h2>
+      <div class="legal-card legal-card-accent">
+        <p class="legal-contact-intro">Pour toute question concernant ces mentions légales ou la protection de vos données personnelles :</p>
+        <p><strong>Email :</strong> <%= mail_to "contact@declic.site", "contact@declic.site", class: "legal-link-accent" %></p>
+        <p><strong>Site web :</strong> <%= link_to "https://www.declic.site", root_url, class: "legal-link-accent" %></p>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<style>
+/* ─────────────────────────────────────────────────────────
+   MENTIONS LÉGALES — Design cohérent avec Déclic
+   ───────────────────────────────────────────────────────── */
+
+.legal-page {
+  background: #fafafa;
+  min-height: 100vh;
+  padding: 20px 16px 60px;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+.legal-container {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+/* Bandeau retour */
+.legal-backline {
+  margin: 0 0 20px;
+}
+
+.legal-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #7c3aed;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.legal-back:hover {
+  text-decoration: underline;
+}
+
+.legal-back svg {
+  flex-shrink: 0;
+}
+
+/* Header */
+.legal-header {
+  margin-bottom: 32px;
+}
+
+.legal-header h1 {
+  font-size: clamp(28px, 4vw, 38px);
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 8px;
+  letter-spacing: -.02em;
+}
+
+.legal-date {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Sections */
+.legal-section {
+  margin-bottom: 32px;
+}
+
+.legal-section h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 14px;
+  letter-spacing: -.01em;
+}
+
+.legal-section h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #7c3aed;
+  margin: 24px 0 12px;
+}
+
+/* Cartes */
+.legal-card {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.04);
+}
+
+.legal-card p {
+  margin: 0 0 10px;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.legal-card p:last-child {
+  margin-bottom: 0;
+}
+
+.legal-card-accent {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  border-color: rgba(124, 58, 237, .15);
+}
+
+.legal-contact-intro {
+  margin-bottom: 14px !important;
+  font-weight: 500;
+  color: #111827;
+}
+
+/* Prose (texte long) */
+.legal-prose {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.04);
+  font-size: 15px;
+  line-height: 1.7;
+  color: #374151;
+}
+
+.legal-prose p {
+  margin: 0 0 16px;
+}
+
+.legal-prose p:last-child {
+  margin-bottom: 0;
+}
+
+.legal-prose ul {
+  margin: 12px 0 16px 20px;
+  padding: 0;
+  list-style: disc;
+}
+
+.legal-prose li {
+  margin: 8px 0;
+  padding-left: 4px;
+}
+
+.legal-prose strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+/* Liens */
+.legal-link {
+  color: #7c3aed;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.legal-link:hover {
+  text-decoration: underline;
+}
+
+.legal-link-accent {
+  color: #6d28d9;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.legal-link-accent:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .legal-page {
+    padding: 16px 12px 40px;
+  }
+
+  .legal-header h1 {
+    font-size: 26px;
+  }
+
+  .legal-section h2 {
+    font-size: 20px;
+  }
+
+  .legal-card,
+  .legal-prose {
+    padding: 16px;
+  }
+
+  .legal-prose {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 640px) {
+  .legal-page {
+    padding: 32px 24px 80px;
+  }
+}
+</style>
