@@ -13,6 +13,9 @@ module StoriesHelper
          key.include?('menu')              then '🍰'
     when key.include?('inspirant') ||
          key.include?('pourquoi')          then '💡'
+    when key.include?('récit')             then '👉'
+    when key.include?('immersion')         then '👉'
+    when key.include?('secret')            then '👉'
     else '👉'
     end
   end
@@ -58,12 +61,13 @@ module StoriesHelper
   EMOJI_START_RX = /\A[\p{Emoji}\u2600-\u27BF]/u
 
   # Ajoute un émoji "pratique" uniquement si la ligne n'en possède pas déjà
+  # DÉSACTIVÉ pour les paragraphes normaux - seulement pour infos pratiques
   def auto_emoji_line(line)
     l = line.to_s
     return l if l.strip.empty?
     return l if l.lstrip =~ EMOJI_START_RX
 
-    # Mots-clés de bas de page / infos pratiques
+    # Mots-clés de bas de page / infos pratiques UNIQUEMENT
     lowered = l.downcase
     if lowered.start_with?('adresse')
       "📍 #{l}"
@@ -74,13 +78,14 @@ module StoriesHelper
     elsif lowered.start_with?('contact')
       "✉️ #{l}"
     else
+      # NE PLUS AJOUTER D'ÉMOJI PAR DÉFAUT SUR LES PARAGRAPHES NORMAUX
       l
     end
   end
 
   # ----------------------------- Rendu principal -------------------------------------
   # Markdown light :
-  # - Titres "### ..." avec émoji saisi par l’auteur (🌿 Titre ou {🌿} Titre) sinon fallback emoji_for
+  # - Titres "### ..." avec émoji saisi par l'auteur (🌿 Titre ou {🌿} Titre) sinon fallback emoji_for
   # - Listes "- ..."
   # - Bloc "**À retenir**" => liste à checkmarks
   # - Paragraphes + inline_format
@@ -104,7 +109,7 @@ module StoriesHelper
         next
       end
 
-      # Titres ### (avec émoji saisi par l’auteur optionnel)
+      # Titres ### (avec émoji saisi par l'auteur optionnel)
       if line =~ /\A[ \t\u00A0\u2000-\u200B\u202F]*###[ \t\u00A0\u2000-\u200B\u202F]+(.+)/
         title_raw = Regexp.last_match(1).strip
 
@@ -184,7 +189,7 @@ module StoriesHelper
         in_list = false
       end
 
-      # Émoji auto pour les lignes d’infos pratiques si pas déjà présent
+      # Émoji auto SEULEMENT pour les lignes d'infos pratiques (Adresse, Contact, Source)
       formatted_line = auto_emoji_line(line)
 
       html << %(<p class="text-slate-800 leading-relaxed">#{inline_format(formatted_line)}</p>)
@@ -199,7 +204,3 @@ module StoriesHelper
     text.to_s.split(/\s+/).first(words).join(" ")
   end
 end
-
-
-
-
