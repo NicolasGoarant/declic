@@ -132,9 +132,10 @@ module StoriesHelper
         in_list = false
         in_takeaways = false
 
+        # MODIFIÉ : Émoji sans cercle, juste text-2xl
         html << %(
           <h3 class="mt-7 mb-3 flex items-center gap-3 text-xl font-semibold text-slate-900">
-            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-violet-600/10 text-lg">#{emoji}</span>
+            <span class="text-2xl">#{emoji}</span>
             <span>#{ERB::Util.html_escape(title)}</span>
           </h3>
         )

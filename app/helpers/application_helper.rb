@@ -6,22 +6,21 @@ module ApplicationHelper
   def md(text)
     return "" if text.blank?
 
-    # On utilise Kramdown pour convertir le Markdown en HTML
-    # Cela gérera les **gras**, les ### titres, les listes, etc.
-    html = Kramdown::Document.new(text.to_s).to_html
+    # 1. Conversion Markdown -> HTML via Kramdown
+    # On force l'utilisation de Kramdown qui est présent dans ton Gemfile
+    html_output = Kramdown::Document.new(text.to_s, input: 'GFM').to_html
 
-    # Sécurité : on nettoie le HTML produit pour éviter les failles
-    safe = sanitize(
-      html,
-      tags: %w[h1 h2 h3 h4 h5 h6 p br hr strong em a ul ol li blockquote code pre],
-      attributes: %w[href title target rel class]
+    # 2. Nettoyage sécurisé
+    # On s'assure que Rails ne supprime pas les balises <strong> ou <h3>
+    safe_html = sanitize(
+      html_output,
+      tags: %w[h1 h2 h3 h4 h5 h6 p br hr strong em a ul ol li blockquote code pre div span],
+      attributes: %w[href title target rel class style]
     )
 
-    # On garde ta logique de décoration pour le CTA
-    decorate_md_cta(safe).html_safe
+    # 3. Application de ton design CTA
+    decorate_md_cta(safe_html).html_safe
   end
-
-  private
 
   def decorate_md_cta(safe_html)
     require "nokogiri"
