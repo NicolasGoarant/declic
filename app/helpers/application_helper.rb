@@ -4,23 +4,21 @@ module ApplicationHelper
   CTA_REGEX = /(et moi,\s*comment\s*je\s*peux\s*avoir\s*le\s*d[ée]clic)/i
 
   def md(text)
-    raw = text.to_s
+    return "" if text.blank?
 
-    html =
-      if defined?(Commonmarker)
-        # ✅ API correcte (1 seul argument)
-        Commonmarker.commonmark_to_html(raw)
-      else
-        ERB::Util.html_escape(raw).gsub("\n", "<br>")
-      end
+    # On utilise Kramdown pour convertir le Markdown en HTML
+    # Cela gérera les **gras**, les ### titres, les listes, etc.
+    html = Kramdown::Document.new(text.to_s).to_html
 
+    # Sécurité : on nettoie le HTML produit pour éviter les failles
     safe = sanitize(
       html,
       tags: %w[h1 h2 h3 h4 h5 h6 p br hr strong em a ul ol li blockquote code pre],
       attributes: %w[href title target rel class]
     )
 
-    decorate_md_cta(safe)
+    # On garde ta logique de décoration pour le CTA
+    decorate_md_cta(safe).html_safe
   end
 
   private
