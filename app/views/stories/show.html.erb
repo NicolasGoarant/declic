@@ -446,7 +446,7 @@ end
               end
             %>
 
-            <%= raw(Kramdown::Document.new(rendered_body).to_html) %>
+            <%= render_story_body(rendered_body) %>
           </div>
         </div>
 
