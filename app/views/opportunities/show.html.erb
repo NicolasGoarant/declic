@@ -342,7 +342,7 @@
               end
             %>
 
-            <%= simple_format(rendered_description.gsub(/\*\*(.+?)\*\*/, '<strong>\1</strong>').html_safe) %>
+            <%= render_opportunity_body(rendered_description) %>
           </div>
 
           <%# CITATION / TÉMOIGNAGE %>
