@@ -34,9 +34,120 @@ module OpportunitiesHelper
     "https://www.google.com/calendar/render?#{q}"
   end
 
-  # 3) Lien Google Maps sur l’adresse
+  # 3) Lien Google Maps sur l'adresse
   def maps_url(op)
     return unless op.location.present?
     "https://www.google.com/maps/search/?api=1&query=#{ERB::Util.url_encode(op.location.to_s)}"
+  end
+
+  # ----------------------------- NOUVEAU : Rendu Markdown pour opportunities -----------------------------
+
+  # Convertit **gras**, *italique* et [lien](https://...) après échappement HTML
+  def inline_format_opportunity(text)
+    s = ERB::Util.html_escape(text.to_s)
+
+    # Liens [label](http/https)
+    s = s.gsub(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/i) do
+      label = Regexp.last_match(1)
+      href  = Regexp.last_match(2)
+      %Q(<a href="#{href}" target="_blank" rel="noopener nofollow" class="text-blue-600 hover:underline">#{ERB::Util.html_escape(label)}</a>)
+    end
+
+    # **gras**
+    s = s.gsub(/\*\*(.+?)\*\*/) { "<strong>#{Regexp.last_match(1)}</strong>" }
+
+    # *italique* (éviter de matcher dans **…**)
+    s = s.gsub(/(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)/) { "<em>#{Regexp.last_match(1)}</em>" }
+
+    s
+  end
+
+  # Emoji par défaut pour les titres d'opportunities
+  def emoji_for_opportunity(title)
+    key = title.to_s.downcase
+    case
+    when key.include?('craindre') || key.include?('panne')          then '💡'
+    when key.include?('atelier') || key.include?('participatif')    then '🛠️'
+    when key.include?('mains') || key.include?('cambouis')          then '🔧'
+    when key.include?('mettre')                                     then '👐'
+    else '📌'
+    end
+  end
+
+  # Détection émoji en début de ligne
+  EMOJI_START_RX = /\A[\p{Emoji}\u2600-\u27BF]/u
+
+  # Rendu principal du body d'une opportunity (similaire à render_story_body)
+  def render_opportunity_body(text)
+    return "".html_safe if text.blank?
+
+    lines = text.to_s.split(/\r?\n/)
+    html  = []
+    in_list = false
+
+    lines.each do |raw|
+      line = raw.rstrip
+
+      # Titres ### (avec émoji optionnel)
+      if line =~ /\A[ \t]*###[ \t]+(.+)/
+        title_raw = Regexp.last_match(1).strip
+
+        # Détecter émoji custom
+        custom_emoji = nil
+        title = title_raw
+
+        if title_raw =~ /\A\{(?<em>[\p{Emoji}\u2600-\u27BF])\}[ \t]*(?<rest>.+)\z/u
+          custom_emoji = Regexp.last_match(:em)
+          title        = Regexp.last_match(:rest).strip
+        elsif title_raw =~ /\A(?<em>[\p{Emoji}\u2600-\u27BF])[ \t]*(?<rest>.+)\z/u
+          custom_emoji = Regexp.last_match(:em)
+          title        = Regexp.last_match(:rest).strip
+        end
+
+        emoji = custom_emoji || emoji_for_opportunity(title)
+
+        html << %(</ul>) if in_list
+        in_list = false
+
+        html << %(
+          <h3 class="mt-6 mb-3 flex items-center gap-3 text-lg font-bold text-slate-900">
+            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-base">#{emoji}</span>
+            <span>#{ERB::Util.html_escape(title)}</span>
+          </h3>
+        )
+        next
+      end
+
+      # Listes "- ..."
+      if line =~ /\A-\s+(.+)/
+        item = Regexp.last_match(1).strip
+        unless in_list
+          html << %(<ul class="list-disc pl-6 space-y-1 text-slate-700 mb-4">)
+          in_list = true
+        end
+        html << %(<li>#{inline_format_opportunity(item)}</li>)
+        next
+      end
+
+      # Ligne vide -> fermer liste si besoin
+      if line.blank?
+        if in_list
+          html << %(</ul>)
+          in_list = false
+        end
+        next
+      end
+
+      # Paragraphe
+      if in_list
+        html << %(</ul>)
+        in_list = false
+      end
+
+      html << %(<p class="text-slate-700 leading-relaxed mb-4">#{inline_format_opportunity(line)}</p>)
+    end
+
+    html << %(</ul>) if in_list
+    html.join("\n").html_safe
   end
 end
