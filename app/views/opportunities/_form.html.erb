@@ -158,25 +158,30 @@
       </div>
     </div>
 
-    <%# ========== SECTION 6 : IMAGES ========== %>
+<%# ========== SECTION 6 : IMAGES ========== %>
     <div class="form-section">
       <h3 class="section-title">🖼️ Images</h3>
       <div class="form-grid">
         <div class="field">
           <%= f.label :image, "Image principale (upload)" %>
-          <%= f.file_field :image, direct_upload: true %>
-          <% if @opportunity.image.attached? %>
-            <p class="preview-label">Image actuelle :</p>
-            <%= image_tag @opportunity.image.variant(resize_to_limit: [300, 180]),
-                          class: "preview-img" rescue nil %>
+          <%= f.file_field :image, direct_upload: true, accept: "image/*", class: "field-input" %>
+
+          <%# Correction du bug : on ne demande l'URL de l'image (variant) que si l'objet existe en base %>
+          <% if @opportunity.persisted? && @opportunity.image.attached? %>
+            <div class="current-image-preview" style="margin-top: 0.75rem;">
+              <p class="preview-label" style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem;">Image actuelle :</p>
+              <%= image_tag @opportunity.image.variant(resize_to_limit: [300, 180]),
+                            class: "preview-img",
+                            style: "border-radius: 6px; border: 1px solid #e2e8f0;" rescue nil %>
+            </div>
           <% end %>
-          <small class="field-hint">Ratio recommandé : 16:9</small>
+          <small class="field-hint">Ratio recommandé : 16:9. Sera utilisé si l'URL externe est vide.</small>
         </div>
 
         <div class="field">
           <%= f.label :image_url, "Image principale (URL externe)" %>
-          <%= f.text_field :image_url, placeholder: "https://…" %>
-          <small class="field-hint">Alternative à l'upload. URL d'image externe.</small>
+          <%= f.url_field :image_url, placeholder: "https://…", class: "field-input" %>
+          <small class="field-hint">Prioritaire sur l'upload si rempli.</small>
         </div>
       </div>
     </div>
