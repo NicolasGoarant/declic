@@ -167,7 +167,7 @@
           <%= f.file_field :image, direct_upload: true, accept: "image/*", class: "field-input" %>
 
           <%# Correction du bug : on ne demande l'URL de l'image (variant) que si l'objet existe en base %>
-          <% if @opportunity.persisted? && @opportunity.image.attached? %>
+          <% if @opportunity.persisted? && @opportunity.image.attached? && @opportunity.image.blob.persisted? %>
             <div class="current-image-preview" style="margin-top: 0.75rem;">
               <p class="preview-label" style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem;">Image actuelle :</p>
               <%= image_tag @opportunity.image.variant(resize_to_limit: [300, 180]),
