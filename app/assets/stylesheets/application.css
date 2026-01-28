@@ -692,3 +692,354 @@ body {
     max-height: none;
   }
 }
+
+
+
+
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION CONTRIBUTIVE + BANDEAU STICKY
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ────────────────────────────────────────────────────────────────
+   SECTION "CONTRIBUE À DÉCLIC"
+   ──────────────────────────────────────────────────────────────── */
+
+.hm-contribute {
+  background: linear-gradient(135deg, #faf5ff 0%, #fce7f3 100%);
+  padding: 80px 24px !important;
+}
+
+.hm-contribute-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.hm-contribute-emoji {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: pulse-emoji 2s ease-in-out infinite;
+}
+
+@keyframes pulse-emoji {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.hm-contribute-title {
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 16px;
+  letter-spacing: -0.02em;
+}
+
+.hm-contribute-title .grad {
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hm-contribute-subtitle {
+  font-size: clamp(16px, 2.5vw, 19px);
+  color: #6b7280;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.hm-contribute-subtitle strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+/* Grille des cartes contributives */
+.hm-contribute-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 32px;
+  max-width: 1000px;
+  margin: 0 auto 40px;
+}
+
+.hm-contribute-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 40px 32px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  border: 2px solid transparent;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hm-contribute-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.hm-contribute-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.hm-contribute-card:hover::before {
+  opacity: 1;
+}
+
+/* Variante Story (violet) */
+.hm-contribute-card.-story {
+  border-color: rgba(168, 85, 247, 0.2);
+  color: #a855f7;
+}
+
+.hm-contribute-card.-story:hover {
+  border-color: #a855f7;
+}
+
+/* Variante Opportunity (vert) */
+.hm-contribute-card.-opportunity {
+  border-color: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.hm-contribute-card.-opportunity:hover {
+  border-color: #10b981;
+}
+
+.hm-contribute-card .card-icon {
+  font-size: 56px;
+  margin-bottom: 20px;
+  transition: transform 0.3s;
+}
+
+.hm-contribute-card:hover .card-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.hm-contribute-card .card-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 16px;
+}
+
+.hm-contribute-card .card-desc {
+  font-size: 15px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0 0 28px;
+  flex-grow: 1;
+}
+
+.hm-contribute-card .card-btn {
+  display: inline-block;
+  padding: 14px 32px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 15px;
+  color: #ffffff;
+  background: currentColor;
+  transition: all 0.2s;
+}
+
+.hm-contribute-card.-story .card-btn {
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+}
+
+.hm-contribute-card.-opportunity .card-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.hm-contribute-card:hover .card-btn {
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Stats sociales */
+.hm-contribute-social {
+  text-align: center;
+  color: #6b7280;
+  font-size: 15px;
+}
+
+.hm-contribute-social strong {
+  color: #a855f7;
+  font-weight: 700;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   BANDEAU STICKY CONTRIBUTIF (EN BAS DE PAGE)
+   ──────────────────────────────────────────────────────────────── */
+
+.hm-sticky-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  color: #ffffff;
+  padding: 16px 24px;
+  box-shadow: 0 -4px 24px rgba(168, 85, 247, 0.4);
+  z-index: 9999;
+  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s;
+}
+
+.hm-sticky-banner.hidden {
+  display: none;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.hm-sticky-banner .banner-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.hm-sticky-banner .banner-text {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hm-sticky-banner .banner-emoji {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.hm-sticky-banner .banner-message {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.hm-sticky-banner .banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hm-sticky-banner .banner-btn {
+  display: inline-block;
+  background: #ffffff;
+  color: #a855f7;
+  padding: 10px 24px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.hm-sticky-banner .banner-btn:hover {
+  background: #f3f4f6;
+  transform: scale(1.05);
+}
+
+.hm-sticky-banner .banner-close {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.hm-sticky-banner .banner-close:hover {
+  opacity: 0.8;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   RESPONSIVE
+   ──────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .hm-contribute {
+    padding: 60px 16px !important;
+  }
+
+  .hm-contribute-header {
+    margin-bottom: 32px;
+  }
+
+  .hm-contribute-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .hm-contribute-card {
+    padding: 32px 24px;
+  }
+
+  .hm-sticky-banner .banner-inner {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .hm-sticky-banner .banner-text {
+    justify-content: center;
+  }
+
+  .hm-sticky-banner .banner-actions {
+    justify-content: center;
+  }
+
+  .hm-sticky-banner .banner-btn {
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .hm-contribute-emoji {
+    font-size: 48px;
+  }
+
+  .hm-contribute-card .card-icon {
+    font-size: 48px;
+  }
+
+  .hm-sticky-banner {
+    padding: 12px 16px;
+  }
+
+  .hm-sticky-banner .banner-message {
+    font-size: 14px;
+  }
+
+  .hm-sticky-banner .banner-btn {
+    font-size: 13px;
+    padding: 8px 16px;
+  }
+}

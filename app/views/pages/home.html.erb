@@ -168,6 +168,7 @@ end
       </div>
   </section>
 
+
   <%# ========== SECTION "CHOISIS TON DÉCLIC" (MAINTENANT EN 2ÈME) ========== %>
   <section id="parcours" class="hm-slice alt">
     <div class="container">
@@ -260,6 +261,49 @@ end
 
       <div class="hm-stories-footer">
         <%= link_to "Lire toutes les histoires", stories_path, class: "hm-story-more" %>
+      </div>
+    </div>
+  </section>
+
+
+    <%# ========== NOUVELLE SECTION : CONTRIBUE À DÉCLIC ========== %>
+  <section id="contribuer" class="hm-slice hm-contribute">
+    <div class="container">
+      <div class="hm-contribute-header">
+        <div class="hm-contribute-emoji">🌟</div>
+        <h2 class="hm-contribute-title">
+          Déclic, c'est <span class="grad">VOUS</span> !
+        </h2>
+        <p class="hm-contribute-subtitle">
+          Chaque semaine, des dizaines de personnes comme toi partagent leurs initiatives locales.<br>
+          <strong>Et si c'était ton tour ?</strong>
+        </p>
+      </div>
+
+      <div class="hm-contribute-grid">
+        <%# Card Story %>
+        <%= link_to new_story_path, class: "hm-contribute-card -story" do %>
+          <div class="card-icon">📝</div>
+          <h3 class="card-title">Tu as une belle histoire ?</h3>
+          <p class="card-desc">
+            Partage ton parcours, ton projet, ton initiative qui a changé ta vie ou celle des autres.
+          </p>
+          <span class="card-btn">Partager mon histoire ✨</span>
+        <% end %>
+
+        <%# Card Opportunity %>
+        <%= link_to new_opportunity_path, class: "hm-contribute-card -opportunity" do %>
+          <div class="card-icon">➕</div>
+          <h3 class="card-title">Tu organises quelque chose ?</h3>
+          <p class="card-desc">
+            Atelier, formation, événement, initiative locale... Fais-le découvrir à toute la communauté !
+          </p>
+          <span class="card-btn">Proposer une opportunité 🚀</span>
+        <% end %>
+      </div>
+
+      <div class="hm-contribute-social">
+        Déjà <strong>300+ histoires</strong> partagées par la communauté ! 🎉
       </div>
     </div>
   </section>
