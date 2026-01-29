@@ -19,8 +19,11 @@ class PagesController < ApplicationController
         icon: 'briefcase', color: 'bg-gradient-to-br from-orange-500 to-red-600' }
     ]
 
-    @opportunities = Opportunity.where(is_active: true)
-    @latest        = Opportunity.active.order(published_at: :desc).limit(3)
+    # Toutes les opportunities actives, triées par date de création décroissante (les plus récentes en premier)
+    @opportunities = Opportunity.where(is_active: true).order(created_at: :desc)
+
+    # Les 3 dernières opportunities (basées sur published_at)
+    @latest = Opportunity.active.order(published_at: :desc).limit(3)
   end
 
   def legal; end
