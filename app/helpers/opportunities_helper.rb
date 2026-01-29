@@ -40,7 +40,7 @@ module OpportunitiesHelper
     "https://www.google.com/maps/search/?api=1&query=#{ERB::Util.url_encode(op.location.to_s)}"
   end
 
-  # ----------------------------- NOUVEAU : Rendu Markdown pour opportunities -----------------------------
+  # ----------------------------- MARKDOWN RENDERING -----------------------------
 
   # Convertit **gras**, *italique* et [lien](https://...) après échappement HTML
   def inline_format_opportunity(text)
@@ -69,7 +69,7 @@ module OpportunitiesHelper
     when key.include?('craindre') || key.include?('panne')          then '💡'
     when key.include?('atelier') || key.include?('participatif')    then '🛠️'
     when key.include?('mains') || key.include?('cambouis')          then '🔧'
-    when key.include?('mettre')                                     then '👐'
+    when key.include?('mettre')                                     then '👍'
     else '📌'
     end
   end
@@ -77,11 +77,63 @@ module OpportunitiesHelper
   # Détection émoji en début de ligne
   EMOJI_START_RX = /\A[\p{Emoji}\u2600-\u27BF]/u
 
-  # Rendu principal du body d'une opportunity (similaire à render_story_body)
+  # ----------------------------- NOUVEAU : SUPPORT IMAGES INLINE -----------------------------
+
+  # Remplace les <!-- IMAGE_1 -->, <!-- IMAGE_2 -->, <!-- IMAGE_3 --> par les vraies images
+  def replace_inline_images(text, opportunity)
+    return text unless opportunity
+
+    result = text.dup
+
+    # IMAGE_1
+    if opportunity.respond_to?(:inline_image_1) && opportunity.inline_image_1.attached?
+      img_tag = render_inline_image(opportunity.inline_image_1, opportunity.inline_caption_1, 1)
+      result.gsub!(/<!--\s*IMAGE_1\s*-->/, img_tag)
+    end
+
+    # IMAGE_2
+    if opportunity.respond_to?(:inline_image_2) && opportunity.inline_image_2.attached?
+      img_tag = render_inline_image(opportunity.inline_image_2, opportunity.inline_caption_2, 2)
+      result.gsub!(/<!--\s*IMAGE_2\s*-->/, img_tag)
+    end
+
+    # IMAGE_3
+    if opportunity.respond_to?(:inline_image_3) && opportunity.inline_image_3.attached?
+      img_tag = render_inline_image(opportunity.inline_image_3, opportunity.inline_caption_3, 3)
+      result.gsub!(/<!--\s*IMAGE_3\s*-->/, img_tag)
+    end
+
+    result
+  end
+
+  # Génère le HTML d'une image inline avec caption
+  def render_inline_image(attachment, caption, index)
+    img_url = url_for(attachment)
+
+    # Alternance gauche/droite
+    position_class = (index.odd? ? 'inline-photo-left' : 'inline-photo-right')
+
+    html = %{
+      <figure class="#{position_class}">
+        <img src="#{img_url}" alt="#{ERB::Util.html_escape(caption || 'Photo')}" loading="lazy" />
+        #{"<figcaption>#{ERB::Util.html_escape(caption)}</figcaption>" if caption.present?}
+      </figure>
+    }
+
+    html
+  end
+
+  # ----------------------------- RENDU PRINCIPAL -----------------------------
+
+  # Rendu principal du body d'une opportunity (avec support images inline)
   def render_opportunity_body(text)
     return "".html_safe if text.blank?
 
-    lines = text.to_s.split(/\r?\n/)
+    # ÉTAPE 1 : Remplacer les <!-- IMAGE_X --> par les vraies images AVANT le parsing markdown
+    text_with_images = replace_inline_images(text, @opportunity)
+
+    # ÉTAPE 2 : Parser le markdown
+    lines = text_with_images.to_s.split(/\r?\n/)
     html  = []
     in_list = false
 
@@ -138,13 +190,18 @@ module OpportunitiesHelper
         next
       end
 
-      # Paragraphe
+      # Paragraphe OU balise HTML (figure) générée par replace_inline_images
       if in_list
         html << %(</ul>)
         in_list = false
       end
 
-      html << %(<p class="text-slate-700 leading-relaxed mb-4">#{inline_format_opportunity(line)}</p>)
+      # Si la ligne contient du HTML (comme <figure>), on la passe telle quelle
+      if line =~ /<figure class="inline-photo/
+        html << line
+      else
+        html << %(<p class="text-slate-700 leading-relaxed mb-4">#{inline_format_opportunity(line)}</p>)
+      end
     end
 
     html << %(</ul>) if in_list
