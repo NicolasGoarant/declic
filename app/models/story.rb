@@ -2,9 +2,11 @@ class Story < ApplicationRecord
   # Image principale (hero)
   has_one_attached :image
 
-  # Cette ligne permet à Story d'accepter plusieurs fichiers via Active Storage
+  # Photos multiples pour soumissions publiques (si besoin futur)
   has_many_attached :photos
+
   # Photos inline dans le récit (3 max pour style éditorial)
+  # Ces images seront insérées dans le texte via des placeholders
   has_one_attached :inline_image_1
   has_one_attached :inline_image_2
   has_one_attached :inline_image_3
@@ -15,12 +17,16 @@ class Story < ApplicationRecord
   # Configure la géolocalisation
   geocoded_by :location
 
-  # ✅ Modif demandée : ne géocoder automatiquement que si coords manquantes
-  before_validation :geocode, if: -> { location.present? && (latitude.blank? || longitude.blank?) && will_save_change_to_location? }
+  # Ne géocoder automatiquement que si coords manquantes ET location a changé
+  before_validation :geocode, if: -> {
+    location.present? &&
+    (latitude.blank? || longitude.blank?) &&
+    will_save_change_to_location?
+  }
 
   before_validation :ensure_slug
 
-  # ✅ Par défaut, les nouvelles stories sont inactives (en attente de validation)
+  # Par défaut, les nouvelles stories sont inactives (en attente de validation)
   before_validation :set_default_active, on: :create
 
   # Scope pour ne récupérer que les stories actives
@@ -35,6 +41,20 @@ class Story < ApplicationRecord
     else
       view_context.asset_path("fallback-story.jpg") rescue ""
     end
+  end
+
+  # Vérifie si au moins une image inline est attachée
+  def has_inline_images?
+    inline_image_1.attached? || inline_image_2.attached? || inline_image_3.attached?
+  end
+
+  # Compte le nombre d'images inline attachées
+  def inline_images_count
+    count = 0
+    count += 1 if inline_image_1.attached?
+    count += 1 if inline_image_2.attached?
+    count += 1 if inline_image_3.attached?
+    count
   end
 
   private

@@ -11,7 +11,6 @@ class StoriesController < ApplicationController
     @story ||= Story.find_by!(slug: params[:id])
 
     # Rediriger si la story n'est pas active (sauf pour les admins)
-    # Optionnel : enlève ce check si tu veux permettre l'aperçu via lien direct
     unless @story.is_active
       redirect_to stories_path, alert: "Cette histoire n'est pas encore publiée."
     end
@@ -43,10 +42,12 @@ class StoriesController < ApplicationController
       :title, :chapo, :content, :name, :email, :phone, :address, :city, :postal_code,
       photos: []
     ).tap do |whitelisted|
+      # Mapping des noms de champs du formulaire vers les colonnes de la DB
       whitelisted[:body] = whitelisted.delete(:content) if whitelisted[:content].present?
       whitelisted[:author_name] = whitelisted.delete(:name) if whitelisted[:name].present?
       whitelisted[:author_email] = whitelisted.delete(:email) if whitelisted[:email].present?
 
+      # Ne garder que les champs qui existent dans la table + photos
       whitelisted.select! { |key| Story.column_names.include?(key.to_s) || key.to_s == "photos" }
     end
   end

@@ -1,5 +1,4 @@
 class Admin::StoriesController < Admin::BaseController
-  # Ajout de toggle_active dans le before_action
   before_action :set_story, only: [:edit, :update, :destroy, :toggle_active]
 
   # GET /admin/stories
@@ -37,6 +36,9 @@ class Admin::StoriesController < Admin::BaseController
   def create
     @story = Story.new(story_params)
 
+    # Attacher les images inline avant la sauvegarde
+    attach_inline_images(@story)
+
     apply_import_blob(@story)
 
     if @story.errors.none? && @story.save
@@ -54,6 +56,9 @@ class Admin::StoriesController < Admin::BaseController
   def update
     @story.assign_attributes(story_params)
 
+    # Attacher les nouvelles images inline si présentes
+    attach_inline_images(@story)
+
     apply_import_blob(@story)
 
     if @story.errors.none? && @story.save
@@ -65,10 +70,9 @@ class Admin::StoriesController < Admin::BaseController
   end
 
   # DELETE /admin/stories/:id
-
   def destroy
     @story.destroy
-    # On force Rails à vider le cache de la home
+    # Force Rails à vider le cache de la home
     expire_fragment('home_map_data')
 
     redirect_to admin_stories_path, notice: "Story supprimée avec succès."
@@ -168,6 +172,23 @@ class Admin::StoriesController < Admin::BaseController
       :author_name, :author_email, :phone, :address, :city, :postal_code,
       photos: []
     )
+  end
+
+  # ✅ NOUVELLE MÉTHODE : Attache les images inline uploadées
+  def attach_inline_images(story)
+    (1..3).each do |i|
+      param_key = "inline_image_#{i}"
+
+      # Vérifier si une nouvelle image a été uploadée pour ce slot
+      if params[:story] && params[:story][param_key].present?
+        uploaded_file = params[:story][param_key]
+
+        # Ne traiter que si c'est vraiment un fichier uploadé (pas une string vide ou nil)
+        if uploaded_file.respond_to?(:read)
+          story.send(param_key).attach(uploaded_file)
+        end
+      end
+    end
   end
 
   def apply_import_blob(story)
