@@ -32,8 +32,14 @@ Rails.application.configure do
   config.action_mailer.raise_delivery_errors = false
   config.action_mailer.perform_caching = false
 
-  # URL helpers
+  # URL helpers pour Action Mailer
   config.action_mailer.default_url_options = {
+    host: "localhost",
+    port: 3000
+  }
+
+  # ✅ AJOUT : Configuration pour Rails routes (nécessaire pour Active Storage url_for)
+  Rails.application.routes.default_url_options = {
     host: "localhost",
     port: 3000
   }

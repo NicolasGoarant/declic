@@ -38,7 +38,8 @@ module StoriesHelper
       if inline_image.attached?
         # Générer l'URL de l'image via Active Storage
         begin
-          image_url = Rails.application.routes.url_helpers.url_for(inline_image)
+          # ✅ CORRECTION : Utiliser rails_blob_path au lieu de url_for pour éviter le problème de host
+          image_url = Rails.application.routes.url_helpers.rails_blob_path(inline_image, only_path: true)
           # Créer la syntaxe Markdown avec caption
           markdown = "![#{caption}](#{image_url})"
           processed.gsub!(placeholder, markdown)
@@ -102,7 +103,7 @@ module StoriesHelper
 
     %Q(
       <figure class="story-img my-4">
-        <img src="#{img_src}" alt="#{ERB::Util.html_escape(alt)}" loading="lazy" class="rounded-xl shadow-md w-full h-auto object-cover">
+        <img src="#{img_src}" alt="#{ERB::Util.html_escape(alt)}" loading="lazy" class="rounded-xl shadow-md w-full h-auto object-cover" style="max-height: 500px;">
         <figcaption class="mt-2 text-sm text-slate-600">#{ERB::Util.html_escape(alt)}</figcaption>
       </figure>
     )
