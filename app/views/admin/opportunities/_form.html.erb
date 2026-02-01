@@ -251,7 +251,7 @@ TXT
         <div class="field">
           <%= f.label :image, "Upload image principale", class: "field-label" %>
           <%= f.file_field :image, accept: "image/*", direct_upload: true, class: "field-input" %>
-          <% if @opportunity.image.attached? %>
+<% if @opportunity.persisted? && @opportunity.image.attached? && @opportunity.image.blob.persisted? %>
             <div class="current-image" style="margin-top: 0.75rem;">
               <%= image_tag @opportunity.image, style: "max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" %>
               <p style="font-size: 0.75rem; color: #64748b; margin: 0.5rem 0 0 0;">✅ Image actuelle</p>
