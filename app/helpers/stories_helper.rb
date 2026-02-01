@@ -22,6 +22,7 @@ module StoriesHelper
 
   # ----------------------------- Inline Markdown sûr ---------------------------------
   # Convertit **gras**, *italique* et [lien](https://...) après échappement HTML.
+  # ⚠️ NOUVEAU : Préserve les placeholders HTML pour photos inline
   def inline_format(text)
     s = ERB::Util.html_escape(text.to_s)
 
@@ -90,6 +91,7 @@ module StoriesHelper
   # - Bloc "**À retenir**" => liste à checkmarks
   # - Paragraphes + inline_format
   # - Images Markdown ![alt](src)
+  # ⚠️ NOUVEAU : Préserve les placeholders ___INLINE_PHOTO_X_PLACEHOLDER___
   def render_story_body(text)
     return "".html_safe if text.blank?
 
@@ -101,7 +103,15 @@ module StoriesHelper
     lines.each do |raw|
       line = raw.rstrip
 
-      # Images
+      # ⚠️ NOUVEAU : Détecter et préserver les placeholders de photos inline
+      if line =~ /\A___INLINE_PHOTO_\d+_PLACEHOLDER___\z/
+        html << %(</ul>) if in_list
+        in_list = false
+        html << line  # Garder le placeholder tel quel
+        next
+      end
+
+      # Images Markdown standard
       if (img_html = render_image_line(line))
         html << %(</ul>) if in_list
         in_list = false
@@ -132,7 +142,6 @@ module StoriesHelper
         in_list = false
         in_takeaways = false
 
-        # MODIFIÉ : Émoji sans cercle, juste text-2xl
         html << %(
           <h3 class="mt-7 mb-3 flex items-center gap-3 text-xl font-semibold text-slate-900">
             <span class="text-2xl">#{emoji}</span>
