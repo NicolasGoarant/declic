@@ -3,8 +3,14 @@
 <%
 # Helpers visuels
 def story_thumb(s)
-  return s.image_url if s.respond_to?(:image_url) && s.image_url.present?
-  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=80&fit=crop"
+  # PRIORITÉ : Upload Active Storage > URL externe > Placeholder
+  if s.respond_to?(:image) && s.image.attached?
+    return url_for(s.image)
+  elsif s.respond_to?(:image_url) && s.image_url.present?
+    return s.image_url
+  else
+    return "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=80&fit=crop"
+  end
 end
 
 def clean_desc(txt)
