@@ -3,7 +3,15 @@
 <%
 # Helpers visuels (Images par défaut selon catégorie)
 def thumb_for(o)
+  # 1. PRIORITÉ 1 : Image uploadée via Active Storage
+  if o.respond_to?(:image) && o.image.attached?
+    return url_for(o.image)
+  end
+
+  # 2. PRIORITÉ 2 : URL externe (image_url)
   return o.image_url if o.respond_to?(:image_url) && o.image_url.present?
+
+  # 3. FALLBACK : Placeholder Unsplash par catégorie
   cat = (o.respond_to?(:category) ? o.category : '').to_s.downcase
   case cat
   when 'benevolat'    then 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=600&q=80&fit=crop'
@@ -15,10 +23,13 @@ def thumb_for(o)
   end
 end
 
+
+
 def clean_desc(txt)
   (txt || "").to_s.gsub(/###|!\[.*?\]\(.*?\)/, "").gsub(/\*\*|__/, "").truncate(120)
 end
 %>
+
 
 <div class="ops-ms">
 
