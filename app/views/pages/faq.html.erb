@@ -1,4 +1,506 @@
-<div class="max-w-[900px] mx-auto px-5 py-12">
-  <h1 class="text-3xl font-extrabold mb-4">FAQ</h1>
-  <p class="text-gray-700">Questions fréquentes…</p>
+<%# app/views/pages/faq.html.erb %>
+
+<div class="faq-page">
+
+  <%# HERO %>
+  <header class="faq-hero">
+    <div class="container">
+      <div class="faq-hero-badge">💡 Support</div>
+      <h1 class="faq-hero-title">Foire Aux Questions</h1>
+      <p class="faq-hero-chapo">
+        Vous avez des questions ? Nous avons les réponses.<br>
+        Découvrez comment Déclic peut vous aider à passer à l'action.
+      </p>
+    </div>
+  </header>
+
+  <%# CONTENU FAQ %>
+  <section class="faq-content">
+    <div class="container">
+
+      <%# CATÉGORIE 1 : Utilisation de la plateforme %>
+      <div class="faq-category">
+        <h2 class="faq-category-title">
+          <span class="faq-category-icon">🚀</span>
+          Utilisation de la plateforme
+        </h2>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span class="faq-q-icon">Q</span>
+            <h3>Qu'est-ce que Déclic ?</h3>
+          </div>
+          <div class="faq-answer">
+            <p>Déclic est une plateforme qui met en lumière des opportunités d'engagement citoyen et des témoignages inspirants dans le Grand Nancy et Paris. Notre mission : vous aider à passer à l'action en découvrant des projets concrets près de chez vous pour vous former, entreprendre, vous engager ou créer du lien.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span class="faq-q-icon">Q</span>
+            <h3>Comment trouver des opportunités près de chez moi ?</h3>
+          </div>
+          <div class="faq-answer">
+            <p>Utilisez la carte interactive sur la page d'accueil ou la page "Explorer". Vous pouvez :</p>
+            <ul>
+              <li>Filtrer par catégorie (Bénévolat, Formation, Rencontres, Entreprendre, Écologiser)</li>
+              <li>Utiliser le bouton "Me localiser" pour voir les opportunités autour de vous</li>
+              <li>Cliquer sur les marqueurs pour découvrir les détails</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span class="faq-q-icon">Q</span>
+            <h3>La plateforme est-elle gratuite ?</h3>
+          </div>
+          <div class="faq-answer">
+            <p>Oui, 100% ! Déclic est une plateforme citoyenne et gratuite. Aucun frais, aucun abonnement. Notre objectif est de faciliter l'accès à l'engagement pour tous.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span class="faq-q-icon">Q</span>
+            <h3>Dois-je créer un compte pour utiliser Déclic ?</h3>
+          </div>
+          <div class="faq-answer">
+            <p>Non ! Vous pouvez explorer toutes les opportunités et histoires sans créer de compte. Un compte n'est nécessaire que si vous souhaitez proposer une opportunité ou partager votre témoignage.</p>
+          </div>
+        </div>
+      </div>
+
+      <%# CATÉGORIE 2 : Proposer du contenu %>
+      <div class="faq-category">
+        <h2 class="faq-category-title">
+          <span class="faq-category-icon">✍️</span>
+          Proposer du contenu
+        </h2>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span class="faq-q-icon">Q</span>
+            <h3>Comment proposer une opportunité ?</h3>
+          </div>
+          <div class="faq-answer">
+            <p>Cliquez sur le bouton "Proposer une opportunité" en haut de la page. Remplissez le formulaire avec :</p>
+            <ul>
+              <li>Le titre et la description de votre projet</li>
+              <li>La catégorie (Bénévolat, Formation, etc.)</li>
+              <li>Les informations pratiques (lieu, contact, site web)</li>
+              <li>Une photo pour illustrer votre projet</li>
+            </ul>
+            <p>Votre proposition sera examinée par notre équipe avant publication.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span class="faq-q-icon">Q</span>
+            <h3>Puis-je partager mon témoignage ?</h3>
+          </div>
+          <div class="faq-answer">
+            <p>Absolument ! Les "Belles Histoires" sont au cœur de Déclic. Si vous avez vécu un déclic, une reconversion, un engagement qui a changé votre vie, partagez-le sur la page "Témoignages". Votre histoire peut inspirer des centaines de personnes.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span class="faq-q-icon">Q</span>
+            <h3>Combien de temps avant que mon contenu soit publié ?</h3>
+          </div>
+          <div class="faq-answer">
+            <p>Nous examinons chaque proposition sous 2-3 jours ouvrés. Vous recevrez un email de confirmation une fois votre contenu publié. Si des informations manquent, nous vous contacterons pour compléter.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span class="faq-q-icon">Q</span>
+            <h3>Puis-je modifier ou supprimer mon contenu ?</h3>
+          </div>
+          <div class="faq-answer">
+            <p>Oui. Envoyez-nous un email à <a href="mailto:contact@declic.site">contact@declic.site</a> avec les modifications souhaitées ou une demande de suppression. Nous traiterons votre demande rapidement.</p>
+          </div>
+        </div>
+      </div>
+
+      <%# CATÉGORIE 3 : Types d'opportunités %>
+      <div class="faq-category">
+        <h2 class="faq-category-title">
+          <span class="faq-category-icon">🎯</span>
+          Types d'opportunités
+        </h2>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span class="faq-q-icon">Q</span>
+            <h3>Que signifient les différentes catégories ?</h3>
+          </div>
+          <div class="faq-answer">
+            <ul>
+              <li><strong>❤️ Bénévolat</strong> : Associations, actions solidaires, aide aux autres</li>
+              <li><strong>📚 Formation</strong> : Cours, ateliers, apprentissage de compétences</li>
+              <li><strong>☕ Rencontres</strong> : Événements, cafés citoyens, réseaux</li>
+              <li><strong>🚀 Entreprendre</strong> : Création d'entreprise, accompagnement, incubateurs</li>
+              <li><strong>🌱 Écologiser</strong> : Transition écologique, jardins partagés, zéro déchet</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span class="faq-q-icon">Q</span>
+            <h3>Les opportunités sont-elles vérifiées ?</h3>
+          </div>
+          <div class="faq-answer">
+            <p>Oui ! Chaque opportunité est vérifiée par notre équipe avant publication. Nous nous assurons que les informations sont correctes et que les contacts sont valides. Si vous constatez une erreur, signalez-la nous.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span class="faq-q-icon">Q</span>
+            <h3>Pourquoi certaines opportunités n'ont pas d'adresse exacte ?</h3>
+          </div>
+          <div class="faq-answer">
+            <p>Certaines opportunités sont nomades (événements itinérants) ou en ligne. Dans ce cas, nous indiquons "Grand Nancy" ou "Paris" comme zone générale. Consultez les détails pour connaître les modalités de participation.</p>
+          </div>
+        </div>
+      </div>
+
+      <%# CATÉGORIE 4 : Contact et support %>
+      <div class="faq-category">
+        <h2 class="faq-category-title">
+          <span class="faq-category-icon">📧</span>
+          Contact et support
+        </h2>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span class="faq-q-icon">Q</span>
+            <h3>Comment vous contacter ?</h3>
+          </div>
+          <div class="faq-answer">
+            <p>Vous pouvez nous joindre par email à <a href="mailto:contact@declic.site">contact@declic.site</a>. Nous répondons généralement sous 48h.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span class="faq-q-icon">Q</span>
+            <h3>J'ai trouvé un bug, comment le signaler ?</h3>
+          </div>
+          <div class="faq-answer">
+            <p>Merci de nous aider à améliorer Déclic ! Envoyez-nous un email à <a href="mailto:contact@declic.site">contact@declic.site</a> en décrivant le problème (page concernée, navigateur utilisé, captures d'écran si possible).</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span class="faq-q-icon">Q</span>
+            <h3>Puis-je contribuer au développement de Déclic ?</h3>
+          </div>
+          <div class="faq-answer">
+            <p>Oui ! Déclic est un projet citoyen et ouvert. Si vous avez des compétences en développement, design, rédaction ou communication, contactez-nous pour rejoindre l'aventure.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <%# CTA FINAL %>
+  <section class="faq-cta">
+    <div class="container">
+      <div class="faq-cta-card">
+        <div class="faq-cta-icon">💬</div>
+        <h2>Une autre question ?</h2>
+        <p>Notre équipe est là pour vous aider</p>
+        <a href="mailto:contact@declic.site" class="faq-cta-btn">
+          Nous contacter
+        </a>
+      </div>
+    </div>
+  </section>
+
 </div>
+
+<style>
+/* BASE */
+.faq-page {
+  font-family: "Inter", system-ui, sans-serif;
+  color: #0f172a;
+  background: white;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* HERO */
+.faq-hero {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  padding: 80px 24px 60px;
+  text-align: center;
+  border-bottom: 2px solid #e9d5ff;
+}
+
+.faq-hero-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  color: white;
+  font-weight: 800;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 20px;
+  border-radius: 999px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+}
+
+.faq-hero-title {
+  font-family: "Epilogue", sans-serif;
+  font-weight: 900;
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  line-height: 1.1;
+  margin: 0 0 16px;
+  background: linear-gradient(135deg, #7e22ce, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.faq-hero-chapo {
+  font-size: 1.15rem;
+  color: #64748b;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* CONTENU */
+.faq-content {
+  padding: 60px 0;
+}
+
+.faq-category {
+  margin-bottom: 60px;
+}
+
+.faq-category-title {
+  font-family: "Epilogue", sans-serif;
+  font-weight: 800;
+  font-size: 1.8rem;
+  color: #1e293b;
+  margin: 0 0 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 3px solid #f1f5f9;
+}
+
+.faq-category-icon {
+  font-size: 2rem;
+}
+
+.faq-item {
+  background: white;
+  border: 2px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s;
+}
+
+.faq-item:hover {
+  border-color: #e9d5ff;
+  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.1);
+  transform: translateY(-2px);
+}
+
+.faq-question {
+  display: flex;
+  align-items: start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.faq-q-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  color: white;
+  font-weight: 800;
+  font-size: 0.9rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.faq-question h3 {
+  font-family: "Epilogue", sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.faq-answer {
+  padding-left: 48px;
+}
+
+.faq-answer p {
+  color: #475569;
+  font-size: 1rem;
+  line-height: 1.7;
+  margin: 0 0 12px;
+}
+
+.faq-answer p:last-child {
+  margin-bottom: 0;
+}
+
+.faq-answer ul {
+  color: #475569;
+  font-size: 1rem;
+  line-height: 1.7;
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.faq-answer li {
+  margin-bottom: 8px;
+}
+
+.faq-answer a {
+  color: #a855f7;
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 2px solid #e9d5ff;
+  transition: border-color 0.2s;
+}
+
+.faq-answer a:hover {
+  border-bottom-color: #a855f7;
+}
+
+.faq-answer strong {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+/* CTA FINAL */
+.faq-cta {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  padding: 80px 24px;
+}
+
+.faq-cta-card {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.faq-cta-icon {
+  font-size: 4rem;
+  margin-bottom: 24px;
+}
+
+.faq-cta-card h2 {
+  font-family: "Epilogue", sans-serif;
+  font-weight: 800;
+  font-size: 2.5rem;
+  color: white;
+  margin: 0 0 12px;
+}
+
+.faq-cta-card p {
+  font-size: 1.25rem;
+  color: #cbd5e1;
+  margin: 0 0 32px;
+}
+
+.faq-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  color: white;
+  padding: 18px 40px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-decoration: none;
+  box-shadow: 0 10px 40px rgba(168, 85, 247, 0.4);
+  transition: all 0.2s;
+}
+
+.faq-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 50px rgba(168, 85, 247, 0.5);
+}
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+  .faq-hero {
+    padding: 60px 20px 40px;
+  }
+
+  .faq-hero-title {
+    font-size: 2rem;
+  }
+
+  .faq-hero-chapo {
+    font-size: 1rem;
+  }
+
+  .faq-content {
+    padding: 40px 0;
+  }
+
+  .faq-category-title {
+    font-size: 1.5rem;
+  }
+
+  .faq-item {
+    padding: 20px;
+  }
+
+  .faq-question h3 {
+    font-size: 1.1rem;
+  }
+
+  .faq-answer {
+    padding-left: 0;
+    margin-top: 12px;
+  }
+
+  .faq-answer p,
+  .faq-answer ul {
+    font-size: 0.95rem;
+  }
+
+  .faq-cta {
+    padding: 60px 20px;
+  }
+
+  .faq-cta-card h2 {
+    font-size: 2rem;
+  }
+
+  .faq-cta-card p {
+    font-size: 1.1rem;
+  }
+}
+</style>
