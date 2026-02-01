@@ -309,9 +309,8 @@ end
   </section>
 
 
-
-    <%# ========== SECTION TÉMOIGNAGES PRO (STYLE SWAPN EXACT) ========== %>
-  <section id="temoignages" class="hm-slice">
+<%# ========== SECTION TÉMOIGNAGES ========== %>
+  <section class="hm-testimonials">
     <div class="container">
       <div class="hm-testi-header">
         <h2 class="hm-h2">Ils/elles ont trouvé leur déclic</h2>
@@ -319,56 +318,47 @@ end
       </div>
 
       <div class="hm-testimonials-pro">
-        <% [
+        <%
+        testimonials = [
           {
-            name: "Nathalie",
+            name: "Lucile",
             role: "Chargée de communication",
-            location: "Nancy",
             text: "Je cherchais un engagement local sans trop savoir par où commencer. Grâce à Déclic, j'ai trouvé une mission de bénévolat dans une épicerie solidaire à 10 minutes de chez moi.",
-            color: "violet",
-            photo: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&h=400&fit=crop&q=80"
+            color: "blue",
+            photo: asset_path("avatars/lucile.png")
           },
           {
             name: "Matthieu",
             role: "En reconversion",
-            location: "Saint-Max",
             text: "Je regardais les offres d'emploi sans trop savoir ce qui me correspondait. Avec Déclic, j'ai trouvé un atelier de bilan de compétences animé localement. Ça a totalement réorienté ma trajectoire.",
             color: "orange",
-            photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&q=80"
+            photo: asset_path("avatars/francois.png")
           },
           {
             name: "Karim",
             role: "Développeur junior",
-            location: "Laxou",
             text: "Je voulais entreprendre mais je ne savais pas par où commencer. Sur Déclic, j'ai participé à un afterwork d'entrepreneurs. J'y ai pitché mon projet pour la première fois et décroché un vrai coup de pouce.",
             color: "yellow",
-            photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&q=80"
+            photo: asset_path("avatars/luc.png")
           },
           {
             name: "Emma",
             role: "Jeune diplômée",
-            location: "Vandœuvre",
             text: "Après mes études, je me sentais un peu perdue. En explorant Déclic, j'ai découvert un atelier d'accompagnement pour jeunes actifs. J'y ai rencontré d'autres personnes motivées et retrouvé de la confiance.",
             color: "beige",
-            photo: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&q=80"
+            photo: asset_path("avatars/emma.jpeg")
           }
         ].each do |t| %>
           <div class="hm-testi-card-pro" data-color="<%= t[:color] %>">
             <div class="testi-gradient"></div>
 
             <div class="testi-content">
-              <%# Zone photo grande en haut - Style Swapn %>
+              <%# Zone photo grande en haut %>
               <div class="testi-photo-wrapper">
                 <div class="testi-photo" style="background-image: url('<%= t[:photo] %>')"></div>
-                <%# Bouton play optionnel pour vidéos futures %>
-                <%# <button class="testi-play" aria-label="Lire le témoignage vidéo">
-                  <svg width="24" height="24" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
-                </button> %>
               </div>
 
-              <%# Bloc texte en dessous - Style Swapn %>
+              <%# Bloc texte en dessous %>
               <div class="testi-text-block">
                 <svg class="testi-quote-icon" width="32" height="32" viewBox="0 0 32 32" fill="currentColor">
                   <path d="M10 8c-3.3 0-6 2.7-6 6v8h8v-8h-4c0-2.2 1.8-4 4-4V8zm12 0c-3.3 0-6 2.7-6 6v8h8v-8h-4c0-2.2 1.8-4 4-4V8z"/>
@@ -376,7 +366,7 @@ end
 
                 <p class="testi-quote">"<%= t[:text] %>"</p>
 
-                <%# Auteur avec icône guillemets à gauche - Style Swapn %>
+                <%# Auteur %>
                 <div class="testi-author">
                   <div class="testi-author-info">
                     <p class="testi-name"><%= t[:name] %></p>
@@ -394,6 +384,7 @@ end
       </div>
     </div>
   </section>
+
 
   <section class="hm-cta">
     <div class="container">
