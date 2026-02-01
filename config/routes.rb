@@ -27,11 +27,10 @@ Rails.application.routes.draw do
     end
   end
 
-<%= link_to "FAQ", faq_path %>                      <!-- Était: # -->
-<%= link_to "Confidentialité", confidentialite_path %> <!-- Était: # -->
-<%= link_to "Mentions légales", mentions_legales_path %> <!-- Déjà OK ✅ -->
-<%= link_to "Presse", presse_path %>               <!-- Était: # -->
-
+  get "/mentions-legales", to: "pages#legal",           as: :mentions_legales
+  get "/confidentialite",  to: "pages#confidentialite", as: :confidentialite
+  get "/presse",           to: "pages#presse",          as: :presse
+  get "/faq",              to: "pages#faq",             as: :faq
   # --- API PUBLIQUE ---
 
   namespace :api do
