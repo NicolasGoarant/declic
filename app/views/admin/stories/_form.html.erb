@@ -149,13 +149,13 @@
 
     <div class="form-grid">
       <div class="field full image-preview-container">
-        <% if @story.image_url.present? || @story.image.attached? %>
+        <% if @story.image_url.present? || (@story.persisted? && @story.image.attached? && @story.image.blob.persisted?) %>
           <div class="current-image">
             <p class="preview-label">✅ Image actuelle :</p>
             <% if @story.image_url.present? %>
               <img src="<%= @story.image_url %>" alt="Preview" class="preview-img">
               <p class="image-source">Source : URL externe</p>
-            <% elsif @story.image.attached? %>
+            <% elsif @story.persisted? && @story.image.attached? && @story.image.blob.persisted? %>
               <%= image_tag @story.image.variant(resize_to_limit: [600, 400]), class: "preview-img" rescue nil %>
               <p class="image-source">Source : Upload fichier</p>
             <% end %>
@@ -200,7 +200,7 @@
 
         <%= f.label :inline_image_1, "Upload photo 1" %>
         <%= f.file_field :inline_image_1, direct_upload: true, accept: "image/*" %>
-        <% if @story.respond_to?(:inline_image_1) && @story.inline_image_1.attached? %>
+        <% if @story.respond_to?(:inline_image_1) && @story.persisted? && @story.inline_image_1.attached? && @story.inline_image_1.blob.persisted? %>
           <div style="margin-top: 8px;">
             <%= image_tag @story.inline_image_1.variant(resize_to_limit: [300, 200]), style: "border-radius: 8px;" %>
           </div>
@@ -220,7 +220,7 @@
 
         <%= f.label :inline_image_2, "Upload photo 2" %>
         <%= f.file_field :inline_image_2, direct_upload: true, accept: "image/*" %>
-        <% if @story.respond_to?(:inline_image_2) && @story.inline_image_2.attached? %>
+        <% if @story.respond_to?(:inline_image_2) && @story.persisted? && @story.inline_image_2.attached? && @story.inline_image_2.blob.persisted? %>
           <div style="margin-top: 8px;">
             <%= image_tag @story.inline_image_2.variant(resize_to_limit: [300, 200]), style: "border-radius: 8px;" %>
           </div>
@@ -240,7 +240,7 @@
 
         <%= f.label :inline_image_3, "Upload photo 3" %>
         <%= f.file_field :inline_image_3, direct_upload: true, accept: "image/*" %>
-        <% if @story.respond_to?(:inline_image_3) && @story.inline_image_3.attached? %>
+        <% if @story.respond_to?(:inline_image_3) && @story.persisted? && @story.inline_image_3.attached? && @story.inline_image_3.blob.persisted? %>
           <div style="margin-top: 8px;">
             <%= image_tag @story.inline_image_3.variant(resize_to_limit: [600, 300]), style: "border-radius: 8px; width: 100%;" %>
           </div>
