@@ -258,10 +258,6 @@ end
           <% end %>
         <% end %>
       </div>
-
-      <div class="hm-stories-footer">
-        <%= link_to "Lire toutes les histoires", stories_path, class: "hm-story-more" %>
-      </div>
     </div>
   </section>
 
@@ -378,28 +374,10 @@ end
           </div>
         <% end %>
       </div>
-
-      <div class="hm-testi-cta">
-        <%= link_to "Lire toutes les histoires", stories_path, class: "hm-testi-btn" %>
-      </div>
     </div>
   </section>
 
 
-  <section class="hm-cta">
-    <div class="container">
-      <h2>Envie d’agir à ton tour ?</h2>
-      <p>Découvre des opportunités près de chez toi ou partage ta propre histoire pour inspirer d’autres personnes.</p>
-      <div class="buttons">
-        <%= link_to "Voir les actions locales",
-                    (url_for(controller: :opportunities, action: :index, category: 'toutes') rescue root_path(anchor: "explorer")),
-                    class: "btn primary" %>
-        <%= link_to "Partager mon histoire",
-                    (respond_to?(:new_story_path) ? new_story_path : stories_path),
-                    class: "btn secondary" %>
-      </div>
-    </div>
-  </section>
 </div>
 
 <style>
