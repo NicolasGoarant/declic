@@ -1850,7 +1850,9 @@ function bootHome(){
         html: `<div style="${baseStyle}${extraStyle}"><span>${em}</span></div>`,
         iconSize: [26, 32],
         iconAnchor: [13, 28],
-        popupAnchor: [0, -16]
+        popupAnchor: [0, -16],
+        // ✅ AJOUT : z-index plus élevé pour les opportunities
+        zIndexOffset: c === 'histoires' ? 0 : 100
       });
     };
 

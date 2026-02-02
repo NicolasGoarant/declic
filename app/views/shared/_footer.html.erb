@@ -10,12 +10,10 @@
       </div>
     </div>
 
-    <nav class="declic-footer__links">
-      <%= link_to "FAQ", "#" %>
-      <%= link_to "Confidentialité", "#" %>
-      <%= link_to "Mentions légales", mentions_legales_path %>
-      <%= link_to "Presse", "#" %>
-    </nav>
+<%= link_to "FAQ", faq_path %>                      <!-- Était: # -->
+<%= link_to "Confidentialité", confidentialite_path %> <!-- Était: # -->
+<%= link_to "Mentions légales", mentions_legales_path %> <!-- Déjà OK ✅ -->
+<%= link_to "Presse", presse_path %>               <!-- Était: # -->
 
     <div class="declic-footer__socials">
       <a href="#" aria-label="Déclic sur Facebook" class="declic-footer__social">
