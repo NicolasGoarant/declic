@@ -75,9 +75,30 @@ end
           Change ta vie, <span class="grad">en quelques clics</span>
         </h1>
         <p class="hm-chapo">
-          Déclic agrège les mille et une opportunités locales pour entreprendre, écologiser, se former, rencontrer,
+          Déclic te connecte aux opportunités locales d'engagement :
           aider — et pour découvrir des <strong>“belles histoires”</strong> qui inspirent.
         </p>
+
+        <%# LES 3 C DE DÉCLIC %>
+        <div class="trois-c">
+          <div class="c-card c-card-1">
+            <div class="c-emoji">🔍</div>
+            <h3 class="c-title">Concentrer</h3>
+            <p class="c-desc">Toutes les opportunités en un seul endroit</p>
+          </div>
+
+          <div class="c-card c-card-2">
+            <div class="c-emoji">🗺️</div>
+            <h3 class="c-title">Cartographier</h3>
+            <p class="c-desc">Visualise les initiatives près de chez toi</p>
+          </div>
+
+          <div class="c-card c-card-3">
+            <div class="c-emoji">✨</div>
+            <h3 class="c-title">Contribuer</h3>
+            <p class="c-desc">Partage ton histoire, dépose une opportunité</p>
+          </div>
+        </div>
 
       </div>
     </div>
@@ -376,6 +397,91 @@ end
 </div>
 
 <style>
+/* === LES 3 C === */
+.trois-c {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  max-width: 56rem;
+  margin: 2.5rem auto 0;
+}
+
+.c-card {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 1.25rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.6s ease forwards;
+  opacity: 0;
+}
+
+.c-card-1 { animation-delay: 0.2s; }
+.c-card-2 { animation-delay: 0.4s; }
+.c-card-3 { animation-delay: 0.6s; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.c-card:hover {
+  transform: translateY(-8px);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.c-emoji {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  line-height: 1;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+}
+
+.c-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+  color: white;
+}
+
+.c-desc {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .trois-c {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  .c-card {
+    padding: 1.75rem 1.25rem;
+  }
+  .c-emoji {
+    font-size: 2.5rem;
+  }
+  .c-title {
+    font-size: 1.1rem;
+  }
+  .c-desc {
+    font-size: 0.875rem;
+  }
+}
+
 /* ====== Thème global ====== */
 .home-ms{
   --a1:#7e5bef;
