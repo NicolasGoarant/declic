@@ -163,7 +163,7 @@ module OpportunitiesHelper
 
         html << %(
           <h3 class="mt-6 mb-3 flex items-center gap-3 text-lg font-bold text-slate-900">
-            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-base">#{emoji}</span>
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-xl">#{emoji}</span>
             <span class="font-bold">#{ERB::Util.html_escape(title)}</span>
           </h3>
         )
