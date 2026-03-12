@@ -66,10 +66,50 @@ module OpportunitiesHelper
   def emoji_for_opportunity(title)
     key = title.to_s.downcase
     case
-    when key.include?('craindre') || key.include?('panne')          then '💡'
-    when key.include?('atelier') || key.include?('participatif')    then '🛠️'
-    when key.include?('mains') || key.include?('cambouis')          then '🔧'
-    when key.include?('mettre')                                     then '👍'
+    # Santé / Médical
+    when key.include?('médical') || key.include?('santé') || key.include?('soin') || key.include?('patient')     then '🏥'
+    when key.include?('recherche') || key.include?('innovation') || key.include?('technolog')                    then '🔬'
+
+    # Écologie / Environnement
+    when key.include?('écolo') || key.include?('environnement') || key.include?('planète')                       then '🌱'
+    when key.include?('écosystème') || key.include?('biodiversité')                                              then '🌍'
+    when key.include?('énergie') || key.include?('renouvelable') || key.include?('solaire')                      then '⚡'
+
+    # Entrepreneuriat / Business
+    when key.include?('projet') || key.include?('entreprise') || key.include?('création')                        then '🚀'
+    when key.include?('financement') || key.include?('levée') || key.include?('investis')                        then '💰'
+    when key.include?('expertise') || key.include?('conseil') || key.include?('accompagnement')                  then '🎯'
+    when key.include?('réseau') || key.include?('partenaire') || key.include?('collaboration')                   then '🤝'
+
+    # Réparation / Technique
+    when key.include?('répar') || key.include?('répare')                                                         then '🔧'
+    when key.include?('atelier') || key.include?('participatif')                                                 then '🛠️'
+    when key.include?('mains') || key.include?('cambouis')                                                       then '🔧'
+
+    # Problèmes / Solutions
+    when key.include?('craindre') || key.include?('panne') || key.include?('problème')                           then '💡'
+    when key.include?('solution') || key.include?('réponse')                                                     then '✨'
+
+    # Social / Solidaire
+    when key.include?('solidaire') || key.include?('social') || key.include?('entraide')                         then '❤️'
+    when key.include?('bénévol') || key.include?('don') || key.include?('aide')                                  then '🤲'
+
+    # Formation / Apprentissage
+    when key.include?('formation') || key.include?('apprend') || key.include?('cours')                           then '📚'
+    when key.include?('mentor') || key.include?('coach')                                                         then '👨‍🏫'
+
+    # Événement / Rencontre
+    when key.include?('événement') || key.include?('rencontre') || key.include?('rendez-vous')                   then '📅'
+    when key.include?('festival') || key.include?('concert') || key.include?('spectacle')                        then '🎭'
+
+    # Transport / Mobilité
+    when key.include?('transport') || key.include?('mobilité') || key.include?('véhicule')                       then '🚗'
+    when key.include?('train') || key.include?('rail') || key.include?('ferroviaire')                            then '🚂'
+
+    # Avancée / Progrès
+    when key.include?('avancée') || key.include?('progrès') || key.include?('évolution')                         then '📈'
+    when key.include?('envergure') || key.include?('ambition') || key.include?('objectif')                       then '🎯'
+
     else '📌'
     end
   end
