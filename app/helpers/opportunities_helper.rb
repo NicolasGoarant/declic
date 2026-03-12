@@ -144,16 +144,28 @@ module OpportunitiesHelper
       if line =~ /\A[ \t]*###[ \t]+(.+)/
         title_raw = Regexp.last_match(1).strip
 
-        # Détecter émoji custom
+        # Détecter émoji custom avec regex AMÉLIORÉE pour tous les émojis Unicode
         custom_emoji = nil
         title = title_raw
 
-        if title_raw =~ /\A\{(?<em>[\p{Emoji}\u2600-\u27BF])\}[ \t]*(?<rest>.+)\z/u
-          custom_emoji = Regexp.last_match(:em)
-          title        = Regexp.last_match(:rest).strip
-        elsif title_raw =~ /\A(?<em>[\p{Emoji}\u2600-\u27BF])[ \t]*(?<rest>.+)\z/u
-          custom_emoji = Regexp.last_match(:em)
-          title        = Regexp.last_match(:rest).strip
+        # Pattern 1: {émoji} Titre
+        if title_raw =~ /\A\{(.)\}[ \t]*(.+)\z/u
+          potential_emoji = Regexp.last_match(1)
+          rest = Regexp.last_match(2).strip
+          # Vérifier que c'est bien un émoji (code point >= U+1F300)
+          if potential_emoji.ord >= 0x1F300 || potential_emoji.match?(/[\u2600-\u27BF\u2B50\u2B55\u231A\u231B\u23E9-\u23FA\u25AA-\u25FE\u2614-\u2615\u2648-\u2653\u26A0-\u26FA\u2700-\u27BF]/)
+            custom_emoji = potential_emoji
+            title = rest
+          end
+        # Pattern 2: émoji Titre (sans accolades)
+        elsif title_raw =~ /\A(.)[ \t]+(.+)\z/u
+          potential_emoji = Regexp.last_match(1)
+          rest = Regexp.last_match(2).strip
+          # Vérifier que c'est bien un émoji
+          if potential_emoji.ord >= 0x1F300 || potential_emoji.match?(/[\u2600-\u27BF\u2B50\u2B55\u231A\u231B\u23E9-\u23FA\u25AA-\u25FE\u2614-\u2615\u2648-\u2653\u26A0-\u26FA\u2700-\u27BF]/)
+            custom_emoji = potential_emoji
+            title = rest
+          end
         end
 
         emoji = custom_emoji || emoji_for_opportunity(title)
