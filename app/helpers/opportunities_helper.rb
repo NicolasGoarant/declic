@@ -144,27 +144,27 @@ module OpportunitiesHelper
       if line =~ /\A[ \t]*###[ \t]+(.+)/
         title_raw = Regexp.last_match(1).strip
 
-        # Détecter émoji custom avec regex AMÉLIORÉE pour tous les émojis Unicode
+        # Détecter émoji au début (avec ou sans accolades)
         custom_emoji = nil
         title = title_raw
 
         # Pattern 1: {émoji} Titre
         if title_raw =~ /\A\{(.)\}[ \t]*(.+)\z/u
-          potential_emoji = Regexp.last_match(1)
+          potential = Regexp.last_match(1)
           rest = Regexp.last_match(2).strip
-          # Vérifier que c'est bien un émoji (code point >= U+1F300)
-          if potential_emoji.ord >= 0x1F300 || potential_emoji.match?(/[\u2600-\u27BF\u2B50\u2B55\u231A\u231B\u23E9-\u23FA\u25AA-\u25FE\u2614-\u2615\u2648-\u2653\u26A0-\u26FA\u2700-\u27BF]/)
-            custom_emoji = potential_emoji
-            title = rest
+          # Vérifie que c'est bien un émoji
+          if potential.ord >= 0x1F300 || potential =~ /[\p{Emoji}]/
+            custom_emoji = potential
+            title = rest  # SANS l'émoji
           end
-        # Pattern 2: émoji Titre (sans accolades)
-        elsif title_raw =~ /\A(.)[ \t]+(.+)\z/u
-          potential_emoji = Regexp.last_match(1)
+        # Pattern 2: émoji Titre (émoji collé au texte)
+        elsif title_raw =~ /\A(.)[ \t]*(.+)\z/u
+          potential = Regexp.last_match(1)
           rest = Regexp.last_match(2).strip
-          # Vérifier que c'est bien un émoji
-          if potential_emoji.ord >= 0x1F300 || potential_emoji.match?(/[\u2600-\u27BF\u2B50\u2B55\u231A\u231B\u23E9-\u23FA\u25AA-\u25FE\u2614-\u2615\u2648-\u2653\u26A0-\u26FA\u2700-\u27BF]/)
-            custom_emoji = potential_emoji
-            title = rest
+          # Vérifie que c'est bien un émoji
+          if potential.ord >= 0x1F300 || potential =~ /[\p{Emoji}]/
+            custom_emoji = potential
+            title = rest  # SANS l'émoji
           end
         end
 
@@ -177,6 +177,25 @@ module OpportunitiesHelper
           <h3 class="mt-6 mb-3 flex items-center gap-3 text-lg font-bold text-slate-900">
             <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-xl">#{emoji}</span>
             <span class="font-bold">#{ERB::Util.html_escape(title)}</span>
+          </h3>
+        )
+        next
+      end
+
+      # Titres en **gras:** (alternative à ###)
+      if line =~ /\A\*\*(.+?)\*\*\s*:?\s*\z/
+        bold_title = Regexp.last_match(1).strip
+
+        # Générer émoji par défaut
+        emoji = emoji_for_opportunity(bold_title)
+
+        html << %(</ul>) if in_list
+        in_list = false
+
+        html << %(
+          <h3 class="mt-6 mb-3 flex items-center gap-3 text-lg font-bold text-slate-900">
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-xl">#{emoji}</span>
+            <span class="font-bold">#{ERB::Util.html_escape(bold_title)}</span>
           </h3>
         )
         next
