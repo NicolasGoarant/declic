@@ -62,56 +62,82 @@ module OpportunitiesHelper
     s
   end
 
-  # Emoji par défaut pour les titres d'opportunities
+  # Emoji intelligent pour les titres d'opportunities - logique large
   def emoji_for_opportunity(title)
     key = title.to_s.downcase
-    case
-    # Santé / Médical
-    when key.include?('médical') || key.include?('santé') || key.include?('soin') || key.include?('patient')     then '🏥'
-    when key.include?('recherche') || key.include?('innovation') || key.include?('technolog')                    then '🔬'
 
-    # Écologie / Environnement
-    when key.include?('écolo') || key.include?('environnement') || key.include?('planète')                       then '🌱'
-    when key.include?('écosystème') || key.include?('biodiversité')                                              then '🌍'
-    when key.include?('énergie') || key.include?('renouvelable') || key.include?('solaire')                      then '⚡'
+    # Catégorie 1: Santé & Médical
+    return '🏥' if key =~ /(médic|santé|soin|hôpit|clinique|patient|thérap|pharmac)/
+    return '🔬' if key =~ /(recherch|innov|technolog|scientif|lab|découvert)/
 
-    # Entrepreneuriat / Business
-    when key.include?('projet') || key.include?('entreprise') || key.include?('création')                        then '🚀'
-    when key.include?('financement') || key.include?('levée') || key.include?('investis')                        then '💰'
-    when key.include?('expertise') || key.include?('conseil') || key.include?('accompagnement')                  then '🎯'
-    when key.include?('réseau') || key.include?('partenaire') || key.include?('collaboration')                   then '🤝'
+    # Catégorie 2: Écologie & Environnement
+    return '🌱' if key =~ /(écolo|vert|nature|bio|durable|environn|planète|climat)/
+    return '♻️' if key =~ /(recycl|déchet|économie circulaire|réutilis|circular|compost)/
+    return '🌍' if key =~ /(écosystème|biodiversit|terre|monde|global|planétaire)/
+    return '⚡' if key =~ /(énergie|électri|solaire|renouvel|photovolt|éolien)/
 
-    # Réparation / Technique
-    when key.include?('répar') || key.include?('répare')                                                         then '🔧'
-    when key.include?('atelier') || key.include?('participatif')                                                 then '🛠️'
-    when key.include?('mains') || key.include?('cambouis')                                                       then '🔧'
+    # Catégorie 3: Entrepreneuriat & Business
+    return '🚀' if key =~ /(projet|lance|créa|démarre|startup|entrepren|business|idée)/
+    return '💰' if key =~ /(financ|levée|invest|fond|capital|budget|subvent|argent)/
+    return '🎯' if key =~ /(object|ambiti|envergure|stratég|vision|mission|but)/
+    return '📈' if key =~ /(croissan|progress|avanc|évolu|développ|expansion|croît)/
+    return '🤝' if key =~ /(réseau|partena|collabor|coopéra|allianc|ensembl|collectif)/
+    return '👨‍💼' if key =~ /(expert|conseil|accompagn|mentor|coach|guid|assist)/
 
-    # Problèmes / Solutions
-    when key.include?('craindre') || key.include?('panne') || key.include?('problème')                           then '💡'
-    when key.include?('solution') || key.include?('réponse')                                                     then '✨'
+    # Catégorie 4: Social & Solidarité
+    return '❤️' if key =~ /(solidai|social|entraid|partag|générosi|don de soi)/
+    return '🤲' if key =~ /(bénévol|don\b|aide|soutien|gratuit|volontai)/
+    return '🏘️' if key =~ /(local|territoir|quartier|proximité|voisin|commune)/
+    return '👥' if key =~ /(commun|group|collecti|citoyen|participa|démocrat)/
 
-    # Social / Solidaire
-    when key.include?('solidaire') || key.include?('social') || key.include?('entraide')                         then '❤️'
-    when key.include?('bénévol') || key.include?('don') || key.include?('aide')                                  then '🤲'
+    # Catégorie 5: Formation & Éducation
+    return '📚' if key =~ /(formation|cours|apprentiss|étud|enseign|pédagog|école)/
+    return '🎓' if key =~ /(diplôm|certif|qualif|compétenc|savoir|connaissance)/
+    return '👨‍🏫' if key =~ /(formateur|professeur|mentor|tuteur|enseignant)/
 
-    # Formation / Apprentissage
-    when key.include?('formation') || key.include?('apprend') || key.include?('cours')                           then '📚'
-    when key.include?('mentor') || key.include?('coach')                                                         then '👨‍🏫'
+    # Catégorie 6: Événements & Culture
+    return '📅' if key =~ /(événement|rendez-vous|date|inscri|programm|agenda)/
+    return '🎭' if key =~ /(festival|concert|spectacl|cultur|artist|théâtre|scène)/
+    return '🎉' if key =~ /(fête|célébr|inaug|lancement|gala|soirée)/
 
-    # Événement / Rencontre
-    when key.include?('événement') || key.include?('rencontre') || key.include?('rendez-vous')                   then '📅'
-    when key.include?('festival') || key.include?('concert') || key.include?('spectacle')                        then '🎭'
+    # Catégorie 7: Réparation & Technique
+    return '🔧' if key =~ /(répar|fix|dépann|mainten|entretien|restaur)/
+    return '🛠️' if key =~ /(atelier|bricolag|fabrication|construc|manuel|pratique)/
+    return '🏭' if key =~ /(production|usine|fabrique|manufactur|industr)/
 
-    # Transport / Mobilité
-    when key.include?('transport') || key.include?('mobilité') || key.include?('véhicule')                       then '🚗'
-    when key.include?('train') || key.include?('rail') || key.include?('ferroviaire')                            then '🚂'
+    # Catégorie 8: Transport & Mobilité
+    return '🚗' if key =~ /(voiture|auto|véhicul|condui|garage|mobilité)/
+    return '🚂' if key =~ /(train|rail|ferroviair|tram|métro|transport public)/
+    return '🚴' if key =~ /(vélo|cycl|piste|deux-roues)/
 
-    # Avancée / Progrès
-    when key.include?('avancée') || key.include?('progrès') || key.include?('évolution')                         then '📈'
-    when key.include?('envergure') || key.include?('ambition') || key.include?('objectif')                       then '🎯'
+    # Catégorie 9: Alimentation
+    return '🍽️' if key =~ /(restaurant|cuisine|chef|gastronom|repas|manger)/
+    return '🌾' if key =~ /(agricul|ferme|paysan|maraîch|culture|récolte)/
+    return '🥖' if key =~ /(boulang|pain|artisan|pâtiss)/
 
-    else '📌'
-    end
+    # Catégorie 10: Problèmes & Solutions
+    return '💡' if key =~ /(idée|solution|astuce|conseil|réponse|trouvaille|déclic)/
+    return '⚠️' if key =~ /(problème|difficulté|défi|obstacle|crainte|peur|risque)/
+    return '✨' if key =~ /(nouveau|nouveau|innov|origin|unique|inédit|révolu)/
+
+    # Catégorie 11: Impact & Résultats
+    return '🌟' if key =~ /(impact|effet|résultat|réussite|succès|performance)/
+    return '🎁' if key =~ /(bonus|avantage|bénéfice|gain|offre|cadeau)/
+    return '📊' if key =~ /(données|statistique|chiffre|mesure|indicateur)/
+
+    # Catégorie 12: Temps & Durée
+    return '⏰' if key =~ /(horaire|heure|temps|durée|planning|calendrier)/
+    return '📆' if key =~ /(semaine|mois|année|période|saison|trimestre)/
+
+    # Catégorie 13: Questions
+    return '❓' if key =~ /(pourquoi|comment|quel|qui|quoi|où|quand|\?)/
+    return '🔍' if key =~ /(saviez-vous|découvr|explor|cherch|trouv)/
+
+    # Fallback intelligent basé sur le sentiment général
+    return '🎯' if key =~ /(pour|vers|à|de|du|des|le|la|les|un|une)/ && key.length > 15
+
+    # Dernier fallback
+    '📌'
   end
 
   # Détection émoji en début de ligne
