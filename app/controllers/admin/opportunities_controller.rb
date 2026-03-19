@@ -33,7 +33,9 @@ class Admin::OpportunitiesController < ApplicationController
 
   def create
     @opportunity = Opportunity.new(opportunity_params)
-    apply_import_blob!(@opportunity)
+
+    # N'applique l'import_blob QUE s'il est présent
+    apply_import_blob!(@opportunity) if params[:import_blob].present?
 
     if @opportunity.save
       redirect_to admin_opportunities_path, notice: "Opportunité créée ✅"
@@ -44,10 +46,12 @@ class Admin::OpportunitiesController < ApplicationController
 
   def update
     @opportunity.assign_attributes(opportunity_params)
-    apply_import_blob!(@opportunity)
+
+  # N'applique l'import_blob QUE s'il est présent
+    apply_import_blob!(@opportunity) if params[:import_blob].present?
 
     if @opportunity.save
-      redirect_to admin_opportunities_path, notice: "Opportunité mise à jour ✅"
+     redirect_to admin_opportunities_path, notice: "Opportunité mise à jour ✅"
     else
       render :edit, status: :unprocessable_entity
     end
