@@ -126,11 +126,11 @@ class Opportunity < ApplicationRecord
     errors.add(:base, "Spam détecté") if honeypot_url.present?
   end
 
-  before_validation :build_location
+  # before_validation :build_location
 
-  def build_location
-    if address.present? && city.present? && postal_code.present?
-      self.location = "#{address}, #{postal_code} #{city}, France"
-    end
-  end
+  # def build_location
+  #  if address.present? && city.present? && postal_code.present?
+  #    self.location = "#{address}, #{postal_code} #{city}, France"
+  #  end
+  # end
 end
