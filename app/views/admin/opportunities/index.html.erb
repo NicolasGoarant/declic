@@ -46,7 +46,7 @@
           </td>
           <td>
             <span class="<%= 'warning' if o.latitude.blank? %>">
-              <%= o.location.presence || "—" %>
+              <%= o.address.presence || o.city.presence || "—" %>
             </span>
           </td>
           <td class="date-cell"><%= o.created_at.strftime("%d/%m/%Y") %></td>
