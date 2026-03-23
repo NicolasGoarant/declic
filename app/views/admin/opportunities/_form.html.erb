@@ -196,8 +196,15 @@ TXT
       <p class="form-section-subtitle">Adresse et coordonnées GPS</p>
 
       <div class="field">
-        <%= f.label :location, "Adresse / Lieu *", class: "field-label" %>
-        <%= f.text_field :location, placeholder: "21 Grande-Rue, 54000 Nancy", class: "field-input" %>
+        <%= f.label :address, "Adresse (affichage court)", class: "field-label" %>
+        <%= f.text_field :address, placeholder: "6 Rue du Coq, Lunéville", class: "field-input" %>
+        <div class="field-hint">📍 Adresse courte affichée dans l'index admin et sur la fiche publique</div>
+      </div>
+
+      <div class="field">
+        <%= f.label :location, "Adresse complète (pour Google Maps)", class: "field-label" %>
+        <%= f.text_field :location, placeholder: "6 Rue du Coq, 54300 Lunéville, France", class: "field-input" %>
+        <div class="field-hint">🗺️ Utilisée pour la géolocalisation et le lien Google Maps</div>
       </div>
 
       <div class="form-row">
@@ -230,131 +237,27 @@ TXT
           <%= f.label :end_date, "Fin", class: "field-label" %>
           <%= f.date_field :end_date, class: "field-input" %>
         </div>
-        <div class="field">
-          <%= f.label :time_commitment, "Temps à prévoir", class: "field-label" %>
-          <%= f.text_field :time_commitment, placeholder: "2h par semaine", class: "field-input" %>
-        </div>
+      </div>
+
+      <div class="field">
+        <%= f.label :time_commitment, "Engagement en temps", class: "field-label" %>
+        <%= f.text_field :time_commitment, placeholder: "2h par semaine", class: "field-input" %>
       </div>
     </div>
 
-    <%# ========== SECTION 7 : IMAGES (NOUVEAU SYSTÈME COMME LES STORIES) ========== %>
-    <div class="form-section">
-      <h3 class="form-section-title">🖼️ Images</h3>
-      <p class="form-section-subtitle">Photo principale et photos dans le texte (style éditorial)</p>
+    <%# ========== SECTION 7 : IMAGES (SYSTÈME INLINE) ========== %>
+    <div class="form-section" style="border: 2px solid #3b82f6; background: #eff6ff;">
+      <h3 class="form-section-title">🖼️ Images (Système Inline)</h3>
+      <p class="form-section-subtitle">Uploadez jusqu'à 3 photos et placez-les dans le texte avec &lt;!-- IMAGE_X --&gt;</p>
 
-      <%# IMAGE HERO %>
-      <div style="background: #f8fafc; padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 2rem;">
-        <h4 style="font-weight: 700; color: #0f172a; margin: 0 0 1rem 0; font-size: 1rem;">
-          📸 Image principale (bandeau hero)
-        </h4>
-
-        <div class="field">
-          <%= f.label :image, "Upload image principale", class: "field-label" %>
-          <%= f.file_field :image, accept: "image/*", direct_upload: true, class: "field-input" %>
-<% if @opportunity.persisted? && @opportunity.image.attached? && @opportunity.image.blob.persisted? %>
-            <div class="current-image" style="margin-top: 0.75rem;">
-              <%= image_tag @opportunity.image, style: "max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" %>
-              <p style="font-size: 0.75rem; color: #64748b; margin: 0.5rem 0 0 0;">✅ Image actuelle</p>
-            </div>
-          <% end %>
-          <div class="field-hint">📐 Format recommandé : 1200x600px minimum (16:9)</div>
-        </div>
-
-        <div class="field" style="margin-top: 1rem;">
-          <%= f.label :image_url, "OU Image (URL externe)", class: "field-label" %>
-          <%= f.text_field :image_url, placeholder: "https://images.unsplash.com/photo-...", class: "field-input" %>
-          <div class="field-hint">Alternative à l'upload (prioritaire si rempli)</div>
-        </div>
-      </div>
-
-      <%# PHOTOS INLINE DANS LE TEXTE - SYSTÈME <!-- IMAGE_1 --> -->
-      <div style="background: #f0f9ff; padding: 2rem; border-radius: 0.75rem; border: 2px solid #3b82f6;">
-        <h4 style="font-weight: 700; color: #1e40af; margin: 0 0 0.75rem 0; font-size: 1.125rem;">
-          📸 Photos Inline dans le Texte (Style Éditorial)
-        </h4>
-        <p style="margin: 0 0 1.5rem 0; color: #475569; font-size: 0.9rem;">
-          Ajoutez jusqu'à 3 photos qui s'intégreront dans le texte pour un style magazine.<br>
-          Insérez <code style="background: white; padding: 2px 6px; border-radius: 4px; font-family: monospace;">&lt;!-- IMAGE_1 --&gt;</code>,
-          <code style="background: white; padding: 2px 6px; border-radius: 4px; font-family: monospace;">&lt;!-- IMAGE_2 --&gt;</code>,
-          <code style="background: white; padding: 2px 6px; border-radius: 4px; font-family: monospace;">&lt;!-- IMAGE_3 --&gt;</code>
-          dans la description pour positionner les photos.
-        </p>
-
-        <%# PHOTO INLINE 1 %>
-        <div style="background: white; padding: 1.25rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; margin-bottom: 1.25rem;">
-          <h5 style="margin: 0 0 0.75rem 0; color: #1e40af; font-size: 1rem; font-weight: 600;">📸 Photo 1 (float gauche)</h5>
-
-          <div class="field">
-            <%= f.label :inline_image_1, "Upload photo 1", class: "field-label" %>
-            <%= f.file_field :inline_image_1, accept: "image/*", direct_upload: true, class: "field-input" %>
-            <% if @opportunity.respond_to?(:inline_image_1) && @opportunity.inline_image_1.attached? %>
-              <div style="margin-top: 0.5rem;">
-                <%= image_tag @opportunity.inline_image_1.variant(resize_to_limit: [300, 200]), style: "border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" %>
-              </div>
-            <% end %>
-            <div class="field-hint">💡 S'affichera à gauche du texte (45% de largeur)</div>
-          </div>
-
-          <div class="field" style="margin-top: 0.75rem;">
-            <%= f.label :inline_caption_1, "Légende (optionnel)", class: "field-label" %>
-            <%= f.text_field :inline_caption_1, placeholder: "Ex: L'équipe du Repair Café au travail", class: "field-input" %>
-            <div class="field-hint">Texte affiché sous la photo en italique</div>
-          </div>
-        </div>
-
-        <%# PHOTO INLINE 2 %>
-        <div style="background: white; padding: 1.25rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; margin-bottom: 1.25rem;">
-          <h5 style="margin: 0 0 0.75rem 0; color: #1e40af; font-size: 1rem; font-weight: 600;">📸 Photo 2 (float droite)</h5>
-
-          <div class="field">
-            <%= f.label :inline_image_2, "Upload photo 2", class: "field-label" %>
-            <%= f.file_field :inline_image_2, accept: "image/*", direct_upload: true, class: "field-input" %>
-            <% if @opportunity.respond_to?(:inline_image_2) && @opportunity.inline_image_2.attached? %>
-              <div style="margin-top: 0.5rem;">
-                <%= image_tag @opportunity.inline_image_2.variant(resize_to_limit: [300, 200]), style: "border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" %>
-              </div>
-            <% end %>
-            <div class="field-hint">💡 S'affichera à droite du texte (45% de largeur)</div>
-          </div>
-
-          <div class="field" style="margin-top: 0.75rem;">
-            <%= f.label :inline_caption_2, "Légende (optionnel)", class: "field-label" %>
-            <%= f.text_field :inline_caption_2, placeholder: "Ex: Les objets réparés exposés", class: "field-input" %>
-            <div class="field-hint">Texte affiché sous la photo en italique</div>
-          </div>
-        </div>
-
-        <%# PHOTO INLINE 3 %>
-        <div style="background: white; padding: 1.25rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; margin-bottom: 1.25rem;">
-          <h5 style="margin: 0 0 0.75rem 0; color: #1e40af; font-size: 1rem; font-weight: 600;">📸 Photo 3 (pleine largeur)</h5>
-
-          <div class="field">
-            <%= f.label :inline_image_3, "Upload photo 3", class: "field-label" %>
-            <%= f.file_field :inline_image_3, accept: "image/*", direct_upload: true, class: "field-input" %>
-            <% if @opportunity.respond_to?(:inline_image_3) && @opportunity.inline_image_3.attached? %>
-              <div style="margin-top: 0.5rem;">
-                <%= image_tag @opportunity.inline_image_3.variant(resize_to_limit: [600, 300]), style: "border-radius: 8px; width: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" %>
-              </div>
-            <% end %>
-            <div class="field-hint">💡 S'affichera en pleine largeur (100%)</div>
-          </div>
-
-          <div class="field" style="margin-top: 0.75rem;">
-            <%= f.label :inline_caption_3, "Légende (optionnel)", class: "field-label" %>
-            <%= f.text_field :inline_caption_3, placeholder: "Ex: L'atelier lors d'une journée de réparation", class: "field-input" %>
-            <div class="field-hint">Texte affiché sous la photo en italique</div>
-          </div>
-        </div>
-
-        <%# GUIDE D'UTILISATION %>
-        <div style="background: #dbeafe; padding: 1.25rem; border-radius: 0.5rem; border-left: 4px solid #3b82f6;">
-          <strong style="color: #1e40af; font-size: 1rem;">💡 Comment utiliser les photos inline :</strong>
-          <ol style="margin: 0.75rem 0 0 1.25rem; color: #334155; font-size: 0.9rem;">
-            <li style="margin-bottom: 0.5rem;">Uploadez 1 à 3 photos ci-dessus</li>
-            <li style="margin-bottom: 0.5rem;">Dans le champ <strong>"Description"</strong>, insérez les marqueurs :</li>
-            <ul style="margin: 0.5rem 0 0.75rem 1.25rem; font-family: monospace; font-size: 0.85rem;">
-              <li style="margin-bottom: 0.25rem;"><code style="background: white; padding: 2px 6px; border-radius: 3px;">&lt;!-- IMAGE_1 --&gt;</code> pour la photo 1 (gauche)</li>
-              <li style="margin-bottom: 0.25rem;"><code style="background: white; padding: 2px 6px; border-radius: 3px;">&lt;!-- IMAGE_2 --&gt;</code> pour la photo 2 (droite)</li>
+      <div style="background: #dbeafe; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-left: 4px solid #3b82f6;">
+        <p style="margin: 0 0 0.75rem 0; font-weight: 700; color: #1e40af;">💡 Comment utiliser les images inline :</p>
+        <ol style="margin: 0; padding-left: 1.5rem; color: #1e3a8a; font-size: 0.9rem;">
+          <li style="margin-bottom: 0.5rem;">Uploadez vos photos ci-dessous (Photo 1, 2 et 3)</li>
+          <li style="margin-bottom: 0.5rem;">Dans le champ <strong>Description</strong> ci-dessus, placez ces balises où vous voulez que les photos apparaissent :
+            <ul style="margin-top: 0.25rem; list-style-type: circle; padding-left: 1.5rem;">
+              <li style="margin-bottom: 0.25rem;"><code style="background: white; padding: 2px 6px; border-radius: 3px;">&lt;!-- IMAGE_1 --&gt;</code> pour la photo 1 (flotte à gauche)</li>
+              <li style="margin-bottom: 0.25rem;"><code style="background: white; padding: 2px 6px; border-radius: 3px;">&lt;!-- IMAGE_2 --&gt;</code> pour la photo 2 (flotte à droite)</li>
               <li style="margin-bottom: 0.25rem;"><code style="background: white; padding: 2px 6px; border-radius: 3px;">&lt;!-- IMAGE_3 --&gt;</code> pour la photo 3 (pleine largeur)</li>
             </ul>
             <li>Les photos s'afficheront automatiquement à ces endroits dans le texte !</li>
@@ -377,6 +280,48 @@ L'atelier est ouvert tous les samedis après-midi...
 &lt;!-- IMAGE_3 --&gt;</div>
           </div>
         </div>
+      </div>
+
+      <%# Photo 1 : Flotte à gauche %>
+      <div class="field">
+        <%= f.label :inline_image_1, "📷 Photo 1 (gauche)", class: "field-label" %>
+        <%= f.file_field :inline_image_1, accept: "image/png,image/jpeg,image/jpg,image/gif,image/webp", class: "field-input" %>
+        <div class="field-hint">
+          Insérez <code>&lt;!-- IMAGE_1 --&gt;</code> dans la Description pour placer cette photo
+        </div>
+      </div>
+
+      <div class="field">
+        <%= f.label :inline_caption_1, "Légende Photo 1", class: "field-label" %>
+        <%= f.text_field :inline_caption_1, placeholder: "Des bénévoles réparent une cafetière", class: "field-input" %>
+      </div>
+
+      <%# Photo 2 : Flotte à droite %>
+      <div class="field">
+        <%= f.label :inline_image_2, "📷 Photo 2 (droite)", class: "field-label" %>
+        <%= f.file_field :inline_image_2, accept: "image/png,image/jpeg,image/jpg,image/gif,image/webp", class: "field-input" %>
+        <div class="field-hint">
+          Insérez <code>&lt;!-- IMAGE_2 --&gt;</code> dans la Description pour placer cette photo
+        </div>
+      </div>
+
+      <div class="field">
+        <%= f.label :inline_caption_2, "Légende Photo 2", class: "field-label" %>
+        <%= f.text_field :inline_caption_2, placeholder: "L'atelier du Repair Café", class: "field-input" %>
+      </div>
+
+      <%# Photo 3 : Pleine largeur %>
+      <div class="field">
+        <%= f.label :inline_image_3, "📷 Photo 3 (pleine largeur)", class: "field-label" %>
+        <%= f.file_field :inline_image_3, accept: "image/png,image/jpeg,image/jpg,image/gif,image/webp", class: "field-input" %>
+        <div class="field-hint">
+          Insérez <code>&lt;!-- IMAGE_3 --&gt;</code> dans la Description pour placer cette photo
+        </div>
+      </div>
+
+      <div class="field">
+        <%= f.label :inline_caption_3, "Légende Photo 3", class: "field-label" %>
+        <%= f.text_field :inline_caption_3, placeholder: "Vue d'ensemble de l'atelier", class: "field-input" %>
       </div>
     </div>
 
