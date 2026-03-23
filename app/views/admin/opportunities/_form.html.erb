@@ -245,6 +245,24 @@ TXT
       </div>
     </div>
 
+    <%# ========== SECTION 6.5 : IMAGE HERO ========== %>
+    <div class="form-section">
+      <h3 class="form-section-title">🖼️ Image principale (Hero)</h3>
+      <p class="form-section-subtitle">Image de couverture affichée en haut de la fiche</p>
+
+      <div class="field">
+        <%= f.label :image, "📷 Image principale", class: "field-label" %>
+        <%= f.file_field :image, accept: "image/png,image/jpeg,image/jpg,image/gif,image/webp", class: "field-input" %>
+        <div class="field-hint">Format recommandé : 1200x675px (16:9)</div>
+      </div>
+
+      <div class="field">
+        <%= f.label :image_url, "OU URL d'une image externe", class: "field-label" %>
+        <%= f.text_field :image_url, placeholder: "https://example.com/image.jpg", class: "field-input" %>
+        <div class="field-hint">Si vous avez déjà une image hébergée ailleurs</div>
+      </div>
+    </div>
+
     <%# ========== SECTION 7 : IMAGES (SYSTÈME INLINE) ========== %>
     <div class="form-section" style="border: 2px solid #3b82f6; background: #eff6ff;">
       <h3 class="form-section-title">🖼️ Images (Système Inline)</h3>
