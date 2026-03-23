@@ -2025,7 +2025,7 @@ function plot(items){
     const lat = Number(o.latitude);
     const lng = Number(o.longitude);
 
-    if(!lat || !lng) return; // Si la conversion échoue (lat ou lng vaut 0 ou NaN), on saute
+    if(isNaN(lat) || isNaN(lng) || lat === null || lng === null) return; // Si la conversion échoue (lat ou lng vaut 0 ou NaN), on saute
 
 // Le reste du code reste le même, mais utilise lat et lng (variables locales)
     const marker = L.marker([lat, lng], { icon:iconFor((o.category||'').toLowerCase()) })
