@@ -53,3 +53,5 @@ yarn.lock
 .env
 .env.*
 config/master.key
+app/assets/stories/
+app/assets/fichiers_internes/

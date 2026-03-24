@@ -2039,22 +2039,8 @@ function bootHome(){
       `;
     }
 
-    const dataLayer = L.markerClusterGroup({
-      showCoverageOnHover: false,
-      maxClusterRadius: 40,
-      spiderfyOnMaxZoom: true,
-      disableClusteringAtZoom: 14,
-      animate: true,
-      iconCreateFunction: function(cluster) {
-        const count = cluster.getChildCount();
-        return L.divIcon({
-          html: `<div class="dc-cluster"><span>${count}</span></div>`,
-          className: '',
-          iconSize: [40, 40],
-          iconAnchor: [20, 20]
-        });
-      }
-    }).addTo(map);
+    const dataLayer = L.layerGroup().addTo(map); // markerCluster désactivé
+    /* DISABLED
     window._declicDataLayer = dataLayer;
     let dataset = [];
 
