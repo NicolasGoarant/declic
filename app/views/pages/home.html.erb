@@ -1847,10 +1847,38 @@ end
   }
 }
 
+/* ====== MARKER CLUSTER ====== */
+.dc-cluster {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  border: 3px solid white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(124, 58, 237, 0.4);
+  transition: transform 0.2s ease;
+}
+.dc-cluster:hover {
+  transform: scale(1.1);
+}
+.dc-cluster span {
+  color: white;
+  font-weight: 800;
+  font-size: 13px;
+  font-family: "Inter", sans-serif;
+  line-height: 1;
+}
+
 </style>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
 <% content_for :scripts do %>
 <script>
@@ -2011,7 +2039,22 @@ function bootHome(){
       `;
     }
 
-    const dataLayer = L.layerGroup().addTo(map);
+    const dataLayer = L.markerClusterGroup({
+      showCoverageOnHover: false,
+      maxClusterRadius: 40,
+      spiderfyOnMaxZoom: true,
+      disableClusteringAtZoom: 14,
+      animate: true,
+      iconCreateFunction: function(cluster) {
+        const count = cluster.getChildCount();
+        return L.divIcon({
+          html: `<div class="dc-cluster"><span>${count}</span></div>`,
+          className: '',
+          iconSize: [40, 40],
+          iconAnchor: [20, 20]
+        });
+      }
+    }).addTo(map);
     window._declicDataLayer = dataLayer;
     let dataset = [];
 
