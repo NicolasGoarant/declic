@@ -91,3 +91,5 @@ ruby "3.3.0"
 # ...
 
 gem "image_processing", "~> 1.14"
+gem 'httparty'
+gem 'nokogiri'
