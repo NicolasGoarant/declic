@@ -1847,30 +1847,6 @@ end
   }
 }
 
-/* ====== MARKER CLUSTER ====== */
-.dc-cluster {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
-  border: 3px solid white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 3px 10px rgba(124, 58, 237, 0.4);
-  transition: transform 0.2s ease;
-}
-.dc-cluster:hover {
-  transform: scale(1.1);
-}
-.dc-cluster span {
-  color: white;
-  font-weight: 800;
-  font-size: 13px;
-  font-family: "Inter", sans-serif;
-  line-height: 1;
-}
-
 </style>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -2039,13 +2015,14 @@ function bootHome(){
       `;
     }
 
-    const dataLayer = L.layerGroup().addTo(map); // markerCluster désactivé
+    const dataLayer = L.layerGroup().addTo(map);
     window._declicDataLayer = dataLayer;
     let dataset = [];
 
 // La fonction plot(items) gère le dessin des marqueurs sur la carte
 function plot(items){
   dataLayer.clearLayers();
+  const seen = new Map(); // Jitter : évite la superposition de marqueurs au même endroit
   const bounds=[];
   (items||[]).forEach(o=>{
 
@@ -2053,10 +2030,16 @@ function plot(items){
     const lat = Number(o.latitude);
     const lng = Number(o.longitude);
 
-    if(isNaN(lat) || isNaN(lng) || lat === null || lng === null) return; // Si la conversion échoue (lat ou lng vaut 0 ou NaN), on saute
+    if(isNaN(lat) || isNaN(lng) || lat === null || lng === null) return;
 
-// Le reste du code reste le même, mais utilise lat et lng (variables locales)
-    const marker = L.marker([lat, lng], { icon:iconFor((o.category||'').toLowerCase()) })
+    // JITTER : décaler légèrement les marqueurs superposés
+    const key = lat.toFixed(4) + ',' + lng.toFixed(4);
+    const jitterCount = seen.get(key) || 0;
+    seen.set(key, jitterCount + 1);
+    const jLat = lat + (jitterCount * 0.0003 * Math.cos(jitterCount * 2.4));
+    const jLng = lng + (jitterCount * 0.0003 * Math.sin(jitterCount * 2.4));
+
+    const marker = L.marker([jLat, jLng], { icon:iconFor((o.category||'').toLowerCase()) })
       .addTo(dataLayer)
       .bindPopup(popupHtml(o), {
         autoPan: false,
