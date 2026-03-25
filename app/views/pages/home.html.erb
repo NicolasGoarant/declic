@@ -2062,6 +2062,11 @@ function plot(items){
         offset: [0, 0]
       });
 
+    // Préchargement image au survol
+    marker.on('mouseover', function() {
+      if (o.image_url) { const img = new Image(); img.src = o.image_url; }
+    });
+
     // FIX: Centrer le popup avec padding pour navbar
     marker.on('popupopen', function(e) {
       const popup = e.popup;
