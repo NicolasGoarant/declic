@@ -32,4 +32,5 @@ class PagesController < ApplicationController
   def sponsors; end
   def faq; end
   def philosophie; end
+  def contact; end
 end

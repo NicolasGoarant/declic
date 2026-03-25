@@ -31,6 +31,7 @@ Rails.application.routes.draw do
   get "/confidentialite",  to: "pages#confidentialite", as: :confidentialite
   get "/presse",           to: "pages#presse",          as: :presse
   get "/faq",              to: "pages#faq",             as: :faq
+  get "contact", to: "pages#contact"
   # --- API PUBLIQUE ---
 
   namespace :api do

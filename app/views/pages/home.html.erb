@@ -407,9 +407,6 @@ end
 }
 
 .c-card {
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 1.25rem;
   padding: 2rem 1.5rem;
   text-align: center;
@@ -418,9 +415,21 @@ end
   opacity: 0;
 }
 
-.c-card-1 { animation-delay: 0.2s; }
-.c-card-2 { animation-delay: 0.4s; }
-.c-card-3 { animation-delay: 0.6s; }
+.c-card-1 {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  animation-delay: 0.2s;
+}
+.c-card-2 {
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+  animation-delay: 0.4s;
+}
+.c-card-3 {
+  background: #fdf4ff;
+  border: 1.5px solid #e9d5ff;
+  animation-delay: 0.6s;
+}
 
 @keyframes fadeInUp {
   from {
@@ -435,31 +444,42 @@ end
 
 .c-card:hover {
   transform: translateY(-8px);
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.35);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.10);
 }
+.c-card-1:hover { box-shadow: 0 20px 40px rgba(22, 101, 52, 0.12); }
+.c-card-2:hover { box-shadow: 0 20px 40px rgba(30, 64, 175, 0.12); }
+.c-card-3:hover { box-shadow: 0 20px 40px rgba(126, 34, 206, 0.12); }
 
 .c-emoji {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: 2.5rem;
+  margin-bottom: 0.9rem;
   line-height: 1;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
 }
+.c-card-1 .c-emoji { background: #dcfce7; }
+.c-card-2 .c-emoji { background: #dbeafe; }
+.c-card-3 .c-emoji { background: #f3e8ff; }
 
 .c-title {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 0.75rem;
-  color: white;
+  margin-bottom: 0.6rem;
 }
+.c-card-1 .c-title { color: #166534; }
+.c-card-2 .c-title { color: #1e40af; }
+.c-card-3 .c-title { color: #7e22ce; }
 
 .c-desc {
   font-size: 0.95rem;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.9);
+  color: #475569;
   margin: 0;
 }
 
@@ -472,10 +492,12 @@ end
     padding: 1.75rem 1.25rem;
   }
   .c-emoji {
-    font-size: 2.5rem;
+    font-size: 2rem;
+    width: 52px;
+    height: 52px;
   }
   .c-title {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
   }
   .c-desc {
     font-size: 0.875rem;

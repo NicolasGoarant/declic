@@ -1,0 +1,321 @@
+<%# app/views/pages/contact.html.erb %>
+
+<div class="contact-page">
+
+  <header class="contact-hero">
+    <div class="container">
+      <div class="contact-hero-badge">💬 Contact</div>
+      <h1 class="contact-hero-title">Parlons-nous</h1>
+      <p class="contact-hero-chapo">
+        Une opportunité à référencer, une histoire à partager, une idée de partenariat,
+        une erreur à signaler ? Je lis tous les messages.
+      </p>
+    </div>
+  </header>
+
+  <section class="contact-content">
+    <div class="container">
+      <div class="contact-grid">
+
+        <%# Colonne gauche — portrait + bio %>
+        <div class="contact-bio">
+          <div class="contact-photo-wrap">
+            <%= image_tag "nicolas_goarant.jpg",
+                  alt: "Nicolas Goarant, fondateur de Déclic",
+                  class: "contact-photo" %>
+          </div>
+          <h2 class="contact-name">Nicolas Goarant</h2>
+          <p class="contact-role">Fondateur de Déclic</p>
+          <p class="contact-about">
+            Ancien chargé de communication à la Ville de Nancy, je suis convaincu que
+            l'engagement local commence souvent par une information qu'on n'a pas encore
+            croisée. J'ai créé Déclic pour changer ça.
+          </p>
+          <div class="contact-links">
+            <a href="https://linkedin.com/in/nicolasgoarant" target="_blank" rel="noopener" class="contact-link-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 23.2 23.227 23.2 22.271V1.729C23.2.774 23.2 0 22.225 0h.003z"/></svg>
+              LinkedIn
+            </a>
+          </div>
+        </div>
+
+        <%# Colonne droite — canaux de contact %>
+        <div class="contact-channels">
+
+          <div class="contact-card">
+            <div class="contact-card-icon">📧</div>
+            <div class="contact-card-body">
+              <h3>Par email</h3>
+              <p>Pour toute question, proposition de partenariat ou signalement d'erreur.</p>
+              <a href="mailto:contact@declic.site" class="contact-card-btn">
+                contact@declic.site
+              </a>
+            </div>
+          </div>
+
+          <div class="contact-card">
+            <div class="contact-card-icon">➕</div>
+            <div class="contact-card-body">
+              <h3>Proposer une opportunité</h3>
+              <p>Vous organisez quelque chose ? Référencez-le directement sur la plateforme.</p>
+              <%= link_to new_opportunity_path, class: "contact-card-btn" do %>
+                Déposer une opportunité
+              <% end %>
+            </div>
+          </div>
+
+          <div class="contact-card">
+            <div class="contact-card-icon">✨</div>
+            <div class="contact-card-body">
+              <h3>Partager une belle histoire</h3>
+              <p>Vous avez vécu un déclic ? Votre parcours peut inspirer d'autres personnes.</p>
+              <%= link_to new_story_path, class: "contact-card-btn" do %>
+                Partager mon histoire
+              <% end %>
+            </div>
+          </div>
+
+          <div class="contact-card contact-card--muted">
+            <div class="contact-card-icon">⏱️</div>
+            <div class="contact-card-body">
+              <h3>Délai de réponse</h3>
+              <p>Je réponds généralement sous 48h. Déclic est un projet porté à titre personnel — merci pour votre patience.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<style>
+.contact-page {
+  font-family: "Inter", system-ui, sans-serif;
+  color: #0f172a;
+  background: white;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* HERO */
+.contact-hero {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  padding: 80px 24px 60px;
+  text-align: center;
+  border-bottom: 2px solid #e9d5ff;
+}
+
+.contact-hero-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  color: white;
+  font-weight: 800;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 20px;
+  border-radius: 999px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+}
+
+.contact-hero-title {
+  font-family: "Epilogue", sans-serif;
+  font-weight: 900;
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  line-height: 1.1;
+  margin: 0 0 16px;
+  background: linear-gradient(135deg, #7e22ce, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.contact-hero-chapo {
+  font-size: 1.15rem;
+  color: #64748b;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* CONTENU */
+.contact-content {
+  padding: 60px 0 80px;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+/* BIO */
+.contact-photo-wrap {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #e9d5ff;
+  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.2);
+  margin: 0 auto 20px;
+}
+
+.contact-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.contact-name {
+  font-family: "Epilogue", sans-serif;
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: #1e293b;
+  margin: 0 0 4px;
+  text-align: center;
+}
+
+.contact-role {
+  font-size: 0.95rem;
+  color: #a855f7;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 16px;
+}
+
+.contact-about {
+  font-size: 0.95rem;
+  color: #475569;
+  line-height: 1.7;
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+.contact-links {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.contact-link-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1.5px solid #e9d5ff;
+  color: #7e22ce;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.contact-link-item:hover {
+  background: #f3e8ff;
+  border-color: #a855f7;
+}
+
+/* CARDS */
+.contact-channels {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.contact-card {
+  background: white;
+  border: 2px solid #f1f5f9;
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  transition: all 0.2s;
+}
+
+.contact-card:hover:not(.contact-card--muted) {
+  border-color: #e9d5ff;
+  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.1);
+  transform: translateY(-2px);
+}
+
+.contact-card--muted {
+  background: #f8fafc;
+}
+
+.contact-card-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.contact-card-body h3 {
+  font-family: "Epilogue", sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #1e293b;
+  margin: 0 0 6px;
+}
+
+.contact-card-body p {
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+
+.contact-card-body p:last-child {
+  margin-bottom: 0;
+}
+
+.contact-card-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  color: white;
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25);
+}
+
+.contact-card-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(168, 85, 247, 0.35);
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .contact-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .contact-hero {
+    padding: 60px 20px 40px;
+  }
+
+  .contact-hero-title {
+    font-size: 2rem;
+  }
+
+  .contact-card {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+</style>
