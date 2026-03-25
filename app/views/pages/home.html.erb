@@ -407,6 +407,9 @@ end
 }
 
 .c-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-radius: 1.25rem;
   padding: 2rem 1.5rem;
   text-align: center;
@@ -415,21 +418,9 @@ end
   opacity: 0;
 }
 
-.c-card-1 {
-  background: #f0fdf4;
-  border: 1.5px solid #bbf7d0;
-  animation-delay: 0.2s;
-}
-.c-card-2 {
-  background: #eff6ff;
-  border: 1.5px solid #bfdbfe;
-  animation-delay: 0.4s;
-}
-.c-card-3 {
-  background: #fdf4ff;
-  border: 1.5px solid #e9d5ff;
-  animation-delay: 0.6s;
-}
+.c-card-1 { border: 1.5px solid rgba(134, 239, 172, 0.6); animation-delay: 0.2s; }
+.c-card-2 { border: 1.5px solid rgba(147, 197, 253, 0.6); animation-delay: 0.4s; }
+.c-card-3 { border: 1.5px solid rgba(216, 180, 254, 0.6); animation-delay: 0.6s; }
 
 @keyframes fadeInUp {
   from {
@@ -443,12 +434,10 @@ end
 }
 
 .c-card:hover {
+  background: rgba(255, 255, 255, 0.22);
   transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.10);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
-.c-card-1:hover { box-shadow: 0 20px 40px rgba(22, 101, 52, 0.12); }
-.c-card-2:hover { box-shadow: 0 20px 40px rgba(30, 64, 175, 0.12); }
-.c-card-3:hover { box-shadow: 0 20px 40px rgba(126, 34, 206, 0.12); }
 
 .c-emoji {
   font-size: 2.5rem;
@@ -461,9 +450,9 @@ end
   height: 64px;
   border-radius: 18px;
 }
-.c-card-1 .c-emoji { background: #dcfce7; }
-.c-card-2 .c-emoji { background: #dbeafe; }
-.c-card-3 .c-emoji { background: #f3e8ff; }
+.c-card-1 .c-emoji { background: rgba(134, 239, 172, 0.25); }
+.c-card-2 .c-emoji { background: rgba(147, 197, 253, 0.25); }
+.c-card-3 .c-emoji { background: rgba(216, 180, 254, 0.25); }
 
 .c-title {
   font-size: 1.15rem;
@@ -472,14 +461,14 @@ end
   letter-spacing: 0.05em;
   margin-bottom: 0.6rem;
 }
-.c-card-1 .c-title { color: #166534; }
-.c-card-2 .c-title { color: #1e40af; }
-.c-card-3 .c-title { color: #7e22ce; }
+.c-card-1 .c-title { color: #bbf7d0; }
+.c-card-2 .c-title { color: #bfdbfe; }
+.c-card-3 .c-title { color: #e9d5ff; }
 
 .c-desc {
   font-size: 0.95rem;
   line-height: 1.5;
-  color: #475569;
+  color: rgba(255, 255, 255, 0.9);
   margin: 0;
 }
 
