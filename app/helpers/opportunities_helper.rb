@@ -240,9 +240,9 @@ module OpportunitiesHelper
         in_list = false
 
         html << %(
-          <h3 style="margin-top:1.5rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.75rem;font-size:1.1rem;font-weight:700;color:#0f172a;">
-            <span style="display:inline-flex;width:2.25rem;height:2.25rem;align-items:center;justify-content:center;border-radius:9999px;background:#d1fae5;font-size:1.1rem;flex-shrink:0;">#{emoji}</span>
-            <span style="font-weight:700;">#{ERB::Util.html_escape(title)}</span>
+          <h3 class="mt-6 mb-3 flex items-center gap-3 text-lg font-bold text-slate-900">
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-xl">#{emoji}</span>
+            <span class="font-bold">#{ERB::Util.html_escape(title)}</span>
           </h3>
         )
         next
@@ -259,9 +259,9 @@ module OpportunitiesHelper
         in_list = false
 
         html << %(
-          <h3 style="margin-top:1.5rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.75rem;font-size:1.1rem;font-weight:700;color:#0f172a;">
-            <span style="display:inline-flex;width:2.25rem;height:2.25rem;align-items:center;justify-content:center;border-radius:9999px;background:#d1fae5;font-size:1.1rem;flex-shrink:0;">#{emoji}</span>
-            <span style="font-weight:700;">#{ERB::Util.html_escape(bold_title)}</span>
+          <h3 class="mt-6 mb-3 flex items-center gap-3 text-lg font-bold text-slate-900">
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-xl">#{emoji}</span>
+            <span class="font-bold">#{ERB::Util.html_escape(bold_title)}</span>
           </h3>
         )
         next
