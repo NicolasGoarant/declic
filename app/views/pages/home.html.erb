@@ -17,7 +17,7 @@ def strip_unsplash_md(txt)
   s.gsub!(/__([^_]+)__/, '\1')
   s.gsub!(/_([^_]+)_/, '\1')
   s.gsub!(/`([^`]+)`/, '\1')
-  s.gsub!(/[>\-\+]{1,}\s*/, '')
+  s.gsub!(/^[>\-\+]+\s/, '')
   s.gsub!(/\s+/, ' ')
   s.strip
 end
