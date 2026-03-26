@@ -1,4 +1,4 @@
-<%# app/views/pages/philosophie.html.erb — version ajustée (citation + boutons) %>
+<%# app/views/pages/philosophie.html.erb — version corrigée (stats réelles) %>
 
 <style>
 /* =========================================================
@@ -59,15 +59,15 @@
   z-index: 1;
 }
 
-/* CITA–TION   (texte dans la pastille, auteur en dessous) */
+/* CITATION */
 .philo-hero-quote {
   display: flex;
-  align-items: center;               /* guillemets alignés au texte */
+  align-items: center;
   justify-content: center;
-  gap: 0.18rem;                      /* guillemets rapprochés mais sans toucher */
+  gap: 0.18rem;
   padding: 0.4rem 1.4rem;
-  margin: 0 auto 0.6rem;             /* centré horizontalement */
-  max-width: calc(100% - 2.5rem);    /* évite de toucher les bords sur mobile */
+  margin: 0 auto 0.6rem;
+  max-width: calc(100% - 2.5rem);
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,.26);
   background: rgba(255,255,255,.14);
@@ -84,10 +84,9 @@
 
 .philo-hero-quote-text {
   font-size: 0.95rem;
-  white-space: nowrap;               /* une seule ligne */
+  white-space: nowrap;
 }
 
-/* auteur centré sous la pastille */
 .philo-hero-quote-author {
   font-size: 0.95rem;
   font-weight: 500;
@@ -130,8 +129,8 @@
 .philo-btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;       /* centre le groupe emoji + texte */
-  gap: 0.55rem;                  /* espace suffisant entre emoji et texte */
+  justify-content: center;
+  gap: 0.55rem;
   padding: .9rem 1.9rem;
   border-radius: .9rem;
   font-weight: 600;
@@ -500,7 +499,7 @@
    ========================================================= */
 @media (max-width: 768px) {
   .philo-hero {
-    padding-top: 2.6rem;   /* moins d’air au-dessus de la citation */
+    padding-top: 2.6rem;
     padding-bottom: 3rem;
   }
 
@@ -522,7 +521,7 @@
   }
 
   .philo-hero-title {
-    font-size: 2.2rem;          /* pour que “Pourquoi Déclic ?” tienne sur une ligne */
+    font-size: 2.2rem;
   }
 
   .philo-hero-lead {
@@ -584,16 +583,16 @@
 
       <div class="philo-stats">
         <div class="philo-stat">
-          <div class="philo-stat-number">15&nbsp;000+</div>
+          <div class="philo-stat-number">75+</div>
           <div class="philo-stat-label">Opportunités</div>
         </div>
         <div class="philo-stat">
-          <div class="philo-stat-number">300+</div>
-          <div class="philo-stat-label">Villes</div>
+          <div class="philo-stat-number">1</div>
+          <div class="philo-stat-label">Métropole</div>
         </div>
         <div class="philo-stat">
-          <div class="philo-stat-number">10k</div>
-          <div class="philo-stat-label">Communauté</div>
+          <div class="philo-stat-number">51+</div>
+          <div class="philo-stat-label">Histoires</div>
         </div>
       </div>
     </div>
@@ -756,11 +755,11 @@
         </div>
 
         <div class="philo-valeur-card">
-          <span class="philo-valeur-emoji">📈</span>
+          <span class="philo-valeur-emoji">📍</span>
           <h3>Local & Concret</h3>
           <p>
             Chaque action compte. Nous valorisons l'impact territorial
-            et facilitons l'engagement de proximité.
+            et facilitons l'engagement de proximité, dans la métropole du Grand Nancy.
           </p>
         </div>
       </div>
@@ -771,9 +770,9 @@
   <section class="philo-final">
     <div class="philo-container philo-final-inner">
       <span class="philo-final-emoji">⚡</span>
-      <h2 class="philo-final-title">Prêt·e pour ton déclic ?</h2>
+      <h2 class="philo-final-title">Prêt·e pour ton déclic&nbsp;?</h2>
       <p class="philo-final-text">
-        Rejoins les milliers de personnes qui passent à l'action près de chez toi.
+        Rejoins les habitants de la métropole du Grand Nancy qui passent à l'action près de chez toi.
       </p>
 
       <%= link_to root_path, class: "philo-final-btn" do %>
