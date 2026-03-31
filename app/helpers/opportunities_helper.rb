@@ -25,10 +25,10 @@ module OpportunitiesHelper
     s = op.starts_at.utc.strftime('%Y%m%dT%H%M%SZ')
     e = (op.try(:ends_at) || op.starts_at + 1.hour).utc.strftime('%Y%m%dT%H%M%SZ')
     q = {
-      action:  'TEMPLATE',
-      text:    op.title,
-      dates:   "#{s}/#{e}",
-      details: strip_tags(op.description.to_s),
+      action:   'TEMPLATE',
+      text:     op.title,
+      dates:    "#{s}/#{e}",
+      details:  strip_tags(op.description.to_s),
       location: op.location
     }.to_query
     "https://www.google.com/calendar/render?#{q}"
@@ -143,30 +143,31 @@ module OpportunitiesHelper
   # Détection émoji en début de ligne
   EMOJI_START_RX = /\A[\p{Emoji}\u2600-\u27BF]/u
 
-  # ----------------------------- NOUVEAU : SUPPORT IMAGES INLINE -----------------------------
+  # ----------------------------- SUPPORT IMAGES INLINE -----------------------------
 
-  # Remplace les <!-- IMAGE_1 -->, <!-- IMAGE_2 -->, <!-- IMAGE_3 --> par les vraies images
+  # Remplace les <!-- IMAGE_1 -->, <!-- IMAGE_2 -->, <!-- IMAGE_3 --> par les vraies images.
+  # Si l'image n'est pas attachée, le placeholder est supprimé silencieusement
+  # (évite l'affichage brut du commentaire HTML dans la page publique).
   def replace_inline_images(text, opportunity)
     return text unless opportunity
 
     result = text.dup
 
-    # IMAGE_1
-    if opportunity.respond_to?(:inline_image_1) && opportunity.inline_image_1.attached?
-      img_tag = render_inline_image(opportunity.inline_image_1, opportunity.inline_caption_1, 1)
-      result.gsub!(/<!--\s*IMAGE_1\s*-->/, img_tag)
-    end
+    [1, 2, 3].each do |i|
+      marker     = /<!--\s*IMAGE_#{i}\s*-->/
+      img_method = "inline_image_#{i}"
 
-    # IMAGE_2
-    if opportunity.respond_to?(:inline_image_2) && opportunity.inline_image_2.attached?
-      img_tag = render_inline_image(opportunity.inline_image_2, opportunity.inline_caption_2, 2)
-      result.gsub!(/<!--\s*IMAGE_2\s*-->/, img_tag)
-    end
-
-    # IMAGE_3
-    if opportunity.respond_to?(:inline_image_3) && opportunity.inline_image_3.attached?
-      img_tag = render_inline_image(opportunity.inline_image_3, opportunity.inline_caption_3, 3)
-      result.gsub!(/<!--\s*IMAGE_3\s*-->/, img_tag)
+      if opportunity.respond_to?(img_method) && opportunity.send(img_method).attached?
+        img_tag = render_inline_image(
+          opportunity.send(img_method),
+          opportunity.send("inline_caption_#{i}"),
+          i
+        )
+        result.gsub!(marker, img_tag)
+      else
+        # Pas d'image attachée → on supprime le placeholder proprement
+        result.gsub!(marker, "")
+      end
     end
 
     result
@@ -177,7 +178,7 @@ module OpportunitiesHelper
     img_url = url_for(attachment)
 
     # Alternance gauche/droite
-    position_class = (index.odd? ? 'inline-photo-left' : 'inline-photo-right')
+    position_class = index.odd? ? 'inline-photo-left' : 'inline-photo-right'
 
     html = %{
       <figure class="#{position_class}">
@@ -195,12 +196,12 @@ module OpportunitiesHelper
   def render_opportunity_body(text)
     return "".html_safe if text.blank?
 
-    # ÉTAPE 1 : Remplacer les <!-- IMAGE_X --> par les vraies images AVANT le parsing markdown
+    # ÉTAPE 1 : Remplacer (ou supprimer) les <!-- IMAGE_X --> AVANT le parsing markdown
     text_with_images = replace_inline_images(text, @opportunity)
 
-    # ÉTAPE 2 : Parser le markdown
-    lines = text_with_images.to_s.split(/\r?\n/)
-    html  = []
+    # ÉTAPE 2 : Parser le markdown ligne par ligne
+    lines   = text_with_images.to_s.split(/\r?\n/)
+    html    = []
     in_list = false
 
     lines.each do |raw|
@@ -208,29 +209,25 @@ module OpportunitiesHelper
 
       # Titres ### (avec émoji optionnel)
       if line =~ /\A[ \t]*###[ \t]+(.+)/
-        title_raw = Regexp.last_match(1).strip
-
-        # Détecter émoji au début (avec ou sans accolades)
+        title_raw    = Regexp.last_match(1).strip
         custom_emoji = nil
-        title = title_raw
+        title        = title_raw
 
         # Pattern 1: {émoji} Titre
         if title_raw =~ /\A\{(.)\}[ \t]*(.+)\z/u
           potential = Regexp.last_match(1)
-          rest = Regexp.last_match(2).strip
-          # Vérifie que c'est bien un émoji
+          rest      = Regexp.last_match(2).strip
           if potential.ord >= 0x1F300 || potential =~ /[\p{Emoji}]/
             custom_emoji = potential
-            title = rest  # SANS l'émoji
+            title        = rest
           end
         # Pattern 2: émoji Titre (émoji collé au texte)
         elsif title_raw =~ /\A(.)[ \t]*(.+)\z/u
           potential = Regexp.last_match(1)
-          rest = Regexp.last_match(2).strip
-          # Vérifie que c'est bien un émoji
+          rest      = Regexp.last_match(2).strip
           if potential.ord >= 0x1F300 || potential =~ /[\p{Emoji}]/
             custom_emoji = potential
-            title = rest  # SANS l'émoji
+            title        = rest
           end
         end
 
@@ -251,9 +248,7 @@ module OpportunitiesHelper
       # Titres en **gras:** (alternative à ###)
       if line =~ /\A\*\*(.+?)\*\*\s*:?\s*\z/
         bold_title = Regexp.last_match(1).strip
-
-        # Générer émoji par défaut
-        emoji = emoji_for_opportunity(bold_title)
+        emoji      = emoji_for_opportunity(bold_title)
 
         html << %(</ul>) if in_list
         in_list = false
@@ -278,7 +273,7 @@ module OpportunitiesHelper
         next
       end
 
-      # Ligne vide -> fermer liste si besoin
+      # Ligne vide → fermer la liste si besoin
       if line.blank?
         if in_list
           html << %(</ul>)
@@ -293,7 +288,7 @@ module OpportunitiesHelper
         in_list = false
       end
 
-      # Si la ligne contient du HTML (comme <figure>), on la passe telle quelle
+      # Si la ligne contient du HTML <figure>, on la passe telle quelle
       if line =~ /<figure class="inline-photo/
         html << line
       else
