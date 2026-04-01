@@ -1551,48 +1551,66 @@ end
 
 /* ====== FIX POPUP MOBILE - COMPACT ====== */
 
-/* Limiter la hauteur du popup sur mobile */
 @media (max-width: 768px) {
+  /* Le wrapper Leaflet ne coupe plus le contenu */
   .leaflet-popup-content-wrapper {
-    max-height: 60vh !important;
+    max-height: 70vh !important;
     overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
+  .leaflet-popup-content {
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    max-height: 70vh !important;
+  }
+
+  /* La card est scrollable, mais le bouton reste toujours visible en bas */
   .dc-pop-card {
-    max-height: 60vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+    max-height: 70vh;
+    overflow: hidden;
   }
 
-  /* Réduire la taille de l'image hero */
+  /* Hero : hauteur fixe compacte sur mobile, pas d'aspect-ratio */
   .dc-pop-hero {
-    aspect-ratio: 16/9 !important;
-    height: auto !important;
+    aspect-ratio: unset !important;
+    height: 120px !important;
+    flex-shrink: 0;
   }
 
-  /* Réduire le padding du body */
+  /* Corps scrollable */
   .dc-pop-body {
     padding: 12px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    flex: 1;
+    /* Assure que le bouton reste visible */
+    display: flex;
+    flex-direction: column;
   }
 
-  /* Titre plus compact */
   .dc-pop-title {
-    font-size: 0.9rem !important;
-    margin: 0 0 8px 0 !important;
+    font-size: 0.88rem !important;
+    margin: 0 0 6px 0 !important;
     line-height: 1.2 !important;
   }
 
-  /* Meta plus compact */
   .dc-pop-meta {
     font-size: 0.75rem !important;
     gap: 2px !important;
     margin-bottom: 10px !important;
   }
 
-  /* Bouton plus petit */
+  /* Bouton collé en bas, jamais coupé */
   .dc-pop-btn {
-    padding: 8px 0 !important;
-    font-size: 0.8rem !important;
+    padding: 10px 0 !important;
+    font-size: 0.82rem !important;
+    margin-top: auto;
+    flex-shrink: 0;
   }
 }
 
