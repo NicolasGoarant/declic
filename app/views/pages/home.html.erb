@@ -1552,65 +1552,38 @@ end
 /* ====== FIX POPUP MOBILE - COMPACT ====== */
 
 @media (max-width: 768px) {
-  /* Le wrapper Leaflet ne coupe plus le contenu */
+  /* Largeur adaptée à l'écran mobile */
   .leaflet-popup-content-wrapper {
-    max-height: 70vh !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
+    max-width: 260px !important;
   }
-
   .leaflet-popup-content {
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-    max-height: 70vh !important;
+    width: 240px !important;
   }
 
-  /* La card est scrollable, mais le bouton reste toujours visible en bas */
-  .dc-pop-card {
-    display: flex;
-    flex-direction: column;
-    max-height: 70vh;
-    overflow: hidden;
-  }
-
-  /* Hero : hauteur fixe compacte sur mobile, pas d'aspect-ratio */
+  /* Hero masqué sur mobile : le popup doit tenir dans ~280px de carte */
   .dc-pop-hero {
-    aspect-ratio: unset !important;
-    height: 120px !important;
-    flex-shrink: 0;
+    display: none !important;
   }
 
-  /* Corps scrollable */
   .dc-pop-body {
-    padding: 12px !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-    flex: 1;
-    /* Assure que le bouton reste visible */
-    display: flex;
-    flex-direction: column;
+    padding: 14px !important;
   }
 
   .dc-pop-title {
-    font-size: 0.88rem !important;
-    margin: 0 0 6px 0 !important;
-    line-height: 1.2 !important;
+    font-size: 0.9rem !important;
+    margin: 0 0 8px 0 !important;
+    line-height: 1.25 !important;
   }
 
   .dc-pop-meta {
     font-size: 0.75rem !important;
-    gap: 2px !important;
+    gap: 3px !important;
     margin-bottom: 10px !important;
   }
 
-  /* Bouton collé en bas, jamais coupé */
   .dc-pop-btn {
     padding: 10px 0 !important;
     font-size: 0.82rem !important;
-    margin-top: auto;
-    flex-shrink: 0;
   }
 }
 
@@ -2072,7 +2045,8 @@ function plot(items){
     const marker = L.marker([jLat, jLng], { icon:iconFor((o.category||'').toLowerCase()) })
       .addTo(dataLayer)
       .bindPopup(popupHtml(o), {
-        autoPan: false,
+        autoPan: window.innerWidth <= 768,
+        autoPanPadding: [20, 80],
         maxWidth: 300,
         minWidth: 280,
         maxHeight: window.innerHeight * 0.65,
