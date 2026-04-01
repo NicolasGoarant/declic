@@ -1552,38 +1552,38 @@ end
 /* ====== FIX POPUP MOBILE - COMPACT ====== */
 
 @media (max-width: 768px) {
-  /* Largeur adaptée à l'écran mobile */
   .leaflet-popup-content-wrapper {
-    max-width: 260px !important;
+    max-width: 270px !important;
   }
   .leaflet-popup-content {
-    width: 240px !important;
+    width: 250px !important;
   }
 
-  /* Hero masqué sur mobile : le popup doit tenir dans ~280px de carte */
+  /* Hero compact sur mobile : hauteur fixe au lieu d'aspect-ratio */
   .dc-pop-hero {
-    display: none !important;
+    aspect-ratio: unset !important;
+    height: 110px !important;
   }
 
   .dc-pop-body {
-    padding: 14px !important;
+    padding: 12px !important;
   }
 
   .dc-pop-title {
-    font-size: 0.9rem !important;
-    margin: 0 0 8px 0 !important;
-    line-height: 1.25 !important;
+    font-size: 0.88rem !important;
+    margin: 0 0 6px 0 !important;
+    line-height: 1.2 !important;
   }
 
   .dc-pop-meta {
     font-size: 0.75rem !important;
-    gap: 3px !important;
-    margin-bottom: 10px !important;
+    gap: 2px !important;
+    margin-bottom: 8px !important;
   }
 
   .dc-pop-btn {
-    padding: 10px 0 !important;
-    font-size: 0.82rem !important;
+    padding: 9px 0 !important;
+    font-size: 0.8rem !important;
   }
 }
 
@@ -2046,7 +2046,7 @@ function plot(items){
       .addTo(dataLayer)
       .bindPopup(popupHtml(o), {
         autoPan: window.innerWidth <= 768,
-        autoPanPadding: [20, 80],
+        autoPanPadding: [10, 90],
         maxWidth: 300,
         minWidth: 280,
         maxHeight: window.innerHeight * 0.65,
@@ -2404,4 +2404,5 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
   observer.observe(stats);
 })();
 </script>
+<% end %>
 <% end %>
