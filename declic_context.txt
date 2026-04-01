@@ -1,3 +1,290 @@
+===== ./app/assets/config/manifest.js =====
+//= link_tree ../images
+//= link_directory ../stylesheets .css
+//= link_tree ../../javascript .js
+//= link_tree ../../../vendor/javascript .js
+//= link_tree ../builds
+
+
+//= link_tree ../images
+// (garde aussi éventuellement)
+
+// Stories PDFs
+//= link leaflet_tiles_fallback.js
+//= link geo_watch.js
+
+===== ./app/assets/javascripts/geo_watch.js =====
+/* global L */
+/*
+ * GeoWatch — Déclic
+ * ----------------------------------------------
+ * - Un unique point BLEU qui suit l'utilisateur.
+ * - AUCUN pin rouge, AUCUN halo d'accuracy par défaut.
+ * - Démarrage/arrêt propre, idempotent (peut être appelé plusieurs fois).
+ * - "Follow" actif au démarrage ; se désactive si l'utilisateur manipule la carte.
+ * - Supprime tout contrôle Leaflet non lié au zoom (évite l'icône carré avec pin rouge).
+ * - Exposé sous window.DeclicGeo : start(map, opts), stop(), isRunning(), setFollow(bool)
+ *
+ *  opts (tous facultatifs) :
+ *    - follow: true        // recadre automatiquement la carte
+ *    - showAccuracy: false // si true, affiche un cercle d'accuracy (désactivé selon demande)
+ *    - highAccuracy: true
+ *    - maxAgeMs: 15000
+ *    - panIntervalMs: 800  // délai min entre recadrages
+ *    - firstFitZoom: null  // si nombre, fait map.setView([lat,lng], firstFitZoom) au 1er fix
+ */
+
+(function () {
+  // Ne crée l'objet global qu'une seule fois
+  if (window.DeclicGeo && window.DeclicGeo.__ready) return;
+
+  const state = {
+    map: null,
+    watchId: null,
+    marker: null,
+    accCircle: null,
+    following: true,
+    lastPanAt: 0,
+    opts: null,
+    boundAutoStopFollow: null
+  };
+
+  const DEFAULTS = {
+    follow: true,
+    showAccuracy: false,
+    highAccuracy: true,
+    maxAgeMs: 15000,
+    panIntervalMs: 800,
+    firstFitZoom: null
+  };
+
+  function ensureMapOk(map) {
+    return !!(map && typeof map.on === 'function' && map._loaded !== undefined);
+  }
+
+  function removeNonZoomControls(map) {
+    try {
+      const root = map.getContainer().querySelector('.leaflet-top.leaflet-left');
+      if (!root) return;
+      Array.from(root.children).forEach(el => {
+        const isZoom = el.classList.contains('leaflet-control-zoom');
+        if (!isZoom) el.remove();
+      });
+    } catch (_) { /* no-op */ }
+  }
+
+  function blueDotIcon() {
+    // petit point bleu (comme iOS) : cercle bleu avec bordure blanche et léger ring
+    const html =
+      '<div style="' +
+      'width:18px;height:18px;border-radius:9999px;' +
+      'background:#2563eb;border:2px solid #fff;' +
+      'box-shadow:0 0 0 3px rgba(37,99,235,.35);' +
+      '"></div>';
+    return L.divIcon({
+      className: '',
+      html: html,
+      iconSize: [18, 18],
+      iconAnchor: [9, 9]
+    });
+  }
+
+  function onPosition(pos) {
+    if (!state.map || !pos || !pos.coords) return;
+
+    const { latitude, longitude, accuracy } = pos.coords;
+    if (typeof latitude !== 'number' || typeof longitude !== 'number') return;
+
+    // Crée/maj du point bleu
+    if (!state.marker) {
+      state.marker = L.marker([latitude, longitude], { icon: blueDotIcon() }).addTo(state.map);
+      // 1er fix : on centre immédiatement
+      if (state.opts.firstFitZoom && Number.isFinite(state.opts.firstFitZoom)) {
+        state.map.setView([latitude, longitude], Number(state.opts.firstFitZoom), { animate: true });
+      } else if (state.opts.follow) {
+        state.map.panTo([latitude, longitude], { animate: true });
+      }
+    } else {
+      state.marker.setLatLng([latitude, longitude]);
+    }
+
+    // Accuracy (désactivé par défaut)
+    if (state.opts.showAccuracy) {
+      const r = Math.max(5, Math.min(accuracy || 0, 1000));
+      if (!state.accCircle) {
+        state.accCircle = L.circle([latitude, longitude], {
+          radius: r,
+          color: '#2563eb',
+          weight: 1,
+          fillColor: '#60a5fa',
+          fillOpacity: 0.18
+        }).addTo(state.map);
+      } else {
+        state.accCircle.setLatLng([latitude, longitude]).setRadius(r);
+      }
+    }
+
+    // Follow
+    if (state.following) {
+      const now = Date.now();
+      if (now - state.lastPanAt > state.opts.panIntervalMs) {
+        state.map.panTo([latitude, longitude], { animate: true });
+        state.lastPanAt = now;
+      }
+    }
+  }
+
+  function onError(err) {
+    // Pas d'alertes intrusives : on log juste
+    console.warn('Geolocation error:', err && err.message ? err.message : err);
+  }
+
+  function bindAutoStopFollow() {
+    if (!state.map) return;
+    if (state.boundAutoStopFollow) return;
+
+    const handler = function () {
+      if (!state.following) return;
+      state.following = false;
+    };
+    state.boundAutoStopFollow = handler;
+    state.map.on('dragstart zoomstart', handler);
+  }
+
+  function unbindAutoStopFollow() {
+    if (!state.map || !state.boundAutoStopFollow) return;
+    state.map.off('dragstart zoomstart', state.boundAutoStopFollow);
+    state.boundAutoStopFollow = null;
+  }
+
+  function start(map, opts) {
+    if (!ensureMapOk(map)) {
+      console.warn('[DeclicGeo] Carte Leaflet manquante ou invalide.');
+      return () => {};
+    }
+
+    // Si déjà en cours, on stoppe proprement avant de relancer
+    if (state.watchId !== null) stop();
+
+    state.map = map;
+    state.opts = Object.assign({}, DEFAULTS, opts || {});
+    state.following = !!state.opts.follow;
+    state.lastPanAt = 0;
+
+    // Nettoie d'éventuels contrôles non-zoom restants
+    removeNonZoomControls(map);
+
+    // Lance le watch
+    try {
+      state.watchId = navigator.geolocation.watchPosition(onPosition, onError, {
+        enableHighAccuracy: !!state.opts.highAccuracy,
+        maximumAge: state.opts.maxAgeMs,
+        timeout: 10000
+      });
+    } catch (e) {
+      console.warn('[DeclicGeo] Geolocation non disponible sur ce navigateur.', e);
+      state.watchId = null;
+    }
+
+    // Un "nudge" au retour d'onglet (iOS/Android parfois gèlent le watch)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && navigator.geolocation && navigator.geolocation.getCurrentPosition) {
+        navigator.geolocation.getCurrentPosition(onPosition, onError, {
+          enableHighAccuracy: !!state.opts.highAccuracy,
+          maximumAge: state.opts.maxAgeMs,
+          timeout: 8000
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible, { passive: true });
+
+    // Sécurité : arrêter le watch à la fermeture
+    const stopOnUnload = () => stop();
+    window.addEventListener('beforeunload', stopOnUnload, { once: true });
+
+    // Mémorise pour stop()
+    state._cleanup = () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('beforeunload', stopOnUnload);
+    };
+
+    // Désactive follow dès que l'utilisateur manipule la carte
+    bindAutoStopFollow();
+
+    return stop;
+  }
+
+  function stop() {
+    // Arrête geolocation
+    try {
+      if (state.watchId !== null) navigator.geolocation.clearWatch(state.watchId);
+    } catch (_) { /* no-op */ }
+    state.watchId = null;
+
+    // Nettoie couche/marker/accuracy
+    try {
+      if (state.marker) { state.marker.remove(); }
+      if (state.accCircle) { state.accCircle.remove(); }
+    } catch (_) { /* no-op */ }
+    state.marker = null;
+    state.accCircle = null;
+
+    // Nettoie events
+    unbindAutoStopFollow();
+    if (state._cleanup) { try { state._cleanup(); } catch (_) {} }
+    state._cleanup = null;
+
+    // Ne touche pas à la map (laisse les autres couches)
+  }
+
+  function isRunning() {
+    return state.watchId !== null;
+  }
+
+  function setFollow(on) {
+    state.following = !!on;
+  }
+
+  // API publique
+  window.DeclicGeo = {
+    startGeoWatch: start,
+    stopGeoWatch: stop,
+    isRunning: isRunning,
+    setFollow: setFollow,
+    __ready: true
+  };
+})();
+
+
+
+
+
+
+===== ./app/assets/javascripts/leaflet_tiles_fallback.js =====
+/* global L */
+function addFallbackTiles(map){
+  const providers = [
+    { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      options: { maxZoom: 19, attribution: '© OpenStreetMap' } },
+    { url: 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
+      options: { subdomains: 'abc', maxZoom: 19, attribution: '© OpenStreetMap, © OSM-FR' } },
+    { url: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+      options: { subdomains: 'abcd', maxZoom: 19, attribution: '© OpenStreetMap, © Carto' } }
+  ];
+  let layer = null, idx = 0;
+  const tryNext = () => {
+    if (layer) { map.removeLayer(layer); layer = null; }
+    if (idx >= providers.length) { console.warn('Aucune source de tuiles n’a répondu'); return null; }
+    const p = providers[idx++]; layer = L.tileLayer(p.url, p.options);
+    let loaded = false;
+    const onLoad = () => { loaded = true; layer.off('load', onLoad); layer.off('tileerror', onErr); };
+    const onErr  = () => setTimeout(() => { if (!loaded) tryNext(); }, 600);
+    layer.on('load', onLoad); layer.on('tileerror', onErr);
+    layer.addTo(map); return layer;
+  };
+  return tryNext();
+}
+
 ===== ./app/channels/application_cable/channel.rb =====
 module ApplicationCable
   class Channel < ActionCable::Channel::Base
@@ -1358,6 +1645,40 @@ module StoriesHelper
     text.to_s.split(/\s+/).first(words).join(" ")
   end
 end
+
+===== ./app/javascript/application.js =====
+// Configure your import map in config/importmap.rb. Read more: https://github.com/rails/importmap-rails
+import "@hotwired/turbo-rails"
+import "controllers"
+import "map"
+
+===== ./app/javascript/controllers/application.js =====
+import { Application } from "@hotwired/stimulus"
+
+const application = Application.start()
+
+// Configure Stimulus development experience
+application.debug = false
+window.Stimulus   = application
+
+export { application }
+
+===== ./app/javascript/controllers/hello_controller.js =====
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  connect() {
+    this.element.textContent = "Hello World!"
+  }
+}
+
+===== ./app/javascript/controllers/index.js =====
+// Import and register all your controllers from the importmap via controllers/**/*_controller
+import { application } from "controllers/application"
+import { eagerLoadControllersFrom } from "@hotwired/stimulus-loading"
+eagerLoadControllersFrom("controllers", application)
+
+===== ./app/javascript/map.js =====
 
 ===== ./app/jobs/application_job.rb =====
 class ApplicationJob < ActiveJob::Base
@@ -6450,7 +6771,7 @@ document.addEventListener("DOMContentLoaded", initOppMap);
             <div class="contact-card-body">
               <h3>Par email</h3>
               <p>Pour toute question, proposition de partenariat ou signalement d'erreur.</p>
-              <a href="mailto:nicolas.goarant@hotmail.fr" class="contact-card-btn">
+              <a href="mailto:nicolas@declic.site" class="contact-card-btn">
                 nicolas.goarant@hotmail.fr
               </a>
             </div>
@@ -7298,8 +7619,7 @@ end
           Change ta vie, <span class="grad">en quelques clics</span>
         </h1>
         <p class="hm-chapo">
-          Déclic te connecte aux opportunités locales d'engagement :
-          aider — et pour découvrir des <strong>“belles histoires”</strong> qui inspirent.
+          Déclic te connecte aux opportunités locales et t'aide à découvrir des <strong>“belles histoires”</strong> qui inspirent.
         </p>
 
         <%# LES 3 C DE DÉCLIC %>
@@ -9663,7 +9983,7 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
         <p><strong>Nom :</strong> Nicolas Goarant</p>
         <p><strong>Statut :</strong> Entrepreneur individuel</p>
         <p><strong>Adresse :</strong> Nancy, Grand Est, France</p>
-        <p><strong>Email :</strong> <%= mail_to "contact@declic.site", "contact@declic.site", class: "legal-link" %></p>
+        <p><strong>Email :</strong> <%= mail_to "nicolas@declic.site", "nicolas@declic.site", class: "legal-link" %></p>
         <p><strong>Responsable de la publication :</strong> Nicolas Goarant</p>
       </div>
     </section>
@@ -9696,7 +10016,7 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
 
       <div class="legal-prose">
         <h3>4.1. Responsable du traitement</h3>
-        <p>Le responsable du traitement des données personnelles collectées sur declic.site est Nicolas Goarant, joignable à l'adresse : <%= mail_to "contact@declic.site", "contact@declic.site", class: "legal-link" %></p>
+        <p>Le responsable du traitement des données personnelles collectées sur declic.site est Nicolas Goarant, joignable à l'adresse : <%= mail_to "nicolas@declic.site", "nicolas@declic.site", class: "legal-link" %></p>
 
         <h3>4.2. Données collectées</h3>
         <p>Actuellement, Déclic ne collecte <strong>aucune donnée personnelle</strong> des visiteurs du site.</p>
@@ -9733,7 +10053,7 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
           <li><strong>Droit à la portabilité :</strong> Vous pouvez demander de récupérer vos données dans un format structuré</li>
           <li><strong>Droit d'opposition :</strong> Vous pouvez vous opposer au traitement de vos données</li>
         </ul>
-        <p>Pour exercer ces droits, contactez-nous à : <%= mail_to "contact@declic.site", "contact@declic.site", class: "legal-link" %></p>
+        <p>Pour exercer ces droits, contactez-nous à : <%= mail_to "nicolas@declic.site", "nicolas@declic.site", class: "legal-link" %></p>
         <p>Vous disposez également du droit d'introduire une réclamation auprès de la CNIL : <%= link_to "www.cnil.fr", "https://www.cnil.fr", target: "_blank", rel: "noopener", class: "legal-link" %></p>
 
         <h3>4.6. Sécurité des données</h3>
@@ -9994,7 +10314,7 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
 </style>
 
 ===== ./app/views/pages/philosophie.html.erb =====
-<%# app/views/pages/philosophie.html.erb — version ajustée (citation + boutons) %>
+<%# app/views/pages/philosophie.html.erb — version corrigée (stats réelles) %>
 
 <style>
 /* =========================================================
@@ -10055,15 +10375,15 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
   z-index: 1;
 }
 
-/* CITA–TION   (texte dans la pastille, auteur en dessous) */
+/* CITATION */
 .philo-hero-quote {
   display: flex;
-  align-items: center;               /* guillemets alignés au texte */
+  align-items: center;
   justify-content: center;
-  gap: 0.18rem;                      /* guillemets rapprochés mais sans toucher */
+  gap: 0.18rem;
   padding: 0.4rem 1.4rem;
-  margin: 0 auto 0.6rem;             /* centré horizontalement */
-  max-width: calc(100% - 2.5rem);    /* évite de toucher les bords sur mobile */
+  margin: 0 auto 0.6rem;
+  max-width: calc(100% - 2.5rem);
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,.26);
   background: rgba(255,255,255,.14);
@@ -10080,10 +10400,9 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
 
 .philo-hero-quote-text {
   font-size: 0.95rem;
-  white-space: nowrap;               /* une seule ligne */
+  white-space: nowrap;
 }
 
-/* auteur centré sous la pastille */
 .philo-hero-quote-author {
   font-size: 0.95rem;
   font-weight: 500;
@@ -10126,8 +10445,8 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
 .philo-btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;       /* centre le groupe emoji + texte */
-  gap: 0.55rem;                  /* espace suffisant entre emoji et texte */
+  justify-content: center;
+  gap: 0.55rem;
   padding: .9rem 1.9rem;
   border-radius: .9rem;
   font-weight: 600;
@@ -10496,7 +10815,7 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
    ========================================================= */
 @media (max-width: 768px) {
   .philo-hero {
-    padding-top: 2.6rem;   /* moins d’air au-dessus de la citation */
+    padding-top: 2.6rem;
     padding-bottom: 3rem;
   }
 
@@ -10518,7 +10837,7 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
   }
 
   .philo-hero-title {
-    font-size: 2.2rem;          /* pour que “Pourquoi Déclic ?” tienne sur une ligne */
+    font-size: 2.2rem;
   }
 
   .philo-hero-lead {
@@ -10580,16 +10899,16 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
 
       <div class="philo-stats">
         <div class="philo-stat">
-          <div class="philo-stat-number">15&nbsp;000+</div>
+          <div class="philo-stat-number">100+</div>
           <div class="philo-stat-label">Opportunités</div>
         </div>
         <div class="philo-stat">
-          <div class="philo-stat-number">300+</div>
-          <div class="philo-stat-label">Villes</div>
+          <div class="philo-stat-number">1</div>
+          <div class="philo-stat-label">Métropole</div>
         </div>
         <div class="philo-stat">
-          <div class="philo-stat-number">10k</div>
-          <div class="philo-stat-label">Communauté</div>
+          <div class="philo-stat-number">50+</div>
+          <div class="philo-stat-label">Histoires</div>
         </div>
       </div>
     </div>
@@ -10752,11 +11071,11 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
         </div>
 
         <div class="philo-valeur-card">
-          <span class="philo-valeur-emoji">📈</span>
+          <span class="philo-valeur-emoji">📍</span>
           <h3>Local & Concret</h3>
           <p>
             Chaque action compte. Nous valorisons l'impact territorial
-            et facilitons l'engagement de proximité.
+            et facilitons l'engagement de proximité, dans la métropole du Grand Nancy.
           </p>
         </div>
       </div>
@@ -10767,9 +11086,9 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
   <section class="philo-final">
     <div class="philo-container philo-final-inner">
       <span class="philo-final-emoji">⚡</span>
-      <h2 class="philo-final-title">Prêt·e pour ton déclic ?</h2>
+      <h2 class="philo-final-title">Prêt·e pour ton déclic&nbsp;?</h2>
       <p class="philo-final-text">
-        Rejoins les milliers de personnes qui passent à l'action près de chez toi.
+        Rejoins les habitants de la métropole du Grand Nancy qui passent à l'action près de chez toi.
       </p>
 
       <%= link_to root_path, class: "philo-final-btn" do %>
@@ -11894,6 +12213,34 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
   "theme_color": "red",
   "background_color": "red"
 }
+
+===== ./app/views/pwa/service-worker.js =====
+// Add a service worker for processing Web Push notifications:
+//
+// self.addEventListener("push", async (event) => {
+//   const { title, options } = await event.data.json()
+//   event.waitUntil(self.registration.showNotification(title, options))
+// })
+//
+// self.addEventListener("notificationclick", function(event) {
+//   event.notification.close()
+//   event.waitUntil(
+//     clients.matchAll({ type: "window" }).then((clientList) => {
+//       for (let i = 0; i < clientList.length; i++) {
+//         let client = clientList[i]
+//         let clientPath = (new URL(client.url)).pathname
+//
+//         if (clientPath == event.notification.data.path && "focus" in client) {
+//           return client.focus()
+//         }
+//       }
+//
+//       if (clients.openWindow) {
+//         return clients.openWindow(event.notification.data.path)
+//       }
+//     })
+//   )
+// })
 
 ===== ./app/views/shared/_footer.html.erb =====
 <footer class="declic-footer">
@@ -14111,6 +14458,118 @@ img =
   document.addEventListener('turbo:load', initStoryMap);
 </script>
 
+===== ./collector/.venv/lib/python3.12/site-packages/urllib3/contrib/emscripten/emscripten_fetch_worker.js =====
+let Status = {
+  SUCCESS_HEADER: -1,
+  SUCCESS_EOF: -2,
+  ERROR_TIMEOUT: -3,
+  ERROR_EXCEPTION: -4,
+};
+
+let connections = {};
+let nextConnectionID = 1;
+const encoder = new TextEncoder();
+
+self.addEventListener("message", async function (event) {
+  if (event.data.close) {
+    let connectionID = event.data.close;
+    delete connections[connectionID];
+    return;
+  } else if (event.data.getMore) {
+    let connectionID = event.data.getMore;
+    let { curOffset, value, reader, intBuffer, byteBuffer } =
+      connections[connectionID];
+    // if we still have some in buffer, then just send it back straight away
+    if (!value || curOffset >= value.length) {
+      // read another buffer if required
+      try {
+        let readResponse = await reader.read();
+
+        if (readResponse.done) {
+          // read everything - clear connection and return
+          delete connections[connectionID];
+          Atomics.store(intBuffer, 0, Status.SUCCESS_EOF);
+          Atomics.notify(intBuffer, 0);
+          // finished reading successfully
+          // return from event handler
+          return;
+        }
+        curOffset = 0;
+        connections[connectionID].value = readResponse.value;
+        value = readResponse.value;
+      } catch (error) {
+        console.log("Request exception:", error);
+        let errorBytes = encoder.encode(error.message);
+        let written = errorBytes.length;
+        byteBuffer.set(errorBytes);
+        intBuffer[1] = written;
+        Atomics.store(intBuffer, 0, Status.ERROR_EXCEPTION);
+        Atomics.notify(intBuffer, 0);
+      }
+    }
+
+    // send as much buffer as we can
+    let curLen = value.length - curOffset;
+    if (curLen > byteBuffer.length) {
+      curLen = byteBuffer.length;
+    }
+    byteBuffer.set(value.subarray(curOffset, curOffset + curLen), 0);
+
+    Atomics.store(intBuffer, 0, curLen); // store current length in bytes
+    Atomics.notify(intBuffer, 0);
+    curOffset += curLen;
+    connections[connectionID].curOffset = curOffset;
+
+    return;
+  } else {
+    // start fetch
+    let connectionID = nextConnectionID;
+    nextConnectionID += 1;
+    const intBuffer = new Int32Array(event.data.buffer);
+    const byteBuffer = new Uint8Array(event.data.buffer, 8);
+    try {
+      const response = await fetch(event.data.url, event.data.fetchParams);
+      // return the headers first via textencoder
+      var headers = [];
+      for (const pair of response.headers.entries()) {
+        headers.push([pair[0], pair[1]]);
+      }
+      let headerObj = {
+        headers: headers,
+        status: response.status,
+        connectionID,
+      };
+      const headerText = JSON.stringify(headerObj);
+      let headerBytes = encoder.encode(headerText);
+      let written = headerBytes.length;
+      byteBuffer.set(headerBytes);
+      intBuffer[1] = written;
+      // make a connection
+      connections[connectionID] = {
+        reader: response.body.getReader(),
+        intBuffer: intBuffer,
+        byteBuffer: byteBuffer,
+        value: undefined,
+        curOffset: 0,
+      };
+      // set header ready
+      Atomics.store(intBuffer, 0, Status.SUCCESS_HEADER);
+      Atomics.notify(intBuffer, 0);
+      // all fetching after this goes through a new postmessage call with getMore
+      // this allows for parallel requests
+    } catch (error) {
+      console.log("Request exception:", error);
+      let errorBytes = encoder.encode(error.message);
+      let written = errorBytes.length;
+      byteBuffer.set(errorBytes);
+      intBuffer[1] = written;
+      Atomics.store(intBuffer, 0, Status.ERROR_EXCEPTION);
+      Atomics.notify(intBuffer, 0);
+    }
+  }
+});
+self.postMessage({ inited: true });
+
 ===== ./config/application.rb =====
 require_relative "boot"
 
@@ -15739,6 +16198,110 @@ File.open(output_file, 'w') do |file|
 end
 
 puts "✅ Succès : #{stories_to_export.count} Stories exportées vers #{output_file}"
+
+===== ./Gemfile =====
+source "https://rubygems.org"
+
+# Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
+gem "rails", "~> 7.2.2", ">= 7.2.2.2"
+# The original asset pipeline for Rails [https://github.com/rails/sprockets-rails]
+gem "sprockets-rails"
+# Use the Puma web server [https://github.com/puma/puma]
+gem "puma", ">= 5.0"
+
+gem "aws-sdk-s3", "~> 1.0"
+
+# Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
+gem "importmap-rails"
+# Hotwire's SPA-like page accelerator [https://turbo.hotwired.dev]
+gem "turbo-rails"
+# Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
+gem "stimulus-rails"
+# Use Tailwind CSS [https://github.com/rails/tailwindcss-rails]
+gem "tailwindcss-rails"
+# Build JSON APIs with ease [https://github.com/rails/jbuilder]
+gem "jbuilder"
+# Use Redis adapter to run Action Cable in production
+# gem "redis", ">= 4.0.1"
+
+# Use Kredis to get higher-level data types in Redis [https://github.com/rails/kredis]
+# gem "kredis"
+
+# Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
+# gem "bcrypt", "~> 3.1.7"
+
+# Windows does not include zoneinfo files, so bundle the tzinfo-data gem
+gem "tzinfo-data", platforms: %i[ windows jruby ]
+
+# Reduces boot times through caching; required in config/boot.rb
+gem "bootsnap", require: false
+
+# Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
+# gem "image_processing", "~> 1.2"
+
+group :development, :test do
+  # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
+  gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
+
+  gem "sqlite3", "~> 1.4"
+  # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
+  gem "brakeman", require: false
+
+  # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
+  gem "rubocop-rails-omakase", require: false
+end
+
+group :development do
+  # Use console on exceptions pages [https://github.com/rails/web-console]
+  gem "web-console"
+
+  gem "letter_opener"
+  gem "letter_opener_web"
+end
+
+group :test do
+  # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
+  gem "capybara"
+  gem "selenium-webdriver"
+end
+
+gem "friendly_id", "~> 5.5"
+
+gem "geocoder", "~> 1.8"
+
+gem "pagy", "~> 9.4"
+gem 'faraday'
+gem 'rss'           # parseur RSS/Atom de base (utilisé par feedjira aussi)
+gem 'feedjira', '~> 3.2'
+gem 'icalendar'
+gem 'httparty'
+
+gem 'kramdown'
+# gem 'kramdown-parser-gfm' # si vous voulez le format GFM (GitHub Flavored Markdown)S
+# --- Production ---
+gem "commonmarker"
+gem "nokogiri"
+
+group :production do
+  gem "pg", "~> 1.5"
+end
+
+
+
+ruby "3.3.0"
+
+# ...
+
+gem "image_processing", "~> 1.14"
+gem 'httparty'
+gem 'nokogiri'
+
+===== ./Procfile =====
+web: bundle exec puma -C config/puma.rb
+
+===== ./public/javascripts/geo_watch.js =====
+
+===== ./public/javascripts/leaflet_tiles_fallback.js =====
 
 ===== ./script/import_mjc.rb =====
 # script/import_mjc.rb
