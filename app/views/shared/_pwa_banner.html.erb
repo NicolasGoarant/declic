@@ -18,32 +18,43 @@
 </div>
 
 <script>
-  (function() {
-    var deferredPrompt = null;
-    var banner = document.getElementById('pwa-banner');
+(function() {
+  var banner = document.getElementById('pwa-banner');
 
-    // Ne pas montrer si déjà installé ou déjà refusé
-    if (window.matchMedia('(display-mode: standalone)').matches) return;
-    if (localStorage.getItem('pwa-banner-dismissed')) return;
+  // Ne pas montrer si déjà installé ou déjà refusé
+  if (window.matchMedia('(display-mode: standalone)').matches) return;
+  if (localStorage.getItem('pwa-banner-dismissed')) return;
 
-    window.addEventListener('beforeinstallprompt', function(e) {
-      e.preventDefault();
-      deferredPrompt = e;
+  var deferredPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+
+  // Affiche après 3 secondes sur mobile
+  if (window.innerWidth < 768) {
+    setTimeout(function() {
       banner.style.display = 'block';
-    });
+    }, 3000);
+  }
 
-    document.getElementById('pwa-install-btn').addEventListener('click', function() {
-      if (!deferredPrompt) return;
+  document.getElementById('pwa-install-btn').addEventListener('click', function() {
+    if (deferredPrompt) {
       deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(function(result) {
+      deferredPrompt.userChoice.then(function() {
         deferredPrompt = null;
         banner.style.display = 'none';
       });
-    });
+    } else {
+      // iOS : redirige vers les instructions
+      banner.innerHTML = '<div style="text-align:center; padding:12px; font-size:13px; color:#374151;">Sur Safari : appuie sur <strong>⬆️ Partager</strong> puis <strong>"Sur l\'écran d\'accueil"</strong></div>';
+    }
+  });
 
-    document.getElementById('pwa-dismiss-btn').addEventListener('click', function() {
-      banner.style.display = 'none';
-      localStorage.setItem('pwa-banner-dismissed', '1');
-    });
-  })();
+  document.getElementById('pwa-dismiss-btn').addEventListener('click', function() {
+    banner.style.display = 'none';
+    localStorage.setItem('pwa-banner-dismissed', '1');
+  });
+})();
 </script>

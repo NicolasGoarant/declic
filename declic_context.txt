@@ -1097,10 +1097,10 @@ module OpportunitiesHelper
     s = op.starts_at.utc.strftime('%Y%m%dT%H%M%SZ')
     e = (op.try(:ends_at) || op.starts_at + 1.hour).utc.strftime('%Y%m%dT%H%M%SZ')
     q = {
-      action:  'TEMPLATE',
-      text:    op.title,
-      dates:   "#{s}/#{e}",
-      details: strip_tags(op.description.to_s),
+      action:   'TEMPLATE',
+      text:     op.title,
+      dates:    "#{s}/#{e}",
+      details:  strip_tags(op.description.to_s),
       location: op.location
     }.to_query
     "https://www.google.com/calendar/render?#{q}"
@@ -1215,30 +1215,31 @@ module OpportunitiesHelper
   # Détection émoji en début de ligne
   EMOJI_START_RX = /\A[\p{Emoji}\u2600-\u27BF]/u
 
-  # ----------------------------- NOUVEAU : SUPPORT IMAGES INLINE -----------------------------
+  # ----------------------------- SUPPORT IMAGES INLINE -----------------------------
 
-  # Remplace les <!-- IMAGE_1 -->, <!-- IMAGE_2 -->, <!-- IMAGE_3 --> par les vraies images
+  # Remplace les <!-- IMAGE_1 -->, <!-- IMAGE_2 -->, <!-- IMAGE_3 --> par les vraies images.
+  # Si l'image n'est pas attachée, le placeholder est supprimé silencieusement
+  # (évite l'affichage brut du commentaire HTML dans la page publique).
   def replace_inline_images(text, opportunity)
     return text unless opportunity
 
     result = text.dup
 
-    # IMAGE_1
-    if opportunity.respond_to?(:inline_image_1) && opportunity.inline_image_1.attached?
-      img_tag = render_inline_image(opportunity.inline_image_1, opportunity.inline_caption_1, 1)
-      result.gsub!(/<!--\s*IMAGE_1\s*-->/, img_tag)
-    end
+    [1, 2, 3].each do |i|
+      marker     = /<!--\s*IMAGE_#{i}\s*-->/
+      img_method = "inline_image_#{i}"
 
-    # IMAGE_2
-    if opportunity.respond_to?(:inline_image_2) && opportunity.inline_image_2.attached?
-      img_tag = render_inline_image(opportunity.inline_image_2, opportunity.inline_caption_2, 2)
-      result.gsub!(/<!--\s*IMAGE_2\s*-->/, img_tag)
-    end
-
-    # IMAGE_3
-    if opportunity.respond_to?(:inline_image_3) && opportunity.inline_image_3.attached?
-      img_tag = render_inline_image(opportunity.inline_image_3, opportunity.inline_caption_3, 3)
-      result.gsub!(/<!--\s*IMAGE_3\s*-->/, img_tag)
+      if opportunity.respond_to?(img_method) && opportunity.send(img_method).attached?
+        img_tag = render_inline_image(
+          opportunity.send(img_method),
+          opportunity.send("inline_caption_#{i}"),
+          i
+        )
+        result.gsub!(marker, img_tag)
+      else
+        # Pas d'image attachée → on supprime le placeholder proprement
+        result.gsub!(marker, "")
+      end
     end
 
     result
@@ -1249,7 +1250,7 @@ module OpportunitiesHelper
     img_url = url_for(attachment)
 
     # Alternance gauche/droite
-    position_class = (index.odd? ? 'inline-photo-left' : 'inline-photo-right')
+    position_class = index.odd? ? 'inline-photo-left' : 'inline-photo-right'
 
     html = %{
       <figure class="#{position_class}">
@@ -1267,12 +1268,12 @@ module OpportunitiesHelper
   def render_opportunity_body(text)
     return "".html_safe if text.blank?
 
-    # ÉTAPE 1 : Remplacer les <!-- IMAGE_X --> par les vraies images AVANT le parsing markdown
+    # ÉTAPE 1 : Remplacer (ou supprimer) les <!-- IMAGE_X --> AVANT le parsing markdown
     text_with_images = replace_inline_images(text, @opportunity)
 
-    # ÉTAPE 2 : Parser le markdown
-    lines = text_with_images.to_s.split(/\r?\n/)
-    html  = []
+    # ÉTAPE 2 : Parser le markdown ligne par ligne
+    lines   = text_with_images.to_s.split(/\r?\n/)
+    html    = []
     in_list = false
 
     lines.each do |raw|
@@ -1280,29 +1281,25 @@ module OpportunitiesHelper
 
       # Titres ### (avec émoji optionnel)
       if line =~ /\A[ \t]*###[ \t]+(.+)/
-        title_raw = Regexp.last_match(1).strip
-
-        # Détecter émoji au début (avec ou sans accolades)
+        title_raw    = Regexp.last_match(1).strip
         custom_emoji = nil
-        title = title_raw
+        title        = title_raw
 
         # Pattern 1: {émoji} Titre
         if title_raw =~ /\A\{(.)\}[ \t]*(.+)\z/u
           potential = Regexp.last_match(1)
-          rest = Regexp.last_match(2).strip
-          # Vérifie que c'est bien un émoji
+          rest      = Regexp.last_match(2).strip
           if potential.ord >= 0x1F300 || potential =~ /[\p{Emoji}]/
             custom_emoji = potential
-            title = rest  # SANS l'émoji
+            title        = rest
           end
         # Pattern 2: émoji Titre (émoji collé au texte)
         elsif title_raw =~ /\A(.)[ \t]*(.+)\z/u
           potential = Regexp.last_match(1)
-          rest = Regexp.last_match(2).strip
-          # Vérifie que c'est bien un émoji
+          rest      = Regexp.last_match(2).strip
           if potential.ord >= 0x1F300 || potential =~ /[\p{Emoji}]/
             custom_emoji = potential
-            title = rest  # SANS l'émoji
+            title        = rest
           end
         end
 
@@ -1323,9 +1320,7 @@ module OpportunitiesHelper
       # Titres en **gras:** (alternative à ###)
       if line =~ /\A\*\*(.+?)\*\*\s*:?\s*\z/
         bold_title = Regexp.last_match(1).strip
-
-        # Générer émoji par défaut
-        emoji = emoji_for_opportunity(bold_title)
+        emoji      = emoji_for_opportunity(bold_title)
 
         html << %(</ul>) if in_list
         in_list = false
@@ -1350,7 +1345,7 @@ module OpportunitiesHelper
         next
       end
 
-      # Ligne vide -> fermer liste si besoin
+      # Ligne vide → fermer la liste si besoin
       if line.blank?
         if in_list
           html << %(</ul>)
@@ -1365,7 +1360,7 @@ module OpportunitiesHelper
         in_list = false
       end
 
-      # Si la ligne contient du HTML (comme <figure>), on la passe telle quelle
+      # Si la ligne contient du HTML <figure>, on la passe telle quelle
       if line =~ /<figure class="inline-photo/
         html << line
       else
@@ -9034,7 +9029,8 @@ end
   color: #0f172a;
 }
 .dc-pop-hero {
-  height: 140px;
+  aspect-ratio: 16/9;
+  width: 100%;
   background-size: cover;
   background-position: center;
   position: relative;
@@ -9094,46 +9090,38 @@ end
 
 /* ====== FIX POPUP MOBILE - COMPACT ====== */
 
-/* Limiter la hauteur du popup sur mobile */
 @media (max-width: 768px) {
   .leaflet-popup-content-wrapper {
-    max-height: 60vh !important;
-    overflow: hidden !important;
+    max-width: 270px !important;
+  }
+  .leaflet-popup-content {
+    width: 250px !important;
   }
 
-  .dc-pop-card {
-    max-height: 60vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Réduire la taille de l'image hero */
+  /* Hero compact sur mobile : hauteur fixe au lieu d'aspect-ratio */
   .dc-pop-hero {
-    height: 100px !important;
+    aspect-ratio: unset !important;
+    height: 110px !important;
   }
 
-  /* Réduire le padding du body */
   .dc-pop-body {
     padding: 12px !important;
   }
 
-  /* Titre plus compact */
   .dc-pop-title {
-    font-size: 0.9rem !important;
-    margin: 0 0 8px 0 !important;
+    font-size: 0.88rem !important;
+    margin: 0 0 6px 0 !important;
     line-height: 1.2 !important;
   }
 
-  /* Meta plus compact */
   .dc-pop-meta {
     font-size: 0.75rem !important;
     gap: 2px !important;
-    margin-bottom: 10px !important;
+    margin-bottom: 8px !important;
   }
 
-  /* Bouton plus petit */
   .dc-pop-btn {
-    padding: 8px 0 !important;
+    padding: 9px 0 !important;
     font-size: 0.8rem !important;
   }
 }
@@ -9164,8 +9152,8 @@ end
 }
 .hm-card-op .op-img{
   width:100%;
-  height:180px;
-  background:#f1f5f9 center/cover no-repeat;
+  aspect-ratio:16/9;
+  background:#e2e8f0 center/cover no-repeat;
   border-bottom:1px solid #e6e8ee;
 }
 .hm-card-op .op-content{ padding:16px 18px; }
@@ -9596,7 +9584,8 @@ function plot(items){
     const marker = L.marker([jLat, jLng], { icon:iconFor((o.category||'').toLowerCase()) })
       .addTo(dataLayer)
       .bindPopup(popupHtml(o), {
-        autoPan: false,
+        autoPan: window.innerWidth <= 768,
+        autoPanPadding: [10, 90],
         maxWidth: 300,
         minWidth: 280,
         maxHeight: window.innerHeight * 0.65,
@@ -16295,6 +16284,34 @@ ruby "3.3.0"
 gem "image_processing", "~> 1.14"
 gem 'httparty'
 gem 'nokogiri'
+
+===== ./lib/tasks/check_placeholders.rb =====
+puts '=== OPPORTUNITIES ==='
+Opportunity.where(is_active: true).find_each do |o|
+  next if o.description.blank?
+  [1,2,3].each do |i|
+    marker = "<!-- IMAGE_#{i} -->"
+    if o.description.include?(marker)
+      unless o.send("inline_image_#{i}").attached?
+        puts "  [opp ##{o.id}] #{o.title.truncate(50)} — IMAGE_#{i} orpheline"
+      end
+    end
+  end
+end
+
+puts ''
+puts '=== STORIES ==='
+Story.where(is_active: true).find_each do |s|
+  next if s.body.blank?
+  [1,2,3].each do |i|
+    marker = "___INLINE_PHOTO_#{i}_PLACEHOLDER___"
+    if s.body.include?(marker)
+      unless s.send("inline_image_#{i}").attached?
+        puts "  [story ##{s.id}] #{s.title.truncate(50)} — PHOTO_#{i} orpheline"
+      end
+    end
+  end
+end
 
 ===== ./Procfile =====
 web: bundle exec puma -C config/puma.rb
