@@ -1,0 +1,49 @@
+<%# app/views/shared/_pwa_banner.html.erb %>
+<div id="pwa-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; padding:12px 16px; background:white; border-top:0.5px solid #e5e7eb; box-shadow:0 -2px 12px rgba(0,0,0,0.08);">
+  <div style="max-width:480px; margin:0 auto; display:flex; align-items:center; gap:12px;">
+    <div style="width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg,#c026d3,#4f46e5); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+      <span style="color:white; font-weight:600; font-size:18px;">D</span>
+    </div>
+    <div style="flex:1; min-width:0;">
+      <p style="margin:0; font-size:14px; font-weight:600; color:#111827;">Installer Déclic</p>
+      <p style="margin:0; font-size:12px; color:#6b7280;">Accès rapide depuis ton écran d'accueil</p>
+    </div>
+    <button id="pwa-install-btn" style="background:#7c3aed; color:white; border:none; border-radius:8px; padding:8px 14px; font-size:13px; font-weight:500; cursor:pointer;">
+      Installer
+    </button>
+    <button id="pwa-dismiss-btn" style="background:none; border:none; color:#9ca3af; cursor:pointer; font-size:22px; padding:0 4px; line-height:1;">
+      &times;
+    </button>
+  </div>
+</div>
+
+<script>
+  (function() {
+    var deferredPrompt = null;
+    var banner = document.getElementById('pwa-banner');
+
+    // Ne pas montrer si déjà installé ou déjà refusé
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
+    if (localStorage.getItem('pwa-banner-dismissed')) return;
+
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      banner.style.display = 'block';
+    });
+
+    document.getElementById('pwa-install-btn').addEventListener('click', function() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(result) {
+        deferredPrompt = null;
+        banner.style.display = 'none';
+      });
+    });
+
+    document.getElementById('pwa-dismiss-btn').addEventListener('click', function() {
+      banner.style.display = 'none';
+      localStorage.setItem('pwa-banner-dismissed', '1');
+    });
+  })();
+</script>
