@@ -6,7 +6,7 @@
     </div>
     <div style="flex:1; min-width:0;">
       <p style="margin:0; font-size:14px; font-weight:600; color:#111827;">Installer Déclic</p>
-      <p style="margin:0; font-size:12px; color:#6b7280;">Accès rapide depuis ton écran d'accueil</p>
+      <p id="pwa-banner-sub" style="margin:0; font-size:12px; color:#6b7280;">Accès rapide depuis ton écran d'accueil</p>
     </div>
     <button id="pwa-install-btn" style="background:#7c3aed; color:white; border:none; border-radius:8px; padding:8px 14px; font-size:13px; font-weight:500; cursor:pointer;">
       Installer
@@ -18,43 +18,44 @@
 </div>
 
 <script>
-(function() {
-  var banner = document.getElementById('pwa-banner');
+  (function() {
+    var banner = document.getElementById('pwa-banner');
+    var installBtn = document.getElementById('pwa-install-btn');
+    var dismissBtn = document.getElementById('pwa-dismiss-btn');
+    var sub = document.getElementById('pwa-banner-sub');
+    var deferredPrompt = null;
+    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
 
-  // Ne pas montrer si déjà installé ou déjà refusé
-  if (window.matchMedia('(display-mode: standalone)').matches) return;
-  if (localStorage.getItem('pwa-banner-dismissed')) return;
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
+    if (localStorage.getItem('pwa-banner-dismissed')) return;
 
-  var deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
 
-  window.addEventListener('beforeinstallprompt', function(e) {
-    e.preventDefault();
-    deferredPrompt = e;
-  });
-
-  // Affiche après 3 secondes sur mobile
-  if (window.innerWidth < 768) {
-    setTimeout(function() {
-      banner.style.display = 'block';
-    }, 3000);
-  }
-
-  document.getElementById('pwa-install-btn').addEventListener('click', function() {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(function() {
-        deferredPrompt = null;
-        banner.style.display = 'none';
-      });
-    } else {
-      // iOS : redirige vers les instructions
-      banner.innerHTML = '<div style="text-align:center; padding:12px; font-size:13px; color:#374151;">Sur Safari : appuie sur <strong>⬆️ Partager</strong> puis <strong>"Sur l\'écran d\'accueil"</strong></div>';
+    if (window.innerWidth < 768) {
+      setTimeout(function() { banner.style.display = 'block'; }, 3000);
     }
-  });
 
-  document.getElementById('pwa-dismiss-btn').addEventListener('click', function() {
-    banner.style.display = 'none';
-    localStorage.setItem('pwa-banner-dismissed', '1');
-  });
-})();
+    installBtn.addEventListener('click', function() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function() {
+          deferredPrompt = null;
+          banner.style.display = 'none';
+        });
+      } else if (isIOS) {
+        sub.textContent = 'Appuie sur ⬆ Partager puis "Sur l\'écran d\'accueil"';
+        installBtn.style.display = 'none';
+      } else {
+        banner.style.display = 'none';
+      }
+    });
+
+    dismissBtn.addEventListener('click', function() {
+      banner.style.display = 'none';
+      localStorage.setItem('pwa-banner-dismissed', '1');
+    });
+  })();
 </script>
