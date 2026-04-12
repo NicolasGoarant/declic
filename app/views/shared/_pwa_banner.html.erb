@@ -27,7 +27,9 @@
     var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
 
     if (window.matchMedia('(display-mode: standalone)').matches) return;
-    if (localStorage.getItem('pwa-banner-dismissed')) return;
+
+    var views = parseInt(localStorage.getItem('pwa-banner-views') || '0');
+    if (views >= 3) return;
 
     window.addEventListener('beforeinstallprompt', function(e) {
       e.preventDefault();
@@ -35,7 +37,10 @@
     });
 
     if (window.innerWidth < 768) {
-      setTimeout(function() { banner.style.display = 'block'; }, 3000);
+      setTimeout(function() {
+        banner.style.display = 'block';
+        localStorage.setItem('pwa-banner-views', views + 1);
+      }, 3000);
     }
 
     installBtn.addEventListener('click', function() {
@@ -44,6 +49,7 @@
         deferredPrompt.userChoice.then(function() {
           deferredPrompt = null;
           banner.style.display = 'none';
+          localStorage.setItem('pwa-banner-views', '99');
         });
       } else if (isIOS) {
         sub.textContent = 'Appuie sur ⬆ Partager puis "Sur l\'écran d\'accueil"';
@@ -55,7 +61,6 @@
 
     dismissBtn.addEventListener('click', function() {
       banner.style.display = 'none';
-      localStorage.setItem('pwa-banner-dismissed', '1');
     });
   })();
 </script>
