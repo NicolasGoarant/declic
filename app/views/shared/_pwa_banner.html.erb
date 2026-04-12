@@ -24,7 +24,10 @@
     var dismissBtn = document.getElementById('pwa-dismiss-btn');
     var sub = document.getElementById('pwa-banner-sub');
     var deferredPrompt = null;
+
     var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+    var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    var isChromeiOS = isIOS && /CriOS/i.test(navigator.userAgent);
 
     if (window.matchMedia('(display-mode: standalone)').matches) return;
 
@@ -38,6 +41,13 @@
 
     if (window.innerWidth < 768) {
       setTimeout(function() {
+        if (isChromeiOS) {
+          sub.textContent = 'Ouvre declic.site dans Safari pour installer l\'app';
+          installBtn.style.display = 'none';
+        } else if (isIOS && isSafari) {
+          sub.textContent = 'Appuie sur ⬆ Partager puis "Sur l\'écran d\'accueil"';
+          installBtn.style.display = 'none';
+        }
         banner.style.display = 'block';
         localStorage.setItem('pwa-banner-views', views + 1);
       }, 3000);
