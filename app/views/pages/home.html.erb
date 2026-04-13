@@ -900,9 +900,9 @@ end
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  border: none;
-  color: white;
-  background: rgba(255,255,255,0.15);
+  border: 3px solid transparent;
+  color: inherit;
+  background: white;
   transition: opacity 0.2s, transform 0.15s;
 }
 .chip:hover { opacity: 0.85; transform: translateY(-1px); }
@@ -1488,18 +1488,18 @@ end
 }
 .leaflet-container a.leaflet-popup-close-button {
   top: 8px; right: 8px;
-  color: white;
+  color: inherit;
   background: rgba(0,0,0,0.3);
   border-radius: 50%;
   width: 24px; height: 24px;
   display: flex; align-items: center; justify-content: center;
   font: 16px/14px Tahoma, Verdana, sans-serif;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  border: none;
+  border: 3px solid transparent;
 }
 .leaflet-container a.leaflet-popup-close-button:hover {
   background: rgba(0,0,0,0.6);
-  color: white;
+  color: inherit;
 }
 
 /* Contenu de la carte popup */
@@ -1518,7 +1518,7 @@ end
   position: absolute;
   top: 12px; left: 12px;
   background: var(--cat-color, #7e5bef);
-  color: white;
+  color: inherit;
   font-size: 0.65rem;
   font-weight: 800;
   text-transform: uppercase;
