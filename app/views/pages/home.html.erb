@@ -892,30 +892,85 @@ end
 
 /* Chips de filtre - Effet pulse au clic */
 .chip {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  color: white;
+  background: rgba(255,255,255,0.15);
+  transition: opacity 0.2s, transform 0.15s;
+}
+.chip:hover { opacity: 0.85; transform: translateY(-1px); }
+.chip:active { transform: scale(0.97); }
+
+/* Toutes */
+.chip[data-cat="toutes"] {
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+}
+.chip[data-cat="toutes"].is-active {
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  box-shadow: 0 0 0 3px rgba(168,85,247,0.4);
 }
 
-.chip::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: currentColor;
-  opacity: 0;
-  transition: opacity 0.25s ease;
+/* Bénévolat */
+.chip[data-cat="benevolat"] {
+  background: linear-gradient(135deg, #f43f5e, #ec4899);
+}
+.chip[data-cat="benevolat"].is-active {
+  box-shadow: 0 0 0 3px rgba(244,63,94,0.4);
 }
 
-.chip:hover::before {
-  opacity: 0.08;
+/* Écologiser */
+.chip[data-cat="ecologiser"] {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+}
+.chip[data-cat="ecologiser"].is-active {
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.4);
 }
 
-.chip:active {
-  transform: scale(0.96);
+/* Formation */
+.chip[data-cat="formation"] {
+  background: linear-gradient(135deg, #6366f1, #38bdf8);
+}
+.chip[data-cat="formation"].is-active {
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.4);
+}
+
+/* Rencontres */
+.chip[data-cat="rencontres"] {
+  background: linear-gradient(135deg, #facc15, #f97316);
+  color: #1a0533;
+}
+.chip[data-cat="rencontres"].is-active {
+  box-shadow: 0 0 0 3px rgba(249,115,22,0.4);
+}
+
+/* Entreprendre */
+.chip[data-cat="rencontres"]  { background:#facc15; color:white; }
+.chip[data-cat="entreprendre"].is-active {
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.4);
+}
+
+/* Belles histoires */
+.chip[data-cat="histoires"] {
+  background: linear-gradient(135deg, #f59e0b, #ec4899, #7e5bef);
+}
+.chip[data-cat="histoires"].is-active {
+  box-shadow: 0 0 0 3px rgba(168,85,247,0.4);
 }
 
 .chip.is-active {
   animation: chipPulse 0.4s ease;
+}
+@keyframes chipPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
 }
 
 @keyframes chipPulse {
@@ -1182,77 +1237,40 @@ end
   gap:8px;
 }
 .chip{
-  --chip-bg-soft:rgba(255, 255, 255, 0.85);
-  --chip-border:rgba(203, 213, 225, 0.4);
-  --chip-text:#475569;
   display:inline-flex;
   align-items:center;
   justify-content:center;
   padding:.55rem .8rem;
-  border-radius:12px;
-  background:var(--chip-bg-soft);
-  backdrop-filter:blur(10px);
-  border:1px solid var(--chip-border);
+  border-radius:999px;
   font:700 .8rem/1.1 "Inter";
-  color:var(--chip-text);
   cursor:pointer;
-  transition:all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow:0 2px 8px rgba(15, 23, 42, 0.04);
+  background:white;
   white-space:nowrap;
+  outline:none;
+  transition:all 0.2s;
 }
-.chip:hover {
-  transform:translateY(-2px);
-  box-shadow:0 4px 12px rgba(15, 23, 42, 0.08);
-  background:rgba(255, 255, 255, 0.95);
-}
+.chip:hover{ transform:translateY(-1px); }
 
-/* Desktop : chips plus compacts pour tenir sur 1 ligne */
-@media (min-width:1280px){
-  .chip{
-    padding:.5rem .75rem;
-    font-size:.78rem;
-  }
-  .hm-filterbar{
-    gap:7px;
-  }
-}
+.chip[data-cat="toutes"]      { border:3px solid #a855f7; color:#a855f7; }
+.chip[data-cat="benevolat"]   { border:3px solid #f43f5e; color:#f43f5e; }
+.chip[data-cat="ecologiser"]  { border:3px solid #22c55e; color:#22c55e; }
+.chip[data-cat="formation"]   { border:3px solid #6366f1; color:#6366f1; }
+.chip[data-cat="rencontres"]  { border:3px solid #eab308; color:#eab308; }
+.chip[data-cat="entreprendre"]{ border:3px solid #f97316; color:#f97316; }
+.chip[data-cat="histoires"]   { border:3px solid #ec4899; color:#ec4899; }
 
-/* Mobile : afficher select, cacher chips */
-@media (max-width:768px){
-  .hm-select-mobile{
-    display:block;
-  }
-  .hm-filterbar{
-    display:none;
-  }
-}
+.chip[data-cat="toutes"].is-active      { background:#a855f7; color:white; border-color:#a855f7; }
+.chip[data-cat="benevolat"].is-active   { background:#f43f5e; color:white; border-color:#f43f5e; }
+.chip[data-cat="ecologiser"].is-active  { background:#22c55e; color:white; border-color:#22c55e; }
+.chip[data-cat="formation"].is-active   { background:#6366f1; color:white; border-color:#6366f1; }
+.chip[data-cat="rencontres"].is-active  { background:#eab308; color:white; border-color:#eab308; }
+.chip[data-cat="entreprendre"].is-active{ background:#f97316; color:white; border-color:#f97316; }
+.chip[data-cat="histoires"].is-active   { background:#ec4899; color:white; border-color:#ec4899; }
 
-/* Variantes de couleurs subtiles */
-.chip[data-cat="benevolat"]{--chip-bg-soft:rgba(255, 241, 242, 0.7);--chip-border:rgba(254, 205, 211, 0.4);--chip-text:#be123c;}
-.chip[data-cat="ecologiser"]{--chip-bg-soft:rgba(236, 253, 243, 0.7);--chip-border:rgba(187, 247, 208, 0.4);--chip-text:#166534;}
-.chip[data-cat="formation"]{--chip-bg-soft:rgba(239, 246, 255, 0.7);--chip-border:rgba(191, 219, 254, 0.4);--chip-text:#1d4ed8;}
-.chip[data-cat="rencontres"]{--chip-bg-soft:rgba(254, 252, 232, 0.7);--chip-border:rgba(254, 243, 199, 0.4);--chip-text:#92400e;}
-.chip[data-cat="entreprendre"]{--chip-bg-soft:rgba(255, 247, 237, 0.7);--chip-border:rgba(254, 215, 170, 0.4);--chip-text:#c2410c;}
-.chip[data-cat="histoires"]{--chip-bg-soft:rgba(245, 243, 255, 0.7);--chip-border:rgba(221, 214, 254, 0.4);--chip-text:#5b21b6;}
-
-/* État actif - Plus marqué mais élégant */
-.chip.is-active{
-  background:var(--chip-text);
-  color:#fff;
-  border-color:transparent;
-  box-shadow:0 4px 16px rgba(0, 0, 0, 0.15);
-  transform:translateY(0);
+.chip.is-active{ animation:chipPulse 0.4s ease; }
+@keyframes chipPulse{
+  0%{transform:scale(1)} 50%{transform:scale(1.08)} 100%{transform:scale(1)}
 }
-.chip[data-cat="histoires"].is-active{
-  background:linear-gradient(135deg,#a855f7,#7e5bef,#6366f1);
-  background-size:200% 200%;
-  animation:gradientShift 8s ease infinite;
-  color:#fff;
-  border-color:transparent;
-}
-
-@keyframes gradientShift {
-  0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
 }
 
