@@ -890,42 +890,6 @@ end
   width: 80%;
 }
 
-/* Chips de filtre - Effet pulse au clic */
-.chip {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.25s ease;
-}
-
-.chip::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: currentColor;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-.chip:hover::before {
-  opacity: 0.08;
-}
-
-.chip:active {
-  transform: scale(0.96);
-}
-
-.chip.is-active {
-  animation: chipPulse 0.4s ease;
-}
-
-@keyframes chipPulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
 
 /* Bouton localisation - Effet ripple */
 .hm-locate {
@@ -1189,10 +1153,10 @@ end
   align-items:center;
   justify-content:center;
   padding:.55rem .8rem;
-  border-radius:12px;
-  background:var(--chip-bg-soft);
+  border-radius:999px;
+  background:white;
   backdrop-filter:blur(10px);
-  border:1px solid var(--chip-border);
+  border:3px solid var(--chip-border);
   font:700 .8rem/1.1 "Inter";
   color:var(--chip-text);
   cursor:pointer;
@@ -1228,12 +1192,13 @@ end
 }
 
 /* Variantes de couleurs subtiles */
-.chip[data-cat="benevolat"]{--chip-bg-soft:rgba(255, 241, 242, 0.7);--chip-border:rgba(254, 205, 211, 0.4);--chip-text:#be123c;}
-.chip[data-cat="ecologiser"]{--chip-bg-soft:rgba(236, 253, 243, 0.7);--chip-border:rgba(187, 247, 208, 0.4);--chip-text:#166534;}
-.chip[data-cat="formation"]{--chip-bg-soft:rgba(239, 246, 255, 0.7);--chip-border:rgba(191, 219, 254, 0.4);--chip-text:#1d4ed8;}
-.chip[data-cat="rencontres"]{--chip-bg-soft:rgba(254, 252, 232, 0.7);--chip-border:rgba(254, 243, 199, 0.4);--chip-text:#92400e;}
-.chip[data-cat="entreprendre"]{--chip-bg-soft:rgba(255, 247, 237, 0.7);--chip-border:rgba(254, 215, 170, 0.4);--chip-text:#c2410c;}
-.chip[data-cat="histoires"]{--chip-bg-soft:rgba(245, 243, 255, 0.7);--chip-border:rgba(221, 214, 254, 0.4);--chip-text:#5b21b6;}
+.chip[data-cat="benevolat"]   { --chip-border:#f43f5e; --chip-text:#f43f5e; }
+.chip[data-cat="ecologiser"]  { --chip-border:#22c55e; --chip-text:#22c55e; }
+.chip[data-cat="formation"]    { --chip-border:#6366f1; --chip-text:#6366f1; }
+.chip[data-cat="rencontres"]  { --chip-border:#eab308; --chip-text:#eab308; }
+.chip[data-cat="entreprendre"]{ --chip-border:#f97316; --chip-text:#f97316; }
+.chip[data-cat="histoires"]    { --chip-border:#ec4899; --chip-text:#ec4899; }
+.chip[data-cat="toutes"]       { --chip-border:#a855f7; --chip-text:#a855f7; }
 
 /* État actif - Plus marqué mais élégant */
 .chip.is-active{
