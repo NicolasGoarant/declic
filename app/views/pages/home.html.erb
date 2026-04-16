@@ -63,6 +63,20 @@ def hero_fallback(obj)
   # 3. Fallback
   thumb_for(obj)
 end
+
+CAT_PILL = {
+  'benevolat'    => { bg: '#fff1f2', color: '#e11d48',  label: 'Bénévolat'    },
+  'ecologiser'   => { bg: '#f0fdf4', color: '#16a34a',  label: 'Écologiser'   },
+  'formation'    => { bg: '#eff6ff', color: '#2563eb',  label: 'Formation'    },
+  'rencontres'   => { bg: '#fefce8', color: '#a16207',  label: 'Rencontres'   },
+  'entreprendre' => { bg: '#fff7ed', color: '#c2410c',  label: 'Entreprendre' },
+  'histoires'    => { bg: '#fdf4ff', color: '#9333ea',  label: 'Témoignage'   },
+}.freeze
+
+def cat_pill(cat)
+  c = CAT_PILL[cat.to_s.downcase] || { bg: '#f5f3ff', color: '#7e5bef', label: cat.to_s.capitalize }
+  "<span class=\"op-pill\" style=\"background:#{c[:bg]};color:#{c[:color]}\">#{c[:label]}</span>".html_safe
+end
 %>
 
 <div class="home-ms">
@@ -113,59 +127,77 @@ end
 
   <%# ========== SECTION CARTE ========== %>
   <section id="explorer" class="hm-slice hm-map-hero">
-    <%# Grille sortie du container pour pleine largeur %>
+
+    <%# Intro titre de section %>
+    <div class="hm-explorer-intro container">
+      <div class="hm-explorer-intro-inner">
+        <div>
+          <span class="hm-tag">Explorer</span>
+          <h2 class="hm-explorer-title">Les initiatives près de chez toi</h2>
+          <p class="hm-explorer-sub">
+            <%= Opportunity.where(is_active: true).count %>+ opportunités cartographiées dans la métropole du Grand Nancy
+          </p>
+        </div>
+        <%= link_to opportunities_path, class: "hm-explorer-cta" do %>
+          Tout explorer →
+        <% end %>
+      </div>
+    </div>
+
+    <%# Filtres %>
+    <div class="hm-filter-wrapper container">
+      <select class="hm-select-mobile" id="category-select">
+        <option value="toutes">🌍 Toutes les catégories</option>
+        <option value="benevolat">❤️ Bénévolat</option>
+        <option value="ecologiser">🌱 Écologiser</option>
+        <option value="formation">📘 Formation</option>
+        <option value="rencontres">👥 Rencontres</option>
+        <option value="entreprendre">🚀 Entreprendre</option>
+        <option value="histoires">✨ Belles histoires</option>
+      </select>
+      <div class="hm-filterbar">
+        <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
+        <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
+        <button class="chip" data-cat="ecologiser">🌱 Écologiser</button>
+        <button class="chip" data-cat="formation">📘 Formation</button>
+        <button class="chip" data-cat="rencontres">👥 Rencontres</button>
+        <button class="chip" data-cat="entreprendre">🚀 Entreprendre</button>
+        <button class="chip" data-cat="histoires">✨ Belles histoires</button>
+      </div>
+    </div>
+
+    <%# Grille carte + pépites %>
     <div class="hm-explore-grid">
-        <div class="hm-explore-left">
-          <%# Filtres : chips sur desktop, select sur mobile %>
-          <div class="hm-filter-wrapper">
-            <%# Select mobile (visible uniquement sur mobile) %>
-            <select class="hm-select-mobile" id="category-select">
-              <option value="toutes">🌍 Toutes les catégories</option>
-              <option value="benevolat">❤️ Bénévolat</option>
-              <option value="ecologiser">🌱 Écologiser</option>
-              <option value="formation">📘 Formation</option>
-              <option value="rencontres">👥 Rencontres</option>
-              <option value="entreprendre">🚀 Entreprendre</option>
-              <option value="histoires">✨ Belles histoires</option>
-            </select>
-
-            <%# Chips desktop (cachés sur mobile) %>
-            <div class="hm-filterbar">
-              <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
-              <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
-              <button class="chip" data-cat="ecologiser">🌱 Écologiser</button>
-              <button class="chip" data-cat="formation">📘 Formation</button>
-              <button class="chip" data-cat="rencontres">👥 Rencontres</button>
-              <button class="chip" data-cat="entreprendre">🚀 Entreprendre</button>
-              <button class="chip" data-cat="histoires">✨ Belles histoires</button>
-            </div>
-          </div>
-
-          <div class="hm-map-sticky">
-            <div class="hm-mapwrap">
-              <div id="map" class="hm-map"></div>
-              <button id="btn-locate" class="hm-locate hm-locate-enhanced">
-                <span class="locate-icon">📍</span>
-                <span class="locate-text">Me localiser</span>
-              </button>
-            </div>
+      <div class="hm-explore-left">
+        <div class="hm-map-sticky">
+          <div class="hm-mapwrap">
+            <div id="map" class="hm-map"></div>
+            <button id="btn-locate" class="hm-locate hm-locate-enhanced">
+              <span class="locate-icon">📍</span>
+              <span class="locate-text">Me localiser</span>
+            </button>
           </div>
         </div>
+      </div>
 
-        <div class="hm-explore-right">
+      <div class="hm-explore-right">
+        <div class="hm-explore-panel">
           <div class="hm-explore-header">
-            <h3 class="hm-h3">Dernières pépites</h3>
+            <div class="hm-explore-header-left">
+              <h3 class="hm-panel-title">Dernières pépites</h3>
+              <p class="hm-panel-sub">Les nouvelles opportunités ajoutées</p>
+            </div>
             <%= link_to opportunities_path, class: "hm-explore-more" do %>
               Voir tout →
             <% end %>
           </div>
 
           <div class="hm-cards">
-            <% (@opportunities || []).first(3).each do |o| %>
+            <% (@opportunities || []).first(4).each do |o| %>
               <%= link_to opportunity_path(o), class: "hm-card-op" do %>
                 <div class="op-img" style="background-image:url('<%= thumb_for(o) %>')"></div>
                 <div class="op-content">
-                  <p class="k"><%= o.category.to_s.capitalize %></p>
+                  <%= cat_pill(o.category) %>
                   <p class="t"><%= strip_unsplash_md(o.title) %></p>
                   <p class="d"><%= strip_unsplash_md(o.description) %></p>
                   <p class="l">📍 <%= o.location %></p>
@@ -174,13 +206,12 @@ end
             <% end %>
 
             <% if (@opportunities || []).empty? %>
-              <div class="hm-empty">
-                Aucune opportunité pour le moment… Revenez vite !
-              </div>
+              <div class="hm-empty">Aucune opportunité pour le moment… Revenez vite !</div>
             <% end %>
           </div>
         </div>
       </div>
+    </div>
   </section>
 
 
@@ -773,10 +804,19 @@ end
 
 /* ====== SECTION CARTE ====== */
 .hm-map-hero {
-  background:linear-gradient(180deg,#f8f9fc 0%,#eef2f7 100%);
-  padding-top:3rem; padding-bottom:4rem;
+  background:linear-gradient(180deg,#f3f0ff 0%,#eaecf8 100%);
+  padding-top:2.5rem; padding-bottom:4rem;
 }
 @media (max-width:768px){ .hm-map-hero{ padding-top:1.5rem; padding-bottom:2.5rem; } }
+
+/* Intro titre */
+.hm-explorer-intro{ margin-bottom:1.75rem; }
+.hm-explorer-intro-inner{ display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; }
+.hm-explorer-title{ font-family:"Epilogue"; font-weight:900; font-size:clamp(1.5rem,2.2vw,2rem); color:#0f172a; margin:.25rem 0 0; line-height:1.15; }
+.hm-explorer-sub{ font-size:.95rem; color:#64748b; font-weight:500; margin:.3rem 0 0; }
+.hm-explorer-cta{ flex-shrink:0; display:inline-flex; align-items:center; gap:.4rem; padding:.65rem 1.3rem; border-radius:999px; background:var(--a1); color:#fff; text-decoration:none; font:700 .9rem/1 "Inter"; white-space:nowrap; box-shadow:0 4px 14px rgba(126,91,239,.3); transition:all .2s ease; }
+.hm-explorer-cta:hover{ background:#6d49e0; transform:translateY(-2px); box-shadow:0 8px 20px rgba(126,91,239,.4); }
+@media(max-width:640px){ .hm-explorer-intro-inner{ flex-direction:column; align-items:flex-start; } }
 
 .hm-map-intro{ text-align:center; max-width:880px; margin:0 auto 2.5rem; }
 
@@ -805,9 +845,25 @@ end
 
 .hm-explore-left{ min-width:0; }
 .hm-explore-right{ min-width:0; }
-.hm-explore-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-.hm-explore-more{ font:700 .95rem/1 "Inter"; color:#4f46e5; text-decoration:none; }
-.hm-explore-more:hover{ text-decoration:underline; }
+
+/* Panneau droite — encadré */
+.hm-explore-panel{
+  background:#fff;
+  border-radius:24px;
+  border:1px solid #e8e4f8;
+  box-shadow:0 8px 32px rgba(126,91,239,.08), 0 1px 4px rgba(15,23,42,.04);
+  overflow:hidden;
+}
+.hm-explore-header{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  padding:1.5rem 1.5rem 1rem;
+  border-bottom:1px solid #f1eeff;
+}
+.hm-explore-header-left{ flex:1; min-width:0; }
+.hm-panel-title{ font-family:"Epilogue"; font-weight:900; font-size:1.15rem; color:#0f172a; margin:0 0 .2rem; letter-spacing:-.01em; }
+.hm-panel-sub{ font-size:.8rem; color:#94a3b8; font-weight:500; margin:0; }
+.hm-explore-more{ flex-shrink:0; margin-left:1rem; margin-top:.1rem; display:inline-flex; align-items:center; padding:.35rem .9rem; border-radius:999px; font:700 .8rem/1 "Inter"; text-decoration:none; background:#f5f3ff; color:var(--a1); border:1px solid #ede9fe; transition:all .2s ease; }
+.hm-explore-more:hover{ background:var(--a1); color:#fff; border-color:transparent; box-shadow:0 4px 12px rgba(126,91,239,.25); }
 
 .hm-mapwrap{ position:relative; }
 .hm-map{
@@ -876,21 +932,24 @@ end
 }
 
 /* ====== Cards opportunités ====== */
-.hm-cards{ display:grid; grid-template-columns:1fr; gap:18px; }
+.hm-cards{ display:grid; grid-template-columns:1fr; gap:0; }
 .hm-card-op{
-  display:block; border-radius:20px; background:#fff;
-  border:1px solid #e6e8ee; box-shadow:0 10px 26px rgba(15,23,42,.08);
-  text-decoration:none; color:#0f172a; overflow:hidden;
-  transition:transform .15s ease, box-shadow .15s ease;
+  display:block; text-decoration:none; color:#0f172a;
+  border-bottom:1px solid #f1eeff;
+  transition:background .15s ease;
 }
-.hm-card-op:hover{ transform:translateY(-4px); box-shadow:0 16px 38px rgba(15,23,42,.14); }
-.hm-card-op .op-img{ width:100%; aspect-ratio:16/9; background:#e2e8f0 center/cover no-repeat; border-bottom:1px solid #e6e8ee; }
-.hm-card-op .op-content{ padding:16px 18px; }
-.hm-card-op .k{ color:#64748b; font-size:.82rem; margin:0 0 .4rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
-.hm-card-op .t{ font:900 1.16rem/1.2 "Epilogue"; margin:0 0 .3rem; }
-.hm-card-op .d{ font:1rem/1.55 "Inter"; color:#475569; margin:.3rem 0 .5rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-.hm-card-op .l{ font:1rem/1.4 "Inter"; color:#1f2937; margin:0; }
-.hm-empty{ grid-column:1/-1; padding:18px; border-radius:14px; border:1px dashed #e5e7eb; background:#f9fafb; text-align:center; color:#6b7280; }
+.hm-card-op:last-child{ border-bottom:none; }
+.hm-card-op:hover{ background:#faf9ff; }
+.hm-card-op .op-img{ width:100%; aspect-ratio:16/7; background:#e2e8f0 center/cover no-repeat; }
+.hm-card-op .op-content{ padding:14px 18px 16px; }
+
+/* Pill catégorie colorée */
+.op-pill{ display:inline-block; padding:.2rem .7rem; border-radius:999px; font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; margin:0 0 .45rem; line-height:1.4; }
+
+.hm-card-op .t{ font:800 1rem/1.3 "Epilogue"; margin:0 0 .3rem; color:#0f172a; }
+.hm-card-op .d{ font:.875rem/1.5 "Inter"; color:#64748b; margin:0 0 .5rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.hm-card-op .l{ font:.82rem/1.4 "Inter"; color:#94a3b8; margin:0; }
+.hm-empty{ padding:24px 18px; text-align:center; color:#94a3b8; font-size:.95rem; }
 
 /* ====== TÉMOIGNAGES ====== */
 .hm-testis{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; }
