@@ -64,17 +64,16 @@ def hero_fallback(obj)
   thumb_for(obj)
 end
 
-CAT_PILL = {
-  'benevolat'    => { bg: '#fff1f2', color: '#e11d48',  label: 'Bénévolat'    },
-  'ecologiser'   => { bg: '#f0fdf4', color: '#16a34a',  label: 'Écologiser'   },
-  'formation'    => { bg: '#eff6ff', color: '#2563eb',  label: 'Formation'    },
-  'rencontres'   => { bg: '#fefce8', color: '#a16207',  label: 'Rencontres'   },
-  'entreprendre' => { bg: '#fff7ed', color: '#c2410c',  label: 'Entreprendre' },
-  'histoires'    => { bg: '#fdf4ff', color: '#9333ea',  label: 'Témoignage'   },
-}.freeze
-
 def cat_pill(cat)
-  c = CAT_PILL[cat.to_s.downcase] || { bg: '#f5f3ff', color: '#7e5bef', label: cat.to_s.capitalize }
+  pills = {
+    'benevolat'    => { bg: '#fff1f2', color: '#e11d48',  label: 'Bénévolat'    },
+    'ecologiser'   => { bg: '#f0fdf4', color: '#16a34a',  label: 'Écologiser'   },
+    'formation'    => { bg: '#eff6ff', color: '#2563eb',  label: 'Formation'    },
+    'rencontres'   => { bg: '#fefce8', color: '#a16207',  label: 'Rencontres'   },
+    'entreprendre' => { bg: '#fff7ed', color: '#c2410c',  label: 'Entreprendre' },
+    'histoires'    => { bg: '#fdf4ff', color: '#9333ea',  label: 'Témoignage'   },
+  }
+  c = pills[cat.to_s.downcase] || { bg: '#f5f3ff', color: '#7e5bef', label: cat.to_s.capitalize }
   "<span class=\"op-pill\" style=\"background:#{c[:bg]};color:#{c[:color]}\">#{c[:label]}</span>".html_safe
 end
 %>
