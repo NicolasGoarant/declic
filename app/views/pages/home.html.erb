@@ -133,9 +133,6 @@ end
         <div>
           <span class="hm-tag">Explorer</span>
           <h2 class="hm-explorer-title">Les initiatives près de chez toi</h2>
-          <p class="hm-explorer-sub">
-            <%= Opportunity.where(is_active: true).count %>+ opportunités cartographiées dans la métropole du Grand Nancy
-          </p>
         </div>
         <%= link_to opportunities_path, class: "hm-explorer-cta" do %>
           Tout explorer →
