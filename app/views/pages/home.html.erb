@@ -132,6 +132,9 @@ end
       <div>
         <span class="hm-tag">Explorer</span>
         <h2 class="hm-explorer-title">Les initiatives près de chez toi</h2>
+        <p class="hm-explorer-sub">
+          <%= Opportunity.where(is_active: true).count %>+ opportunités cartographiées dans la métropole du Grand Nancy
+        </p>
       </div>
     </div>
 
@@ -801,7 +804,8 @@ end
 @media (max-width:768px){ .hm-map-hero{ padding-top:1.5rem; padding-bottom:2.5rem; } }
 
 /* Intro titre */
-.hm-explorer-intro{ margin-bottom:2.5rem; padding-bottom:.25rem; }
+.hm-explorer-intro{ margin-bottom:3.25rem; padding-bottom:.25rem; }
+@media(max-width:640px){ .hm-explorer-title{ font-size:1.15rem; white-space:nowrap; } }
 .hm-explorer-intro-inner{ display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; }
 .hm-explorer-title{ font-family:"Epilogue"; font-weight:900; font-size:clamp(1.5rem,2.2vw,2rem); color:#0f172a; margin:.25rem 0 0; line-height:1.15; }
 .hm-explorer-sub{ font-size:.95rem; color:#64748b; font-weight:500; margin:.3rem 0 0; }
