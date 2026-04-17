@@ -136,30 +136,29 @@ end
     </div>
 
     <%# Filtres %>
-    <div class="hm-filter-wrapper container">
-      <select class="hm-select-mobile" id="category-select">
-        <option value="toutes">🌍 Toutes les catégories</option>
-        <option value="benevolat">❤️ Bénévolat</option>
-        <option value="ecologiser">🌱 Écologiser</option>
-        <option value="formation">📘 Formation</option>
-        <option value="rencontres">👥 Rencontres</option>
-        <option value="entreprendre">🚀 Entreprendre</option>
-        <option value="histoires">✨ Belles histoires</option>
-      </select>
-      <div class="hm-filterbar">
-        <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
-        <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
-        <button class="chip" data-cat="ecologiser">🌱 Écologiser</button>
-        <button class="chip" data-cat="formation">📘 Formation</button>
-        <button class="chip" data-cat="rencontres">👥 Rencontres</button>
-        <button class="chip" data-cat="entreprendre">🚀 Entreprendre</button>
-        <button class="chip" data-cat="histoires">✨ Belles histoires</button>
-      </div>
-    </div>
-
     <%# Grille carte + pépites %>
     <div class="hm-explore-grid">
       <div class="hm-explore-left">
+        <div class="hm-filter-wrapper">
+          <select class="hm-select-mobile" id="category-select">
+            <option value="toutes">🌍 Toutes les catégories</option>
+            <option value="benevolat">❤️ Bénévolat</option>
+            <option value="ecologiser">🌱 Écologiser</option>
+            <option value="formation">📘 Formation</option>
+            <option value="rencontres">👥 Rencontres</option>
+            <option value="entreprendre">🚀 Entreprendre</option>
+            <option value="histoires">✨ Belles histoires</option>
+          </select>
+          <div class="hm-filterbar">
+            <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
+            <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
+            <button class="chip" data-cat="ecologiser">🌱 Écologiser</button>
+            <button class="chip" data-cat="formation">📘 Formation</button>
+            <button class="chip" data-cat="rencontres">👥 Rencontres</button>
+            <button class="chip" data-cat="entreprendre">🚀 Entreprendre</button>
+            <button class="chip" data-cat="histoires">✨ Belles histoires</button>
+          </div>
+        </div>
         <div class="hm-map-sticky">
           <div class="hm-mapwrap">
             <div id="map" class="hm-map"></div>
@@ -802,7 +801,7 @@ end
 /* Intro titre */
 .hm-explorer-intro{ margin-bottom:3.25rem; padding-bottom:.25rem; }
 .hm-explorer-title{ font-family:"Epilogue"; font-weight:900; font-size:clamp(1.5rem,2.2vw,2rem); color:#0f172a; margin:.25rem 0 1.5rem; line-height:1.15; }
-@media(max-width:640px){ .hm-explorer-title{ font-size:1.2rem; margin-bottom:1.5rem; } }
+@media(max-width:640px){ .hm-explorer-title{ font-size:1.05rem; margin-bottom:1.5rem; } }
 .hm-explorer-intro-inner{ display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; }
 .hm-explorer-sub{ font-size:.95rem; color:#64748b; font-weight:500; margin:.3rem 0 0; }
 .hm-explorer-cta{ flex-shrink:0; display:inline-flex; align-items:center; gap:.4rem; padding:.65rem 1.3rem; border-radius:999px; background:var(--a1); color:#fff; text-decoration:none; font:700 .9rem/1 "Inter"; white-space:nowrap; box-shadow:0 4px 14px rgba(126,91,239,.3); transition:all .2s ease; }
