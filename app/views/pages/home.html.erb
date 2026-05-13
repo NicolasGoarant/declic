@@ -393,6 +393,18 @@ end
           </div>
         </a>
 
+        <a href="https://radiofajet.net/2026/04/29/declic/"
+           target="_blank" rel="noopener" class="hm-press-card">
+          <div class="press-logo-wrap">
+            <%= image_tag "radiofajet.png", alt: "Radio Fajet", class: "press-logo" %>
+          </div>
+          <div class="press-content">
+            <span class="press-source">Radio Fajet</span>
+            <p class="press-quote">« Un écran tourné vers l'autre »</p>
+            <span class="press-cta">Écouter l'interview →</span>
+          </div>
+        </a>
+
       </div>
     </div>
   </section>
@@ -994,7 +1006,7 @@ end
 
 .hm-press-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.5rem;
 }
 
@@ -1018,13 +1030,13 @@ end
 }
 
 .press-logo-wrap {
-  height: 48px;
+  height: 72px;
   display: flex;
   align-items: center;
 }
 .press-logo {
-  max-height: 40px;
-  max-width: 140px;
+  max-height: 64px;
+  max-width: 180px;
   width: auto;
   object-fit: contain;
   filter: grayscale(30%);
