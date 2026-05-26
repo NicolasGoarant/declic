@@ -544,6 +544,74 @@
     font-size: 2rem;
   }
 }
+
+/* =========================================================
+   FONDATEUR
+   ========================================================= */
+.philo-fondateur {
+  padding: 4.5rem 0;
+  background: linear-gradient(135deg, #faf5ff, #fdf2f8);
+}
+.philo-fondateur-inner {
+  display: flex;
+  align-items: center;
+  gap: 3.5rem;
+  max-width: 860px;
+  margin: 0 auto;
+}
+.philo-fondateur-photo-wrap {
+  flex-shrink: 0;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 4px solid #ffffff;
+  box-shadow: 0 12px 36px rgba(147, 51, 234, 0.22);
+}
+.philo-fondateur-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.philo-fondateur-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--philo-purple-600);
+  margin-bottom: 0.3rem;
+}
+.philo-fondateur-name {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--philo-gray-900);
+  margin-bottom: 1.2rem;
+  letter-spacing: -0.02em;
+}
+.philo-fondateur-text {
+  font-size: 1rem;
+  color: var(--philo-gray-700);
+  line-height: 1.8;
+  margin-bottom: 0.9rem;
+}
+.philo-fondateur-conviction {
+  font-weight: 600;
+  color: var(--philo-gray-900);
+  font-style: italic;
+}
+@media (max-width: 640px) {
+  .philo-fondateur-inner {
+    flex-direction: column;
+    text-align: center;
+    gap: 2rem;
+  }
+  .philo-fondateur-photo-wrap {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto;
+  }
+}
 </style>
 
 <div class="philo-page">
@@ -631,6 +699,41 @@
       <div class="philo-manifeste-img">
         <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&q=80&auto=format&fit=crop"
              alt="Personnes qui discutent et échangent" loading="lazy">
+      </div>
+    </div>
+  </section>
+
+
+  <%# ===================== FONDATEUR ===================== %>
+  <section class="philo-fondateur">
+    <div class="philo-container">
+      <div class="philo-fondateur-inner">
+        <div class="philo-fondateur-photo-wrap">
+          <%= image_tag "nicolas_goarant(2).png",
+                alt: "Nicolas Goarant, fondateur de Déclic",
+                class: "philo-fondateur-photo",
+                loading: "lazy" %>
+        </div>
+        <div class="philo-fondateur-content">
+          <p class="philo-fondateur-label">Le fondateur</p>
+          <h2 class="philo-fondateur-name">Nicolas Goarant</h2>
+          <p class="philo-fondateur-text">
+            Collaborateur politique pendant quinze ans, à l'Assemblée nationale,
+            à la Ville de Paris, à la Métropole du Grand Nancy, j'ai vu de l'intérieur
+            comment les institutions fonctionnent, ce qu'elles font bien,
+            et ce qu'elles pourraient faire de mieux.
+          </p>
+          <p class="philo-fondateur-text">
+            Ce que je n'ai jamais cessé de voir, c'est l'énergie des gens.
+            Les associations qui bricolent, les projets qui naissent dans les cafés,
+            les personnes qui cherchent comment s'engager sans savoir par où commencer,
+            les projets de startups qui ne demandent qu'à grandir.
+          </p>
+          <p class="philo-fondateur-text philo-fondateur-conviction">
+            Déclic est né de cette conviction&nbsp;: l'engagement citoyen existe,
+            il foisonne&nbsp;: il lui faut juste un endroit pour le rendre visible&nbsp;!
+          </p>
+        </div>
       </div>
     </div>
   </section>
