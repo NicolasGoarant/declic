@@ -12,3 +12,5 @@ amazon:
   secret_access_key: <%= ENV["AWS_SECRET_ACCESS_KEY"] %>
   region:            <%= ENV["AWS_REGION"] || "eu-west-3" %>  # défaut si pas défini
   bucket:            <%= ENV["AWS_BUCKET"] %>
+  url_options:
+    expires_in: 3600
