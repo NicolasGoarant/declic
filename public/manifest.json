@@ -6,7 +6,7 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#f9fafb",
+  "background_color": "#ffffff",
   "theme_color": "#7c3aed",
   "lang": "fr",
   "categories": ["lifestyle", "social", "education"],
