@@ -1,24 +1,48 @@
-# README
+# Déclic
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+**Les opportunités d'engagement local, rassemblées et cartographiées.**
+Bénévolat, formation, entrepreneuriat, écologie, rencontres — près de chez soi.
 
-Things you may want to cover:
+🔗 **[www.declic.site](https://www.declic.site)** — en ligne, Nancy et sa métropole
 
-* Ruby version
+---
 
-* System dependencies
+## Le problème
 
-* Configuration
+L'offre d'engagement local existe, mais elle est éclatée : sites d'associations,
+pages Facebook, affiches en mairie, bouche-à-oreille. Résultat, deux populations
+qui se cherchent sans se trouver — des habitants prêts à s'impliquer sans savoir
+par où commencer, et des structures locales en manque de bénévoles.
 
-* Database creation
+Déclic concentre cette offre en un point d'entrée unique, la géolocalise, et
+l'accompagne de témoignages de personnes qui ont franchi le pas.
 
-* Database initialization
+## Ce que fait la plateforme
 
-* How to run the test suite
+- **Cartographier** — les initiatives locales sur une carte, filtrables par
+  catégorie (bénévolat, écologiser, formation, rencontres, entreprendre)
+- **Concentrer** — un seul endroit plutôt qu'une dizaine de canaux dispersés
+- **Inspirer** — les « belles histoires », des parcours de personnes du territoire
+  qui ont changé de trajectoire
+- **Contribuer** — dépôt d'opportunités et de témoignages ouvert à tous
 
-* Services (job queues, cache servers, search engines, etc.)
+Application installable (PWA), utilisable depuis l'écran d'accueil d'un mobile.
 
-* Deployment instructions
+## Dans les médias
 
-* ...
+- **France Bleu Lorraine** — « Déclic, la plateforme qui veut créer du lien dans
+  la métropole du Grand Nancy »
+- **L'Est Républicain** (avril 2026) — « Déclic, la plateforme qui recense les
+  opportunités citoyennes près de chez vous »
+- **RCF Radio** — Le grand témoin régional
+- **Radio Fajet** — « Un écran tourné vers l'autre »
+
+## Stack
+
+Ruby on Rails · PostgreSQL · Hotwire · cartographie interactive · PWA
+Déploiement conteneurisé (Docker)
+
+## Porté par
+
+L'association Déclic (loi 1901), à Nancy.
+Contact et mentions légales : [www.declic.site/contact](https://www.declic.site/contact)
