@@ -122,6 +122,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_05_090200) do
     t.string "cta_button_url"
     t.string "start_date"
     t.string "end_date"
+    t.string "inline_caption_1"
+    t.string "inline_caption_2"
+    t.string "inline_caption_3"
     t.index ["ends_at"], name: "index_opportunities_on_ends_at"
     t.index ["slug"], name: "index_opportunities_on_slug", unique: true
     t.index ["source", "external_id"], name: "index_opportunities_on_source_and_external_id", unique: true
