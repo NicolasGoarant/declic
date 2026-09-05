@@ -1,0 +1,42 @@
+<h1>Sources</h1>
+<p class="muted small">
+  Registre des publications surveillées. Aucun collecteur n'y est branché à ce
+  stade : les candidats entrent uniquement par <code>rake veille:import</code>.
+</p>
+
+<p style="margin:14px 0"><%= link_to "Ajouter une source", new_admin_veille_source_path, class: "btn" %></p>
+
+<% if @sources.empty? %>
+  <div class="vide">Aucune source enregistrée.</div>
+<% else %>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Nom</th><th>Type</th><th>URL</th><th>Active</th>
+        <th>Candidats</th><th>Dernière collecte</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @sources.each do |source| %>
+        <tr>
+          <td><strong><%= source.name %></strong></td>
+          <td><span class="badge"><%= source.kind.tr("_", " ") %></span></td>
+          <td class="small" style="word-break:break-all">
+            <%= link_to source.url, source.url, target: "_blank", rel: "noopener noreferrer" %>
+          </td>
+          <td><span class="badge <%= source.active? ? 'ok' : 'no' %>"><%= source.active? ? "oui" : "non" %></span></td>
+          <td><%= source.candidates.count %></td>
+          <td class="small muted"><%= source.last_collected_at&.strftime("%d/%m/%Y %H:%M") || "—" %></td>
+          <td>
+            <div class="actions">
+              <%= link_to "Modifier", edit_admin_veille_source_path(source), class: "btn secondary" %>
+              <%= button_to "Supprimer", admin_veille_source_path(source), method: :delete,
+                            class: "btn danger",
+                            form: { data: { turbo_confirm: "Supprimer #{source.name} ? Les candidats déjà importés sont conservés et perdent seulement leur rattachement." } } %>
+            </div>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>

@@ -1,0 +1,63 @@
+<p class="small"><%= link_to "← Retour à la file", admin_veille_candidates_path(status: @candidate.status) %></p>
+<h1><%= @candidate.title.presence || "(sans titre)" %></h1>
+
+<div class="cols">
+  <%# ---------- COLONNE GAUCHE : la source ---------- %>
+  <div class="card">
+    <h2>Article d'origine</h2>
+
+    <p>
+      <%= link_to "Ouvrir l'article ↗", @candidate.url,
+                  target: "_blank", rel: "noopener noreferrer", class: "btn" %>
+    </p>
+    <p class="small muted" style="word-break:break-all"><%= @candidate.url %></p>
+
+    <dl class="meta">
+      <dt>Source</dt>
+      <dd><%= @candidate.source_label || "—" %></dd>
+
+      <dt>Publié le</dt>
+      <dd><%= @candidate.published_on&.strftime("%d/%m/%Y") || "—" %></dd>
+
+      <dt>Qualification</dt>
+      <dd>
+        <% if @candidate.qualified? %>
+          <span class="score <%= @candidate.score.to_i >= 75 ? 'haut' : @candidate.score.to_i >= 40 ? 'moyen' : 'bas' %>">
+            <%= @candidate.score %>
+          </span>
+          <span class="badge"><%= @candidate.category == "belle_histoire" ? "belle histoire" : "autre" %></span>
+          <div class="small muted" style="margin-top:4px"><%= @candidate.reason %></div>
+        <% else %>
+          <span class="muted">non qualifié</span>
+        <% end %>
+      </dd>
+
+      <dt>Chapeau relevé</dt>
+      <dd class="small"><%= @candidate.excerpt.presence || "—" %></dd>
+
+      <dt>Statut</dt>
+      <dd><span class="badge"><%= @candidate.status %></span></dd>
+    </dl>
+  </div>
+
+  <%# ---------- COLONNE DROITE : le texte puis le brouillon ---------- %>
+  <div class="card">
+    <h2>Texte de l'article</h2>
+
+    <%= form_with url: rediger_admin_veille_candidate_path(@candidate), method: :post do |f| %>
+      <%= f.text_area :full_text, value: @candidate.full_text, class: "grand",
+                      placeholder: "Colle ici le texte de l'article, puis clique sur Rédiger." %>
+      <p class="small muted">
+        Tampon de travail. Il est effacé automatiquement dès que la fiche est créée —
+        Déclic ne constitue pas de base dérivée d'articles de presse.
+        Au-delà de <%= number_with_delimiter(::Veille::Drafter::MAX_FULL_TEXT_CHARS) %> caractères, le texte est tronqué.
+      </p>
+      <p><%= f.submit "Rédiger", class: "btn", data: { turbo_submits_with: "Rédaction en cours…" } %></p>
+    <% end %>
+
+    <%# Cible des Turbo Streams de la passe B. %>
+    <div id="brouillon">
+      <%= render "brouillon", candidate: @candidate, draft: @draft, error: @error %>
+    </div>
+  </div>
+</div>

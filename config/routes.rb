@@ -65,5 +65,23 @@ Rails.application.routes.draw do
         post :geocode_missing
       end
     end
+
+    # --- VEILLE « BELLES HISTOIRES » ---
+    # Outil interne de repérage. Aucune route publique : tout est derrière
+    # l'authentification admin (Admin::BaseController).
+    namespace :veille do
+      root to: "candidates#index"
+
+      resources :candidates, only: %i[index show] do
+        member do
+          patch :retenir
+          patch :ecarter
+          post  :rediger # passe B — appel Sonnet, réponse en Turbo Stream
+          post  :publier # crée la Story et purge full_text
+        end
+      end
+
+      resources :sources, except: :show
+    end
   end
 end

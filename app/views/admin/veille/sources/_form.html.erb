@@ -1,0 +1,28 @@
+<%= form_with model: source, url: url, method: method, scope: :source do |f| %>
+  <% if source.errors.any? %>
+    <div class="flash alert">
+      <%= pluralize(source.errors.count, "erreur") %> :
+      <%= source.errors.full_messages.join(", ") %>
+    </div>
+  <% end %>
+
+  <label>Nom</label>
+  <%= f.text_field :name, placeholder: "L'Est Républicain — Nancy" %>
+
+  <label>Type</label>
+  <%= f.select :kind,
+               ::Veille::Source::KINDS.map { |k| [k.tr("_", " "), k] },
+               { include_blank: "—" } %>
+
+  <label>URL</label>
+  <%= f.url_field :url, placeholder: "https://www.estrepublicain.fr/…" %>
+
+  <label style="display:flex;align-items:center;gap:8px;font-weight:400">
+    <%= f.check_box :active %> Source active
+  </label>
+
+  <p style="margin-top:18px">
+    <%= f.submit class: "btn" %>
+    <%= link_to "Annuler", admin_veille_sources_path, class: "btn secondary" %>
+  </p>
+<% end %>

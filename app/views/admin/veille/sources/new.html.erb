@@ -1,0 +1,5 @@
+<p class="small"><%= link_to "← Sources", admin_veille_sources_path %></p>
+<h1>Nouvelle source</h1>
+<div class="card" style="max-width:620px">
+  <%= render "form", source: @source, url: admin_veille_sources_path, method: :post %>
+</div>
