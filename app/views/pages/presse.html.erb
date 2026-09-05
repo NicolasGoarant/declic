@@ -29,8 +29,10 @@
           <div class="press-about-icon">📊</div>
           <h3>En chiffres</h3>
           <ul>
-            <li><strong>200+</strong> opportunités référencées</li>
-            <li><strong>50+</strong> témoignages inspirants</li>
+            <% opp_s = "s" if @opportunities_count > 1 %>
+            <% sto_s = "s" if @stories_count > 1 %>
+            <li><strong><%= @opportunities_count %></strong> opportunité<%= opp_s %> référencée<%= opp_s %></li>
+            <li><strong><%= @stories_count %></strong> témoignage<%= sto_s %> inspirant<%= sto_s %></li>
             <li><strong>2 territoires</strong> couverts (Nancy & Paris)</li>
             <li><strong>100%</strong> gratuit et citoyen</li>
           </ul>
