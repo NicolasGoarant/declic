@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_23_152634) do
+ActiveRecord::Schema[7.2].define(version: 2026_09_05_090200) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -122,9 +122,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_23_152634) do
     t.string "cta_button_url"
     t.string "start_date"
     t.string "end_date"
-    t.string "inline_caption_1"
-    t.string "inline_caption_2"
-    t.string "inline_caption_3"
     t.index ["ends_at"], name: "index_opportunities_on_ends_at"
     t.index ["slug"], name: "index_opportunities_on_slug", unique: true
     t.index ["source", "external_id"], name: "index_opportunities_on_source_and_external_id", unique: true
@@ -162,6 +159,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_23_152634) do
     t.string "phone"
     t.string "address"
     t.string "postal_code"
+    t.integer "veille_candidate_id"
+    t.index ["veille_candidate_id"], name: "index_stories_on_veille_candidate_id"
   end
 
   create_table "testimonials", force: :cascade do |t|
@@ -174,6 +173,40 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_23_152634) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "veille_candidates", force: :cascade do |t|
+    t.integer "veille_source_id"
+    t.string "title"
+    t.text "excerpt"
+    t.string "url", null: false
+    t.date "published_on"
+    t.text "full_text"
+    t.string "category"
+    t.integer "score"
+    t.string "reason"
+    t.datetime "qualified_at"
+    t.string "status", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["score"], name: "index_veille_candidates_on_score"
+    t.index ["status"], name: "index_veille_candidates_on_status"
+    t.index ["url"], name: "index_veille_candidates_on_url", unique: true
+    t.index ["veille_source_id"], name: "index_veille_candidates_on_veille_source_id"
+  end
+
+  create_table "veille_sources", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "kind", null: false
+    t.string "url", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "last_collected_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_veille_sources_on_active"
+    t.index ["name"], name: "index_veille_sources_on_name", unique: true
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "stories", "veille_candidates", on_delete: :nullify
+  add_foreign_key "veille_candidates", "veille_sources", on_delete: :nullify
 end
