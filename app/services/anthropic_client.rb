@@ -33,14 +33,19 @@ class AnthropicClient
   DEFAULT_TIMEOUT = 20
   OPEN_TIMEOUT    = 10
 
-  attr_reader :model, :timeout
+  attr_reader :model, :timeout, :retries
 
-  def initialize(api_key: nil, model: nil, timeout: DEFAULT_TIMEOUT, open_timeout: OPEN_TIMEOUT)
+  # retries : nombre de tentatives SUPPLÉMENTAIRES sur incident réseau.
+  # Sur le chemin web, passer 0 — un retry doublerait le temps de réponse
+  # et ferait sauter le budget de 30 s d'Heroku.
+  def initialize(api_key: nil, model: nil, timeout: DEFAULT_TIMEOUT,
+                 open_timeout: OPEN_TIMEOUT, retries: 1)
     cfg           = Rails.configuration.x.anthropic
     @api_key      = api_key || cfg[:api_key]
     @model        = model   || cfg[:model]
     @timeout      = timeout
     @open_timeout = open_timeout
+    @retries      = retries
     raise AuthenticationError, "ANTHROPIC_API_KEY manquant" if @api_key.blank?
     raise Error,               "modèle Anthropic manquant"  if @model.blank?
   end
@@ -108,17 +113,17 @@ class AnthropicClient
     end
   end
 
-  # Un seul retry sur incident réseau. Si le second essai échoue aussi, on
-  # enveloppe dans ConnectionError : l'appelant ne doit jamais avoir à
-  # connaître Faraday.
+  # Retente au plus @retries fois sur incident réseau. Une fois les essais
+  # épuisés, on enveloppe dans ConnectionError : l'appelant ne doit jamais
+  # avoir à connaître Faraday.
   def retry_once
     attempts = 0
     begin
       attempts += 1
       yield
     rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
-      if attempts < 2
-        Rails.logger.warn("[AnthropicClient] #{e.class}: #{e.message} — retry")
+      if attempts <= @retries
+        Rails.logger.warn("[AnthropicClient] #{e.class}: #{e.message} — retry #{attempts}/#{@retries}")
         retry
       end
       raise ConnectionError, "API Anthropic injoignable (#{e.class}) — #{e.message}"
