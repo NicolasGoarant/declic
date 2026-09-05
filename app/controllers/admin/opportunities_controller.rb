@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Admin::OpportunitiesController < ApplicationController
+class Admin::OpportunitiesController < Admin::BaseController
   before_action :set_opportunity, only: [:edit, :update, :destroy, :toggle_active]
 
   def index
