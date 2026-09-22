@@ -1,5 +1,7 @@
 # app/models/opportunity.rb
 class Opportunity < ApplicationRecord
+  include NancyGeocodable
+
   # --- Stockage JSON (SQLite/Postgres) ---
   attribute :raw_payload, :json
 
@@ -29,8 +31,11 @@ class Opportunity < ApplicationRecord
   scope :active,      -> { where(is_active: true) }
   scope :with_coords, -> { where.not(latitude: nil, longitude: nil) }
 
-  # --- Géocodage (location -> lat/lng) ---
-  geocoded_by :location, latitude: :latitude, longitude: :longitude
+  # --- Géocodage (location -> lat/lng), restreint à la zone de Nancy ---
+  # `nancy_geocoded_by` (NancyGeocodable) ajoute une boîte de recherche à la
+  # requête Nominatim ET un garde-fou de distance après coup : voir le
+  # commentaire du concern pour le cas qui a rendu ça nécessaire.
+  nancy_geocoded_by :location, latitude: :latitude, longitude: :longitude
   before_validation :geocode_if_needed,
                     if: -> { location.present? && (latitude.blank? || longitude.blank?) }
 
@@ -117,7 +122,7 @@ class Opportunity < ApplicationRecord
   end
 
   def geocode_if_needed
-    geocode
+    geocode_and_guard
   rescue => e
     Rails.logger.warn("[geocode_if_needed] #{e.class}: #{e.message}")
   end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_23_152634) do
+ActiveRecord::Schema[7.2].define(version: 2026_09_22_065709) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -125,6 +125,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_23_152634) do
     t.string "inline_caption_1"
     t.string "inline_caption_2"
     t.string "inline_caption_3"
+    t.string "geocoding_flagged_reason"
     t.index ["ends_at"], name: "index_opportunities_on_ends_at"
     t.index ["slug"], name: "index_opportunities_on_slug", unique: true
     t.index ["source", "external_id"], name: "index_opportunities_on_source_and_external_id", unique: true
@@ -162,6 +163,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_23_152634) do
     t.string "phone"
     t.string "address"
     t.string "postal_code"
+    t.string "geocoding_flagged_reason"
   end
 
   create_table "testimonials", force: :cascade do |t|
