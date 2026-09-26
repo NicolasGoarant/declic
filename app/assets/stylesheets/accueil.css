@@ -18,6 +18,7 @@
   --tabbar-h: calc(64px + env(safe-area-inset-bottom));
   --poignee-h: 56px; /* poignée de la bottom sheet repliée */
   --sheet-h: 55dvh; /* bottom sheet dépliée */
+  --legende-h: 62px; /* légende des catégories, posée au-dessus de la poignée */
   --barre-h: 68px;
   --gouttiere: 16px;
 }
@@ -108,21 +109,11 @@ body.acc-corps {
 }
 .acc-accroche em { font-style: normal; color: var(--violet); }
 
-.acc-recherche { display: flex; gap: 8px; }
-.acc-champ {
-  display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 12px;
-  background: rgba(255, 255, 255, 0.82); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-  border: 1px solid rgba(232, 230, 240, 0.9); border-radius: 999px;
-  box-shadow: var(--ombre-legere);
-}
-.acc-champ { flex: 1; min-width: 0; color: var(--gris); }
-.acc-champ input {
-  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 14px;
-}
-.acc-champ input::placeholder { color: var(--gris); }
-
-/* Six catégories sur une seule ligne (375 px sans défilement) : cellules égales, texte à la ligne si besoin. */
+/* La légende : six catégories sur une ligne (375 px sans défilement), cellules égales, texte à la
+   ligne si besoin. Posée au-dessus de la poignée du volet, dans le volet : elle monte avec lui. */
 .acc-categories {
+  position: absolute; left: var(--gouttiere); right: var(--gouttiere); bottom: calc(100% + 8px);
+  height: var(--legende-h); align-items: center;
   display: flex; gap: 0; padding: 4px 2px;
   border-radius: 20px; background: rgba(255, 255, 255, 0.78);
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: var(--ombre-legere);
@@ -163,7 +154,7 @@ body.acc-corps {
 }
 
 .acc-commandes {
-  position: absolute; right: var(--gouttiere); bottom: calc(var(--poignee-h) + 16px); z-index: 600;
+  position: absolute; right: var(--gouttiere); bottom: calc(var(--poignee-h) + var(--legende-h) + 20px); z-index: 600;
   display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
   transition: opacity 250ms ease-out, visibility 250ms;
 }
@@ -205,7 +196,7 @@ body.acc-corps {
 .acc-attribution:not(.acc-attribution--ouverte) { font-size: 0; width: 26px; height: 26px; padding: 0; display: grid; place-items: center; }
 .acc-attribution:not(.acc-attribution--ouverte)::before { content: "ⓘ"; font-size: 15px; color: var(--encre); }
 .acc-attribution--ouverte { border-radius: 12px; }
-.acc-carte .leaflet-bottom.leaflet-left { bottom: var(--poignee-h); transition: transform 250ms ease-out; }
+.acc-carte .leaflet-bottom.leaflet-left { bottom: calc(var(--poignee-h) + var(--legende-h) + 8px); transition: transform 250ms ease-out; }
 /* Sheet dépliée : l'attribution (obligatoire) monte avec elle ; zoom et recentrage s'effacent, le
    temps de l'ouverture, plutôt que de recouvrir les commandes du haut (le pincement zoome toujours). */
 .acc-ecran:has(.acc-volet--ouvert) .acc-carte .leaflet-bottom.leaflet-left {
@@ -214,7 +205,7 @@ body.acc-corps {
 .acc-ecran:has(.acc-volet--ouvert) .acc-commandes { opacity: 0; visibility: hidden; }
 
 /* Les marqueurs : pictogramme sur une tige fine, petit socle coloré au pied. */
-.leaflet-marker-icon.acc-pin, .leaflet-marker-icon.acc-grappe { background: none; border: 0; }
+.leaflet-marker-icon.acc-pin, .leaflet-marker-icon.acc-bouquet { background: none; border: 0; }
 .pin { position: relative; width: 40px; height: 88px; transform-origin: 20px 80px; transition: transform 0.15s ease-out; }
 .pin-picto {
   position: absolute; left: 0; top: 0; width: 40px; height: 40px; z-index: 2;
@@ -230,21 +221,60 @@ body.acc-corps {
   background: var(--c);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 35%, transparent), 0 1px 2px rgba(29, 26, 43, 0.35);
 }
-.acc-survole .pin, .acc-pin:hover .pin { transform: scale(1.18) translateY(-3px); }
-.acc-survole.acc-pin { z-index: 1000 !important; }
+.pin.acc-survole, .acc-pin:hover .pin { transform: scale(1.18) translateY(-3px); }
+.leaflet-marker-icon.acc-survole { z-index: 1000 !important; }
 
-/* Les grappes : disque violet et nombre. */
-.acc-grappe span {
-  display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
-  background: var(--violet); color: var(--blanc); font-weight: 800; font-size: 15px;
-  border: 3px solid var(--blanc); box-shadow: 0 4px 12px rgba(91, 61, 245, 0.45);
-  transition: transform 0.15s;
+/* Les bouquets : un pied commun, une tige par fleur en éventail (diorama/bouquets.js). L'icône Leaflet
+   fait 0 × 0 px au pied ; tiges et fleurs se placent autour et restent cliquables. */
+.bouquet { position: relative; width: 0; height: 0; }
+.bouquet-tige {
+  position: absolute; left: -1px; bottom: 0; width: 2px; z-index: 1; transform-origin: 50% 100%;
+  background: linear-gradient(to top, color-mix(in srgb, var(--c) 45%, var(--blanc)), rgba(255, 255, 255, 0.98));
+  box-shadow: 0 0 0 0.5px rgba(29, 26, 43, 0.22);
 }
-.acc-grappe.acc-survole span { transform: scale(1.15); box-shadow: 0 0 0 5px color-mix(in srgb, var(--violet) 30%, transparent), 0 4px 12px rgba(91, 61, 245, 0.45); }
+.bouquet-fleur {
+  position: absolute; width: 40px; height: 40px; z-index: 2; cursor: pointer;
+  transform-origin: 50% 90%; transition: transform 0.15s ease-out;
+  filter: drop-shadow(0 0 1.5px var(--blanc)) drop-shadow(0 0 2.5px rgba(255, 255, 255, 0.92)) drop-shadow(0 3px 4px rgba(29, 26, 43, 0.3));
+}
+.bouquet-fleur:hover, .bouquet-fleur.acc-survole { transform: scale(1.18) translateY(-3px); z-index: 3; }
+.bouquet-pied {
+  position: absolute; left: -9px; top: -6px; width: 18px; height: 12px; z-index: 1; border-radius: 50%;
+  background: var(--blanc); border: 2.5px solid var(--violet); box-shadow: 0 1px 3px rgba(29, 26, 43, 0.35);
+}
+.bouquet-plus {
+  position: absolute; left: 11px; top: -2px; z-index: 3; min-width: 26px; height: 20px; padding: 0 6px;
+  border-radius: 10px; background: var(--violet); color: var(--blanc); box-shadow: 0 0 0 2px var(--blanc);
+  font-size: 11px; font-weight: 800; line-height: 20px; text-align: center; cursor: pointer; white-space: nowrap;
+}
+.bouquet-plus::before { content: ""; position: absolute; inset: -10px -8px; } /* zone de toucher élargie */
 
-/* La position du visiteur : point bleu, précision en ellipse au sol. */
-.acc-visiteur { fill: #2f6bff; fill-opacity: 1; stroke: var(--blanc); stroke-width: 3; }
-.acc-precision { fill: #2f6bff; fill-opacity: 0.14; stroke: #2f6bff; stroke-opacity: 0.35; stroke-width: 1; }
+/* La popup d'un pin. */
+.acc-popup .leaflet-popup-content-wrapper { padding: 0; border-radius: 16px; overflow: hidden; box-shadow: var(--ombre); }
+.acc-popup .leaflet-popup-content { margin: 0; font: inherit; color: var(--encre); }
+.acc-popup .leaflet-popup-content p { margin: 0; }
+.acc-popup a.leaflet-popup-close-button {
+  top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; z-index: 1;
+  background: rgba(255, 255, 255, 0.92); color: var(--encre); font: 700 20px/28px system-ui, sans-serif;
+}
+.bulle-bandeau {
+  position: relative; display: grid; place-items: center; height: 108px;
+  background: color-mix(in srgb, var(--c) 22%, var(--blanc));
+}
+.bulle-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bulle-photo[hidden], .bulle-picto[hidden] { display: none; }
+.bulle-corps { display: grid; gap: 4px; padding: 10px 14px 12px; }
+.bulle-cat {
+  justify-self: start; padding: 2px 9px; border-radius: 999px; background: var(--c);
+  font-size: 11px; font-weight: 800; line-height: 1.5;
+}
+.bulle-titre { margin: 2px 0; font-size: 15px; line-height: 1.25; font-weight: 800; }
+.bulle-date, .bulle-commune { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--gris); }
+.acc-popup .bulle-lien {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; justify-self: start;
+  color: var(--violet); font-size: 13.5px; font-weight: 800; text-decoration: none;
+}
+.acc-popup .bulle-lien:hover { color: var(--violet-fonce); }
 
 /* ─── Le volet : bottom sheet repliée sur sa poignée (mobile et tablette) ────────────── */
 /* Ancrée au bas de l'écran, donc au-dessus de la tab bar, qu'elle ne masque jamais. Elle bouge par
@@ -428,10 +458,8 @@ body.acc-corps {
 
 /* ─── Tablette : le mobile, élargi ─────────────────────────────────────────────── */
 @media (min-width: 768px) {
-  :root { --gouttiere: 28px; }
-  .acc-recherche { max-width: 640px; }
-  .acc-categories { justify-content: flex-start; }
-  .acc-categories { justify-content: flex-start; gap: 4px; }
+  :root { --gouttiere: 28px; --legende-h: 84px; }
+  .acc-categories { justify-content: center; gap: 4px; }
   .acc-cat { flex: none; width: 96px; font-size: 13px; }
   .acc-cat img { width: 52px; height: 52px; }
   .fiche { width: 210px; }
@@ -468,8 +496,7 @@ body.acc-corps {
     height: calc(100svh - var(--barre-h));
     scroll-margin-top: var(--barre-h);
   }
-  /* Panneau gauche : fond plein, accroche visible. `position: static` laisse les puces se placer
-     par rapport à l'écran, en haut de la carte. */
+  /* Panneau gauche : fond plein, accroche visible. */
   .acc-tete {
     grid-area: tete; position: static; z-index: auto; display: block;
     background: var(--blanc); padding: 22px var(--gouttiere) 8px;
@@ -479,12 +506,9 @@ body.acc-corps {
     clip-path: none; white-space: normal; font-size: 24px; line-height: 1.28; font-weight: 800;
     letter-spacing: -0.015em; max-width: 30ch;
   }
-  .acc-recherche { flex-direction: column; }
-  .acc-champ {
-    background: var(--blanc); -webkit-backdrop-filter: none; backdrop-filter: none; flex: none;
-  }
   .acc-categories {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 14px 0 0; padding: 0; overflow: visible;
+    position: static; height: auto;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 0 var(--gouttiere) 12px; padding: 0; overflow: visible;
     border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
   }
   .acc-cat { flex: none; width: auto; padding: 8px 4px; }

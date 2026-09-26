@@ -3,6 +3,7 @@
     Les fiches sont clonées depuis le modèle ci-dessous par le contrôleur Stimulus `diorama`. %>
 <section class="acc-volet" aria-label="Lieux au centre de la vue" data-controller="sheet"
          data-action="keydown@window->sheet#echap diorama:carte-cliquee@window->sheet#replier diorama:voir-tout@window->sheet#replier diorama:ouvrir-volet@window->sheet#ouvrir">
+  <%= render "accueil/categories" %>
   <button type="button" class="acc-poignee" aria-expanded="false" aria-controls="acc-volet-panneau"
           aria-label="Afficher les lieux au centre de la vue"
           data-sheet-target="poignee"

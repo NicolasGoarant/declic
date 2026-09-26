@@ -88,6 +88,7 @@ export default class extends Controller {
     this.ouverte = ouverte
     this.element.style.removeProperty("--glisse")
     this.appliquer()
+    if (ouverte) this.dispatch("ouverte") // sheet:ouverte : le diorama ferme sa popup, que la sheet recouvrirait
     // Le focus va sur la première fiche à l'ouverture (clavier ou tap sur la poignée).
     if (ouverte && focus && !this.mediaBureau.matches) {
       this.panneauTarget.querySelector(".fiche-lien")?.focus({ preventScroll: true })

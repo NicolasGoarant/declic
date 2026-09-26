@@ -1,4 +1,5 @@
-<%# Les six catégories filtrent la carte et le volet ; le nombre est rempli par le JS. %>
+<%# La légende : les six catégories filtrent la carte et le volet ; le nombre est rempli par le JS.
+    Mobile et tablette : posée au-dessus de la poignée du volet, elle monte avec lui. Bureau : en tête du panneau gauche. %>
 <div class="acc-categories" role="group" aria-label="Catégories">
   <% Categorie::TOUTES.each do |categorie| %>
     <button type="button" class="acc-cat" aria-pressed="false"
