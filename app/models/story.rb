@@ -4,8 +4,9 @@ class Story < ApplicationRecord
   # Image principale (hero)
   has_one_attached :image
 
-  # Photos multiples pour soumissions publiques (si besoin futur)
-  has_many_attached :photos
+  # Galerie photos : ordre, couverture, suppressions (voir GaleriePhotos)
+  include GaleriePhotos
+  include FicheCompletude
 
   # Photos inline dans le récit (3 max pour style éditorial)
   # Ces images seront insérées dans le texte via des placeholders
@@ -15,10 +16,34 @@ class Story < ApplicationRecord
 
   validates :title, presence: true
   validates :slug, uniqueness: true, allow_blank: true
+  # Nouvelles fiches seulement : ne rend invalide aucune histoire existante.
+  validates :location, presence: true, on: :create
   validate :points_forts_limites
 
   # « Ce qu'il faut retenir » : au plus 3 points {icone, titre, texte} (voir PointsForts).
   def points_forts_liste = PointsForts.normaliser(points_forts)
+
+  # Saisie admin : trois blocs fixes {icone, titre, texte} ; les blocs vides sont ignorés.
+  def points_forts_saisie
+    liste = points_forts_liste
+    Array.new(PointsForts::MAX) { |i| liste[i] || PointsForts::VIDE.dup }
+  end
+
+  def points_forts_saisie=(blocs)
+    blocs = blocs.to_h.sort_by { |cle, _| cle.to_s.to_i }.map(&:last) if blocs.respond_to?(:to_h) && !blocs.is_a?(Array)
+    self.points_forts = PointsForts.normaliser(blocs).first(PointsForts::MAX)
+  end
+
+  # Champs que la nouvelle fiche affiche (voir FicheCompletude).
+  def criteres_fiche
+    {
+      "photo" => a_une_photo?,
+      "lieu" => location.present?,
+      "citation" => quote.present?,
+      "points forts" => points_forts_liste.any?,
+      "source" => source_name.present? && source_url.present?
+    }
+  end
 
   # Configure la géolocalisation, restreinte à la zone de Nancy (voir
   # NancyGeocodable — même mécanisme que Opportunity).
