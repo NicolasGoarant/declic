@@ -1,0 +1,17 @@
+<div class="form-section">
+  <h3 class="form-section-title">📝 Identité</h3>
+  <p class="form-section-subtitle">Titre et accroche : l'en-tête de la fiche</p>
+
+  <div class="field">
+    <%= f.label :title, "Titre *", class: "field-label" %>
+    <%= f.text_field :title, placeholder: "Ex: Elle plaque la finance à Paris pour devenir fromagère…", class: "field-input" %>
+  </div>
+  <div class="field">
+    <%= f.label :chapo, "Chapô (accroche sous le titre)", class: "field-label" %>
+    <%= f.text_area :chapo, rows: 3, placeholder: "Ex: Bénédicte a troqué ses fichiers Excel contre des tomes de fromage.", class: "field-input" %>
+  </div>
+  <div class="field">
+    <%= f.label :happened_on, "Date de l'histoire", class: "field-label" %>
+    <%= f.date_field :happened_on, class: "field-input" %>
+  </div>
+</div>

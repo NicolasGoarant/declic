@@ -1,0 +1,42 @@
+<div class="form-section">
+  <h3 class="form-section-title">🎯 Action & contact</h3>
+  <p class="form-section-subtitle">Le bouton de la fiche (« Je participe / Je m'inscris ») et les moyens de contact</p>
+
+  <div class="form-row">
+    <div class="field">
+      <%= f.label :cta_button_text, "Texte du bouton", class: "field-label" %>
+      <%= f.text_field :cta_button_text, placeholder: "Je participe / Je m'inscris", class: "field-input" %>
+    </div>
+    <div class="field wide">
+      <%= f.label :cta_button_url, "Lien du bouton", class: "field-label" %>
+      <%= f.text_field :cta_button_url, placeholder: "https://…", class: "field-input" %>
+      <div class="field-hint">Le bouton n'apparaît que si le texte et le lien sont renseignés</div>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="field">
+      <%= f.label :website, "Site web de l'organisation", class: "field-label" %>
+      <%= f.text_field :website, placeholder: "https://…", class: "field-input" %>
+    </div>
+    <div class="field">
+      <%= f.label :contact_email, "Email de contact", class: "field-label" %>
+      <%= f.email_field :contact_email, class: "field-input" %>
+    </div>
+    <div class="field">
+      <%= f.label :contact_phone, "Téléphone de contact", class: "field-label" %>
+      <%= f.telephone_field :contact_phone, placeholder: "06 12 34 56 78", class: "field-input" %>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="field">
+      <%= f.label :source_name, "Nom de la source", class: "field-label" %>
+      <%= f.text_field :source_name, placeholder: "L'Est Républicain", class: "field-input" %>
+    </div>
+    <div class="field wide">
+      <%= f.label :source_url, "URL source (article)", class: "field-label" %>
+      <%= f.text_field :source_url, placeholder: "https://…", class: "field-input" %>
+    </div>
+  </div>
+</div>

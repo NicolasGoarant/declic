@@ -1,0 +1,19 @@
+<div class="form-section">
+  <h3 class="form-section-title">📰 D'où vient le récit</h3>
+  <p class="form-section-subtitle">Article source : média, lien et date de parution</p>
+
+  <div class="form-row">
+    <div class="field">
+      <%= f.label :source_name, "Nom de la source", class: "field-label" %>
+      <%= f.text_field :source_name, placeholder: "L'Est Républicain", class: "field-input" %>
+    </div>
+    <div class="field wide">
+      <%= f.label :source_url, "URL de l'article source", class: "field-label" %>
+      <%= f.text_field :source_url, placeholder: "https://…", class: "field-input" %>
+    </div>
+    <div class="field">
+      <%= f.label :source_published_on, "Date de parution", class: "field-label" %>
+      <%= f.date_field :source_published_on, class: "field-input" %>
+    </div>
+  </div>
+</div>

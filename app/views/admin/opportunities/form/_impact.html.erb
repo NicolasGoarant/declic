@@ -1,0 +1,26 @@
+<div class="form-section">
+  <h3 class="form-section-title">📊 Impact & défis</h3>
+  <p class="form-section-subtitle">Jusqu'à 4 statistiques clés et les défis surmontés (optionnel)</p>
+
+  <div class="stats-grid">
+    <% (1..4).each do |n| %>
+      <div class="stat-pair">
+        <div class="field">
+          <%= f.label "stat_#{n}_number", "Stat #{n} - Nombre", class: "field-label" %>
+          <%= f.text_field "stat_#{n}_number", placeholder: [ "200+", "45", "3 ans", "2x" ][n - 1], class: "field-input" %>
+        </div>
+        <div class="field">
+          <%= f.label "stat_#{n}_label", "Stat #{n} - Label", class: "field-label" %>
+          <%= f.text_field "stat_#{n}_label", placeholder: [ "objets réparés", "participants réguliers", "d'existence", "par mois" ][n - 1], class: "field-input" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="field" style="margin-top: 1rem;">
+    <%= f.label :challenges, "Défis surmontés", class: "field-label" %>
+    <%= f.text_area :challenges, rows: 5, class: "field-input",
+          placeholder: "**Trouver un lieu :** négociation avec la mairie pendant 2 mois\n**Financement :** campagne de dons à 5000 €" %>
+    <div class="field-hint">Un défi par ligne, au format **Défi :** Solution</div>
+  </div>
+</div>

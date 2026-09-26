@@ -1,0 +1,35 @@
+<div class="form-section">
+  <h3 class="form-section-title">📅 Dates & horaires</h3>
+  <p class="form-section-subtitle">Laissez les dates vides pour une opportunité permanente (« Ouvert toute l'année »)</p>
+
+  <div class="form-row">
+    <div class="field">
+      <%= f.label :starts_on, "Date de début", class: "field-label" %>
+      <%= f.date_field :starts_on, class: "field-input" %>
+    </div>
+    <div class="field">
+      <%= f.label :ends_on, "Date de fin", class: "field-label" %>
+      <%= f.date_field :ends_on, class: "field-input" %>
+      <div class="field-hint">Vide pour un événement d'un seul jour</div>
+    </div>
+    <div class="field">
+      <%= f.label :start_time, "Heure de début", class: "field-label" %>
+      <%= f.time_field :start_time, class: "field-input" %>
+    </div>
+    <div class="field">
+      <%= f.label :end_time, "Heure de fin", class: "field-label" %>
+      <%= f.time_field :end_time, class: "field-input" %>
+    </div>
+  </div>
+
+  <div class="field">
+    <%= f.label :schedule_text, "Horaires en texte libre", class: "field-label" %>
+    <%= f.text_field :schedule_text, placeholder: "Ouvert toute l'année, sur rendez-vous", class: "field-input" %>
+    <div class="field-hint">ex. Ouvert toute l'année, sur rendez-vous — affiché à la place de l'horaire quand aucune heure n'est saisie</div>
+  </div>
+
+  <div class="field">
+    <%= f.label :time_commitment, "Engagement en temps", class: "field-label" %>
+    <%= f.text_field :time_commitment, placeholder: "2h par semaine", class: "field-input" %>
+  </div>
+</div>

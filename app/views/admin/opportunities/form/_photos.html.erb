@@ -1,0 +1,39 @@
+<div class="form-section">
+  <h3 class="form-section-title">🖼️ Photos</h3>
+  <p class="form-section-subtitle">Galerie de la fiche : la première photo est la couverture</p>
+
+  <%= render "admin/shared/galerie", record: @opportunity %>
+
+  <h4 class="field-label" style="margin-top: 1.5rem;">Ancienne image principale</h4>
+  <div class="field-hint" style="margin-bottom: 0.75rem;">Utilisée par la fiche seulement si la galerie est vide.</div>
+  <div class="form-row">
+    <div class="field">
+      <%= f.label :image, "Image principale", class: "field-label" %>
+      <%= f.file_field :image, accept: "image/png,image/jpeg,image/gif,image/webp", class: "field-input" %>
+      <% if @opportunity.persisted? && @opportunity.image.attached? %>
+        <%= image_tag url_for(@opportunity.image), class: "apercu-logo", style: "height: 5rem;", alt: "Image principale actuelle" %>
+      <% end %>
+    </div>
+    <div class="field">
+      <%= f.label :image_url, "OU URL d'une image externe", class: "field-label" %>
+      <%= f.text_field :image_url, placeholder: "https://example.com/image.jpg", class: "field-input" %>
+    </div>
+  </div>
+
+  <h4 class="field-label" style="margin-top: 1.5rem;">Photos dans le texte</h4>
+  <div class="field-hint" style="margin-bottom: 0.75rem;">
+    Placez <code>&lt;!-- IMAGE_1 --&gt;</code> (à gauche), <code>&lt;!-- IMAGE_2 --&gt;</code> (à droite) ou <code>&lt;!-- IMAGE_3 --&gt;</code> (pleine largeur) dans la description.
+  </div>
+  <% (1..3).each do |n| %>
+    <div class="form-row">
+      <div class="field">
+        <%= f.label "inline_image_#{n}", "Photo #{n}", class: "field-label" %>
+        <%= f.file_field "inline_image_#{n}", accept: "image/png,image/jpeg,image/gif,image/webp", class: "field-input" %>
+      </div>
+      <div class="field">
+        <%= f.label "inline_caption_#{n}", "Légende photo #{n}", class: "field-label" %>
+        <%= f.text_field "inline_caption_#{n}", class: "field-input" %>
+      </div>
+    </div>
+  <% end %>
+</div>

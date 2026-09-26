@@ -1,0 +1,58 @@
+<div class="form-section">
+  <h3 class="form-section-title">📍 Où rencontrer la personne</h3>
+  <p class="form-section-subtitle">Structure ou lieu, adresse et coordonnées GPS</p>
+
+  <div class="form-row">
+    <div class="field">
+      <%= f.label :venue_name, "Nom de la structure ou du lieu", class: "field-label" %>
+      <%= f.text_field :venue_name, placeholder: "Ex: Fromagerie Caseus", class: "field-input" %>
+    </div>
+    <div class="field">
+      <%= f.label :discover_url, "Lien « Découvrir … »", class: "field-label" %>
+      <%= f.text_field :discover_url, placeholder: "https://…", class: "field-input" %>
+      <div class="field-hint">Facultatif : affiché « Découvrir <%= @story.venue_name.presence || "[nom du lieu]" %> »</div>
+    </div>
+  </div>
+
+  <div class="field">
+    <%= f.label :location, "Lieu (adresse complète) *", class: "field-label" %>
+    <%= f.text_field :location, placeholder: "21 Grande-Rue, 54000 Nancy", class: "field-input" %>
+    <div class="field-hint">Obligatoire pour une nouvelle histoire ; sert aussi au géocodage</div>
+  </div>
+
+  <div class="form-row">
+    <div class="field wide">
+      <%= f.label :address, "Adresse (affichage court)", class: "field-label" %>
+      <%= f.text_field :address, class: "field-input" %>
+    </div>
+    <div class="field">
+      <%= f.label :postal_code, "Code postal", class: "field-label" %>
+      <%= f.text_field :postal_code, class: "field-input" %>
+    </div>
+    <div class="field">
+      <%= f.label :city, "Ville", class: "field-label" %>
+      <%= f.text_field :city, class: "field-input" %>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="field">
+      <%= f.label :latitude, "Latitude", class: "field-label" %>
+      <%= f.text_field :latitude, placeholder: "48.6937", class: "field-input" %>
+    </div>
+    <div class="field">
+      <%= f.label :longitude, "Longitude", class: "field-label" %>
+      <%= f.text_field :longitude, placeholder: "6.1844", class: "field-input" %>
+    </div>
+    <div class="field">
+      <%= f.label :phone, "Téléphone", class: "field-label" %>
+      <%= f.telephone_field :phone, class: "field-input" %>
+    </div>
+  </div>
+  <div class="field-hint" style="margin-bottom: 1rem;">💡 <a href="https://www.latlong.net/" target="_blank" rel="noopener">Trouver lat/lng sur LatLong.net</a></div>
+
+  <div class="field">
+    <%= f.label :contact_info, "Informations de contact (optionnel)", class: "field-label" %>
+    <%= f.text_area :contact_info, rows: 2, placeholder: "contact@caseus.fr • 06 12 34 56 78 • www.caseus-nancy.fr", class: "field-input" %>
+  </div>
+</div>

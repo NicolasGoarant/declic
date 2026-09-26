@@ -1,0 +1,39 @@
+<div class="form-section">
+  <h3 class="form-section-title">📍 Lieu</h3>
+  <p class="form-section-subtitle">Adresse et coordonnées GPS</p>
+
+  <div class="field">
+    <%= f.label :address, "Adresse (affichage court)", class: "field-label" %>
+    <%= f.text_field :address, placeholder: "14 Rue du Cheval Blanc", class: "field-input" %>
+    <div class="field-hint">📍 Affichée dans la liste admin et sur la fiche publique</div>
+  </div>
+
+  <div class="form-row">
+    <div class="field">
+      <%= f.label :postal_code, "Code postal", class: "field-label" %>
+      <%= f.text_field :postal_code, placeholder: "54000", class: "field-input" %>
+    </div>
+    <div class="field">
+      <%= f.label :city, "Ville", class: "field-label" %>
+      <%= f.text_field :city, placeholder: "Nancy", class: "field-input" %>
+    </div>
+  </div>
+
+  <div class="field">
+    <%= f.label :location, "Adresse complète (pour Google Maps)", class: "field-label" %>
+    <%= f.text_field :location, placeholder: "14 Rue du Cheval Blanc, 54000 Nancy, France", class: "field-input" %>
+    <div class="field-hint">🗺️ Utilisée pour la géolocalisation et le lien Google Maps</div>
+  </div>
+
+  <div class="form-row">
+    <div class="field">
+      <%= f.label :latitude, "Latitude", class: "field-label" %>
+      <%= f.text_field :latitude, placeholder: "48.6937", class: "field-input" %>
+    </div>
+    <div class="field">
+      <%= f.label :longitude, "Longitude", class: "field-label" %>
+      <%= f.text_field :longitude, placeholder: "6.1844", class: "field-input" %>
+    </div>
+  </div>
+  <div class="field-hint">💡 <a href="https://www.latlong.net/" target="_blank" rel="noopener">Trouver lat/lng sur LatLong.net</a></div>
+</div>
