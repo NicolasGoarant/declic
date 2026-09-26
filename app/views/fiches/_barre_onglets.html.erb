@@ -1,0 +1,14 @@
+<%# Mobile et tablette : la barre d'onglets de /labo/accueil, en liens. Favoris ouvre la carte
+    filtrée sur les favoris gardés sur l'appareil (?favoris=1, lu par diorama#connect). %>
+<nav class="acc-onglets" aria-label="Navigation">
+  <%= link_to labo_accueil_path do %><%= picto(:carte, taille: 24) %><span>Carte</span><% end %>
+  <%= link_to opportunities_path do %><%= picto(:chercher, taille: 24) %><span>Explorer</span><% end %>
+  <%= link_to new_opportunity_path, class: "acc-onglet-plus", aria: { label: "Proposer" } do %>
+    <span class="acc-plus-bouton"><%= picto(:plus, taille: 28, "stroke-width" => 2.5) %></span>
+    <span class="acc-plus-libelle">Proposer</span>
+  <% end %>
+  <%= link_to labo_accueil_path(favoris: 1) do %><%= picto(:coeur, taille: 24) %><span>Favoris</span><% end %>
+  <span class="acc-onglet-inactif" aria-disabled="true" title="Consultation sans compte">
+    <%= picto(:profil, taille: 24) %><span>Profil</span>
+  </span>
+</nav>

@@ -1,334 +1,117 @@
-<%# app/views/stories/show.html.erb - VERSION COMPATIBLE AVEC LE NOUVEAU SYSTÈME %>
+<%# Fiche Belle Histoire (mise en page de docs/maquettes/declic-maquette-fiche-belle-histoire-v1.png,
+    dont le contenu d'exemple est une opportunité). Récit sans appel à l'action : aucun horaire,
+    aucun bouton personnalisé (règle éditoriale, NOTES.md). Un bloc sans contenu n'est pas rendu. %>
+<% s = @story %>
+<% cat = categorie_de(s) %>
+<% url = story_url(s) %>
+<% lieu, adresse = lieu_et_adresse(s) %>
+<% qui = s.author_name.to_s.split.first.presence || s.venue_name.presence %>
+<% points = s.points_forts_liste %>
+<% content_for :onglet_courant, "histoires" %>
+<%= render "fiches/meta_partage", fiche: s, url: url, resume: resume_partage(s.chapo.presence || s.body), image: image_partage(s) %>
 
-<%
-# Configuration thème - Détection plus stricte
-story_haystack = @story.title.to_s.downcase
-story_body = @story.body.to_s.downcase[0..500] # Premiers 500 chars du body
+<main class="fch fch--histoire" style="--c: <%= cat.couleur %>" data-controller="fiche"
+      data-fiche-url-value="<%= url %>" data-fiche-titre-value="<%= s.title %>">
+  <%= render "fiches/entete", fiche: s, cat: cat, badge: "Belle histoire", retour: stories_path %>
 
-# Comptage de mots-clés par thème
-eco_score = 0
-eco_score += 1 if story_haystack.include?('jardin') && (story_haystack.include?('urbain') || story_haystack.include?('cultiv') || story_haystack.include?('permaculture'))
-eco_score += 1 if story_haystack.include?('écolog')
-eco_score += 1 if story_haystack.include?('bio') || story_haystack.include?('durable')
-eco_score += 1 if story_body.include?('environnement') || story_body.include?('permaculture')
+  <div class="fch-grille">
+    <div class="fch-principal">
+      <%= render "fiches/galerie", fiche: s, cat: cat %>
 
-social_score = 0
-social_score += 1 if story_haystack.include?('rencontr') || story_haystack.include?('café')
-social_score += 1 if story_haystack.include?('lien') && story_haystack.include?('social')
-social_score += 1 if story_body.include?('partage') || story_body.include?('convivial')
+      <% if s.chapo.present? || s.body.present? || points.any? || s.quote.present? %>
+        <section class="fch-bloc fch-texte-bloc" aria-labelledby="fch-histoire">
+          <% if s.chapo.present? || s.body.present? %>
+            <h2 id="fch-histoire" class="fch-bloc-titre"><span class="fch-pastille fch-pastille--jaune"><%= picto(:ampoule, taille: 20) %></span>À propos de cette histoire</h2>
+            <% if s.chapo.present? %><p class="fch-chapo"><%= s.chapo %></p><% end %>
+            <% if s.body.present? %><div class="fch-texte"><%= render_story_body(s.body, s) %></div><% end %>
+          <% end %>
 
-entreprendre_score = 0
-entreprendre_score += 1 if story_haystack.include?('entreprise') || story_haystack.include?('fromag') || story_haystack.include?('commerce')
-entreprendre_score += 1 if story_haystack.include?('créer') || story_haystack.include?('lancer')
-entreprendre_score += 1 if story_body.include?('boutique') || story_body.include?('startup')
+          <% if points.any? %>
+            <h3 class="fch-sous-titre">Ce qu'il faut retenir</h3>
+            <ul class="fch-points">
+              <% points.each do |point| %>
+                <li>
+                  <span class="fch-points-icone" aria-hidden="true"><%= PointsForts::ICONES.dig(point["icone"], 0) || "✨" %></span>
+                  <span>
+                    <% if point["titre"].present? %><strong><%= point["titre"] %></strong><% end %>
+                    <% if point["texte"].present? %><span><%= point["texte"] %></span><% end %>
+                  </span>
+                </li>
+              <% end %>
+            </ul>
+          <% end %>
 
-# Thème gagnant (minimum 2 points pour être sélectionné)
-theme = if eco_score >= 2
-  { name: "Écologiser", color: "emerald", gradient: "from-emerald-500 to-teal-500", bg: "bg-emerald-50", icon: "🌱" }
-elsif social_score >= 2
-  { name: "Rencontres", color: "amber", gradient: "from-amber-500 to-orange-500", bg: "bg-amber-50", icon: "☕" }
-elsif entreprendre_score >= 2
-  { name: "Entreprendre", color: "orange", gradient: "from-orange-500 to-red-500", bg: "bg-orange-50", icon: "🚀" }
-else
-  # Fallback : Belle Histoire (par défaut)
-  { name: "Belle Histoire", color: "purple", gradient: "from-purple-500 to-pink-500", bg: "bg-purple-50", icon: "✨" }
-end
-
-# Format date français
-date_fr = if @story.happened_on.present?
-  day_names = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
-  month_names = ['', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-                 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
-  "#{day_names[@story.happened_on.wday].capitalize} #{@story.happened_on.day.to_s.rjust(2, '0')} #{month_names[@story.happened_on.month]} #{@story.happened_on.year}"
-else
-  ""
-end
-%>
-
-<style>
-/* Styles pour la story */
-.story-hero-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.story-spacing-1 { height: 40px; }
-.story-spacing-2 { height: 30px; }
-.story-spacing-3 { height: 25px; }
-
-/* Styles pour le contenu Markdown - ICI C'EST LE HELPER QUI GÈRE LES IMAGES */
-.markdown-content {
-  color: #475569;
-  font-size: 17px;
-  line-height: 1.8;
-}
-
-.markdown-content::after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-/* RESPONSIVE */
-@media (max-width: 1024px) {
-  .story-grid {
-    grid-template-columns: 1fr !important;
-  }
-  .story-sidebar {
-    position: static !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .story-hero-title {
-    font-size: 28px !important;
-  }
-  .markdown-content {
-    font-size: 16px !important;
-  }
-}
-</style>
-
-<div style="background: white; min-height: 100vh;">
-
-  <%# ========== HÉROS AVEC PHOTO ========== %>
-  <div class="story-hero-container" style="position: relative; height: 500px; overflow: hidden; background: #1e293b;">
-    <% if @story.image.attached? || @story.image_url.present? %>
-      <div style="position: absolute; inset: 0;">
-        <img src="<%= @story.hero_image_url(self) %>" alt="<%= @story.title %>" class="story-hero-image" style="filter: brightness(0.7);" />
-      </div>
-    <% end %>
-
-    <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6));"></div>
-
-    <div style="position: relative; height: 100%; max-width: 1200px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; justify-content: flex-end;">
-      <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(168, 85, 247, 0.9); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 999px; margin-bottom: 20px; width: fit-content;">
-        <span style="font-size: 18px;"><%= theme[:icon] %></span>
-        <span style="color: white; font-weight: 700; font-size: 14px; letter-spacing: 0.5px;"><%= theme[:name].upcase %></span>
-      </div>
-
-      <h1 class="story-hero-title" style="color: white; font-size: 48px; font-weight: 800; line-height: 1.2; margin: 0; text-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <%= @story.title %>
-      </h1>
-
-      <% if @story.chapo.present? %>
-        <p style="color: #e2e8f0; font-size: 20px; line-height: 1.6; margin: 16px 0 0 0; max-width: 800px; text-shadow: 0 2px 8px rgba(0,0,0,0.3);">
-          <%= @story.chapo %>
-        </p>
+          <% if s.quote.present? %>
+            <blockquote class="fch-citation">
+              <p>« <%= s.quote.strip.delete_prefix("«").delete_suffix("»").strip %> »</p>
+              <% if s.quote_author.present? %><footer>— <%= s.quote_author %></footer><% end %>
+            </blockquote>
+          <% end %>
+        </section>
       <% end %>
+
+      <%= render "fiches/carte", fiche: s, point: points_diorama([], [s]), tuiles: @tuiles %>
     </div>
-  </div>
 
-  <%# ========== CONTENU PRINCIPAL ========== %>
-  <div style="max-width: 1400px; margin: 0 auto; padding: 60px 24px;">
-    <div class="story-grid" style="display: grid; grid-template-columns: 1fr 380px; gap: 48px;">
-
-      <%# CONTENU PRINCIPAL %>
-      <div>
-        <%# Citation si disponible %>
-        <% if @story.quote.present? %>
-          <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 32px; border-radius: 20px; margin-bottom: 32px; border-left: 6px solid #f59e0b; box-shadow: 0 8px 30px rgba(245,158,11,0.2);">
-            <div style="font-size: 48px; color: #f59e0b; line-height: 1; margin-bottom: 16px;">"</div>
-            <p class="story-quote-text" style="font-size: 22px; font-style: italic; font-weight: 500; color: #78350f; line-height: 1.6; margin: 0;">
-              <%= @story.quote %>
-            </p>
-          </div>
-        <% end %>
-
-        <%# Corps de la story - ✅ AVEC LE SECOND PARAMÈTRE @story %>
-        <div class="markdown-content">
-          <%= render_story_body(@story.body, @story) %>
-        </div>
-
-        <%# Points clés / Highlights %>
-        <% if @story.highlights_title.present? || @story.highlights_text.present? || @story.highlights_items.present? %>
-          <div style="background: linear-gradient(135deg, #fefce8, #fef3c7); border-left: 6px solid #f59e0b; padding: 32px; border-radius: 20px; margin: 32px 0; box-shadow: 0 8px 30px rgba(245,158,11,0.2);">
-            <% if @story.highlights_title.present? %>
-              <h3 style="color: #78350f; font-size: 24px; font-weight: 700; margin: 0 0 16px 0; display: flex; align-items: center; gap: 12px;">
-                <span style="font-size: 28px;">✨</span>
-                <%= @story.highlights_title %>
-              </h3>
+    <div class="fch-cote">
+      <% if lieu || adresse || s.discover_url.present? %>
+        <section class="fch-pratique" aria-labelledby="fch-rencontrer">
+          <h2 id="fch-rencontrer" class="fch-pratique-titre">
+            <%= qui ? "Où rencontrer #{qui} ?" : "Où se rendre ?" %>
+          </h2>
+          <% if lieu || adresse %>
+            <div class="fch-pratique-ligne">
+              <%= picto(:lieu, taille: 22) %>
+              <p><% if lieu %><strong><%= lieu %></strong><% end %><% if adresse %><span><%= adresse %></span><% end %></p>
+            </div>
+          <% end %>
+          <% if (decouvrir = normaliser_url(s.discover_url)) %>
+            <%= link_to decouvrir, class: "fch-lien", target: "_blank", rel: "noopener" do %>
+              Découvrir <%= s.venue_name.presence || "le lieu" %> <%= picto(:externe, taille: 14) %>
             <% end %>
+          <% end %>
+        </section>
+      <% end %>
 
-            <% if @story.highlights_text.present? %>
-              <p style="color: #92400e; font-size: 17px; line-height: 1.6; margin: 0 0 20px 0;">
-                <%= @story.highlights_text %>
-              </p>
-            <% end %>
-
-            <% if @story.highlights_items.present? %>
-              <ul style="list-style: none; padding: 0; margin: 0;">
-                <% @story.highlights_items.split("\n").each do |item| %>
-                  <li style="display: flex; align-items: start; gap: 12px; padding: 12px 0; border-top: 1px solid rgba(245,158,11,0.2);">
-                    <span style="color: #16a34a; font-weight: 900; font-size: 18px; flex-shrink: 0;">✓</span>
-                    <span style="color: #78350f; font-size: 16px; line-height: 1.5;"><%= item.strip %></span>
-                  </li>
-                <% end %>
-              </ul>
-            <% end %>
-          </div>
-        <% end %>
-
-        <%# CTA %>
-        <div style="background: linear-gradient(135deg, #a855f7, #ec4899); border-radius: 24px; padding: 48px; text-align: center; margin-top: 48px; box-shadow: 0 20px 60px rgba(168,85,247,0.3);">
-          <div style="font-size: 56px; margin-bottom: 20px;">✨</div>
-          <h3 style="color: white; font-size: 32px; font-weight: 700; margin: 0 0 16px 0;">
-            Et moi, comment je peux avoir le Déclic ?
-          </h3>
-          <p style="color: rgba(255,255,255,0.9); font-size: 18px; margin: 0 auto 32px; max-width: 600px;">
-            Cette histoire vous inspire ? Des dizaines d'opportunités similaires vous attendent près de chez vous pour entreprendre, vous former, rencontrer ou vous engager.
+      <% if s.source_name.present? || s.source_url.present? %>
+        <section class="fch-bloc fch-source" aria-labelledby="fch-source-titre">
+          <h2 id="fch-source-titre" class="fch-source-titre"><%= picto(:journal, taille: 18) %> Source</h2>
+          <p>
+            Récit inspiré d'un article<%= " de #{s.source_name}" if s.source_name.present? %><%= ", paru le #{date_longue(s.source_published_on)}" if s.source_published_on %>.
           </p>
-          <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;">
-            <a href="/stories/new" style="display: inline-flex; align-items: center; gap: 10px; background: white; color: #a855f7; padding: 18px 36px; border-radius: 999px; font-weight: 700; font-size: 17px; text-decoration: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-              <span>🔍 Partager un témoignage</span>
-            </a>
-            <a href="/opportunities" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); color: white; padding: 18px 36px; border-radius: 999px; font-weight: 700; font-size: 17px; text-decoration: none; border: 2px solid rgba(255,255,255,0.3);">
-              <span>➕ Proposer une opportunité</span>
-            </a>
-          </div>
-        </div>
-
-      </div>
-
-      <%# SIDEBAR %>
-      <div class="story-sidebar" style="position: sticky; top: 32px; align-self: start;">
-
-        <%# Carte %>
-        <% if @story.location.present? && @story.latitude.present? %>
-          <div style="background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 2px solid #e9d5ff; margin-bottom: 24px;">
-            <div id="story-map" style="height: 240px;" data-lat="<%= @story.latitude %>" data-lon="<%= @story.longitude %>"></div>
-            <div style="padding: 16px; background: #fafafa;">
-              <p style="color: #475569; font-weight: 600; margin: 0; font-size: 14px; display: flex; align-items: start; gap: 8px;">
-                <svg style="width: 18px; height: 18px; flex-shrink: 0; color: #a855f7; margin-top: 2px;" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path>
-                </svg>
-                <%= @story.location %>
-              </p>
-            </div>
-          </div>
-        <% end %>
-
-        <%# Infos clés %>
-        <div style="background: white; border-radius: 20px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 2px solid #e9d5ff; margin-bottom: 24px;">
-          <h3 style="font-weight: 700; font-size: 18px; color: #1e293b; margin: 0 0 20px 0; display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">ℹ️</span>
-            Informations clés
-          </h3>
-
-          <% if date_fr.present? %>
-            <div style="display: flex; align-items: start; gap: 12px; padding: 16px; background: #faf5ff; border-radius: 12px; margin-bottom: 16px;">
-              <div style="flex-shrink: 0; width: 44px; height: 44px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                <span style="font-size: 20px;">📅</span>
-              </div>
-              <div>
-                <div style="font-size: 11px; font-weight: 700; color: #7e22ce; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Date</div>
-                <div style="font-weight: 700; color: #1e293b; font-size: 14px;"><%= date_fr %></div>
-              </div>
-            </div>
+          <% if (source = normaliser_url(s.source_url)) %>
+            <%= link_to source, class: "fch-lien", target: "_blank", rel: "noopener" do %>
+              Lire l'article original <%= picto(:externe, taille: 14) %>
+            <% end %>
           <% end %>
+        </section>
+      <% end %>
 
-          <% if @story.location.present? %>
-            <div style="display: flex; align-items: start; gap: 12px; padding: 16px; background: #faf5ff; border-radius: 12px; margin-bottom: 16px;">
-              <div style="flex-shrink: 0; width: 44px; height: 44px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                <span style="font-size: 20px;">🏪</span>
-              </div>
-              <div>
-                <div style="font-size: 11px; font-weight: 700; color: #7e22ce; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Lieu</div>
-                <div style="font-weight: 700; color: #1e293b; font-size: 14px;"><%= @story.location %></div>
-              </div>
-            </div>
-          <% end %>
-
-          <% if @story.source_url.present? %>
-            <div style="display: flex; align-items: start; gap: 12px; padding: 16px; background: #faf5ff; border-radius: 12px; margin-bottom: 16px;">
-              <div style="flex-shrink: 0; width: 44px; height: 44px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                <span style="font-size: 20px;">📰</span>
-              </div>
-              <div>
-                <div style="font-size: 11px; font-weight: 700; color: #7e22ce; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Source</div>
-                <a href="<%= @story.source_url %>" target="_blank" rel="noopener" style="font-weight: 700; color: #3b82f6; font-size: 14px; text-decoration: none;">
-                  <%= @story.source_name.presence || "Voir l'article" %> →
-                </a>
-              </div>
-            </div>
-          <% end %>
-
-          <% if @story.contact_info.present? %>
-            <div style="display: flex; align-items: start; gap: 12px; padding: 16px; background: #faf5ff; border-radius: 12px;">
-              <div style="flex-shrink: 0; width: 44px; height: 44px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                <span style="font-size: 20px;">📧</span>
-              </div>
-              <div>
-                <div style="font-size: 11px; font-weight: 700; color: #7e22ce; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Contact</div>
-                <div style="font-weight: 600; color: #1e293b; font-size: 14px;"><%= @story.contact_info %></div>
-              </div>
-            </div>
-          <% end %>
-        </div>
-
-        <%# Partage %>
-        <div style="background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 20px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 2px solid #cbd5e1;">
-          <h3 style="font-weight: 700; color: #1e293b; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px; font-size: 16px;">
-            <span style="font-size: 20px;">📢</span>
-            Partagez
-          </h3>
-          <div style="display: flex; gap: 12px;">
-            <a href="https://www.facebook.com/sharer/sharer.php?u=<%= request.original_url %>" target="_blank" rel="noopener" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; background: #3b82f6; color: white; padding: 12px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 13px;">
-              <span>Facebook</span>
-            </a>
-            <a href="https://twitter.com/intent/tweet?url=<%= request.original_url %>" target="_blank" rel="noopener" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; background: #1e293b; color: white; padding: 12px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 13px;">
-              <span>X</span>
-            </a>
-          </div>
-        </div>
-
-      </div>
-
+      <%= render "fiches/partage", fiche: s, url: url, titre: "Partager cette histoire" %>
     </div>
   </div>
 
-  <%# ========== DÉCOUVERTE ========== %>
-  <div style="border-top: 2px solid #e2e8f0;">
-    <div style="background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); padding: 80px 24px;">
-      <div style="max-width: 900px; margin: 0 auto; text-align: center;">
-        <div style="font-size: 64px; margin-bottom: 20px;">🌟</div>
-        <h2 style="color: white; font-size: 38px; font-weight: 700; margin: 0 0 16px 0;">
-          Découvrez d'autres histoires inspirantes
-        </h2>
-        <p style="color: #cbd5e1; font-size: 19px; margin: 0 auto 32px; max-width: 600px; line-height: 1.6;">
-          Des centaines de personnes ont déjà trouvé leur Déclic. À votre tour de vous lancer dans l'aventure !
-        </p>
-        <a href="/stories" style="display: inline-flex; align-items: center; gap: 12px; background: linear-gradient(135deg, #a855f7, #ec4899); color: white; padding: 20px 48px; border-radius: 999px; font-weight: 700; font-size: 18px; text-decoration: none; box-shadow: 0 10px 40px rgba(168,85,247,0.4);">
-          <span>Toutes les Belles Histoires</span>
-          <svg style="width: 22px; height: 22px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-          </svg>
-        </a>
+  <% if @opportunites.any? %>
+    <section class="fch-suite" aria-labelledby="fch-declic-titre">
+      <div class="fch-suite-tete">
+        <h2 id="fch-declic-titre">Des opportunités pour avoir ton déclic</h2>
+        <%= link_to opportunities_path, class: "acc-lien-violet" do %>Voir toutes <%= picto(:fleche, taille: 16) %><% end %>
       </div>
-    </div>
-  </div>
+      <div class="fch-vignettes">
+        <%= render partial: "fiches/vignette_opportunite", collection: @opportunites, as: :opportunite %>
+      </div>
+    </section>
+  <% end %>
 
-</div>
-
-<%# CARTE LEAFLET %>
-<% if @story.latitude.present? && @story.longitude.present? %>
-<script>
-function initStoryMap() {
-  var el = document.getElementById('story-map');
-  if (!el || el.dataset.mapInited === "1") return;
-  var lat = parseFloat(el.dataset.lat);
-  var lon = parseFloat(el.dataset.lon);
-  if (!lat || !lon) return;
-  var map = L.map(el, { scrollWheelZoom: false, zoomControl: true }).setView([lat, lon], 14);
-  L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap' }).addTo(map);
-  var marker = L.marker([lat, lon]).addTo(map);
-  marker.bindPopup("<div style='text-align:center;padding:12px;'><div style='font-size:24px;margin-bottom:8px;'>✨</div><strong style='font-size:16px;'><%= @story.title.to_s.gsub("'", "\\'") %></strong><br><span style='color:#64748b;'><%= @story.location.to_s.gsub("'", "\\'") %></span></div>");
-  el.dataset.mapInited = "1";
-  setTimeout(() => map.invalidateSize(), 100);
-}
-if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", initStoryMap); } else { initStoryMap(); }
-document.addEventListener("turbo:load", initStoryMap);
-document.addEventListener("turbo:render", initStoryMap);
-</script>
-<% end %>
+  <% if @autres_histoires.any? %>
+    <section class="fch-suite" aria-labelledby="fch-histoires-titre">
+      <div class="fch-suite-tete">
+        <h2 id="fch-histoires-titre">D'autres belles histoires</h2>
+        <%= link_to stories_path, class: "acc-lien-violet" do %>Voir toutes <%= picto(:fleche, taille: 16) %><% end %>
+      </div>
+      <div class="fch-vignettes">
+        <%= render partial: "fiches/vignette_histoire", collection: @autres_histoires, as: :histoire %>
+      </div>
+    </section>
+  <% end %>
+</main>

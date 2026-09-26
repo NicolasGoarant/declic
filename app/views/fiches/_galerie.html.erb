@@ -1,0 +1,41 @@
+<%# Galerie : photos dans l'ordre de photos_order (sinon l'image principale), glissement au doigt
+    (défilement natif avec aimantation), flèches, compteur, vignettes. Sans photo, ou si toutes
+    les photos sont mortes : l'icône de la catégorie sur fond coloré (contrôleur `galerie`). %>
+<% photos = photos_galerie(fiche) %>
+<section class="fch-galerie" style="--c: <%= cat.couleur %>" aria-label="Photos"
+         data-controller="galerie" data-action="keydown->galerie#clavier">
+  <div class="fch-galerie-cadre">
+    <% if photos.any? %>
+      <div class="fch-galerie-piste" data-galerie-target="piste" data-action="scroll->galerie#defiler" tabindex="0"
+           aria-label="<%= photos.size > 1 ? "#{photos.size} photos, faire glisser pour les parcourir" : "Photo" %>">
+        <% photos.each_with_index do |photo, i| %>
+          <figure class="fch-galerie-diapo" data-galerie-target="diapo">
+            <%= image_tag photo[:src], alt: photo[:alt], loading: (i.zero? ? "eager" : "lazy"), decoding: "async",
+                          data: { action: "error->galerie#photoMorte" } %>
+          </figure>
+        <% end %>
+      </div>
+    <% end %>
+    <div class="fch-galerie-vide" data-galerie-target="vide" <%= "hidden" if photos.any? %>>
+      <%= icone_categorie(cat, taille: 120) %>
+    </div>
+    <% if photos.size > 1 %>
+      <span class="fch-galerie-compteur" data-galerie-target="compteur" aria-live="polite">1/<%= photos.size %></span>
+      <button type="button" class="fch-galerie-fleche fch-galerie-fleche--prec" aria-label="Photo précédente"
+              data-galerie-target="fleche" data-action="galerie#precedent"><%= picto(:precedent, taille: 22) %></button>
+      <button type="button" class="fch-galerie-fleche fch-galerie-fleche--suiv" aria-label="Photo suivante"
+              data-galerie-target="fleche" data-action="galerie#suivant"><%= picto(:suivant, taille: 22) %></button>
+    <% end %>
+  </div>
+  <% if photos.size > 1 %>
+    <div class="fch-galerie-vignettes" data-galerie-target="vignettes">
+      <% photos.each_with_index do |photo, i| %>
+        <button type="button" class="fch-galerie-vignette" aria-label="Voir la photo <%= i + 1 %>"
+                aria-current="<%= i.zero? %>" data-galerie-target="vignette"
+                data-action="galerie#choisir" data-galerie-index-param="<%= i %>">
+          <%= image_tag photo[:src], alt: "", loading: "lazy", decoding: "async" %>
+        </button>
+      <% end %>
+    </div>
+  <% end %>
+</section>

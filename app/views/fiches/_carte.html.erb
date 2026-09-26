@@ -1,0 +1,42 @@
+<%# Petite carte. Dans l'emprise du diorama : mini-diorama (contrôleur `diorama` en mode mini, non
+    interactif, pin de la catégorie au centre). Hors emprise, ou diorama indisponible : Leaflet sur
+    fond OpenStreetMap. Dessous : adresse et lien Google Maps. Sans coordonnées ni adresse : rien. %>
+<% lieu, adresse = lieu_et_adresse(fiche) %>
+<% coords = fiche.latitude.present? && fiche.longitude.present? %>
+<% if coords || adresse %>
+  <section class="fch-bloc fch-carte-bloc" aria-label="Situer sur la carte">
+    <% if coords %>
+      <%= tag.div class: "fch-carte", data: {
+            controller: "diorama",
+            diorama_mini_value: true,
+            diorama_points_value: point.to_json,
+            diorama_categories_value: categories_pour_js.to_json,
+            diorama_tuiles_value: (tuiles&.pour_js || {}).to_json
+          } do %>
+        <div class="fch-carte-fond" data-diorama-target="carte" role="img"
+             aria-label="Carte : <%= [lieu, adresse].compact.join(", ").presence || fiche.title %>"></div>
+        <template data-diorama-target="modelePin">
+          <div class="pin">
+            <img class="pin-picto" alt="" width="40" height="40">
+            <span class="pin-tige"></span>
+            <span class="pin-socle"></span>
+          </div>
+        </template>
+      <% end %>
+    <% end %>
+    <div class="fch-carte-pied">
+      <p class="fch-carte-adresse">
+        <%= picto(:lieu, taille: 18) %>
+        <span>
+          <% if lieu %><strong><%= lieu %></strong><% end %>
+          <% if adresse %><span><%= adresse %></span><% end %>
+        </span>
+      </p>
+      <% if (gmaps = google_maps_url(fiche)) %>
+        <%= link_to gmaps, class: "fch-lien", target: "_blank", rel: "noopener" do %>
+          Voir sur Google Maps <%= picto(:externe, taille: 15) %>
+        <% end %>
+      <% end %>
+    </div>
+  </section>
+<% end %>

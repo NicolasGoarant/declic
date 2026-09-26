@@ -1,0 +1,323 @@
+/* Fiches publiques Opportunité et Belle Histoire (layout « fiche »). S'appuie sur accueil.css
+   (variables, logo, barre haute, barre d'onglets, pins). Mobile d'abord ; bureau (≥ 1024 px) :
+   deux colonnes, la droite collante. --c : couleur de la catégorie de la fiche. */
+
+.fch {
+  --c: var(--violet);
+  --teinte: color-mix(in srgb, var(--c) 12%, var(--blanc));
+  max-width: 1200px; margin: 0 auto; padding: calc(14px + env(safe-area-inset-top)) var(--gouttiere) 32px;
+}
+.fch h1, .fch h2, .fch h3, .fch p, .fch ul, .fch ol, .fch figure, .fch blockquote { margin: 0; }
+.fch-lien {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--violet); font-weight: 700; font-size: 14px; text-decoration: none;
+}
+.fch-lien:hover { color: var(--violet-fonce); text-decoration: underline; }
+
+/* ─── Bandeau « terminée » ─────────────────────────────────────────────────────── */
+.fch-terminee {
+  display: flex; align-items: center; gap: 10px; margin: 0 0 14px !important; padding: 12px 14px;
+  border-radius: 14px; background: #fff4e5; color: #8a4b00; font-weight: 800; font-size: 14px;
+  border: 1px solid #ffd8a8;
+}
+
+/* ─── En-tête ──────────────────────────────────────────────────────────────────── */
+.fch-entete { display: grid; gap: 10px; margin-bottom: 16px; }
+.fch-retour {
+  justify-self: start; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 14px; font-weight: 700; text-decoration: none; color: var(--encre);
+}
+.fch-retour:hover { color: var(--violet); }
+.fch-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.fch-badge {
+  padding: 4px 12px; border-radius: 999px; background: var(--c);
+  font-size: 12.5px; font-weight: 800; line-height: 1.4;
+}
+.fch-publication { font-size: 12.5px; color: var(--gris); }
+.fch-titre {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 25px; line-height: 1.22; font-weight: 800; letter-spacing: -0.015em; overflow-wrap: anywhere;
+}
+.fch-titre-icone { flex: none; width: 34px; height: 34px; margin-top: 0; filter: drop-shadow(0 2px 3px rgba(29, 26, 43, 0.18)); }
+.fch-commune { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--gris); }
+
+/* ─── Grille : une colonne sur mobile, dans l'ordre de la maquette ─────────────── */
+.fch-grille { display: flex; flex-direction: column; gap: 14px; }
+.fch-principal, .fch-cote { display: contents; }
+.fch-galerie { order: 1; }
+.fch-pratique { order: 2; }
+.fch-organisateur { order: 3; }
+.fch-etiquettes { order: 4; }
+.fch-texte-bloc { order: 5; }
+.fch-grille section[aria-labelledby="fch-programme"] { order: 6; }
+.fch-grille section[aria-labelledby="fch-public"] { order: 7; }
+.fch-carte-bloc { order: 8; }
+.fch-action, .fch-apres, .fch-source { order: 9; }
+.fch-partage { order: 10; }
+
+.fch-bloc {
+  min-width: 0; padding: 16px; border-radius: var(--rayon); background: var(--blanc);
+  border: 1px solid var(--gris-clair); box-shadow: var(--ombre-legere);
+}
+.fch-bloc-titre {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px !important;
+  font-size: 18px; line-height: 1.3; font-weight: 800; letter-spacing: -0.01em;
+}
+.fch-pastille {
+  flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px;
+  background: var(--teinte); color: color-mix(in srgb, var(--c) 70%, var(--encre));
+}
+.fch-pastille--jaune { background: #fff4d6; color: #b7791f; }
+.fch-sous-titre { margin: 20px 0 12px !important; font-size: 16px; font-weight: 800; }
+.fch-paragraphe { font-size: 15px; line-height: 1.6; }
+.fch-paragraphe + .fch-paragraphe { margin-top: 8px; }
+
+/* ─── Galerie ─────────────────────────────────────────────────────────────────── */
+.fch-galerie { min-width: 0; }
+.fch-galerie-cadre {
+  position: relative; aspect-ratio: 16 / 10; border-radius: var(--rayon); overflow: hidden;
+  background: var(--teinte); box-shadow: var(--ombre-legere);
+}
+.fch-galerie-piste {
+  position: relative; display: flex; width: 100%; height: 100%;
+  overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none;
+  overscroll-behavior-x: contain; outline-offset: -3px;
+}
+.fch-galerie-piste::-webkit-scrollbar { display: none; }
+.fch-galerie-piste[hidden], .fch-galerie-diapo[hidden], .fch-galerie-vide[hidden],
+.fch-galerie-compteur[hidden], .fch-galerie-fleche[hidden], .fch-galerie-vignettes[hidden],
+.fch-galerie-vignette[hidden] { display: none; }
+.fch-galerie-diapo { flex: 0 0 100%; height: 100%; scroll-snap-align: start; }
+.fch-galerie-diapo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.fch-galerie-vide {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 45%, var(--blanc) 0 22%, transparent 60%), color-mix(in srgb, var(--c) 28%, var(--blanc));
+}
+.fch-galerie-vide img { width: 120px; height: 120px; filter: drop-shadow(0 8px 14px rgba(29, 26, 43, 0.2)); }
+.fch-galerie-compteur {
+  position: absolute; top: 10px; right: 10px; padding: 3px 10px; border-radius: 999px;
+  background: rgba(29, 26, 43, 0.7); color: var(--blanc); font-size: 12px; font-weight: 800;
+}
+.fch-galerie-fleche {
+  position: absolute; top: 50%; display: grid; place-items: center; width: 40px; height: 40px; margin-top: -20px;
+  border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.94); color: var(--encre);
+  box-shadow: var(--ombre-legere); cursor: pointer;
+}
+.fch-galerie-fleche:hover { background: var(--blanc); color: var(--violet); }
+.fch-galerie-fleche--prec { left: 10px; }
+.fch-galerie-fleche--suiv { right: 10px; }
+.fch-galerie-vignettes { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; scrollbar-width: none; padding: 2px; }
+.fch-galerie-vignettes::-webkit-scrollbar { display: none; }
+.fch-galerie-vignette {
+  flex: none; width: 72px; height: 52px; padding: 0; border: 2px solid transparent; border-radius: 12px;
+  overflow: hidden; background: var(--teinte); cursor: pointer; opacity: 0.75;
+}
+.fch-galerie-vignette img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.fch-galerie-vignette[aria-current="true"] { border-color: var(--violet); opacity: 1; }
+
+/* ─── Encart pratique / « Où rencontrer » ─────────────────────────────────────── */
+.fch-pratique {
+  display: grid; gap: 14px; padding: 16px; border-radius: var(--rayon);
+  background: var(--teinte); border: 1px solid color-mix(in srgb, var(--c) 25%, var(--blanc));
+}
+.fch-pratique-titre { font-size: 16px; font-weight: 800; }
+.fch-pratique-ligne { display: flex; align-items: flex-start; gap: 12px; }
+.fch-pratique-ligne svg { color: color-mix(in srgb, var(--c) 70%, var(--encre)); margin-top: 1px; }
+.fch-pratique-ligne p { display: grid; gap: 2px; font-size: 14px; line-height: 1.45; min-width: 0; overflow-wrap: anywhere; }
+.fch-pratique-ligne strong { font-weight: 800; }
+.fch-pratique-ligne span { color: var(--gris); }
+
+/* ─── Organisateur ────────────────────────────────────────────────────────────── */
+.fch-organisateur { display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; }
+a.fch-organisateur:hover { border-color: color-mix(in srgb, var(--violet) 40%, var(--gris-clair)); }
+.fch-organisateur-logo {
+  flex: none; width: 56px; height: 56px; border-radius: 50%; object-fit: contain; background: var(--blanc);
+  border: 1px solid var(--gris-clair);
+}
+.fch-organisateur-initiales {
+  display: grid; place-items: center; border: 0; background: var(--teinte);
+  color: color-mix(in srgb, var(--c) 70%, var(--encre)); font-weight: 800; font-size: 19px;
+}
+.fch-organisateur-texte { display: grid; gap: 2px; min-width: 0; }
+.fch-organisateur-texte small { font-size: 12px; color: var(--gris); font-weight: 600; }
+.fch-organisateur-texte strong { font-size: 15.5px; line-height: 1.3; overflow-wrap: anywhere; }
+.fch-organisateur-chevron { margin-left: auto; color: var(--gris); }
+
+/* ─── Étiquettes ──────────────────────────────────────────────────────────────── */
+.fch-etiquettes { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; list-style: none; }
+.fch-etiquettes li {
+  padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 700;
+  background: var(--teinte); color: color-mix(in srgb, var(--c) 65%, var(--encre));
+  border: 1px solid color-mix(in srgb, var(--c) 30%, var(--blanc));
+}
+.fch-etiquettes li.fch-etiquette--gratuit { background: var(--violet-pale); color: var(--violet-fonce); border-color: #d9d0ff; }
+
+/* ─── Texte (markdown léger des helpers, photos inline) ──────────────────────── */
+.fch-chapo { margin-bottom: 12px !important; font-size: 16px; line-height: 1.55; font-weight: 700; }
+.fch-texte { font-size: 15px; line-height: 1.65; overflow-wrap: anywhere; }
+.fch-texte p { margin: 0 0 12px; }
+.fch-texte p:last-child { margin-bottom: 0; }
+.fch-texte h3 { display: flex; align-items: center; gap: 10px; margin: 18px 0 10px; font-size: 16.5px; line-height: 1.3; font-weight: 800; }
+.fch-texte h3 > span:first-child:not(:only-child) {
+  flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--teinte); font-size: 17px;
+}
+.fch-texte h4 { margin: 16px 0 8px; font-size: 15px; font-weight: 800; }
+.fch-texte ul { margin: 0 0 12px; padding-left: 20px; }
+.fch-texte ul.list-none { padding-left: 0; list-style: none; }
+.fch-texte li { margin: 4px 0; }
+.fch-texte li.flex { display: flex; gap: 8px; }
+.fch-texte a { color: var(--violet); font-weight: 700; }
+.fch-texte figure { margin: 14px 0; }
+.fch-texte img { display: block; width: 100%; height: auto; max-height: 460px; object-fit: cover; border-radius: 14px; }
+.fch-texte figcaption { margin-top: 6px; font-size: 13px; color: var(--gris); }
+.fch-texte::after { content: ""; display: table; clear: both; }
+.fch-texte .inline-photo-left, .fch-texte .inline-photo-right { width: 100%; }
+@media (min-width: 700px) {
+  .fch-texte .inline-photo-left { float: left; width: 45%; margin: 4px 20px 12px 0; }
+  .fch-texte .inline-photo-right { float: right; width: 45%; margin: 4px 0 12px 20px; }
+}
+
+/* ─── Au programme : frise verticale ──────────────────────────────────────────── */
+.fch-frise { position: relative; display: grid; gap: 14px; padding: 2px 0 2px 30px; list-style: none; }
+.fch-frise::before {
+  content: ""; position: absolute; left: 8px; top: 10px; bottom: 10px; width: 2px;
+  background: color-mix(in srgb, var(--c) 35%, var(--blanc));
+}
+.fch-frise li { position: relative; font-size: 15px; line-height: 1.45; }
+.fch-frise li::before {
+  content: ""; position: absolute; left: -27px; top: 4px; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--blanc); border: 3px solid var(--c);
+}
+
+/* ─── Citation ────────────────────────────────────────────────────────────────── */
+.fch-citation {
+  margin-top: 14px !important; padding: 14px 16px; border-radius: 0 14px 14px 0;
+  background: var(--fond); border-left: 4px solid var(--c);
+}
+.fch-citation p { font-style: italic; font-size: 15px; line-height: 1.55; }
+.fch-citation footer { margin-top: 8px; font-size: 13.5px; font-weight: 800; }
+
+/* ─── Ce qu'il faut retenir ───────────────────────────────────────────────────── */
+.fch-points { display: grid; gap: 16px; padding: 0; list-style: none; }
+.fch-points li { display: flex; align-items: flex-start; gap: 12px; }
+.fch-points-icone {
+  flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%;
+  background: var(--teinte); font-size: 20px;
+}
+.fch-points li > span:last-child { display: grid; gap: 3px; font-size: 14px; line-height: 1.5; }
+.fch-points strong { font-size: 15px; }
+.fch-points li > span:last-child span { color: var(--gris); }
+
+/* ─── Carte ───────────────────────────────────────────────────────────────────── */
+.fch-bloc.fch-carte-bloc { padding: 0; overflow: hidden; }
+.fch-carte { position: relative; height: 200px; background: #e9ece8; }
+.fch-carte-fond { position: absolute; inset: 0; z-index: 0; }
+.fch-carte-fond.leaflet-container { font: inherit; background: #e9ece8; cursor: default; }
+.fch-carte .leaflet-control-attribution:not(.acc-attribution) { font-size: 10.5px; }
+.fch-carte .leaflet-control-attribution.acc-attribution { margin: 0 0 8px 8px !important; }
+.fch-carte-pied { display: grid; gap: 8px; padding: 12px 16px 14px; }
+.fch-carte-adresse { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.45; }
+.fch-carte-adresse svg { color: var(--violet); margin-top: 1px; }
+.fch-carte-adresse > span { display: grid; gap: 1px; min-width: 0; overflow-wrap: anywhere; }
+.fch-carte-adresse > span > span { color: var(--gris); }
+
+/* ─── Bloc d'action violet ────────────────────────────────────────────────────── */
+.fch-action {
+  display: grid; gap: 12px; padding: 22px 18px; border-radius: 22px; text-align: center;
+  background: linear-gradient(145deg, #8b6cff, var(--violet) 55%, var(--violet-fonce));
+  color: var(--blanc); box-shadow: 0 12px 30px rgba(91, 61, 245, 0.32);
+}
+.fch-action h2 { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 21px; font-weight: 800; }
+.fch-action p { font-size: 14.5px; line-height: 1.5; opacity: 0.92; }
+.fch-action-bouton, .fch-action-favori {
+  display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 10px 18px;
+  border-radius: 999px; font-size: 15px; font-weight: 800; text-decoration: none; cursor: pointer;
+}
+.fch-action-bouton { background: var(--blanc); color: var(--violet) !important; box-shadow: 0 6px 16px rgba(29, 26, 43, 0.15); }
+.fch-action-bouton:hover { background: var(--violet-pale); }
+.fch-action-favori { border: 1.5px solid rgba(255, 255, 255, 0.55); background: rgba(255, 255, 255, 0.12); color: var(--blanc); }
+.fch-action-favori:hover { background: rgba(255, 255, 255, 0.2); }
+.fch-action-favori[aria-pressed="true"] svg { fill: currentColor; }
+.fch-action :focus-visible { outline-color: var(--blanc); }
+
+.fch-apres { display: grid; gap: 10px; background: var(--violet-pale); border-color: #d9d0ff; }
+.fch-apres p { font-size: 14.5px; font-weight: 600; }
+
+/* ─── Source (Belle Histoire) ─────────────────────────────────────────────────── */
+.fch-source { display: grid; gap: 8px; background: var(--fond); box-shadow: none; }
+.fch-source-titre { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gris); }
+.fch-source p { font-size: 14px; line-height: 1.5; }
+
+/* ─── Partage ─────────────────────────────────────────────────────────────────── */
+.fch-partage { background: #f3f5fd; box-shadow: none; text-align: center; }
+.fch-partage-titre { margin-bottom: 12px !important; font-size: 15px; font-weight: 800; }
+.fch-partage-liens { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.fch-reseau {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 42px; padding: 0 14px;
+  border: 0; border-radius: 12px; color: var(--blanc) !important; font-size: 13.5px; font-weight: 800;
+  text-decoration: none; cursor: pointer;
+}
+.fch-reseau[hidden] { display: none; }
+.fch-reseau:hover { filter: brightness(1.08); }
+.fch-reseau--facebook { background: #1877f2; }
+.fch-reseau--x { background: #0f1419; }
+.fch-reseau--linkedin { background: #0a66c2; }
+.fch-reseau--natif { background: var(--violet); }
+.fch-reseau--copier { background: var(--blanc); color: var(--encre) !important; border: 1px solid var(--gris-clair); }
+.fch-partage-statut { min-height: 18px; margin-top: 8px !important; font-size: 13px; font-weight: 700; color: var(--violet-fonce); overflow-wrap: anywhere; }
+.fch-partage-statut:empty { margin-top: 0 !important; min-height: 0; }
+
+/* ─── Sections pleine largeur : similaires, opportunités, autres histoires ────── */
+.fch-suite { margin-top: 30px; }
+.fch-suite-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.fch-suite-tete h2 { font-size: 20px; line-height: 1.25; font-weight: 800; letter-spacing: -0.01em; }
+.fch-vignettes { display: grid; gap: 12px; }
+.fch-vignette {
+  display: flex; align-items: center; gap: 12px; min-width: 0; padding: 10px; border-radius: 16px;
+  background: var(--blanc); border: 1px solid var(--gris-clair); box-shadow: var(--ombre-legere); text-decoration: none;
+}
+.fch-vignette:hover { box-shadow: var(--ombre); border-color: color-mix(in srgb, var(--c) 45%, var(--gris-clair)); }
+.fch-vignette-photo {
+  position: relative; flex: none; display: grid; place-items: center; width: 84px; height: 84px; border-radius: 12px;
+  overflow: hidden; background: color-mix(in srgb, var(--c) 22%, var(--blanc));
+}
+.fch-vignette-photo img[data-repli] { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.fch-vignette-texte { display: grid; gap: 5px; min-width: 0; flex: 1; }
+.fch-vignette-titre { font-size: 14.5px; line-height: 1.3; font-weight: 800; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fch-vignette-infos { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12.5px; color: var(--gris); }
+.fch-vignette-infos > span { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+.fch-puce {
+  justify-self: start; padding: 2px 9px; border-radius: 999px; background: var(--c); font-size: 11.5px; font-weight: 800;
+}
+.fch-vignette-chevron { flex: none; color: var(--gris); }
+
+/* ─── Tablette ────────────────────────────────────────────────────────────────── */
+@media (min-width: 768px) {
+  .fch-titre { font-size: 30px; }
+  .fch-titre-icone { width: 40px; height: 40px; }
+  .fch-carte { height: 240px; }
+  .fch-vignettes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ─── Bureau : deux colonnes, la droite collante ──────────────────────────────── */
+@media (min-width: 1024px) {
+  .fch { padding: 22px 28px 48px; }
+  .fch-titre { font-size: 34px; }
+  .fch-grille {
+    display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 28px; align-items: start;
+  }
+  .fch-principal, .fch-cote { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .fch-cote { position: sticky; top: calc(var(--barre-h) + 20px); }
+  .fch-galerie-cadre { aspect-ratio: 16 / 9; }
+  .fch-galerie-fleche { width: 44px; height: 44px; margin-top: -22px; }
+  .fch-galerie-vignette { width: 96px; height: 66px; }
+  .fch-bloc { padding: 20px; }
+  .fch-carte { height: 280px; }
+  .fch-suite { margin-top: 44px; }
+  .fch-suite-tete h2 { font-size: 24px; }
+  .fch-vignettes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fch-galerie-piste { scroll-behavior: auto; }
+}

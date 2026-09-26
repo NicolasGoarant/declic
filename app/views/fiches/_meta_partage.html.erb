@@ -1,0 +1,18 @@
+<%# Balises Open Graph et Twitter Card d'une fiche (titre, résumé de 150 caractères, image de
+    couverture en URL absolue). %>
+<% content_for :title, "#{fiche.title} — Déclic" %>
+<% content_for :meta_partage do %>
+  <meta name="description" content="<%= resume %>">
+  <link rel="canonical" href="<%= url %>">
+  <meta property="og:site_name" content="Déclic">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="<%= fiche.title %>">
+  <meta property="og:description" content="<%= resume %>">
+  <meta property="og:url" content="<%= url %>">
+  <meta property="og:image" content="<%= image %>">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<%= fiche.title %>">
+  <meta name="twitter:description" content="<%= resume %>">
+  <meta name="twitter:image" content="<%= image %>">
+<% end %>

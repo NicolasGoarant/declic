@@ -6,9 +6,13 @@ class OpportunitiesController < ApplicationController
     @opportunities = Opportunity.active.order(created_at: :desc).limit(100)
   end
 
-  # Affichage d'une opportunité via son slug (FriendlyId)
+  # Affichage d'une opportunité via son slug (FriendlyId). Mise en page de /labo/accueil
+  # (layout « fiche ») ; les tuiles servent à la mini-carte diorama.
   def show
     @opportunity = Opportunity.friendly.find(params[:id])
+    @similaires = @opportunity.similaires.with_attached_image.with_attached_photos
+    @tuiles = DioramaTuiles.new if @opportunity.latitude.present? && @opportunity.longitude.present?
+    render layout: "fiche"
   end
 
   # Formulaire de proposition (Public)

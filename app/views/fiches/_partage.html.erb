@@ -1,0 +1,24 @@
+<%# Partage : Facebook, X, LinkedIn, partage natif (affiché par le contrôleur `fiche` quand
+    navigator.share existe), copie du lien. %>
+<% liens = liens_partage(url, fiche.title) %>
+<section class="fch-bloc fch-partage" aria-labelledby="fch-partage-titre">
+  <h2 id="fch-partage-titre" class="fch-partage-titre"><%= titre %></h2>
+  <div class="fch-partage-liens">
+    <%= link_to liens[:facebook], class: "fch-reseau fch-reseau--facebook", target: "_blank", rel: "noopener" do %>
+      <%= logo_reseau(:facebook) %><span>Facebook</span>
+    <% end %>
+    <%= link_to liens[:x], class: "fch-reseau fch-reseau--x", target: "_blank", rel: "noopener" do %>
+      <%= logo_reseau(:x, taille: 16) %><span>X</span>
+    <% end %>
+    <%= link_to liens[:linkedin], class: "fch-reseau fch-reseau--linkedin", target: "_blank", rel: "noopener" do %>
+      <%= logo_reseau(:linkedin, taille: 16) %><span>LinkedIn</span>
+    <% end %>
+    <button type="button" class="fch-reseau fch-reseau--natif" hidden data-fiche-target="partageNatif" data-action="fiche#partager">
+      <%= picto(:partager, taille: 17) %><span>Partager…</span>
+    </button>
+    <button type="button" class="fch-reseau fch-reseau--copier" data-action="fiche#copier">
+      <%= picto(:lien, taille: 17) %><span>Copier le lien</span>
+    </button>
+  </div>
+  <p class="fch-partage-statut" role="status" data-fiche-target="statut"></p>
+</section>

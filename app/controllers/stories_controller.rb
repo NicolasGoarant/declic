@@ -12,8 +12,13 @@ class StoriesController < ApplicationController
 
     # Rediriger si la story n'est pas active (sauf pour les admins)
     unless @story.is_active
-      redirect_to stories_path, alert: "Cette histoire n'est pas encore publiée."
+      return redirect_to stories_path, alert: "Cette histoire n'est pas encore publiée."
     end
+
+    @opportunites = @story.opportunites_proches
+    @autres_histoires = @story.autres_histoires.with_attached_image.with_attached_photos
+    @tuiles = DioramaTuiles.new if @story.latitude.present? && @story.longitude.present?
+    render layout: "fiche"
   end
 
   def new
