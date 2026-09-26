@@ -1,14 +1,14 @@
 // La page d'accueil sur le diorama (/labo/accueil), portée de maquette-declic-v3 (nancy-3d).
 //
-// Leaflet et Leaflet.markercluster sont importés À LA DEMANDE, dans connect() : ce contrôleur
-// est chargé d'office sur toutes les pages (eagerLoadControllersFrom), et les autres pages
-// n'ont pas à tirer le CDN. Leaflet d'abord : le module de markercluster s'accroche au `L`
-// global que Leaflet pose lui-même (comportement de la bibliothèque, pas de ce code).
+// Leaflet est importé À LA DEMANDE, dans connect() : ce contrôleur est chargé d'office sur toutes
+// les pages (eagerLoadControllersFrom), et les autres pages n'ont pas à tirer le CDN. Les pins
+// proches se regroupent en bouquets (diorama/bouquets), sans Leaflet.markercluster.
 import { Controller } from "@hotwired/stimulus"
 import { creerProjection } from "diorama_projection"
 import { creerCoucheDalles, creerCoucheBlanche } from "diorama/couches"
 import { creerCoucheAmbiance, lireAmbiance } from "diorama/ambiance"
 import { resoudreAuto } from "diorama/soleil"
+import { regrouper, eventail, FLEURS_MAX } from "diorama/bouquets"
 import { lireDate, aujourdhui, estPasse, estAVenir, etiquette, periode, jourCourt } from "diorama/dates"
 
 const NIVEAU_MAX = 8
@@ -18,15 +18,10 @@ const CENTRE_INITIAL = { lat: 48.6936, lon: 6.1833 }
 const ZOOM_INITIAL = 6
 const ATTRIBUTION = "IGN BD TOPO®, BD ORTHO® et LiDAR HD (LO 2.0) · Métropole du Grand Nancy, Géonancy · " +
                     "© les contributeurs OpenStreetMap (ODbL)"
-// Seuil de regroupement mesuré dans la v3 (m02-chevauchement.py) : deux marqueurs plus
-// proches se chevauchent.
-const SEUIL_GROUPE_PX = 42
 const FICHES_MAX = 24
+const HISTOIRES = "histoires" // Categorie::HISTOIRES : les Belles Histoires
 const CLE_FAVORIS = "declic:favoris"
 const ETROIT = "(max-width: 699.98px)"
-const BUREAU = "(min-width: 1024px)"
-
-const normaliser = (s) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
 
 // Texte noir ou blanc selon la clarté de la couleur de catégorie (luminance relative WCAG).
 function encreSur(hex) {
@@ -39,17 +34,15 @@ export default class extends Controller {
   static values = { points: Array, categories: Array, tuiles: Object, developpement: Boolean }
   static targets = [
     "carte", "rendu", "ambiance", "alerte", "voletTitre", "poigneeTitre", "compteur", "fiches", "vide", "stats",
-    "modeleFiche", "modelePin", "recherche", "categorie", "ongletFavoris", "ongletCarte"
+    "modeleFiche", "modelePin", "modelePopup", "categorie", "ongletFavoris", "ongletCarte"
   ]
 
   connect() {
     this.categoriesParCle = Object.fromEntries(this.categoriesValue.map((c) => [c.cle, c]))
-    this.filtre = { categories: new Set(), texte: "", favoris: false }
+    this.filtre = { categories: new Set(), favoris: false }
     this.favoris = this.lireFavoris()
     this.selection = null
-    this.points = this.pointsValue.map((p) => ({
-      ...p, debut: lireDate(p.debut), fin: lireDate(p.fin), recherche: normaliser(`${p.titre} ${p.commune}`)
-    }))
+    this.points = this.pointsValue.map((p) => ({ ...p, debut: lireDate(p.debut), fin: lireDate(p.fin) }))
     this.categorieTargets.forEach((b) => b.style.setProperty("--c", this.categoriesParCle[b.dataset.cle]?.couleur))
     this.majCompteurs()
     this.majVolet()
@@ -71,7 +64,6 @@ export default class extends Controller {
     try {
       const module = await import("leaflet")
       this.L = module.default ?? module
-      await import("leaflet.markercluster")
       const reponse = await fetch(`${t.base}/${t.lot}/manifeste.json`)
       if (!reponse.ok) throw new Error(`manifeste HTTP ${reponse.status}`)
       this.manifeste = await reponse.json()
@@ -109,7 +101,7 @@ export default class extends Controller {
     })
     this.bornes = L.latLngBounds(this.carte.unproject([0, hauteur], NIVEAU_MAX), this.carte.unproject([largeur, 0], NIVEAU_MAX))
     this.carte.setMaxBounds(this.bornes.pad(0.6))
-    this.carte.fitBounds(this.bornes) // une vue d'abord : les grappes en ont besoin pour s'ajouter
+    this.carte.fitBounds(this.bornes) // une vue d'abord : le regroupement en bouquets en a besoin
     this.optionsCouche = {
       minZoom: 0, maxZoom: NIVEAU_MAX + 1, maxNativeZoom: NIVEAU_MAX, tileSize: 256,
       noWrap: true, bounds: this.bornes, attribution: ATTRIBUTION
@@ -122,13 +114,8 @@ export default class extends Controller {
     this.ambianceEffective = "origine"
     this.poserFond(this.coucheVraie())
 
-    this.grappes = L.markerClusterGroup({
-      maxClusterRadius: SEUIL_GROUPE_PX, showCoverageOnHover: false, spiderfyOnMaxZoom: true,
-      iconCreateFunction: (grappe) => L.divIcon({
-        html: `<span>${grappe.getChildCount()}</span>`, className: "acc-grappe", iconSize: [44, 44]
-      })
-    }).addTo(this.carte)
-    this.grappes.on("animationend spiderfied unspiderfied", () => this.marquerSurvol())
+    this.calquePins = L.layerGroup().addTo(this.carte)
+    this.carte.on("zoomend", () => this.dessinerPins())
 
     this.carte.on("moveend", () => this.majVolet())
     this.carte.on("click", () => {
@@ -276,10 +263,8 @@ export default class extends Controller {
       if (!this.projection.dansLaMosaique(px) || !niveau8?.has(`${Math.floor(px[0] / 256)}/${Math.floor(px[1] / 256)}`)) return
       p.l93 = [x, y]
       p.latlng = this.carte.unproject(L.point(px[0], px[1]), NIVEAU_MAX)
-      p.marqueur = L.marker(p.latlng, { icon: this.iconePin(p), title: p.titre, riseOnHover: true })
-      p.marqueur.on("click", () => this.selectionner(p.id, { depuisCarte: true }))
     })
-    this.poses = this.points.filter((p) => p.marqueur)
+    this.poses = this.points.filter((p) => p.latlng)
     this.majCompteurs()
   }
 
@@ -295,6 +280,171 @@ export default class extends Controller {
     return this.L.divIcon({ html: pin, className: "acc-pin", iconSize: [40, 88], iconAnchor: [20, 80] })
   }
 
+  // ─── Pins isolés et bouquets ─────────────────────────────────────────────────────────
+  // Groupes des points filtrés au zoom donné (pieds à moins de SEUIL_BOUQUET_PX à l'écran).
+  groupes(zoom) {
+    const elements = this.poses.filter((p) => this.passe(p)).map((p) => {
+      const { x, y } = this.carte.project(p.latlng, zoom)
+      return { p, x, y }
+    })
+    return regrouper(elements).map((g) => g.map((e) => e.p))
+  }
+
+  // Redessine pins et bouquets : fin de zoom et changement de filtre. `ancres` retient, pour chaque
+  // point affiché, où poser sa popup (pied + décalage jusqu'au haut de son icône).
+  dessinerPins() {
+    if (!this.calquePins) return
+    this.calquePins.clearLayers()
+    this.ancres = new Map()
+    for (const groupe of this.groupes(this.carte.getZoom())) {
+      if (groupe.length === 1) {
+        const p = groupe[0]
+        p.marqueur ||= this.L.marker(p.latlng, { icon: this.iconePin(p), title: p.titre, riseOnHover: true })
+          .on("click", () => this.ouvrirPopup(p.id))
+        this.calquePins.addLayer(p.marqueur)
+        this.ancres.set(p.id, { latlng: p.latlng, decalage: [0, -84] })
+      } else {
+        this.calquePins.addLayer(this.bouquet(groupe))
+      }
+    }
+    this.marquerSurvol()
+    this.suivrePopup()
+  }
+
+  // Un pied commun (pastille blanche cerclée de violet) au barycentre du groupe, une tige par fleur
+  // en éventail, 6 fleurs au plus et une pastille « +n » qui zoome sur le groupe.
+  bouquet(groupe) {
+    const L = this.L
+    const pixels = groupe.map((p) => this.carte.project(p.latlng, NIVEAU_MAX))
+    const centre = this.carte.unproject(L.point(
+      pixels.reduce((s, q) => s + q.x, 0) / pixels.length, pixels.reduce((s, q) => s + q.y, 0) / pixels.length
+    ), NIVEAU_MAX)
+    const fleurs = groupe.slice(0, FLEURS_MAX).sort((a, b) => a.latlng.lng - b.latlng.lng) // d'ouest en est
+    const el = document.createElement("div")
+    el.className = "bouquet"
+    eventail(fleurs.length).forEach((t, i) => {
+      const p = fleurs[i], cat = this.categorie(p.categorie)
+      const tige = document.createElement("span")
+      tige.className = "bouquet-tige"
+      tige.dataset.id = p.id
+      tige.style.cssText = `height:${t.longueur}px;transform:rotate(${t.angle}deg)`
+      tige.style.setProperty("--c", cat.couleur)
+      const fleur = document.createElement("img")
+      fleur.className = "bouquet-fleur"
+      fleur.dataset.id = p.id
+      fleur.src = cat.icone
+      fleur.srcset = `${cat.icone2x} 2x`
+      fleur.alt = p.titre
+      fleur.title = p.titre
+      fleur.style.cssText = `left:${t.x - 20}px;top:${t.y - 36}px`
+      el.append(tige, fleur)
+      this.ancres.set(p.id, { latlng: centre, decalage: [t.x, t.y - 40] })
+    })
+    const pied = document.createElement("span")
+    pied.className = "bouquet-pied"
+    el.append(pied)
+    if (groupe.length > FLEURS_MAX) {
+      const plus = document.createElement("span")
+      plus.className = "bouquet-plus"
+      plus.textContent = `+${groupe.length - FLEURS_MAX}`
+      plus.title = "Zoomer sur ce groupe"
+      el.append(plus)
+    }
+    const icone = L.divIcon({ html: el, className: "acc-bouquet", iconSize: [0, 0], iconAnchor: [0, 0] })
+    return L.marker(centre, { icon: icone, title: `${groupe.length} initiatives` }).on("click", (e) => {
+      const cible = e.originalEvent?.target
+      if (cible?.closest?.(".bouquet-plus")) {
+        const { haut, bas } = this.marges()
+        this.carte.fitBounds(L.latLngBounds(groupe.map((p) => p.latlng)),
+                             { paddingTopLeft: [40, haut + 90], paddingBottomRight: [40, bas + 20] })
+        return
+      }
+      this.ouvrirPopup(cible?.closest?.("[data-id]")?.dataset.id || fleurs[0].id)
+    })
+  }
+
+  // Premier zoom (depuis le zoom courant) où le point n'est plus dans un bouquet.
+  zoomIsole(p) {
+    for (let z = this.carte.getZoom(); z < this.carte.getMaxZoom(); z++) {
+      if (this.groupes(z).find((g) => g.includes(p))?.length === 1) return z
+    }
+    return this.carte.getMaxZoom()
+  }
+
+  // ─── La popup d'un pin ───────────────────────────────────────────────────────────────
+  // Ce que le logo (en haut), la légende et le volet (en bas) recouvrent de la carte, en px.
+  marges() {
+    const cadre = this.carteTarget.getBoundingClientRect()
+    let haut = 12, bas = 12
+    const logo = this.element.querySelector(".acc-entete")
+    if (logo?.offsetParent) haut = Math.max(haut, logo.getBoundingClientRect().bottom - cadre.top + 10)
+    for (const el of this.element.querySelectorAll(".acc-volet, .acc-volet .acc-categories")) {
+      const r = el.getBoundingClientRect()
+      // Sur bureau, le volet est à gauche de la carte : il ne la recouvre pas.
+      if (r.right <= cadre.left + 1 || r.left >= cadre.right - 1 || r.top >= cadre.bottom) continue
+      bas = Math.max(bas, cadre.bottom - r.top + 10)
+    }
+    return { haut, bas }
+  }
+
+  ouvrirPopup(id) {
+    const p = this.points.find((q) => q.id === id), ancre = this.ancres?.get(id)
+    if (!p || !ancre) return
+    const L = this.L
+    if (!this.popup) {
+      this.popup = L.popup({ className: "acc-popup", minWidth: 240, maxWidth: 240, autoPan: true })
+      this.popup.on("remove", () => { this.popupId = null })
+    }
+    const { haut, bas } = this.marges()
+    Object.assign(this.popup.options, {
+      offset: L.point(ancre.decalage), autoPanPaddingTopLeft: L.point(12, haut), autoPanPaddingBottomRight: L.point(12, bas)
+    })
+    this.selectionner(id, { depuisCarte: true })
+    this.popup.setLatLng(ancre.latlng).setContent(this.contenuPopup(p)).openOn(this.carte)
+    this.popupId = id
+  }
+
+  // Après un nouveau regroupement, la popup suit sa fleur ; elle se ferme si le point est filtré.
+  suivrePopup() {
+    if (!this.popupId || !this.popup?.isOpen()) return
+    const ancre = this.ancres.get(this.popupId)
+    if (!ancre) { this.carte.closePopup(); return }
+    this.popup.options.offset = this.L.point(ancre.decalage)
+    this.popup.setLatLng(ancre.latlng)
+  }
+
+  contenuPopup(p) {
+    const cat = this.categorie(p.categorie)
+    const el = this.modelePopupTarget.content.firstElementChild.cloneNode(true)
+    el.style.setProperty("--c", cat.couleur)
+    const photo = el.querySelector(".bulle-photo"), picto = el.querySelector(".bulle-picto")
+    picto.src = cat.icone2x
+    if (p.photo) {
+      picto.hidden = true
+      // Une photo morte retombe sur l'icône de catégorie, dans la même boîte.
+      photo.addEventListener("error", () => { photo.hidden = true; picto.hidden = false }, { once: true })
+      photo.src = p.photo
+    } else photo.hidden = true
+    const etiquetteCat = el.querySelector(".bulle-cat")
+    etiquetteCat.textContent = cat.libelle
+    etiquetteCat.style.color = encreSur(cat.couleur)
+    el.querySelector(".bulle-titre").textContent = p.titre
+    this.remplir(el, ".bulle-date", periode(p) && [periode(p), p.horaire].filter(Boolean).join(" · "))
+    this.remplir(el, ".bulle-commune", p.commune)
+    const lien = el.querySelector(".bulle-lien")
+    lien.href = p.url
+    lien.querySelector("span").textContent = p.categorie === HISTOIRES ? "Lire l'histoire" : "Voir la fiche"
+    return el
+  }
+
+  echap(event) {
+    if (event.key === "Escape") this.fermerPopup()
+  }
+
+  fermerPopup() {
+    if (this.popup?.isOpen()) this.carte.closePopup()
+  }
+
   categorie(cle) {
     return this.categoriesParCle[cle] || { cle, libelle: "Autre", couleur: "#6b6880", icone: "", icone2x: "" }
   }
@@ -303,16 +453,12 @@ export default class extends Controller {
   passe(p) {
     const f = this.filtre
     if (f.categories.size && !f.categories.has(p.categorie)) return false
-    if (f.texte && !p.recherche.includes(f.texte)) return false
     if (f.favoris && !this.favoris.has(p.id)) return false
     return true
   }
 
   appliquerFiltres() {
-    if (this.grappes) {
-      this.grappes.clearLayers()
-      this.grappes.addLayers(this.poses.filter((p) => this.passe(p)).map((p) => p.marqueur))
-    }
+    this.dessinerPins()
     this.majVolet()
   }
 
@@ -320,19 +466,6 @@ export default class extends Controller {
     const c = this.filtre.categories
     c.has(cle) ? c.delete(cle) : c.add(cle)
     this.categorieTargets.forEach((b) => b.setAttribute("aria-pressed", String(c.has(b.dataset.cle))))
-    this.appliquerFiltres()
-  }
-
-  rechercher() {
-    this.filtre.texte = normaliser(this.rechercheTarget.value.trim())
-    this.appliquerFiltres()
-  }
-
-  reinitialiser() {
-    this.filtre = { categories: new Set(), texte: "", favoris: false }
-    this.rechercheTarget.value = ""
-    this.categorieTargets.forEach((b) => b.setAttribute("aria-pressed", "false"))
-    this.majOnglets()
     this.appliquerFiltres()
   }
 
@@ -504,9 +637,9 @@ export default class extends Controller {
     const fiche = event.target.closest(".fiche")
     if (!fiche || event.target.closest("a")) return
     const p = this.points.find((q) => q.id === fiche.dataset.id)
-    if (p?.marqueur && this.carte) {
+    if (p?.latlng && this.carte) {
       this.selectionner(p.id)
-      this.grappes.zoomToShowLayer(p.marqueur, () => this.carte.panTo(p.latlng))
+      this.carte.setView(p.latlng, this.zoomIsole(p))
     }
   }
 
@@ -520,14 +653,15 @@ export default class extends Controller {
     this.marquerSurvol()
   }
 
-  // Met en avant le marqueur de la fiche survolée, ou la grappe qui le contient.
+  // Met en avant le pin de la fiche survolée ou sélectionnée, ou sa fleur dans un bouquet.
   marquerSurvol() {
-    if (!this.grappes) return
+    if (!this.calquePins) return
     this.carteTarget.querySelectorAll(".acc-survole").forEach((el) => el.classList.remove("acc-survole"))
     for (const id of [this.survol, this.selection]) {
-      const p = id && this.points.find((q) => q.id === id)
-      if (!p?.marqueur || !this.grappes.hasLayer(p.marqueur)) continue
-      this.grappes.getVisibleParent(p.marqueur)?.getElement()?.classList.add("acc-survole")
+      const el = id && this.carteTarget.querySelector(`.pin[data-id="${id}"], .bouquet-fleur[data-id="${id}"]`)
+      if (!el) continue
+      el.classList.add("acc-survole")
+      el.closest(".leaflet-marker-icon")?.classList.add("acc-survole")
     }
   }
 
@@ -546,10 +680,9 @@ export default class extends Controller {
   // ─── Commandes de carte ──────────────────────────────────────────────────────────────
   cadrer() {
     const pts = this.poses.filter((p) => this.passe(p)).map((p) => p.latlng)
-    // Sur mobile, l'en-tête et les puces recouvrent la carte : on cadre dans ce qui reste visible.
-    const bureau = window.matchMedia(BUREAU).matches
-    const haut = bureau ? 80 : (this.element.querySelector(".acc-tete")?.offsetHeight || 0) + 20
-    const options = { paddingTopLeft: [30, haut], paddingBottomRight: [bureau ? 90 : 80, bureau ? 40 : 110], maxZoom: 6 }
+    // Le logo, la légende et le volet recouvrent la carte : on cadre dans ce qui reste visible.
+    const { haut, bas } = this.marges()
+    const options = { paddingTopLeft: [30, haut + 80], paddingBottomRight: [80, bas + 10], maxZoom: 6 }
     if (pts.length) this.carte.fitBounds(this.L.latLngBounds(pts), options)
     else this.carte.fitBounds(this.bornes)
   }

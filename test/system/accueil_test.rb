@@ -46,17 +46,26 @@ class AccueilTest < ApplicationSystemTestCase
     end
   end
 
-  test "l'écran Carte ne garde que recherche, six catégories et zoom" do
+  test "l'écran Carte ne garde que le logo, la légende des six catégories en bas et le zoom" do
     sur_l_ecran_carte do
-      %w[.acc-puces .acc-territoire .acc-filtres .acc-rond .acc-entete-actions].each { |css| assert_no_selector css }
+      %w[.acc-puces .acc-territoire .acc-filtres .acc-rond .acc-entete-actions .acc-recherche].each { |css| assert_no_selector css }
+      assert_no_selector "input[type=search]"
       assert_no_selector "[aria-label='Recentrer la carte']"
       assert_selector "[aria-label='Zoomer']"
       assert_selector "[aria-label='Dézoomer']"
       assert_selector ".acc-entete .acc-logo", text: "Déclic"
 
+      # La légende est dans le volet, juste au-dessus de sa poignée, et reste utilisable volet replié.
+      assert_selector ".acc-volet > .acc-categories + .acc-poignee"
+      legende = find(".acc-categories").rect
+      assert_operator legende.y + legende.height, :<=, find(".acc-poignee").rect.y
+
       categories = all(".acc-cat").map { |c| c.find("span").text }
       assert_equal 6, categories.size
       assert_equal "Belles Histoires", categories.last
+
+      find(".acc-cat[data-cle='histoires']").click
+      assert_selector ".acc-cat[data-cle='histoires'][aria-pressed='true']"
     end
   end
 end

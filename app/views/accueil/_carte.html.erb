@@ -39,5 +39,22 @@
     </div>
   </div>
 
+  <%# La popup d'un pin, remplie par le JS (diorama#contenuPopup). %>
+  <template data-diorama-target="modelePopup">
+    <article class="bulle">
+      <div class="bulle-bandeau">
+        <img class="bulle-photo" alt="" decoding="async">
+        <img class="bulle-picto" alt="" width="64" height="64">
+      </div>
+      <div class="bulle-corps">
+        <span class="bulle-cat"></span>
+        <h3 class="bulle-titre"></h3>
+        <p class="bulle-date"><%= picto(:horloge, taille: 14) %><span></span></p>
+        <p class="bulle-commune"><%= picto(:lieu, taille: 14) %><span></span></p>
+        <a class="bulle-lien" href="#"><span>Voir la fiche</span><%= picto(:fleche, taille: 16) %></a>
+      </div>
+    </article>
+  </template>
+
   <p class="acc-alerte" role="status" hidden data-diorama-target="alerte"></p>
 </section>

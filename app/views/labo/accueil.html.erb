@@ -4,7 +4,8 @@
       diorama_points_value: points_diorama(@opportunites, @histoires_carte).to_json,
       diorama_categories_value: categories_pour_js.to_json,
       diorama_tuiles_value: @tuiles.pour_js.to_json,
-      diorama_developpement_value: Rails.env.development?
+      diorama_developpement_value: Rails.env.development?,
+      action: "keydown@window->diorama#echap sheet:ouverte->diorama#fermerPopup"
     } do %>
   <%= render "accueil/barre_haute" %>
 
@@ -12,8 +13,6 @@
     <div class="acc-tete">
       <%= render "accueil/entete" %>
       <%= render "accueil/accroche" %>
-      <%= render "accueil/recherche" %>
-      <%= render "accueil/categories" %>
     </div>
     <%= render "accueil/carte", disponibles: @tuiles.disponibles %>
     <%= render "accueil/volet" %>
