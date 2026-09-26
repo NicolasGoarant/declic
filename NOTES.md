@@ -24,7 +24,6 @@
 - Base de dev : contient des tables d'une autre branche (veille_*, sources…) ; ne pas régénérer schema.rb via db:migrate.
 - Lancer `declic:dates_rapport` en production ; puis supprimer start_date / end_date / highlights_*.
 - Diorama (branche `refonte-accueil`) : zoom initial, publication R2, licence Géonancy.
-- `.bak` hors app/views à supprimer.
 
 ## Fichiers clés
 - `app/views/{opportunities,stories}/show.html.erb`, `app/views/fiches/*`, `app/views/layouts/fiche.html.erb`, `app/helpers/fiches_helper.rb`, `app/assets/stylesheets/fiche.css`
