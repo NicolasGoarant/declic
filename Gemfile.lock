@@ -130,6 +130,10 @@ GEM
     debug (1.11.0)
       irb (~> 1.10)
       reline (>= 0.3.8)
+    dotenv (3.2.0)
+    dotenv-rails (3.2.0)
+      dotenv (= 3.2.0)
+      railties (>= 6.1)
     drb (2.2.3)
     erb (5.0.2)
     erubi (1.13.1)
@@ -434,6 +438,7 @@ DEPENDENCIES
   capybara
   commonmarker
   debug
+  dotenv-rails
   faraday
   feedjira (~> 3.2)
   friendly_id (~> 5.5)
