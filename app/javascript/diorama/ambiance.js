@@ -175,7 +175,7 @@ export function creerCoucheAmbiance(L, opts) {
         .then(([parametres, base, classe]) => {
           if (!base) { fini(new Error("dalle absente"), toile); return }
           const regles = parametres?.regles || []
-          const ctx = toile.getContext("2d")
+          const ctx = toile.getContext("2d", { willReadFrequently: true })
           if (!regles.length) { ctx.drawImage(base, 0, 0); fini(null, toile); return }
           moteur ||= new Moteur()
           ctx.drawImage(moteur.traiter(base, classe, classe ? mode : 2, regles), 0, 0)

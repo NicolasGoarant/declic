@@ -18,7 +18,7 @@ class DioramaTuilesTest < ActiveSupport::TestCase
   end
 
   test "une ambiance exige blanche, propriété et son propre fichier" do
-    t = tuiles(%w[toits-v1/manifeste.json masque-bati/manifeste.json toits-v1-propriete/manifeste.json
+    t = tuiles(%w[toits-v1/manifeste.json masque-bati/manifeste.json propriete-toits-v1/manifeste.json
                   ambiances/hiver-actuelle.json])
     assert_equal %w[hiver], t.disponibles[:ambiances]
   end
