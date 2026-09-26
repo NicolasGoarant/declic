@@ -1,30 +1,25 @@
 # NOTES
 
 ## Fait
-- Export diorama : tâche `declic:export_diorama` (opportunités publiées et à venir en JSON public, hors dépôt), dates et image corrigées.
-- Géocodage restreint à la zone de Nancy.
-- Compteurs publics calculés depuis la base ; articles de presse fictifs retirés.
-- Carte de la home extraite dans le partial `app/views/shared/_map.html.erb` (HTML, CSS, JS Leaflet, popups, géolocalisation).
-  - Filtre par catégorie : `window._declicFilter(cat)`, appelé par les chips/select de la home.
-  - Une seule carte par page (`id="map"`, globals `window._declic*`).
-  - Option `locate: false` pour masquer le bouton « Me localiser ».
-- Corrigé : `_declicButton` dans `stopFollow` ; Leaflet n'est plus rechargé par le partial (markercluster en `defer`, après le Leaflet du layout).
-- Page de test `/labo/diorama` (viewer de la mosaïque toits-v1, hors navigation) + module `app/javascript/diorama_projection.js` : WGS84/Lambert-93 → pixel de mosaïque, portage de `~/Documents/nancy-3d/projection.js` (identique au pixel près).
-  - Affiche les vraies opportunités (`/api/v1/opportunities`), cercles colorés par catégorie, popup au clic (même fiche que Leaflet + extrait de description). Compteur « n/N dans le secteur couvert » dans le HUD.
-  - Secteur couvert = dalle listée au niveau 8 du manifeste (pas le simple rectangle) ; hors secteur = exclu en silence. Actuellement 17/18 (reste : Landremont).
-  - Sans MNS : z = z_ref (231,17 m) ; ~1,73 px de mosaïque par mètre d'écart → marqueurs ~35-45 px trop hauts en ville basse.
-  - Vérifié en Chromium headless (`~/.cache/ms-playwright/chromium-1243`, piloté via CDP) ; le Chrome du MCP Playwright reste absent.
-  - Filtres par catégorie (`window._declicFilter`, chips en bas à gauche) et bouton « Me localiser » (losange bleu + ellipse de précision ; message si hors secteur couvert). Testés en Chromium headless avec géolocalisation simulée : le vrai prompt de permission reste à essayer à la main.
-  - Tuiles servies par `https://tuiles-declic.mist-media.eu/toits-v1/` (ancienne URL r2.dev abandonnée). Côté `~/Documents/nancy-3d` : `publier-r2.py` modifié mais NON commité ; le manifeste en ligne contient encore l'ancienne URL dans `modele_url_dalle` (republier avec publier-r2.py).
-- MJC Desforges (id 104) : coordonnées corrigées en base de DEV seulement (était dans le Loiret) ; à refaire en prod si la fiche y existe.
+- Branche `refonte-accueil` (partie de `export-diorama-dates`, PR #27) : `/labo/accueil`, la future home sur le diorama. La home actuelle et la route racine sont intactes.
+  - Vue `labo/accueil` + partiels `app/views/accueil/`, layout `layouts/accueil`, CSS `accueil.css` (mobile ≤767, tablette, bureau ≥1024 avec panneau gauche de 380 px).
+  - Contrôleur Stimulus `diorama_controller.js` : Leaflet et markercluster importés à la demande (jsdelivr `+esm`, `preload: false`), pins sur tige, grappes violettes, filtres, favoris localStorage, géolocalisation, volet `majVolet` porté de la v3.
+  - Modules `app/javascript/diorama/` : couches (vrai, blanche), ambiance WebGL, soleil (mode auto), dates.
+  - `DioramaTuiles` : base `DIORAMA_TILES_URL` (défaut tuiles-declic.mist-media.eu), sonde HEAD côté serveur mise en cache 10 min. La bascule et les ambiances ne s'affichent que si les fichiers sont publiés.
+  - `Categorie` : source unique des 6 catégories ; marqueurs 96/192 px dans `app/assets/images/markers/`.
+  - `Opportunity.date_iso` (ISO strict), partagée avec l'export ; `declic:dates_demo` (dev seulement, déjà lancée le 2026-09-26).
+- Antérieur (PR #27) : export diorama, `/labo/diorama`, `diorama_projection.js`, carte de la home dans `shared/_map`.
 
 ## Reste à faire
-- Décider d'une correction d'altitude des marqueurs (MNS ou altitude par point).
-- Vérifier/corriger MJC Desforges (id 104) en production.
-- Décider du sort de `app/views/pages/home.html.erb.bak` (ancienne copie, non rendue).
-- Fichiers non suivis à trier : `app/assets/images/markers/`, `docs/`.
+- Publier sur R2 `masque-bati/`, `toits-v1-propriete/` (chacun avec un `manifeste.json`) et `ambiances/{nom}-actuelle.json` : bascule et ambiances apparaîtront seules.
+- Licence Géonancy : le manifeste dit encore « local seulement ».
+- Test préexistant en échec : `pages_controller_test` (route `pages_home_url` inexistante).
+- Images mortes en base dev (Unsplash bloquées ORB) : la fiche retombe sur le pictogramme.
+- Cloche et profil ne sont que des emplacements ; témoignages dupliqués depuis la home (à retirer de là-bas à la bascule).
+- Altitude des marqueurs (z = z_ref) ; MJC Desforges (id 104) à vérifier en prod ; `home.html.erb.bak`.
+- Vérifier à la main le prompt de géolocalisation réel (Chrome du MCP Playwright absent : vérifs via `~/.cache/ms-playwright/chromium-1243`).
 
 ## Fichiers clés
-- `app/views/pages/home.html.erb` : home, sticky de la carte, filtres, compteurs.
-- `app/views/shared/_map.html.erb` : carte réutilisable.
-- `app/views/layouts/application.html.erb` : charge Leaflet (l.40-41).
+- `app/views/labo/accueil.html.erb`, `app/views/accueil/*`, `app/assets/stylesheets/accueil.css`
+- `app/javascript/controllers/diorama_controller.js`, `app/javascript/diorama/*`
+- `app/models/diorama_tuiles.rb`, `app/models/categorie.rb`, `app/helpers/accueil_helper.rb`
