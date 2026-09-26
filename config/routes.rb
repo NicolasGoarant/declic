@@ -32,6 +32,9 @@ Rails.application.routes.draw do
   get "/presse",           to: "pages#presse",          as: :presse
   get "/faq",              to: "pages#faq",             as: :faq
   get "contact", to: "pages#contact"
+
+  # Page de test du pyramide de tuiles diorama (non liée depuis la navigation)
+  get "labo/diorama", to: "labo#diorama", as: :labo_diorama
   # --- API PUBLIQUE ---
 
   namespace :api do

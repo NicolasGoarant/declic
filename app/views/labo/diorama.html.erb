@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Labo — diorama</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #1b1d22; color: #e8e8e8; font: 13px/1.4 system-ui, sans-serif; overflow: hidden; }
+    canvas { display: block; width: 100vw; height: 100vh; cursor: grab; touch-action: none; }
+    canvas.drag { cursor: grabbing; }
+    #hud { position: fixed; left: 10px; top: 10px; background: rgba(0,0,0,.6); padding: 8px 10px; border-radius: 6px; pointer-events: none; }
+    #hud label { pointer-events: auto; }
+    #attr { position: fixed; right: 8px; bottom: 6px; font-size: 11px; opacity: .7; max-width: 60vw; text-align: right; }
+    #err { color: #ff8a8a; }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="hud">
+    <div><strong>Diorama — test</strong> · <span id="info">chargement du manifeste…</span></div>
+    <div><label><input type="checkbox" id="grid"> grille des dalles</label> · molette / pinch : zoom · glisser : déplacer · double-clic : zoom ×2</div>
+    <div id="err"></div>
+  </div>
+  <div id="attr"></div>
+  <%= javascript_importmap_tags "diorama_projection" %>
+  <script type="module">
+    import { creerProjection } from "diorama_projection";
+    // Points de test en WGS84. `zSol` = altitude au sol ESTIMÉE (m NGF, approximative) : sert
+    // uniquement à montrer le décalage dû au relief (anneau vert). Le marqueur rouge est posé
+    // à z_ref, comme le fera Déclic faute de MNS.
+    const POINTS = [
+      { nom: "Place Stanislas",     lat: 48.69353, lon: 6.18316, zSol: 212 },
+      { nom: "Gare de Nancy",       lat: 48.68975, lon: 6.17418, zSol: 206 },
+      { nom: "Porte de la Craffe",  lat: 48.69569, lon: 6.17383, zSol: 208 },
+      { nom: "Saint-Epvre",         lat: 48.69420, lon: 6.18590, zSol: 210 },
+    ];
+    let proj = null;
+    window.__dioramaOverlay = (ctx, versEcran) => {
+      const D = window.__diorama;
+      if (!D) return;
+      proj = proj || creerProjection(D.M);
+      ctx.save();
+      ctx.font = "12px system-ui, sans-serif";
+      for (const p of POINTS) {
+        const [sx, sy] = versEcran(...proj.pixel(p.lat, p.lon));
+        const [ax, ay] = versEcran(...proj.pixel(p.lat, p.lon, p.zSol));
+        ctx.strokeStyle = "#5fe08a"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(ax, ay, 7, 0, 7); ctx.stroke();
+        ctx.fillStyle = "#ff3b3b"; ctx.strokeStyle = "#fff";
+        ctx.beginPath(); ctx.arc(sx, sy, 5, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#fff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3;
+        ctx.strokeText(p.nom, sx + 10, sy + 4); ctx.fillText(p.nom, sx + 10, sy + 4);
+      }
+      ctx.restore();
+    };
+    // Test : window.__dioramaAller("Gare de Nancy") centre et zoome sur un point
+    window.__dioramaAller = (nom, s = 0.5) => {
+      const p = POINTS.find(q => q.nom === nom), D = window.__diorama;
+      [D.view.cx, D.view.cy] = creerProjection(D.M).pixel(p.lat, p.lon); D.view.s = s; D.schedule();
+    };
+    window.__dioramaPoints = POINTS;
+  </script>
+
+<script>
+(() => {
+  const BASE = "https://pub-9c5c8e74063440d2bb30f449d9fff60e.r2.dev/toits-v1/";
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+  const info = document.getElementById("info");
+  const gridBox = document.getElementById("grid");
+  let M, W, H, dpr = 1;
+  // Vue : (cx, cy) = point de la mosaïque au centre de l'écran (px mosaïque), s = px écran CSS / px mosaïque
+  const view = { cx: 0, cy: 0, s: 0.01 };
+  const cache = new Map(); // "z/x/y" -> {img, state: 'loading'|'ok'|'empty'}
+  let stats = { tiles: 0, pending: 0, drawn: 0, fallback: 0, holes: 0 };
+  let raf = 0;
+
+  const dim = z => M.dimensions_par_niveau_px[z];
+  const span = z => M.cote_dalle_px * Math.pow(2, M.niveau_max - z); // px mosaïque couverts par une dalle
+  const minScale = () => Math.min(W / M.taille_mosaique_px[0], H / M.taille_mosaique_px[1]) * 0.9;
+  const maxScale = () => 2 / dpr * 2;
+
+  function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; draw(); }); }
+
+  function tile(z, x, y, load) {
+    const k = `${z}/${x}/${y}`;
+    let t = cache.get(k);
+    if (!t && load) {
+      // Ne demander que les dalles listées par le manifeste (les autres = vide, sans requête)
+      if (!M._set[z].has(x + "," + y)) { t = { state: "empty" }; cache.set(k, t); return t; }
+      t = { state: "loading", img: new Image() };
+      t.img.decoding = "async";
+      t.img.onload = () => { t.state = "ok"; stats.pending--; schedule(); };
+      t.img.onerror = () => { t.state = "empty"; stats.pending--; schedule(); };
+      stats.pending++;
+      t.img.src = M.modele_url_dalle.replace("{z}", z).replace("{x}", x).replace("{y}", y);
+      cache.set(k, t);
+    }
+    return t;
+  }
+
+  // Dessine la dalle (z,x,y) ; si absente du cache, se rabat sur l'ancêtre le plus proche déjà chargé.
+  function drawTile(z, x, y, load) {
+    const t = tile(z, x, y, load);
+    if (t && t.state === "ok") { blit(t.img, z, x, y); return true; }
+    if (t && t.state === "empty") return true; // vide légitime
+    return false;
+  }
+  function blit(img, z, x, y) {
+    const sp = span(z);
+    const sx = (x * sp - view.cx) * view.s + W / 2, sy = (y * sp - view.cy) * view.s + H / 2;
+    const w = sp * view.s;
+    // 1 px de dalle = 2^(8-z) px mosaïque ; la dalle fait 256 px, sauf au bord de la mosaïque (tronquée)
+    const k = Math.pow(2, M.niveau_max - z) * view.s;
+    ctx.drawImage(img, Math.round(sx * dpr) / dpr, Math.round(sy * dpr) / dpr, img.naturalWidth * k + 0.5 / dpr, img.naturalHeight * k + 0.5 / dpr);
+    if (gridBox.checked) { ctx.strokeStyle = `hsl(${z * 40},90%,60%)`; ctx.strokeRect(sx, sy, w, w); }
+    stats.drawn++;
+  }
+  function drawFallback(z, x, y) {
+    for (let zz = z - 1; zz >= 0; zz--) {
+      const f = Math.pow(2, z - zz), ax = Math.floor(x / f), ay = Math.floor(y / f);
+      const t = tile(zz, ax, ay, false);
+      if (t && t.state === "ok") {
+        // Ne dessiner que la portion de l'ancêtre couvrant (z,x,y)
+        const sp = span(z), k = Math.pow(2, M.niveau_max - zz), n = M.cote_dalle_px / f;
+        const ox = (x - ax * f) * n, oy = (y - ay * f) * n;
+        const sx = (x * sp - view.cx) * view.s + W / 2, sy = (y * sp - view.cy) * view.s + H / 2, w = sp * view.s;
+        ctx.drawImage(t.img, ox, oy, n, n, sx, sy, w + 0.5, w + 0.5);
+        stats.fallback++;
+        return true;
+      }
+      if (t && t.state === "empty") return true;
+    }
+    return false;
+  }
+
+  function draw() {
+    if (!M) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#262a31"; // fond : la mosaïque n'a pas de sol propre en dehors de l'emprise
+    const [mw, mh] = M.taille_mosaique_px;
+    ctx.fillRect((0 - view.cx) * view.s + W / 2, (0 - view.cy) * view.s + H / 2, mw * view.s, mh * view.s);
+    // Niveau : plus détaillé dont 1 px de dalle >= ~1 px écran physique
+    const z = Math.max(M.niveau_min, Math.min(M.niveau_max, Math.ceil(M.niveau_max + Math.log2(view.s * dpr) - 0.25)));
+    const sp = span(z), [gw, gh] = M.grille_par_niveau[z];
+    const x0 = Math.max(0, Math.floor((view.cx - W / 2 / view.s) / sp)), x1 = Math.min(gw - 1, Math.floor((view.cx + W / 2 / view.s) / sp));
+    const y0 = Math.max(0, Math.floor((view.cy - H / 2 / view.s) / sp)), y1 = Math.min(gh - 1, Math.floor((view.cy + H / 2 / view.s) / sp));
+    stats.drawn = stats.fallback = stats.holes = 0;
+    // Passe 1 : ancêtres (repli) ; passe 2 : dalles du niveau courant par-dessus
+    const todo = [];
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const t = tile(z, x, y, true);
+      if (t.state !== "ok") { if (t.state === "loading" && !drawFallback(z, x, y)) stats.holes++; }
+      else todo.push([x, y]);
+    }
+    for (const [x, y] of todo) drawTile(z, x, y, false);
+    info.textContent = `niveau ${z} · ×${view.s.toFixed(3)} · ${stats.drawn} dalles, ${stats.fallback} en repli, ${stats.pending} en cours · cache ${cache.size}`;
+    window.__dioramaStats = { z, ...stats, s: view.s };
+    // Surcouche de marqueurs (voir le script module plus bas) : px mosaïque -> px écran
+    if (window.__dioramaOverlay) window.__dioramaOverlay(ctx, (px, py) => [(px - view.cx) * view.s + W / 2, (py - view.cy) * view.s + H / 2]);
+  }
+
+  function resize() {
+    dpr = window.devicePixelRatio || 1;
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    if (M) { view.s = Math.max(view.s, minScale()); }
+    schedule();
+  }
+  function clamp() {
+    view.s = Math.max(minScale(), Math.min(maxScale(), view.s));
+    view.cx = Math.max(0, Math.min(M.taille_mosaique_px[0], view.cx));
+    view.cy = Math.max(0, Math.min(M.taille_mosaique_px[1], view.cy));
+  }
+  function zoomAt(px, py, f) {
+    const wx = view.cx + (px - W / 2) / view.s, wy = view.cy + (py - H / 2) / view.s;
+    view.s *= f; view.s = Math.max(minScale(), Math.min(maxScale(), view.s));
+    view.cx = wx - (px - W / 2) / view.s; view.cy = wy - (py - H / 2) / view.s;
+    clamp(); schedule();
+  }
+
+  // --- Interactions (pointer events : souris, tactile, pinch) ---
+  const ptrs = new Map(); let lastDist = 0;
+  canvas.addEventListener("pointerdown", e => { canvas.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); canvas.classList.add("drag"); lastDist = 0; });
+  canvas.addEventListener("pointermove", e => {
+    if (!ptrs.has(e.pointerId)) return;
+    const [px, py] = ptrs.get(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+    if (ptrs.size === 1) { view.cx -= (e.clientX - px) / view.s; view.cy -= (e.clientY - py) / view.s; clamp(); schedule(); }
+    else if (ptrs.size === 2) {
+      const [a, b] = [...ptrs.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      if (lastDist) zoomAt((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, d / lastDist);
+      lastDist = d;
+    }
+  });
+  const up = e => { ptrs.delete(e.pointerId); lastDist = 0; if (!ptrs.size) canvas.classList.remove("drag"); };
+  canvas.addEventListener("pointerup", up); canvas.addEventListener("pointercancel", up);
+  canvas.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+  canvas.addEventListener("dblclick", e => zoomAt(e.clientX, e.clientY, 2));
+  gridBox.addEventListener("change", schedule);
+  window.addEventListener("resize", resize);
+
+  fetch(BASE + "manifeste.json").then(r => { if (!r.ok) throw new Error("manifeste HTTP " + r.status); return r.json(); }).then(m => {
+    M = m;
+    M._set = {};
+    for (const z in m.dalles) M._set[z] = new Set(m.dalles[z].map(([x, y]) => x + "," + y));
+    document.getElementById("attr").textContent = m.attributions.join(" · ");
+    view.cx = m.taille_mosaique_px[0] / 2; view.cy = m.taille_mosaique_px[1] / 2;
+    resize(); // fixe W/H avant minScale()
+    view.s = minScale();
+    window.__diorama = { view, M, zoomAt, schedule, cache };
+    resize();
+  }).catch(e => { document.getElementById("err").textContent = "Erreur : " + e.message; });
+})();
+</script>
+</body>
+</html>
