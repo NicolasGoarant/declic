@@ -71,7 +71,7 @@ module AccueilHelper
   def point_opportunite(o)
     {
       id: "o#{o.id}", titre: o.title.to_s.strip, categorie: o.category.to_s.downcase,
-      debut: o.date_debut&.iso8601, fin: o.date_fin&.iso8601, horaire: o.schedule_text.presence,
+      debut: o.starts_on&.iso8601, fin: o.ends_on&.iso8601, horaire: o.schedule_text.presence,
       photo: photo_de(o), commune: commune_de(o.city, o.location),
       latitude: o.latitude.to_f, longitude: o.longitude.to_f, url: opportunity_path(o)
     }
