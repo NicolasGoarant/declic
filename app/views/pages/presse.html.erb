@@ -29,8 +29,10 @@
           <div class="press-about-icon">📊</div>
           <h3>En chiffres</h3>
           <ul>
-            <li><strong>200+</strong> opportunités référencées</li>
-            <li><strong>50+</strong> témoignages inspirants</li>
+            <% opp_s = "s" if @opportunities_count > 1 %>
+            <% sto_s = "s" if @stories_count > 1 %>
+            <li><strong><%= @opportunities_count %></strong> opportunité<%= opp_s %> référencée<%= opp_s %></li>
+            <li><strong><%= @stories_count %></strong> témoignage<%= sto_s %> inspirant<%= sto_s %></li>
             <li><strong>2 territoires</strong> couverts (Nancy & Paris)</li>
             <li><strong>100%</strong> gratuit et citoyen</li>
           </ul>
@@ -108,52 +110,6 @@
       </div>
 
       <div class="press-media-list">
-
-        <%# Exemple d'article - À adapter avec vos vraies apparitions %>
-        <div class="press-media-item">
-          <div class="press-media-logo">
-            <div class="press-media-placeholder">📰</div>
-          </div>
-          <div class="press-media-content">
-            <div class="press-media-source">L'Est Républicain</div>
-            <h3 class="press-media-title">« Déclic : la plateforme qui cartographie l'engagement citoyen à Nancy »</h3>
-            <div class="press-media-date">Décembre 2024</div>
-            <p class="press-media-excerpt">
-              Une nouvelle plateforme numérique permet aux Nancéiens de découvrir facilement les opportunités d'engagement près de chez eux...
-            </p>
-            <a href="#" class="press-media-link">Lire l'article →</a>
-          </div>
-        </div>
-
-        <div class="press-media-item">
-          <div class="press-media-logo">
-            <div class="press-media-placeholder">📻</div>
-          </div>
-          <div class="press-media-content">
-            <div class="press-media-source">France Bleu Lorraine</div>
-            <h3 class="press-media-title">« Comment s'engager localement grâce au numérique ? »</h3>
-            <div class="press-media-date">Novembre 2024</div>
-            <p class="press-media-excerpt">
-              Interview des fondateurs de Déclic sur les nouvelles formes d'engagement citoyen facilitées par le digital...
-            </p>
-            <a href="#" class="press-media-link">Écouter l'interview →</a>
-          </div>
-        </div>
-
-        <div class="press-media-item">
-          <div class="press-media-logo">
-            <div class="press-media-placeholder">📺</div>
-          </div>
-          <div class="press-media-content">
-            <div class="press-media-source">France 3 Grand Est</div>
-            <h3 class="press-media-title">« Déclic, l'appli qui donne envie de passer à l'action »</h3>
-            <div class="press-media-date">Octobre 2024</div>
-            <p class="press-media-excerpt">
-              Reportage sur la plateforme Déclic et les témoignages de citoyens qui ont trouvé leur voie grâce aux opportunités référencées...
-            </p>
-            <a href="#" class="press-media-link">Voir le reportage →</a>
-          </div>
-        </div>
 
         <%# Message si aucune apparition réelle pour l'instant %>
         <div class="press-media-empty">

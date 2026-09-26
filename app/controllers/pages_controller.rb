@@ -1,5 +1,9 @@
 # app/controllers/pages_controller.rb
 class PagesController < ApplicationController
+  # Compteurs affichés sur les pages éditoriales : ils doivent refléter
+  # la base, pas des chiffres saisis à la main.
+  before_action :load_public_counts, only: %i[philosophie presse]
+
   def home
     # Ce header complète la désactivation des previews si un proxy/cdn est devant
     response.set_header("Turbo-Visit-Control", "reload")
@@ -33,4 +37,11 @@ class PagesController < ApplicationController
   def faq; end
   def philosophie; end
   def contact; end
+
+  private
+
+  def load_public_counts
+    @opportunities_count = Opportunity.active.count
+    @stories_count       = Story.active.count
+  end
 end

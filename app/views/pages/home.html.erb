@@ -63,6 +63,19 @@ def hero_fallback(obj)
   # 3. Fallback
   thumb_for(obj)
 end
+
+def cat_pill(cat)
+  pills = {
+    'benevolat'    => { bg: '#fff1f2', color: '#e11d48',  label: 'Bénévolat'    },
+    'ecologiser'   => { bg: '#f0fdf4', color: '#16a34a',  label: 'Écologiser'   },
+    'formation'    => { bg: '#eff6ff', color: '#2563eb',  label: 'Formation'    },
+    'rencontres'   => { bg: '#fefce8', color: '#a16207',  label: 'Rencontres'   },
+    'entreprendre' => { bg: '#fff7ed', color: '#c2410c',  label: 'Entreprendre' },
+    'histoires'    => { bg: '#fdf4ff', color: '#9333ea',  label: 'Témoignage'   },
+  }
+  c = pills[cat.to_s.downcase] || { bg: '#f5f3ff', color: '#7e5bef', label: cat.to_s.capitalize }
+  "<span class=\"op-pill\" style=\"background:#{c[:bg]};color:#{c[:color]}\">#{c[:label]}</span>".html_safe
+end
 %>
 
 <div class="home-ms">
@@ -75,7 +88,7 @@ end
           Change ta vie, <span class="grad">en quelques clics</span>
         </h1>
         <p class="hm-chapo">
-          Déclic te connecte aux opportunités locales et t'aide à découvrir des <strong>“belles histoires”</strong> qui inspirent.
+          Déclic te connecte aux opportunités locales et t'aide à découvrir des <strong>"belles histoires"</strong> qui inspirent.
         </p>
 
         <%# LES 3 C DE DÉCLIC %>
@@ -111,61 +124,63 @@ end
     </div>
   </header>
 
-  <%# ========== SECTION CARTE (MAINTENANT EN PREMIER !) ========== %>
+  <%# ========== SECTION CARTE ========== %>
   <section id="explorer" class="hm-slice hm-map-hero">
-    <%# Grille sortie du container pour pleine largeur %>
+
+    <%# Intro titre de section %>
+    <div class="hm-explorer-intro container">
+      <div>
+        <span class="hm-tag">Explorer</span>
+        <h2 class="hm-explorer-title">Les initiatives près de chez toi</h2>
+      </div>
+    </div>
+
+    <%# Filtres %>
+    <%# Grille carte + pépites %>
     <div class="hm-explore-grid">
-        <div class="hm-explore-left">
-          <%# Filtres : chips sur desktop, select sur mobile %>
-          <div class="hm-filter-wrapper">
-            <%# Select mobile (visible uniquement sur mobile) %>
-            <select class="hm-select-mobile" id="category-select">
-              <option value="toutes">🌍 Toutes les catégories</option>
-              <option value="benevolat">❤️ Bénévolat</option>
-              <option value="ecologiser">🌱 Écologiser</option>
-              <option value="formation">📘 Formation</option>
-              <option value="rencontres">👥 Rencontres</option>
-              <option value="entreprendre">🚀 Entreprendre</option>
-              <option value="histoires">✨ Belles histoires</option>
-            </select>
-
-            <%# Chips desktop (cachés sur mobile) %>
-            <div class="hm-filterbar">
-              <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
-              <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
-              <button class="chip" data-cat="ecologiser">🌱 Écologiser</button>
-              <button class="chip" data-cat="formation">📘 Formation</button>
-              <button class="chip" data-cat="rencontres">👥 Rencontres</button>
-              <button class="chip" data-cat="entreprendre">🚀 Entreprendre</button>
-              <button class="chip" data-cat="histoires">✨ Belles histoires</button>
-            </div>
-          </div>
-
-          <div class="hm-map-sticky">
-            <div class="hm-mapwrap">
-              <div id="map" class="hm-map"></div>
-              <button id="btn-locate" class="hm-locate hm-locate-enhanced">
-                <span class="locate-icon">📍</span>
-                <span class="locate-text">Me localiser</span>
-              </button>
-            </div>
+      <div class="hm-explore-left">
+        <div class="hm-filter-wrapper">
+          <select class="hm-select-mobile" id="category-select">
+            <option value="toutes">🌍 Toutes les catégories</option>
+            <option value="benevolat">❤️ Bénévolat</option>
+            <option value="ecologiser">🌱 Écologiser</option>
+            <option value="formation">📘 Formation</option>
+            <option value="rencontres">👥 Rencontres</option>
+            <option value="entreprendre">🚀 Entreprendre</option>
+            <option value="histoires">✨ Belles histoires</option>
+          </select>
+          <div class="hm-filterbar">
+            <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
+            <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
+            <button class="chip" data-cat="ecologiser">🌱 Écologiser</button>
+            <button class="chip" data-cat="formation">📘 Formation</button>
+            <button class="chip" data-cat="rencontres">👥 Rencontres</button>
+            <button class="chip" data-cat="entreprendre">🚀 Entreprendre</button>
+            <button class="chip" data-cat="histoires">✨ Belles histoires</button>
           </div>
         </div>
+        <div class="hm-map-sticky">
+          <%= render "shared/map" %>
+        </div>
+      </div>
 
-        <div class="hm-explore-right">
+      <div class="hm-explore-right">
+        <div class="hm-explore-panel">
           <div class="hm-explore-header">
-            <h3 class="hm-h3">Dernières pépites</h3>
+            <div class="hm-explore-header-left">
+              <h3 class="hm-panel-title">Dernières pépites</h3>
+            </div>
             <%= link_to opportunities_path, class: "hm-explore-more" do %>
               Voir tout →
             <% end %>
           </div>
 
           <div class="hm-cards">
-            <% (@opportunities || []).first(3).each do |o| %>
+            <% (@opportunities || []).first(4).each do |o| %>
               <%= link_to opportunity_path(o), class: "hm-card-op" do %>
                 <div class="op-img" style="background-image:url('<%= thumb_for(o) %>')"></div>
                 <div class="op-content">
-                  <p class="k"><%= o.category.to_s.capitalize %></p>
+                  <%= cat_pill(o.category) %>
                   <p class="t"><%= strip_unsplash_md(o.title) %></p>
                   <p class="d"><%= strip_unsplash_md(o.description) %></p>
                   <p class="l">📍 <%= o.location %></p>
@@ -174,79 +189,16 @@ end
             <% end %>
 
             <% if (@opportunities || []).empty? %>
-              <div class="hm-empty">
-                Aucune opportunité pour le moment… Revenez vite !
-              </div>
+              <div class="hm-empty">Aucune opportunité pour le moment… Revenez vite !</div>
             <% end %>
           </div>
         </div>
-      </div>
-  </section>
-
-
-  <%# ========== SECTION "CHOISIS TON DÉCLIC" (MAINTENANT EN 2ÈME) ========== %>
-  <section id="parcours" class="hm-slice alt">
-    <div class="container">
-      <div class="hm-grid-cards">
-        <% btn_base = "hm-card" %>
-
-        <%= link_to opportunities_path(category: "entreprendre"), # <<< Lien Corrigé
-                    class: "#{btn_base} -entreprendre" do %>
-          <span class="hm-emoji">🚀</span>
-          <div class="hm-card-txt">
-            <p class="t1">Je veux entreprendre</p>
-            <p class="t2">Lance ton projet avec des mentors</p>
-          </div>
-        <% end %>
-
-        <%= link_to opportunities_path(category: "ecologiser"), # <<< Lien Corrigé
-                    class: "#{btn_base} -ecologiser" do %>
-          <span class="hm-emoji">🌱</span>
-          <div class="hm-card-txt">
-            <p class="t1">Je veux écologiser</p>
-            <p class="t2">Des actions pour la planète</p>
-          </div>
-        <% end %>
-
-        <%= link_to opportunities_path(category: "formation"), # <<< Lien Corrigé
-                    class: "#{btn_base} -formation" do %>
-          <span class="hm-emoji">📘</span>
-          <div class="hm-card-txt">
-            <p class="t1">Je veux me former</p>
-            <p class="t2">Des formations pour progresser</p>
-          </div>
-        <% end %>
-
-        <%= link_to opportunities_path(category: "benevolat"), # <<< Lien Corrigé
-                    class: "#{btn_base} -benevolat" do %>
-          <span class="hm-emoji">❤️</span>
-          <div class="hm-card-txt">
-            <p class="t1">Je veux aider</p>
-            <p class="t2">Des missions utiles et humaines</p>
-          </div>
-        <% end %>
-
-        <%= link_to opportunities_path(category: "rencontres"), # <<< Lien Corrigé
-                    class: "#{btn_base} -rencontres" do %>
-          <span class="hm-emoji">🤝</span>
-          <div class="hm-card-txt">
-            <p class="t1">Je veux rencontrer</p>
-            <p class="t2">Des communautés près de chez toi</p>
-          </div>
-        <% end %>
-
-        <%= link_to stories_path, class: "#{btn_base} -histoires" do %>
-          <span class="hm-emoji">✨</span>
-          <div class="hm-card-txt">
-            <p class="t1">“Belles histoires !”</p>
-            <p class="t2">Déclics, reconversions, prises de risque</p>
-          </div>
-        <% end %>
       </div>
     </div>
   </section>
 
 
+  <%# ========== SECTION BELLES HISTOIRES ========== %>
   <section id="stories" class="hm-slice hm-stories">
     <div class="container">
       <div class="hm-stories-head">
@@ -277,7 +229,7 @@ end
   </section>
 
 
-    <%# ========== NOUVELLE SECTION : CONTRIBUE À DÉCLIC ========== %>
+  <%# ========== SECTION : CONTRIBUE À DÉCLIC ========== %>
   <section id="contribuer" class="hm-slice hm-contribute">
     <div class="container">
       <div class="hm-contribute-header">
@@ -312,19 +264,15 @@ end
           <span class="card-btn">Proposer une opportunité 🚀</span>
         <% end %>
       </div>
-
-      <div class="hm-contribute-social">
-        Déjà <strong>300+ histoires</strong> partagées par la communauté ! 🎉
-      </div>
     </div>
   </section>
 
 
-<%# ========== SECTION TÉMOIGNAGES ========== %>
+  <%# ========== SECTION TÉMOIGNAGES ========== %>
   <section class="hm-testimonials">
     <div class="container">
       <div class="hm-testi-header">
-        <h2 class="hm-h2">Ils/elles ont trouvé leur déclic</h2>
+        <h2 class="hm-h2">Elles et ils ont trouvé leur déclic</h2>
         <p class="hm-testi-subtitle">Découvrez comment Déclic a transformé leur quotidien</p>
       </div>
 
@@ -393,6 +341,68 @@ end
   </section>
 
 
+  <%# ========== SECTION PRESSE "ELLES ET ILS PARLENT DE NOUS" ========== %>
+  <section class="hm-slice hm-press">
+    <div class="container">
+      <div class="hm-press-header">
+        <span class="hm-tag">Dans les médias</span>
+        <h2 class="hm-h2">Ils parlent de nous</h2>
+      </div>
+
+      <div class="hm-press-grid">
+
+        <a href="https://www.radiofrance.fr/francebleu/podcasts/ici-ca-marche-ici-lorraine-meurthe-et-moselle-et-vosges/declic-la-plateforme-qui-veut-creer-du-lien-dans-la-metropole-du-grand-nancy-7222300"
+           target="_blank" rel="noopener" class="hm-press-card">
+          <div class="press-logo-wrap">
+            <%= image_tag "Radio_France.jpeg", alt: "Radio France", class: "press-logo" %>
+          </div>
+          <div class="press-content">
+            <span class="press-source">France Bleu Lorraine</span>
+            <p class="press-quote">« Déclic, la plateforme qui veut créer du lien dans la métropole du Grand Nancy »</p>
+            <span class="press-cta">Écouter le podcast →</span>
+          </div>
+        </a>
+
+        <a href="https://www.rcf.fr/actualite/le-grand-temoin-regional/embed?episodeId=676550"
+           target="_blank" rel="noopener" class="hm-press-card">
+          <div class="press-logo-wrap">
+            <%= image_tag "RCF.jpeg", alt: "RCF Radio", class: "press-logo" %>
+          </div>
+          <div class="press-content">
+            <span class="press-source">RCF Radio</span>
+            <p class="press-quote">« Le grand témoin régional — Déclic, l'initiative citoyenne qui cartographie les opportunités »</p>
+            <span class="press-cta">Écouter l'émission →</span>
+          </div>
+        </a>
+
+        <a href="https://c.estrepublicain.fr/environnement/2026/04/10/declic-la-plateforme-qui-recense-les-opportunites-citoyennes-pres-de-chez-vous"
+           target="_blank" rel="noopener" class="hm-press-card">
+          <div class="press-logo-wrap">
+            <%= image_tag "L'Est Républicain.png", alt: "L'Est Républicain", class: "press-logo" %>
+          </div>
+          <div class="press-content">
+            <span class="press-source">L'Est Républicain</span>
+            <p class="press-quote">« Déclic, la plateforme qui recense les opportunités citoyennes près de chez vous »</p>
+            <span class="press-cta">Lire l'article →</span>
+          </div>
+        </a>
+
+        <a href="https://radiofajet.net/2026/04/29/declic/"
+           target="_blank" rel="noopener" class="hm-press-card">
+          <div class="press-logo-wrap">
+            <%= image_tag "radiofajet.png", alt: "Radio Fajet", class: "press-logo" %>
+          </div>
+          <div class="press-content">
+            <span class="press-source">Radio Fajet</span>
+            <p class="press-quote">« Un écran tourné vers l'autre »</p>
+            <span class="press-cta">Écouter l'interview →</span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
 </div>
 
 <style>
@@ -422,14 +432,8 @@ end
 .c-card-3 { border: 1.5px solid rgba(216, 180, 254, 0.6); animation-delay: 0.6s; }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .c-card:hover {
@@ -472,24 +476,11 @@ end
 }
 
 @media (max-width: 768px) {
-  .trois-c {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-  }
-  .c-card {
-    padding: 1.75rem 1.25rem;
-  }
-  .c-emoji {
-    font-size: 2rem;
-    width: 52px;
-    height: 52px;
-  }
-  .c-title {
-    font-size: 1.05rem;
-  }
-  .c-desc {
-    font-size: 0.875rem;
-  }
+  .trois-c { grid-template-columns: 1fr; gap: 1.25rem; }
+  .c-card   { padding: 1.75rem 1.25rem; }
+  .c-emoji  { font-size: 2rem; width: 52px; height: 52px; }
+  .c-title  { font-size: 1.05rem; }
+  .c-desc   { font-size: 0.875rem; }
 }
 
 /* ====== Thème global ====== */
@@ -523,36 +514,14 @@ end
   animation: fadeInUp 1s ease-out;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* Responsive mobile - plus d'espace en haut pour le badge */
 @media (max-width: 768px) {
-  .hm-hero {
-    min-height: 80vh;
-  }
-
-  .hm-hero-inner {
-    padding: 4rem 0 2rem 0;
-  }
+  .hm-hero       { min-height: 80vh; }
+  .hm-hero-inner { padding: 4rem 0 2rem 0; }
 }
-
 @media (max-width: 640px) {
-  .hm-hero {
-    min-height: 70vh;
-  }
-
-  .hm-hero-inner {
-    padding: 5rem 0 2rem 0;
-  }
+  .hm-hero       { min-height: 70vh; }
+  .hm-hero-inner { padding: 5rem 0 2rem 0; }
 }
 
 .hm-hero::after{
@@ -573,7 +542,7 @@ end
   z-index:1;
 }
 
-/* Badge - En haut à droite sur desktop ET mobile */
+/* Badge */
 .hm-badge{
   position:absolute;
   top:14px;
@@ -595,46 +564,23 @@ end
 }
 
 @keyframes badge-pulse {
-  0%, 100% {
-    box-shadow: 0 8px 20px rgba(0,0,0,.25), 0 0 0 3px rgba(254, 243, 199, 0.3);
-  }
-  50% {
-    box-shadow: 0 8px 20px rgba(0,0,0,.25), 0 0 0 6px rgba(254, 243, 199, 0.5);
-  }
+  0%, 100% { box-shadow: 0 8px 20px rgba(0,0,0,.25), 0 0 0 3px rgba(254, 243, 199, 0.3); }
+  50%       { box-shadow: 0 8px 20px rgba(0,0,0,.25), 0 0 0 6px rgba(254, 243, 199, 0.5); }
 }
 
 @media (min-width:1024px){
-  .hm-badge{
-    padding:.85rem 1.4rem;
-    font-size:1.1rem;
-  }
+  .hm-badge{ padding:.85rem 1.4rem; font-size:1.1rem; }
   .hm-badge:hover{
     transform:translateY(-2px) scale(1.05);
     transition:transform .12s ease;
     box-shadow: 0 12px 28px rgba(0,0,0,.3), 0 0 0 6px rgba(254, 243, 199, 0.5);
   }
 }
+@media (max-width:1023px){ .hm-badge{ font-size:.92rem; padding:.55rem .85rem; } }
+@media (max-width:480px) { .hm-badge{ top:10px; right:10px; font-size:.92rem; padding:.55rem .85rem; } }
 
-@media (max-width:1023px){
-  .hm-badge{
-    font-size:.92rem;
-    padding:.55rem .85rem;
-  }
-}
-
-@media (max-width:480px){
-  .hm-badge{
-    top: 10px;
-    right: 10px;
-    font-size: 0.92rem;
-    padding: 0.55rem 0.85rem;
-  }
-}
-
-/* Badge CTA - masqué maintenant qu'on a remis l'original */
-.hm-badge-cta {
-  display:none;
-}
+/* Badge CTA - masqué */
+.hm-badge-cta { display:none; }
 
 .hm-title{
   font-family:"Epilogue",Inter;
@@ -656,18 +602,9 @@ end
 }
 
 @keyframes focusIn {
-  0% {
-    opacity: 0;
-    filter: blur(12px);
-    transform: scale(0.95);
-  }
-  100% {
-    opacity: 1;
-    filter: blur(0px);
-    transform: scale(1);
-  }
+  0%   { opacity:0; filter:blur(12px); transform:scale(0.95); }
+  100% { opacity:1; filter:blur(0px);  transform:scale(1); }
 }
-
 
 .hm-chapo{
   max-width:980px;
@@ -681,7 +618,6 @@ end
   gap:16px;
   margin-top:18px;
 }
-
 .hm-stats>div{
   background:rgba(255,255,255,.92);
   backdrop-filter: blur(6px);
@@ -692,292 +628,81 @@ end
   color:#0f172a;
   text-align:center;
 }
-
-.hm-stats dt{
-  font:700 .82rem/1 "Inter";
-  color:#6b7280;
-  text-transform:uppercase;
-  letter-spacing:.04em;
-}
-
-.hm-stats dd{
-  margin:.25rem 0 0;
-  font:900 1.8rem/1 "Epilogue";
-}
+.hm-stats dt{ font:700 .82rem/1 "Inter"; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; }
+.hm-stats dd{ margin:.25rem 0 0; font:900 1.8rem/1 "Epilogue"; }
 
 @media (max-width:640px){
-  .hm-stats{
-    grid-template-columns:1fr;
-    gap:10px;
-  }
-  .hm-stats>div{
-    padding:12px 14px;
-  }
-  .hm-stats dd{
-    font-size:1.4rem;
-  }
+  .hm-stats{ grid-template-columns:1fr; gap:10px; }
+  .hm-stats>div{ padding:12px 14px; }
+  .hm-stats dd{ font-size:1.4rem; }
 }
-
 
 /* Animation des compteurs */
-.hm-stats dd {
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-.hm-stats.animated dd {
-  animation: countUp 0.6s ease-out forwards;
-}
-
+.hm-stats dd { opacity:0; transform:translateY(20px); }
+.hm-stats.animated dd { animation:countUp 0.6s ease-out forwards; }
 @keyframes countUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity:0; transform:translateY(20px); }
+  to   { opacity:1; transform:translateY(0); }
 }
 
-
-
-/* ========================================
+/* ======================================
    EFFETS HOVER SUR LES CARTES
-   ======================================== */
-
-/* Cartes opportunités - Effet shimmer au hover */
+   ====================================== */
 .hm-card-op {
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position:relative; overflow:hidden;
+  transition:transform 0.3s ease, box-shadow 0.3s ease;
 }
-
 .hm-card-op::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
-  transition: left 0.5s ease;
-  z-index: 1;
+  content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition:left 0.5s ease; z-index:1;
 }
+.hm-card-op:hover::before { left:100%; }
+.hm-card-op:hover { transform:translateY(-4px); box-shadow:0 20px 40px rgba(15,23,42,.15); }
 
-.hm-card-op:hover::before {
-  left: 100%;
-}
-
-.hm-card-op:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
-}
-
-/* Cartes catégories - Rotation emoji + gradient overlay */
-.hm-card {
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.hm-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-.hm-card:hover::after {
-  opacity: 1;
-}
-
-.hm-card .hm-emoji {
-  display: inline-block;
-  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.hm-card:hover .hm-emoji {
-  transform: scale(1.3) rotate(10deg);
-}
-
-.hm-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
-}
-
-/* Cartes stories - Zoom image au hover */
 .hm-story-card {
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position:relative; overflow:hidden;
+  transition:transform 0.3s ease, box-shadow 0.3s ease;
 }
+.hm-story-img { transition:transform 0.5s ease; }
+.hm-story-card:hover .hm-story-img { transform:scale(1.1); }
+.hm-story-card:hover { transform:translateY(-4px); box-shadow:0 20px 40px rgba(15,23,42,.15); }
 
-.hm-story-img {
-  transition: transform 0.5s ease;
-}
+.hm-testi { transition:transform 0.3s ease, box-shadow 0.3s ease; }
+.hm-testi:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(15,23,42,.12); }
 
-.hm-story-card:hover .hm-story-img {
-  transform: scale(1.1);
-}
-
-.hm-story-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
-}
-
-/* Témoignages - Effet glow */
-.hm-testi {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.hm-testi:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
-}
-
-/* Badge - Animation pulse plus visible au hover */
-.hm-badge:hover {
-  animation: badge-pulse-hover 0.6s ease-in-out;
-}
-
+.hm-badge:hover { animation:badge-pulse-hover 0.6s ease-in-out; }
 @keyframes badge-pulse-hover {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.08);
-  }
+  0%, 100% { transform:scale(1); }
+  50%       { transform:scale(1.08); }
 }
 
-/* Statistiques - Ligne animée au hover */
-.hm-stats > div {
-  position: relative;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
+.hm-stats > div { position:relative; transition:transform 0.3s ease, box-shadow 0.3s ease; }
 .hm-stats > div::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #f472b6, #a855f7, #6366f1);
-  transition: width 0.4s ease;
-  border-radius: 2px;
+  content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+  width:0; height:3px;
+  background:linear-gradient(90deg,#f472b6,#a855f7,#6366f1);
+  transition:width 0.4s ease; border-radius:2px;
 }
+.hm-stats > div:hover { transform:translateY(-2px); box-shadow:0 16px 36px rgba(15,23,42,.2); }
+.hm-stats > div:hover::after { width:80%; }
 
-.hm-stats > div:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.2);
-}
-
-.hm-stats > div:hover::after {
-  width: 80%;
-}
-
-/* Chips de filtre - Effet pulse au clic */
-.chip {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.25s ease;
-}
-
-.chip::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: currentColor;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-.chip:hover::before {
-  opacity: 0.08;
-}
-
-.chip:active {
-  transform: scale(0.96);
-}
-
-.chip.is-active {
-  animation: chipPulse 0.4s ease;
-}
-
-@keyframes chipPulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-/* Bouton localisation - Effet ripple */
 .hm-locate {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
+  position:relative; overflow:hidden; transition:all 0.3s ease;
 }
-
 .hm-locate::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.3) 0%,
-    transparent 70%
-  );
-  transform: scale(0);
-  transition: transform 0.5s ease;
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+  transform:scale(0); transition:transform 0.5s ease;
 }
+.hm-locate:active::before { transform:scale(2); }
+.hm-locate:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.15); }
 
-.hm-locate:active::before {
-  transform: scale(2);
+@media (max-width:768px) {
+  .hm-card-op:hover, .hm-story-card:hover, .hm-testi:hover,
+  .hm-stats > div:hover, .hm-locate:hover { transform:none; }
+  .hm-story-card:hover .hm-story-img { transform:none; }
 }
-
-.hm-locate:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-/* Désactiver les effets sur mobile/tactile */
-@media (max-width: 768px) {
-  .hm-card-op:hover,
-  .hm-card:hover,
-  .hm-story-card:hover,
-  .hm-testi:hover,
-  .hm-stats > div:hover,
-  .hm-locate:hover {
-    transform: none;
-  }
-
-  .hm-card:hover .hm-emoji {
-    transform: none;
-  }
-
-  .hm-story-card:hover .hm-story-img {
-    transform: none;
-  }
-}
-
-
-
 
 /* ====== Slices ====== */
 .hm-slice{ padding:clamp(2rem,4.8vw,4rem) 0; }
@@ -992,16 +717,6 @@ end
     radial-gradient(900px 420px at 85% -10%, #eee7ff 0%, transparent 66%),
     linear-gradient(180deg,#f9f7ff 0%, #f3f1ff 100%);
 }
-.grad-behind-map{
-  background:
-    radial-gradient(980px 460px at 50% -14%, #e9e2ff 0%, transparent 70%),
-    var(--muted);
-}
-.grad-behind-testis{
-  background:
-    radial-gradient(820px 380px at 12% 118%, #ece6ff 0%, transparent 66%),
-    var(--muted);
-}
 
 .hm-h2{
   font-family:"Epilogue"; font-weight:900;
@@ -1015,849 +730,276 @@ end
 }
 .hm-sub{ margin:.2rem 0 1rem; color:#475569; font-size:1.05rem; }
 
-/* ====== h3 utilisé pour "Dernières pépites" ====== */
 .hm-h3{
   font-family:"Epilogue"; font-weight:800;
-  font-size:1.4rem;
-  color:#0f172a;
-  margin:0;
-}
-
-/* ====== GROS BOUTONS (Améliorés) ====== */
-.hm-grid-cards{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:28px;
-  max-width:1220px;
-  margin-inline:auto;
-}
-.hm-card{
-  display:grid;
-  grid-template-columns:110px 1fr;
-  gap:22px;
-  align-items:center;
-  padding:36px 30px;
-  border-radius:30px;
-  color:#fff;
-  text-decoration:none;
-  box-shadow:0 18px 44px rgba(0,0,0,.16);
-  min-height:240px;
-  width:100%;
-  max-width:400px;
-  transition:transform .15s ease, box-shadow .15s ease;
-  justify-self:center;
-  /* Nouveau : pour l'effet shine */
-  position: relative;
-  overflow: hidden;
-  z-index: 1;
-}
-.hm-card:hover{ transform:translateY(-6px); box-shadow:0 22px 62px rgba(0,0,0,.20); }
-
-/* Interaction Emoji au survol */
-.hm-card:hover .hm-emoji {
-  transform: scale(1.1) rotate(6deg);
-  background: rgba(255,255,255,0.4);
-}
-
-.hm-emoji{
-  width:100px; height:100px;
-  border-radius:24px;
-  background:rgba(255,255,255,.22);
-  font-size:50px; display:grid; place-items:center;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.hm-card-txt .t1{
-  font:900 clamp(1.2rem,1vw + 1rem,1.6rem)/1.15 "Epilogue"; margin:0;
-}
-.hm-card-txt .t2{
-  margin-top:.45rem;
-  font:700 clamp(1rem,.7vw + .7rem,1.22rem)/1.45 "Inter";
-  opacity:.98;
-}
-.hm-card.-entreprendre{ background:linear-gradient(135deg,#f59e0b,#ef4444,#fb7185); }
-.hm-card.-ecologiser{  background:linear-gradient(135deg,#16a34a,#22c55e,#4ade80); }
-.hm-card.-formation{   background:linear-gradient(135deg,#6366f1,#38bdf8); }
-.hm-card.-benevolat{   background:linear-gradient(135deg,#f43f5e,#ec4899); }
-.hm-card.-rencontres{  background:linear-gradient(135deg,#facc15,#f97316,#fb923c); }
-
-/* Nouveau style "Histoires" avec effet Shimmer */
-.hm-card.-histoires{
-  background:linear-gradient(135deg, #f59e0b, #ec4899, #7e5bef);
-}
-.hm-card.-histoires::after {
-  content: "";
-  position: absolute;
-  top: 0; left: -150%;
-  width: 100%; height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
-  transform: skewX(-20deg);
-  animation: shine 6s infinite;
-  pointer-events: none;
-}
-@keyframes shine {
-  0% { left: -150%; }
-  10% { left: 150%; }
-  100% { left: 150%; }
-}
-
-@media (max-width:900px){
-  .hm-grid-cards{ grid-template-columns:repeat(2,minmax(0,1fr)); }
-}
-@media (max-width:560px){
-  .hm-grid-cards{
-    grid-template-columns:1fr !important;
-    gap: 16px !important;
-    padding: 0 !important; /* Pas de padding interne, on gère avec container */
-  }
-  .hm-card{
-    grid-template-columns:80px 1fr;
-    padding:22px 18px;
-    min-height:192px;
-    border-radius:22px;
-    max-width: none !important; /* CRITIQUE: pas de limite de largeur */
-    width: 100% !important; /* CRITIQUE: prendre toute la largeur disponible */
-    justify-self: stretch !important; /* CRITIQUE: s'étirer dans la grid */
-  }
-  .hm-emoji{
-    width:72px; height:72px;
-    border-radius:18px;
-    font-size:36px;
-  }
-
-  /* FIX CRITIQUE: Réduire le padding du container sur mobile */
-  #parcours .container,
-  .hm-slice .container {
-    padding: 0 12px !important; /* Encore plus petit pour être sûr */
-  }
-
-  /* FIX: Ajouter de l'espace au-dessus de la section parcours sur mobile */
-  #parcours {
-    margin-top: 20px !important;
-    padding-top: 20px !important;
-  }
+  font-size:1.4rem; color:#0f172a; margin:0;
 }
 
 /* ====== Filtres : Select mobile + Chips desktop ====== */
+.hm-filter-wrapper{ margin-bottom:18px; }
 
-/* Wrapper des filtres */
-.hm-filter-wrapper{
-  margin-bottom:18px;
-}
-
-/* Select mobile (caché sur desktop) */
 .hm-select-mobile{
-  display:none;
-  width:100%;
-  padding:.75rem 1rem;
-  font:700 .95rem/1.2 "Inter";
-  color:#475569;
-  background:rgba(255, 255, 255, 0.9);
-  backdrop-filter:blur(10px);
-  border:2px solid rgba(203, 213, 225, 0.6);
-  border-radius:14px;
-  cursor:pointer;
-  appearance:none;
+  display:none; width:100%; padding:.75rem 1rem;
+  font:700 .95rem/1.2 "Inter"; color:#475569;
+  background:rgba(255,255,255,0.9); backdrop-filter:blur(10px);
+  border:2px solid rgba(203,213,225,0.6); border-radius:14px;
+  cursor:pointer; appearance:none;
   background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;
-  background-position:right 1rem center;
-  padding-right:3rem;
-  box-shadow:0 4px 12px rgba(15, 23, 42, 0.08);
-  transition:all 0.3s ease;
+  background-repeat:no-repeat; background-position:right 1rem center; padding-right:3rem;
+  box-shadow:0 4px 12px rgba(15,23,42,.08); transition:all 0.3s ease;
 }
 .hm-select-mobile:focus{
-  outline:none;
-  border-color:rgba(126, 91, 239, 0.5);
-  box-shadow:0 6px 20px rgba(126, 91, 239, 0.15);
+  outline:none; border-color:rgba(126,91,239,0.5);
+  box-shadow:0 6px 20px rgba(126,91,239,.15);
 }
 
-/* Chips desktop */
-.hm-filterbar{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-}
+.hm-filterbar{ display:flex; flex-wrap:wrap; gap:8px; }
 .chip{
-  --chip-bg-soft:rgba(255, 255, 255, 0.85);
-  --chip-border:rgba(203, 213, 225, 0.4);
+  --chip-bg-soft:rgba(255,255,255,0.85);
+  --chip-border:rgba(203,213,225,0.4);
   --chip-text:#475569;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding:.55rem .8rem;
-  border-radius:12px;
-  background:var(--chip-bg-soft);
-  backdrop-filter:blur(10px);
-  border:1px solid var(--chip-border);
-  font:700 .8rem/1.1 "Inter";
-  color:var(--chip-text);
-  cursor:pointer;
-  transition:all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow:0 2px 8px rgba(15, 23, 42, 0.04);
-  white-space:nowrap;
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:.55rem .8rem; border-radius:999px;
+  background:white; backdrop-filter:blur(10px);
+  border:3px solid var(--chip-border);
+  font:700 .8rem/1.1 "Inter"; color:var(--chip-text);
+  cursor:pointer; transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow:0 2px 8px rgba(15,23,42,.04); white-space:nowrap;
 }
-.chip:hover {
-  transform:translateY(-2px);
-  box-shadow:0 4px 12px rgba(15, 23, 42, 0.08);
-  background:rgba(255, 255, 255, 0.95);
-}
+.chip:hover{ transform:translateY(-2px); box-shadow:0 4px 12px rgba(15,23,42,.08); background:rgba(255,255,255,.95); }
 
-/* Desktop : chips plus compacts pour tenir sur 1 ligne */
-@media (min-width:1280px){
-  .chip{
-    padding:.5rem .75rem;
-    font-size:.78rem;
-  }
-  .hm-filterbar{
-    gap:7px;
-  }
-}
+@media (min-width:1280px){ .chip{ padding:.5rem .75rem; font-size:.78rem; } .hm-filterbar{ gap:7px; } }
+@media (max-width:768px){ .hm-select-mobile{ display:block; } .hm-filterbar{ display:none; } }
 
-/* Mobile : afficher select, cacher chips */
-@media (max-width:768px){
-  .hm-select-mobile{
-    display:block;
-  }
-  .hm-filterbar{
-    display:none;
-  }
-}
+.chip[data-cat="benevolat"]   { --chip-border:#f43f5e; --chip-text:#f43f5e; }
+.chip[data-cat="ecologiser"]  { --chip-border:#22c55e; --chip-text:#22c55e; }
+.chip[data-cat="formation"]   { --chip-border:#6366f1; --chip-text:#6366f1; }
+.chip[data-cat="rencontres"]  { --chip-border:#eab308; --chip-text:#eab308; }
+.chip[data-cat="entreprendre"]{ --chip-border:#f97316; --chip-text:#f97316; }
+.chip[data-cat="histoires"]   { --chip-border:#ec4899; --chip-text:#ec4899; }
+.chip[data-cat="toutes"]      { --chip-border:#a855f7; --chip-text:#a855f7; }
 
-/* Variantes de couleurs subtiles */
-.chip[data-cat="benevolat"]{--chip-bg-soft:rgba(255, 241, 242, 0.7);--chip-border:rgba(254, 205, 211, 0.4);--chip-text:#be123c;}
-.chip[data-cat="ecologiser"]{--chip-bg-soft:rgba(236, 253, 243, 0.7);--chip-border:rgba(187, 247, 208, 0.4);--chip-text:#166534;}
-.chip[data-cat="formation"]{--chip-bg-soft:rgba(239, 246, 255, 0.7);--chip-border:rgba(191, 219, 254, 0.4);--chip-text:#1d4ed8;}
-.chip[data-cat="rencontres"]{--chip-bg-soft:rgba(254, 252, 232, 0.7);--chip-border:rgba(254, 243, 199, 0.4);--chip-text:#92400e;}
-.chip[data-cat="entreprendre"]{--chip-bg-soft:rgba(255, 247, 237, 0.7);--chip-border:rgba(254, 215, 170, 0.4);--chip-text:#c2410c;}
-.chip[data-cat="histoires"]{--chip-bg-soft:rgba(245, 243, 255, 0.7);--chip-border:rgba(221, 214, 254, 0.4);--chip-text:#5b21b6;}
-
-/* État actif - Plus marqué mais élégant */
 .chip.is-active{
-  background:var(--chip-text);
-  color:#fff;
-  border-color:transparent;
-  box-shadow:0 4px 16px rgba(0, 0, 0, 0.15);
-  transform:translateY(0);
+  background:var(--chip-text); color:#fff;
+  border-color:transparent; box-shadow:0 4px 16px rgba(0,0,0,.15); transform:translateY(0);
 }
 .chip[data-cat="histoires"].is-active{
   background:linear-gradient(135deg,#a855f7,#7e5bef,#6366f1);
-  background-size:200% 200%;
-  animation:gradientShift 8s ease infinite;
-  color:#fff;
-  border-color:transparent;
+  background-size:200% 200%; animation:gradientShift 8s ease infinite;
+  color:#fff; border-color:transparent;
 }
-
 @keyframes gradientShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  0%, 100% { background-position:0% 50%; }
+  50%       { background-position:100% 50%; }
 }
 
-/* ====== SECTION CARTE HERO (MAINTENANT EN PREMIER !) ====== */
+/* ====== SECTION CARTE ====== */
 .hm-map-hero {
-  background: linear-gradient(180deg, #f8f9fc 0%, #eef2f7 100%);
-  padding-top: 3rem;
-  padding-bottom: 4rem;
+  background:linear-gradient(180deg,#f3f0ff 0%,#eaecf8 100%);
+  padding-top:2.5rem; padding-bottom:4rem;
 }
+@media (max-width:768px){ .hm-map-hero{ padding-top:1.5rem; padding-bottom:2.5rem; } }
 
-/* Réduire l'espace sur mobile */
-@media (max-width: 768px) {
-  .hm-map-hero {
-    padding-top: 1.5rem;
-    padding-bottom: 2.5rem;
-  }
-}
+/* Intro titre */
+.hm-explorer-intro{ margin-bottom:3.25rem; padding-bottom:.25rem; }
+.hm-explorer-title{ font-family:"Epilogue"; font-weight:900; font-size:clamp(1.5rem,2.2vw,2rem); color:#0f172a; margin:.25rem 0 1.5rem; line-height:1.15; }
+@media(max-width:640px){ .hm-explorer-title{ font-size:1.05rem; margin-bottom:1.5rem; } }
+.hm-explorer-intro-inner{ display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; }
+.hm-explorer-sub{ font-size:.95rem; color:#64748b; font-weight:500; margin:.3rem 0 0; }
+.hm-explorer-cta{ flex-shrink:0; display:inline-flex; align-items:center; gap:.4rem; padding:.65rem 1.3rem; border-radius:999px; background:var(--a1); color:#fff; text-decoration:none; font:700 .9rem/1 "Inter"; white-space:nowrap; box-shadow:0 4px 14px rgba(126,91,239,.3); transition:all .2s ease; }
+.hm-explorer-cta:hover{ background:#6d49e0; transform:translateY(-2px); box-shadow:0 8px 20px rgba(126,91,239,.4); }
+@media(max-width:640px){ .hm-explorer-intro-inner{ flex-direction:column; align-items:flex-start; } }
 
-.hm-map-intro {
-  text-align: center;
-  max-width: 880px;
-  margin: 0 auto 2.5rem;
-}
+.hm-map-intro{ text-align:center; max-width:880px; margin:0 auto 2.5rem; }
 
-.hm-map-title {
-  font-size: clamp(2rem, 4vw, 3.2rem);
-  font-weight: 900;
-  line-height: 1.1;
-  margin: 0 0 1rem;
-  background: linear-gradient(135deg, #7e5bef 0%, #3b82f6 50%, #10b981 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.hm-map-subtitle {
-  font-size: clamp(1.05rem, 1.5vw, 1.3rem);
-  color: #475569;
-  font-weight: 600;
-  margin: 0;
-}
-
-/* Bouton "Me localiser" amélioré */
-/* Bouton "Me localiser" - Version discrète avec glassmorphism */
 .hm-locate-enhanced {
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(10px) !important;
-  padding: 0.65rem 1.2rem !important;
-  font-size: 0.95rem !important;
-  font-weight: 700 !important;
-  color: #475569 !important;
-  border: 1px solid rgba(203, 213, 225, 0.8) !important;
-  border-radius: 999px !important;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
-  transition: all 0.3s ease !important;
+  background:rgba(255,255,255,0.9) !important; backdrop-filter:blur(10px) !important;
+  padding:.65rem 1.2rem !important; font-size:.95rem !important;
+  font-weight:700 !important; color:#475569 !important;
+  border:1px solid rgba(203,213,225,0.8) !important; border-radius:999px !important;
+  box-shadow:0 4px 12px rgba(15,23,42,.08) !important; transition:all 0.3s ease !important;
 }
-
 .hm-locate-enhanced:hover {
-  background: rgba(255, 255, 255, 1) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12) !important;
-  border-color: rgba(126, 91, 239, 0.3) !important;
+  background:rgba(255,255,255,1) !important; transform:translateY(-2px) !important;
+  box-shadow:0 6px 20px rgba(15,23,42,.12) !important; border-color:rgba(126,91,239,.3) !important;
 }
-
-.hm-locate-enhanced .locate-icon {
-  font-size: 1.1em;
-  margin-right: 0.4rem;
-}
-
-/* layout carte + cards */
+.hm-locate-enhanced .locate-icon{ font-size:1.1em; margin-right:.4rem; }
 
 .hm-explore-grid{
   display:grid;
   grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);
-  gap:22px;
-  /* IMPORTANT : align-items start pour permettre au sticky de fonctionner */
-  align-items: start;
-  margin-top:18px;
-  /* Pleine largeur sur desktop */
-  max-width:1650px;
-  margin-left:auto;
-  margin-right:auto;
-  padding:0 2rem;
-  /* Hauteur maximale pour que le sticky s'arrête avant la section parcours */
-  /* Cette hauteur = hauteur viewport * 1.5 pour donner de l'espace de scroll */
-
+  gap:22px; align-items:start;
+  margin-top:18px; max-width:1650px;
+  margin-left:auto; margin-right:auto; padding:0 2rem;
 }
+@media (max-width:960px){ .hm-explore-grid{ grid-template-columns:1fr; } }
+@media (max-width:768px){ .hm-explore-grid{ margin-top:0; padding:0 1rem; } }
 
-@media (max-width:960px){
-  .hm-explore-grid{
-    grid-template-columns:1fr;
-  }
-}
-
-/* Réduire les marges sur mobile */
-@media (max-width:768px){
-  .hm-explore-grid{
-    margin-top:0;
-    padding:0 1rem;
-  }
-}
-
-.hm-explore-left{
-  min-width:0;
-}
+.hm-explore-left{ min-width:0; }
 .hm-explore-right{ min-width:0; }
-.hm-explore-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:10px;
-}
-.hm-explore-more{
-  font:700 .95rem/1 "Inter";
-  color:#4f46e5;
-  text-decoration:none;
-}
-.hm-explore-more:hover{ text-decoration:underline; }
 
-/* Carte - Design amélioré et plus grande */
-.hm-mapwrap{
-  position:relative;
-}
-.hm-map{
-  height:560px;
-  width:100%;
+/* Panneau droite — encadré */
+.hm-explore-panel{
+  background:#f1eeff;
   border-radius:24px;
-  border:2px solid #cbd5e1;
+  border:1px solid #e8e4f8;
+  box-shadow:0 8px 32px rgba(126,91,239,.08), 0 1px 4px rgba(15,23,42,.04);
   overflow:hidden;
-  box-shadow:0 20px 50px rgba(15,23,42,.15), 0 0 0 1px rgba(99,102,241,0.1);
-  transition:box-shadow 0.3s ease;
 }
-.hm-map:hover{
-  box-shadow:0 25px 60px rgba(15,23,42,.2), 0 0 0 2px rgba(99,102,241,0.2);
+.hm-explore-header{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  padding:1.5rem 1.5rem 1rem;
+  border-bottom:1px solid #f1eeff;
 }
+.hm-explore-header-left{ flex:1; min-width:0; }
+.hm-panel-title{ font-family:"Epilogue"; font-weight:900; font-size:1.15rem; color:#0f172a; margin:0 0 .2rem; letter-spacing:-.01em; }
+.hm-panel-sub{ font-size:.8rem; color:#94a3b8; font-weight:500; margin:0; }
+.hm-explore-more{ flex-shrink:0; margin-left:1rem; margin-top:.1rem; display:inline-flex; align-items:center; padding:.35rem .9rem; border-radius:999px; font:700 .8rem/1 "Inter"; text-decoration:none; background:#f5f3ff; color:var(--a1); border:1px solid #ede9fe; transition:all .2s ease; }
+.hm-explore-more:hover{ background:var(--a1); color:#fff; border-color:transparent; box-shadow:0 4px 12px rgba(126,91,239,.25); }
 
-/* Ajout d'un cadre décoratif autour de la carte */
-.hm-mapwrap::before {
-  content:"";
-  position:absolute;
-  inset:-6px;
-  border-radius:28px;
-  background:linear-gradient(135deg,
-    rgba(99,102,241,0.1) 0%,
-    rgba(139,92,246,0.1) 50%,
-    rgba(236,72,153,0.1) 100%);
-  z-index:-1;
-  opacity:0;
-  transition:opacity 0.3s ease;
-}
-.hm-mapwrap:hover::before {
-  opacity:1;
-}
+@media (min-width:1280px){ .hm-explore-grid{ grid-template-columns:1.8fr 1fr; gap:48px; } }
 
-@media (min-width:1280px){
-  .hm-explore-grid{
-    grid-template-columns:1.8fr 1fr;
-    gap:48px;
-  }
-  .hm-map{
-    height:900px; /* IMMENSE sur desktop ! */
-  }
-}
+.hm-map-sticky{ position:sticky; top:80px; z-index:10; }
+@media (max-width:960px){ .hm-map-sticky{ position:static; top:auto; } }
 
-/* Responsive : hauteurs réduites sur tablette et mobile */
-@media (max-width:1279px){
-  .hm-map{
-    height:420px; /* Réduit sur laptop/tablette */
-  }
-}
-
-@media (max-width:768px){
-  .hm-map{
-    height:320px; /* Plus petit sur tablette */
-  }
-}
-
-@media (max-width:520px){
-  .hm-map{
-    height:280px; /* Compact sur mobile */
-  }
-}
-
-.hm-map-sticky {
-  position: sticky;
-  top: 80px;
-  z-index: 10;
-}
-@media (max-width:960px){
-  .hm-map-sticky {
-    position: static;
-    top: auto;
-  }
-}
-
-@media (max-width:768px){
-  .hm-map{ overflow:visible; }
-}
-
-/* ====== POPUP CARTE MODERNE ====== */
-/* Styles pour remplacer le popup par défaut blanc */
-
-.leaflet-popup-content-wrapper {
-  padding: 0;
-  overflow: hidden;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-}
-.leaflet-popup-content {
-  margin: 0 !important;
-  width: 280px !important;
-}
-.leaflet-popup-tip {
-  background: white;
-}
-.leaflet-container a.leaflet-popup-close-button {
-  top: 8px; right: 8px;
-  color: white;
-  background: rgba(0,0,0,0.3);
-  border-radius: 50%;
-  width: 24px; height: 24px;
-  display: flex; align-items: center; justify-content: center;
-  font: 16px/14px Tahoma, Verdana, sans-serif;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  border: none;
-}
-.leaflet-container a.leaflet-popup-close-button:hover {
-  background: rgba(0,0,0,0.6);
-  color: white;
-}
-
-/* Contenu de la carte popup */
-.dc-pop-card {
-  font-family: "Inter", sans-serif;
-  color: #0f172a;
-}
-.dc-pop-hero {
-  aspect-ratio: 16/9;
-  width: 100%;
-  background-size: cover;
-  background-position: center;
-  position: relative;
-}
-.dc-pop-badge {
-  position: absolute;
-  top: 12px; left: 12px;
-  background: var(--cat-color, #7e5bef);
-  color: white;
-  font-size: 0.65rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  padding: 4px 8px;
-  border-radius: 99px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  letter-spacing: 0.05em;
-}
-.dc-pop-body {
-  padding: 16px;
-}
-.dc-pop-title {
-  margin: 0 0 6px 0;
-  font-family: "Epilogue", sans-serif;
-  font-weight: 800;
-  font-size: 1rem;
-  line-height: 1.3;
-  color: #0f172a;
-}
-.dc-pop-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 12px;
-  font-size: 0.8rem;
-  color: #64748b;
-  font-weight: 500;
-}
-.dc-pop-meta span {
-  display: flex; align-items: center; gap: 6px;
-}
-.dc-pop-btn {
-  display: block; width: 100%;
-  text-align: center;
-  background: #0f172a;
-  color: white !important;
-  text-decoration: none !important;
-  padding: 10px 0;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  transition: transform 0.1s, background 0.2s;
-}
-.dc-pop-btn:hover {
-  background: #7e5bef;
-  transform: translateY(-1px);
-}
-
-/* ====== FIX POPUP MOBILE - COMPACT ====== */
-
-@media (max-width: 768px) {
-  .leaflet-popup-content-wrapper {
-    max-width: 270px !important;
-  }
-  .leaflet-popup-content {
-    width: 250px !important;
-  }
-
-  /* Hero compact sur mobile : hauteur fixe au lieu d'aspect-ratio */
-  .dc-pop-hero {
-    aspect-ratio: unset !important;
-    height: 110px !important;
-  }
-
-  .dc-pop-body {
-    padding: 12px !important;
-  }
-
-  .dc-pop-title {
-    font-size: 0.88rem !important;
-    margin: 0 0 6px 0 !important;
-    line-height: 1.2 !important;
-  }
-
-  .dc-pop-meta {
-    font-size: 0.75rem !important;
-    gap: 2px !important;
-    margin-bottom: 8px !important;
-  }
-
-  .dc-pop-btn {
-    padding: 9px 0 !important;
-    font-size: 0.8rem !important;
-  }
-}
 
 /* ====== Cards opportunités ====== */
-.hm-cards{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:18px;
-}
-@media (max-width:980px){
-  .hm-cards{ grid-template-columns:1fr; }
-}
+.hm-cards{ display:grid; grid-template-columns:1fr; gap:8px; }
 .hm-card-op{
-  display:block;
-  border-radius:20px;
+  display:block; text-decoration:none; color:#0f172a;
+  border-bottom:1px solid #ede9fe;
   background:#fff;
-  border:1px solid #e6e8ee;
-  box-shadow:0 10px 26px rgba(15,23,42,.08);
-  text-decoration:none;
-  color:#0f172a;
-  overflow:hidden;
-  transition:transform .15s ease, box-shadow .15s ease;
+  transition:background .15s ease;
 }
-.hm-card-op:hover{
-  transform:translateY(-4px);
-  box-shadow:0 16px 38px rgba(15,23,42,.14);
-}
-.hm-card-op .op-img{
-  width:100%;
-  aspect-ratio:16/9;
-  background:#e2e8f0 center/cover no-repeat;
-  border-bottom:1px solid #e6e8ee;
-}
-.hm-card-op .op-content{ padding:16px 18px; }
-.hm-card-op .k{
-  color:#64748b; font-size:.82rem;
-  margin:0 0 .4rem;
-  font-weight:700; text-transform:uppercase;
-  letter-spacing:.04em;
-}
-.hm-card-op .t{
-  font:900 1.16rem/1.2 "Epilogue"; margin:0 0 .3rem;
-}
-.hm-card-op .d{
-  font:1rem/1.55 "Inter"; color:#475569;
-  margin:.3rem 0 .5rem;
-  display:-webkit-box;
-  -webkit-line-clamp:2; -webkit-box-orient:vertical;
-  overflow:hidden;
-}
-.hm-card-op .l{
-  font:1rem/1.4 "Inter"; color:#1f2937; margin:0;
-}
-.hm-empty{
-  grid-column:1 / -1;
-  padding:18px;
-  border-radius:14px;
-  border:1px dashed #e5e7eb;
-  background:#f9fafb;
-  text-align:center;
-  color:#6b7280;
-}
+.hm-card-op:last-child{ border-bottom:none; }
+.hm-card-op:hover{ background:#ede9fe; }
+.hm-card-op .op-img{ width:100%; aspect-ratio:16/7; background:#e2e8f0 center/cover no-repeat; }
+.hm-card-op .op-content{ padding:14px 18px 16px; }
+
+/* Pill catégorie colorée */
+.op-pill{ display:inline-block; padding:.2rem .7rem; border-radius:999px; font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; margin:0 0 .45rem; line-height:1.4; }
+
+.hm-card-op .t{ font:800 1rem/1.3 "Epilogue"; margin:0 0 .3rem; color:#0f172a; }
+.hm-card-op .d{ font:.875rem/1.5 "Inter"; color:#64748b; margin:0 0 .5rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.hm-card-op .l{ font:.82rem/1.4 "Inter"; color:#94a3b8; margin:0; }
+.hm-empty{ padding:24px 18px; text-align:center; color:#94a3b8; font-size:.95rem; }
 
 /* ====== TÉMOIGNAGES ====== */
-.hm-testis{
-  display:grid;
-  grid-template-columns:repeat(4, minmax(0,1fr));
-  gap:18px;
-}
-@media (max-width:1100px){
-  .hm-testis{ grid-template-columns:repeat(3, minmax(0,1fr)); }
-}
-@media (max-width:820px){
-  .hm-testis{ grid-template-columns:repeat(2, minmax(0,1fr)); }
-}
-@media (max-width:520px){
-  .hm-testis{ grid-template-columns:1fr; }
-}
-.hm-testi{
-  background:#fff;
-  border:1px solid #e6e8ee;
-  border-radius:18px;
-  padding:16px;
-  box-shadow:0 10px 26px rgba(15,23,42,.08);
-}
-.hm-testi .who{
-  display:flex; align-items:center; gap:12px; margin-bottom:8px;
-}
-.hm-avatar{
-  width:64px;
-  height:64px;
-  border-radius:50%;
-  object-fit:cover;
-  object-position:50% 8%;
-  background:#fff;
-  flex:0 0 64px;
-  border:2px solid #fff;
-  box-shadow:0 2px 10px rgba(15,23,42,.12);
-}
-.hm-avatar[src*="nathalie"]{
-  object-position:50% 18%;
-}
-.hm-testi .name{
-  margin:0;
-  font:900 1.05rem/1.1 "Epilogue"; color:#0f172a;
-}
-.hm-testi .role{
-  margin:.15rem 0 0; font:700 .9rem/1.2 "Inter"; color:#64748b;
-}
-.hm-testi .story{
-  margin:.4rem 0 0;
-  color:#334155;
-  font:500 .95rem/1.45 "Inter";
-}
+.hm-testis{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; }
+@media (max-width:1100px){ .hm-testis{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:820px) { .hm-testis{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:520px) { .hm-testis{ grid-template-columns:1fr; } }
+.hm-testi{ background:#fff; border:1px solid #e6e8ee; border-radius:18px; padding:16px; box-shadow:0 10px 26px rgba(15,23,42,.08); }
+.hm-testi .who{ display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+.hm-avatar{ width:64px; height:64px; border-radius:50%; object-fit:cover; object-position:50% 8%; background:#fff; flex:0 0 64px; border:2px solid #fff; box-shadow:0 2px 10px rgba(15,23,42,.12); }
+.hm-avatar[src*="nathalie"]{ object-position:50% 18%; }
+.hm-testi .name{ margin:0; font:900 1.05rem/1.1 "Epilogue"; color:#0f172a; }
+.hm-testi .role{ margin:.15rem 0 0; font:700 .9rem/1.2 "Inter"; color:#64748b; }
+.hm-testi .story{ margin:.4rem 0 0; color:#334155; font:500 .95rem/1.45 "Inter"; }
 
 /* ====== Belles histoires ====== */
-.hm-stories{
-  background:#eef2ff;
-}
-.hm-stories-head{
-  text-align:center;
-  max-width:720px;
-  margin:0 auto 24px;
-}
+.hm-stories{ background:#eef2ff; }
+.hm-stories-head{ text-align:center; max-width:720px; margin:0 auto 24px; }
 .hm-tag{
-  display:inline-block;
-  padding:.3rem .8rem;
-  border-radius:999px;
-  font:700 .75rem/1 "Inter";
-  letter-spacing:.14em;
-  text-transform:uppercase;
-  color:#4f46e5;
-  background:#e0e7ff;
-  margin-bottom:.4rem;
+  display:inline-block; padding:.3rem .8rem; border-radius:999px;
+  font:700 .75rem/1 "Inter"; letter-spacing:.14em; text-transform:uppercase;
+  color:#4f46e5; background:#e0e7ff; margin-bottom:.4rem;
 }
-.hm-stories-grid{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:20px;
-}
-@media (max-width:960px){
-  .hm-stories-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
-}
-@media (max-width:640px){
-  .hm-stories-grid{ grid-template-columns:1fr; }
-}
+.hm-stories-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+@media (max-width:960px){ .hm-stories-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:640px){ .hm-stories-grid{ grid-template-columns:1fr; } }
 
-.hm-story-card{
-  position:relative;
-  display:block;
-  border-radius:24px;
-  overflow:hidden;
-  text-decoration:none;
-  min-height:500px;
-  box-shadow:0 16px 40px rgba(15,23,42,.26);
-}
-
-.hm-story-img{
-  position:absolute;
-  inset:0;
-  background:#020617 center/cover no-repeat;
-  transform:scale(1.03);
-  transition:transform .7s ease;
-}
-.hm-story-overlay{
-  position:absolute;
-  inset:0;
-  padding:18px 18px 20px;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
-  background:linear-gradient(180deg,rgba(15,23,42,.05),rgba(15,23,42,.86));
-}
-.hm-story-card:hover .hm-story-img{
-  transform:scale(1.09);
-}
-.hm-story-pill{
-  align-self:flex-start;
-  padding:.25rem .7rem;
-  border-radius:999px;
-  border:1px solid rgba(248,250,252,.8);
-  background:rgba(15,23,42,.55);
-  color:#e5e7eb;
-  font:700 .7rem/1 "Inter";
-  text-transform:uppercase;
-  letter-spacing:.18em;
-  margin-bottom:.55rem;
-}
-.hm-story-title{
-  margin:0 0 .25rem;
-  font:800 1.3rem/1.2 "Epilogue";
-  color:#f9fafb;
-}
-.hm-story-chapo{
-  margin:0;
-  font:500 .9rem/1.4 "Inter";
-  color:#e5e7eb;
-}
-.hm-stories-footer{
-  text-align:center;
-  margin-top:18px;
-}
-.hm-story-more{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding:.8rem 1.5rem;
-  border-radius:999px;
-  border:2px solid #111827;
-  font:800 .95rem/1 "Epilogue";
-  text-decoration:none;
-  color:#111827;
-  background:#fff;
-}
-.hm-story-more:hover{
-  background:#111827;
-  color:#fff;
-}
+.hm-story-card{ position:relative; display:block; border-radius:24px; overflow:hidden; text-decoration:none; min-height:500px; box-shadow:0 16px 40px rgba(15,23,42,.26); }
+.hm-story-img{ position:absolute; inset:0; background:#020617 center/cover no-repeat; transform:scale(1.03); transition:transform .7s ease; }
+.hm-story-overlay{ position:absolute; inset:0; padding:18px 18px 20px; display:flex; flex-direction:column; justify-content:flex-end; background:linear-gradient(180deg,rgba(15,23,42,.05),rgba(15,23,42,.86)); }
+.hm-story-card:hover .hm-story-img{ transform:scale(1.09); }
+.hm-story-pill{ align-self:flex-start; padding:.25rem .7rem; border-radius:999px; border:1px solid rgba(248,250,252,.8); background:rgba(15,23,42,.55); color:#e5e7eb; font:700 .7rem/1 "Inter"; text-transform:uppercase; letter-spacing:.18em; margin-bottom:.55rem; }
+.hm-story-title{ margin:0 0 .25rem; font:800 1.3rem/1.2 "Epilogue"; color:#f9fafb; }
+.hm-story-chapo{ margin:0; font:500 .9rem/1.4 "Inter"; color:#e5e7eb; }
 
 /* ====== CTA ====== */
-.hm-cta{
-  text-align:center;
-  color:#fff;
-  background: linear-gradient(160deg, var(--a1), color-mix(in oklab, var(--a1), var(--a2) 40%));
-  padding:clamp(2.4rem,5vw,4.2rem) 0;
-}
-.hm-cta h2{
-  margin:0 0 .6rem;
-  font:900 clamp(1.6rem,3vw,2.2rem)/1.1 "Epilogue";
-}
-.hm-cta p{
-  margin:0 0 1rem;
-  font:700 1rem/1.6 "Inter";
-  opacity:.98;
-}
-.hm-cta .buttons{
-  display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
-}
-.hm-cta .btn{
-  display:inline-block;
-  border-radius:999px;
-  padding:.9rem 1.3rem;
-  text-decoration:none;
-  font:900 1rem/1 "Epilogue";
-}
-.hm-cta .btn.primary{
-  background:#fff; color:#111827;
-  box-shadow:0 10px 26px rgba(0,0,0,.12);
-}
-.hm-cta .btn.secondary{
-  background:transparent;
-  border:2px solid #fff;
-  color:#fff;
+.hm-cta{ text-align:center; color:#fff; background:linear-gradient(160deg,var(--a1),color-mix(in oklab,var(--a1),var(--a2) 40%)); padding:clamp(2.4rem,5vw,4.2rem) 0; }
+.hm-cta h2{ margin:0 0 .6rem; font:900 clamp(1.6rem,3vw,2.2rem)/1.1 "Epilogue"; }
+.hm-cta p{ margin:0 0 1rem; font:700 1rem/1.6 "Inter"; opacity:.98; }
+.hm-cta .buttons{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+.hm-cta .btn{ display:inline-block; border-radius:999px; padding:.9rem 1.3rem; text-decoration:none; font:900 1rem/1 "Epilogue"; }
+.hm-cta .btn.primary{ background:#fff; color:#111827; box-shadow:0 10px 26px rgba(0,0,0,.12); }
+.hm-cta .btn.secondary{ background:transparent; border:2px solid #fff; color:#fff; }
+
+/* ====== SECTION PRESSE ====== */
+.hm-press {
+  background: #fff;
+  padding: 5rem 0;
+  border-top: 1px solid #f0ecff;
 }
 
-/* Réduction de l'espace avant les gros boutons */
-#parcours {
-  padding-top: clamp(1.2rem, 2.5vw, 2.2rem);
+.hm-press-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.hm-press-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.hm-press-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 2rem 1.75rem;
+  border-radius: 1.25rem;
+  border: 1.5px solid #ede9fe;
+  background: #faf9ff;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.25s ease;
+}
+.hm-press-card:hover {
+  border-color: var(--a1);
+  box-shadow: 0 12px 32px rgba(126,91,239,.1);
+  transform: translateY(-4px);
+  background: #fff;
+}
+
+.press-logo-wrap {
+  height: 72px;
+  display: flex;
+  align-items: center;
+}
+.press-logo {
+  max-height: 64px;
+  max-width: 180px;
+  width: auto;
+  object-fit: contain;
+  filter: grayscale(30%);
+  transition: filter 0.25s;
+}
+.hm-press-card:hover .press-logo { filter: grayscale(0%); }
+
+.press-content { display:flex; flex-direction:column; gap:.5rem; flex:1; }
+.press-source {
+  font-size: .75rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--a1);
+}
+.press-quote {
+  font-size: .95rem; line-height: 1.55;
+  color: #334155; margin: 0;
+  font-style: italic; flex: 1;
+}
+.press-cta {
+  font-size: .85rem; font-weight: 600;
+  color: var(--a2); margin-top: .5rem;
 }
 
 @media (max-width: 768px) {
-  #parcours {
-    padding-top: 1rem;
-  }
+  .hm-press-grid { grid-template-columns: 1fr; }
 }
 
 </style>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
 <% content_for :scripts do %>
 <script>
@@ -1876,427 +1018,38 @@ document.addEventListener('turbo:load', bootHome);
 document.addEventListener('DOMContentLoaded', bootHome);
 
 function bootHome(){
-  const mapEl = document.getElementById('map');
-  if (!mapEl || !window.L) return;
+  if (!document.getElementById('map')) return;
 
-  let map = window._declicMap;
-  if (!map) {
-    map = L.map(mapEl, { zoomControl:true, attributionControl:false }).setView([46.6, 2.2], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      detectRetina: true,
-      crossOrigin: true
-    }).addTo(map);
-    window._declicMap = map;
-  } else {
-    requestAnimationFrame(()=> map.invalidateSize());
-  }
-
-  map.on('click', () => map.closePopup());
-
-  if (!window._declicDataInit) {
-
-    const colors = {
-      benevolat:   '#f43f5e',
-      ecologiser:  '#16a34a',
-      formation:   '#3b82f6',
-      rencontres:  '#facc15',
-      entreprendre:'#f59e0b',
-      histoires:   '#a855f7',
-      default:     '#7e5bef'
-    };
-    const emojis = {
-      benevolat:   '❤️',
-      ecologiser:  '🌱',
-      formation:   '📘',
-      rencontres:  '🤝',
-      entreprendre:'🚀',
-      histoires:   '✨',
-      default:     '📍'
-    };
-
-    const iconFor = (c) => {
-      const em = emojis[c] || emojis.default;
-      const baseStyle =
-        "width:26px;height:26px;border-radius:9999px;border:2px solid #fff;" +
-        "display:grid;place-items:center;color:#fff;font-size:14px;" +
-        "box-shadow:0 1px 4px rgba(0,0,0,.25);";
-      let extraStyle;
-      if (c === 'histoires') {
-        extraStyle =
-          "background:linear-gradient(135deg,#f97316,#ec4899,#3b82f6,#22c55e,#f59e0b);" +
-          "background-size:320% 320%;animation:gradientShift 8s ease infinite;";
-      } else {
-        const bg = colors[c] || colors.default;
-        extraStyle = `background:${bg};`;
-      }
-
-      return L.divIcon({
-        className: '',
-        html: `<div style="${baseStyle}${extraStyle}"><span>${em}</span></div>`,
-        iconSize: [26, 32],
-        iconAnchor: [13, 28],
-        popupAnchor: [0, -16],
-        // ✅ AJOUT : z-index plus élevé pour les opportunities
-        zIndexOffset: c === 'histoires' ? 0 : 100
-      });
-    };
-
-    const esc = s => (s || '').toString()
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;');
-
-    function mdPlain(s){
-      return (s||'')
-        .replace(/### À quoi ça ressemble \?/gi, '')
-        .replace(/💡/g, '')
-        .replace(/!\[[^\]]*\]\([^\)]+\)/g,' ')
-        .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'$1')
-        .replace(/https?:\/\/\S+/g,' ')
-        .replace(/[\*_`>#]/g,'')
-        .replace(/\s+/g,' ')
-        .trim();
-    }
-
-    // Nouvelle fonction POPUP MODERNISÉE
-    function popupHtml(o){
-      const cats = {
-        benevolat:    { color: '#f43f5e', label: 'Bénévolat' },
-        ecologiser:   { color: '#16a34a', label: 'Écologie' },
-        formation:    { color: '#3b82f6', label: 'Formation' },
-        rencontres:   { color: '#facc15', label: 'Rencontres' },
-        entreprendre: { color: '#f59e0b', label: 'Entreprise' },
-        histoires:    { color: '#a855f7', label: 'Témoignage' },
-        default:      { color: '#7e5bef', label: 'Initiative' }
-      };
-
-      const cKey = (o.category||'').toLowerCase();
-      const conf = cats[cKey] || cats.default;
-
-      const base = (cKey==='histoires') ? '/stories' : '/opportunities';
-      const url = `${base}/${o.slug||o.id}`;
-
-      let dateStr = "";
-      if(o.starts_at || o.date) {
-        const d = new Date(o.starts_at || o.date);
-        dateStr = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-      }
-
-      const img = (function thumbForJs(obj){
-        if(obj.image_url) return obj.image_url;
-        if(cKey==='benevolat') return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400&q=80&fit=crop';
-        if(cKey==='formation') return 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=400&q=80&fit=crop';
-        if(cKey==='rencontres') return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=400&q=80&fit=crop';
-        return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80&fit=crop';
-      })(o);
-
-      const safeTitle = esc(mdPlain(o.title||''));
-      const safeLoc = esc(o.location || '');
-      const safeOrg = esc(o.organization || '');
-
-      return `
-        <div class="dc-pop-card" style="--cat-color: ${conf.color}">
-          <div class="dc-pop-hero" style="background-image: url('${img}')">
-            <span class="dc-pop-badge">${conf.label}</span>
-          </div>
-
-          <div class="dc-pop-body">
-            <h3 class="dc-pop-title">${safeTitle}</h3>
-
-            <div class="dc-pop-meta">
-              ${safeOrg ? `<span>🏢 ${safeOrg}</span>` : ''}
-              ${dateStr ? `<span>🗓️ ${dateStr}</span>` : ''}
-              ${safeLoc ? `<span>📍 ${safeLoc}</span>` : ''}
-            </div>
-
-            <a href="${url}" class="dc-pop-btn">
-              Voir le déclic →
-            </a>
-          </div>
-        </div>
-      `;
-    }
-
-    const dataLayer = L.layerGroup().addTo(map);
-    window._declicDataLayer = dataLayer;
-    let dataset = [];
-
-// La fonction plot(items) gère le dessin des marqueurs sur la carte
-function plot(items){
-  dataLayer.clearLayers();
-  const seen = new Map(); // Jitter : évite la superposition de marqueurs au même endroit
-  const bounds=[];
-  (items||[]).forEach(o=>{
-
-    // FIX DÉCISIF: Convertir la latitude et la longitude en nombre.
-    const lat = Number(o.latitude);
-    const lng = Number(o.longitude);
-
-    if(isNaN(lat) || isNaN(lng) || lat === null || lng === null) return;
-
-    // JITTER : décaler légèrement les marqueurs superposés
-    const key = lat.toFixed(4) + ',' + lng.toFixed(4);
-    const jitterCount = seen.get(key) || 0;
-    seen.set(key, jitterCount + 1);
-    const jLat = lat + (jitterCount * 0.0003 * Math.cos(jitterCount * 2.4));
-    const jLng = lng + (jitterCount * 0.0003 * Math.sin(jitterCount * 2.4));
-
-    const marker = L.marker([jLat, jLng], { icon:iconFor((o.category||'').toLowerCase()) })
-      .addTo(dataLayer)
-      .bindPopup(popupHtml(o), {
-        autoPan: window.innerWidth <= 768,
-        autoPanPadding: [10, 90],
-        maxWidth: 300,
-        minWidth: 280,
-        maxHeight: window.innerHeight * 0.65,
-        closeButton: true,
-        autoClose: true,
-        offset: [0, 0]
-      });
-
-    // Préchargement image au survol
-    marker.on('mouseover', function() {
-      if (o.image_url) { const img = new Image(); img.src = o.image_url; }
-    });
-
-    // FIX: Centrer le popup avec padding pour navbar
-    marker.on('popupopen', function(e) {
-      const popup = e.popup;
-
-      setTimeout(function() {
-        const popupEl = popup._container;
-        if (!popupEl) return;
-
-        // 1. Récupérer les dimensions
-        const popupHeight = popupEl.offsetHeight;
-        const mapSize = map.getSize();
-
-        // 2. Calculer l'espace disponible (navbar + padding)
-        const navbarHeight = window.innerWidth <= 640 ? 64 : 72;
-        const topPadding = 20;
-        const totalTopSpace = navbarHeight + topPadding;
-
-        // 3. Centre de la zone visible
-        const visibleHeight = mapSize.y - totalTopSpace;
-        const mapCenterX = mapSize.x / 2;
-        const mapCenterY = totalTopSpace + (visibleHeight / 2);
-
-        // 4. Position actuelle du popup
-        const markerPoint = map.latLngToContainerPoint(marker.getLatLng());
-        const popupCenterY = markerPoint.y - (popupHeight / 2);
-        const popupCenterX = markerPoint.x;
-
-        // 5. Calculer le décalage nécessaire
-        const offsetX = mapCenterX - popupCenterX;
-        const offsetY = mapCenterY - popupCenterY;
-
-        // 6. Pan pour centrer
-        map.panBy([-offsetX, -offsetY], {
-          animate: true,
-          duration: 0.3
-        });
-
-        // 7. Désactiver autoPan après animation
-        setTimeout(function() {
-          popup.options.autoPan = false;
-        }, 400);
-
-        // 8. Style du bouton de fermeture
-        const closeBtn = popup._closeButton;
-        if (closeBtn) {
-          closeBtn.style.width = '44px';
-          closeBtn.style.height = '44px';
-          closeBtn.style.fontSize = '28px';
-          closeBtn.style.lineHeight = '44px';
-          closeBtn.style.display = 'flex';
-          closeBtn.style.alignItems = 'center';
-          closeBtn.style.justifyContent = 'center';
-          closeBtn.style.cursor = 'pointer';
-          closeBtn.style.touchAction = 'manipulation';
-          closeBtn.style.zIndex = '10001';
-          closeBtn.style.position = 'absolute';
-          closeBtn.style.top = '8px';
-          closeBtn.style.right = '8px';
-          closeBtn.style.background = 'rgba(0, 0, 0, 0.7)';
-          closeBtn.style.borderRadius = '50%';
-          closeBtn.style.color = 'white';
-
-          // Événements tactiles
-          closeBtn.addEventListener('touchstart', function(event) {
-            event.stopPropagation();
-            event.preventDefault();
-            map.closePopup();
-          }, { passive: false });
-
-          closeBtn.addEventListener('click', function(event) {
-            event.stopPropagation();
-            event.preventDefault();
-            map.closePopup();
-          });
-        }
-      }, 100);
-    });
-
-    bounds.push([lat, lng]);
+  // ========== FILTRES CATÉGORIES ==========
+  const chips = document.querySelectorAll('.chip');
+  const sel = document.getElementById('category-select');
+  const applyCat = (cat) => {
+    chips.forEach(c => c.classList.toggle('is-active', c.dataset.cat === cat));
+    if (sel) sel.value = cat;
+    if (window._declicFilter) window._declicFilter(cat);
+  };
+  chips.forEach(ch => {
+    if (ch.dataset.bound === '1') return;
+    ch.dataset.bound = '1';
+    ch.addEventListener('click', () => applyCat(ch.dataset.cat));
   });
-
-  // Recentrage de la carte si des points existent
-  if(bounds.length){ map.fitBounds(bounds,{padding:[30,30]}); }
-}
-
-    Promise.all([
-      fetch('/api/v1/opportunities').then(r=>r.ok?r.json():[]).catch(()=>[]),
-      fetch('/api/v1/stories').then(r=>r.ok?r.json():[]).catch(()=>[])
-    ]).then(([opps, stories])=>{
-      (stories||[]).forEach(s=> s.category='histoires');
-      dataset = ([]).concat(opps||[], stories||[]);
-      plot(dataset);
-    });
-
-    document.querySelectorAll('.chip').forEach(ch=>{
-      if (ch.dataset.bound === '1') return;
-      ch.dataset.bound = '1';
-      ch.addEventListener('click', ()=>{
-        document.querySelectorAll('.chip').forEach(c=>c.classList.remove('is-active'));
-        ch.classList.add('is-active');
-        const cat=ch.dataset.cat;
-        // Sync avec le select mobile
-        const sel = document.getElementById('category-select');
-        if (sel) sel.value = cat;
-        if(cat==='toutes'){ plot(dataset); return; }
-        plot((dataset||[]).filter(o=> (o.category||'').toLowerCase()===cat));
-      });
-    });
-
-    // Gérer le select mobile
-    const sel = document.getElementById('category-select');
-    if (sel && !sel.dataset.bound) {
-      sel.dataset.bound = '1';
-      sel.addEventListener('change', ()=>{
-        const cat = sel.value;
-        // Sync avec les chips (au cas où on passe de mobile à desktop)
-        document.querySelectorAll('.chip').forEach(c=>c.classList.remove('is-active'));
-        const activeChip = document.querySelector(`.chip[data-cat="${cat}"]`);
-        if (activeChip) activeChip.classList.add('is-active');
-        if(cat==='toutes'){ plot(dataset); return; }
-        plot((dataset||[]).filter(o=> (o.category||'').toLowerCase()===cat));
-      });
-    }
-
-    window._declicDataInit = true;
-    window._declicPlot = plot;
+  if (sel && !sel.dataset.bound) {
+    sel.dataset.bound = '1';
+    sel.addEventListener('change', () => applyCat(sel.value));
   }
 
-  if (!window._declicMeLayer) window._declicMeLayer = L.layerGroup().addTo(map);
-  window._declicMeLayer.clearLayers();
-
-  let meDot=null, meHalo=null, meAcc=null;
-
-  function updateMe(lat, lng, acc){
-    const p=[lat,lng];
-
-    if (!meHalo) {
-      meHalo = L.circleMarker(p, { radius:12, color:'#ffffff', opacity:0.9, weight:3, fill:true, fillOpacity:.15 })
-        .addTo(window._declicMeLayer);
-    } else { meHalo.setLatLng(p); }
-
-    if (!meDot) {
-      meDot = L.circleMarker(p, { radius:7, color:'#2563eb', weight:2, fill:true, fillOpacity:1 })
-        .addTo(window._declicMeLayer);
-    } else { meDot.setLatLng(p); }
-
-    const r = (acc && isFinite(acc)) ? Math.min(Math.max(acc, 80), 1200) : 0;
-    if (r) {
-      if (!meAcc) meAcc = L.circle(p, { radius:r, color:'#60a5fa', weight:1, fill:true, fillOpacity:.12 })
-        .addTo(window._declicMeLayer);
-      meAcc.setLatLng(p); meAcc.setRadius(r);
-    }
-  }
-
-  // --- RESTAURATION DE LA GEOLOCALISATION AUTOMATIQUE ---
-  // Ce bloc a été supprimé par erreur, il relance la recherche dès le chargement
-  if ('geolocation' in navigator) {
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        updateMe(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-        // Si on trouve, on centre la carte (optionnel, sinon ça reste vue d'ensemble)
-        // const map = window._declicMap;
-        // if(map) map.panTo([pos.coords.latitude, pos.coords.longitude], { animate:true });
-      },
-      err => {}, // Pas d'alerte au chargement automatique
-      { enableHighAccuracy:true, timeout:8000, maximumAge:60000 }
-    );
-  }
-
-  const btnEl = document.getElementById('btn-locate');
-  function bindLocateButton(){
-    if (!btnEl) return;
-    const btn = btnEl.cloneNode(true); btnEl.replaceWith(btn);
-    btn.addEventListener('click', ()=> (window._declicWatchId ? stopFollow() : startFollow()));
-    window._declicButton = btn;
-  }
-  bindLocateButton();
-
-  function startFollow(){
-    if (!('geolocation' in navigator)) {
-      alert("La géolocalisation n'est pas disponible sur cet appareil.");
-      return;
-    }
-    if (window._declicWatchId) return;
-
-    // Feedback immédiat
-    if (window._declicButton) window._declicButton.innerHTML = '<span>⏳</span> <span>Recherche...</span>';
-
-    const geoOptions = { enableHighAccuracy:true, timeout:15000, maximumAge:0 };
-
-    navigator.geolocation.getCurrentPosition(
-      p => {
-        updateMe(p.coords.latitude, p.coords.longitude, p.coords.accuracy);
-        // Si on trouve, on change le bouton
-        if (window._declicButton) window._declicButton.innerHTML = '<span>🛑</span> <span>Arrêter le suivi</span>';
-        // On recentre la carte sur l'utilisateur
-        const map = window._declicMap;
-        if(map) map.panTo([p.coords.latitude, p.coords.longitude], { animate:true });
-      },
-      e => {
-        console.warn('[geo] getCurrentPosition ERR', e);
-        if(e.code === 1) alert("Vous devez autoriser la géolocalisation pour que cela fonctionne.");
-        else if(e.code === 3) alert("Le délai d'attente GPS est dépassé. Réessayez dehors ou avec une meilleure connexion.");
-        stopFollow();
-      },
-      geoOptions
-    );
-
-    window._declicWatchId = navigator.geolocation.watchPosition(
-      p => updateMe(p.coords.latitude, p.coords.longitude, p.coords.accuracy),
-      e => console.warn('[geo] watch ERR', e),
-      geoOptions
-    );
-  }
-
-  function stopFollow(){
-    if (window._declicWatchId) { navigator.geolocation.clearWatch(window._declicWatchId); window._declicWatchId=null; }
-    if (window._declicButton) window._declicButton.innerHTML = '<span>📍</span> <span>Me localiser</span>';
-  }
-
-  // ========== STICKY CARTE AVEC TRANSFORM (CORRIGÉ MOBILE + DESKTOP) ==========
+  // ========== STICKY CARTE ==========
   (function() {
     const mapSticky = document.querySelector('.hm-map-sticky');
     const rightColumn = document.querySelector('.hm-explore-right');
-    const parcoursSection = document.getElementById('parcours');
 
-    // Vérifier la largeur à chaque appel pour gérer le resize
-    function isDesktop() {
-      return window.innerWidth > 960;
-    }
+    function isDesktop() { return window.innerWidth > 960; }
 
     if (!mapSticky || !rightColumn) return;
 
     const stickyTop = 80;
 
     function handleScroll() {
-      // Ne rien faire sur mobile
       if (!isDesktop()) {
         mapSticky.style.transform = '';
         mapSticky.style.willChange = '';
@@ -2305,34 +1058,19 @@ function plot(items){
 
       const scrollY = window.pageYOffset;
       const mapRect = mapSticky.getBoundingClientRect();
-const mapBox = document.querySelector(".hm-map");
-const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.height);
-
+      const mapBox = document.querySelector(".hm-map");
+      const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.height);
       const rightColumnRect = rightColumn.getBoundingClientRect();
-
-      // Position initiale de la carte (sans transform)
       const currentTransform = parseFloat(mapSticky.style.transform?.match(/translateY\((.+?)px\)/)?.[1] || 0);
       const mapOriginalTop = mapRect.top + scrollY - currentTransform;
-
-      // Point d'arrêt : s'aligne avec le bas de la colonne de droite
       const rightColumnBottom = rightColumnRect.top + scrollY + rightColumnRect.height;
       const stopPoint = rightColumnBottom - mapHeight;
 
-      // Calculer le translateY pour que la carte reste à stickyTop du viewport
       let translateY = scrollY - mapOriginalTop + stickyTop;
-
-      // Limiter pour ne pas dépasser le bas de la colonne de droite
       const maxY = stopPoint - mapOriginalTop;
-      if (translateY > maxY) {
-        translateY = maxY;
-      }
+      if (translateY > maxY) translateY = maxY;
+      if (translateY < 0)    translateY = 0;
 
-      // Ne pas descendre en dessous de 0
-      if (translateY < 0) {
-        translateY = 0;
-      }
-
-      // Appliquer le transform
       if (translateY > 0) {
         mapSticky.style.transform = `translateY(${translateY}px)`;
         mapSticky.style.willChange = 'transform';
@@ -2344,12 +1082,9 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', () => {
-      // Reset au resize puis recalculer
       mapSticky.style.transform = '';
       setTimeout(handleScroll, 100);
     });
-
-    // Premier check
     setTimeout(handleScroll, 100);
   })();
 }
@@ -2360,37 +1095,28 @@ const mapHeight = (mapBox ? mapBox.getBoundingClientRect().height : mapRect.heig
   if (!stats) return;
 
   const counters = stats.querySelectorAll('dd');
-  const duration = 2000; // 2 secondes
+  const duration = 2000;
 
   function animateCounter(element) {
     const text = element.textContent.trim();
     const value = parseInt(text.replace(/[^\d]/g, ''));
     const suffix = text.replace(/[\d\s]/g, '');
-
     if (isNaN(value)) return;
 
     const startTime = Date.now();
-    const endTime = startTime + duration;
 
     function update() {
       const now = Date.now();
       const progress = Math.min((now - startTime) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
       const current = Math.floor(eased * value);
-
       element.textContent = current.toLocaleString('fr-FR') + suffix;
-
-      if (progress < 1) {
-        requestAnimationFrame(update);
-      } else {
-        element.textContent = value.toLocaleString('fr-FR') + suffix;
-      }
+      if (progress < 1) { requestAnimationFrame(update); }
+      else { element.textContent = value.toLocaleString('fr-FR') + suffix; }
     }
-
     update();
   }
 
-  // Observer pour déclencher quand visible
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {

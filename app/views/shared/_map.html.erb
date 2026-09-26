@@ -1,0 +1,438 @@
+<%# app/views/shared/_map.html.erb
+    Carte Leaflet des initiatives (opportunités + belles histoires).
+    Locals : locate (bool, défaut true) — affiche le bouton « Me localiser ».
+    Une seule carte par page (id="map").
+    Filtre par catégorie : window._declicFilter('benevolat' | 'toutes' | …). %>
+<div class="hm-mapwrap">
+  <div id="map" class="hm-map"></div>
+  <% if local_assigns.fetch(:locate, true) %>
+    <button id="btn-locate" class="hm-locate hm-locate-enhanced">
+      <span class="locate-icon">📍</span>
+      <span class="locate-text">Me localiser</span>
+    </button>
+  <% end %>
+</div>
+
+<style>
+.hm-mapwrap{ position:relative; }
+.hm-map{
+  height:560px; width:100%; border-radius:24px;
+  border:2px solid #cbd5e1; overflow:hidden;
+  box-shadow:0 20px 50px rgba(15,23,42,.15), 0 0 0 1px rgba(99,102,241,.1);
+  transition:box-shadow 0.3s ease;
+}
+.hm-map:hover{ box-shadow:0 25px 60px rgba(15,23,42,.2), 0 0 0 2px rgba(99,102,241,.2); }
+
+.hm-mapwrap::before {
+  content:""; position:absolute; inset:-6px; border-radius:28px;
+  background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.1),rgba(236,72,153,.1));
+  z-index:-1; opacity:0; transition:opacity 0.3s ease;
+}
+.hm-mapwrap:hover::before{ opacity:1; }
+
+
+@media (min-width:1280px){ .hm-map{ height:900px; } }
+@media (max-width:1279px){ .hm-map{ height:420px; } }
+@media (max-width:768px) { .hm-map{ height:320px; } }
+@media (max-width:520px) { .hm-map{ height:280px; } }
+@media (max-width:768px){ .hm-map{ overflow:visible; } }
+
+/* ====== POPUP CARTE ====== */
+.leaflet-popup-content-wrapper{ padding:0; overflow:hidden; border-radius:16px; box-shadow:0 10px 25px rgba(0,0,0,.15); }
+.leaflet-popup-content{ margin:0 !important; width:280px !important; }
+.leaflet-popup-tip{ background:white; }
+.leaflet-container a.leaflet-popup-close-button{
+  top:8px; right:8px; color:white; background:rgba(0,0,0,.3);
+  border-radius:50%; width:24px; height:24px;
+  display:flex; align-items:center; justify-content:center;
+  font:16px/14px Tahoma,Verdana,sans-serif;
+  box-shadow:0 2px 4px rgba(0,0,0,.2); border:none;
+}
+.leaflet-container a.leaflet-popup-close-button:hover{ background:rgba(0,0,0,.6); color:white; }
+
+.dc-pop-card{ font-family:"Inter",sans-serif; color:#0f172a; }
+.dc-pop-hero{ aspect-ratio:16/9; width:100%; background-size:cover; background-position:center; position:relative; }
+.dc-pop-badge{
+  position:absolute; top:12px; left:12px; background:var(--cat-color,#7e5bef);
+  color:white; font-size:.65rem; font-weight:800; text-transform:uppercase;
+  padding:4px 8px; border-radius:99px; box-shadow:0 2px 4px rgba(0,0,0,.2); letter-spacing:.05em;
+}
+.dc-pop-body{ padding:16px; }
+.dc-pop-title{ margin:0 0 6px; font-family:"Epilogue",sans-serif; font-weight:800; font-size:1rem; line-height:1.3; color:#0f172a; }
+.dc-pop-meta{ display:flex; flex-direction:column; gap:4px; margin-bottom:12px; font-size:.8rem; color:#64748b; font-weight:500; }
+.dc-pop-meta span{ display:flex; align-items:center; gap:6px; }
+.dc-pop-btn{
+  display:block; width:100%; text-align:center; background:#0f172a; color:white !important;
+  text-decoration:none !important; padding:10px 0; border-radius:8px;
+  font-weight:700; font-size:.85rem; transition:transform .1s, background .2s;
+}
+.dc-pop-btn:hover{ background:#7e5bef; transform:translateY(-1px); }
+
+@media (max-width:768px){
+  .leaflet-popup-content-wrapper{ max-width:270px !important; }
+  .leaflet-popup-content{ width:250px !important; }
+  .dc-pop-hero{ aspect-ratio:unset !important; height:110px !important; }
+  .dc-pop-body{ padding:12px !important; }
+  .dc-pop-title{ font-size:.88rem !important; margin:0 0 6px !important; line-height:1.2 !important; }
+  .dc-pop-meta{ font-size:.75rem !important; gap:2px !important; margin-bottom:8px !important; }
+  .dc-pop-btn{ padding:9px 0 !important; font-size:.8rem !important; }
+}
+</style>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<script defer src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<% content_for :scripts do %>
+<script>
+document.addEventListener('turbo:load', bootDeclicMap);
+document.addEventListener('DOMContentLoaded', bootDeclicMap);
+
+function bootDeclicMap(){
+  const mapEl = document.getElementById('map');
+  if (!mapEl || !window.L) return;
+
+  let map = window._declicMap;
+  if (!map) {
+    map = L.map(mapEl, { zoomControl:true, attributionControl:false }).setView([46.6, 2.2], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      detectRetina: true,
+      crossOrigin: true
+    }).addTo(map);
+    window._declicMap = map;
+  } else {
+    requestAnimationFrame(()=> map.invalidateSize());
+  }
+
+  map.on('click', () => map.closePopup());
+
+  if (!window._declicDataInit) {
+
+    const colors = {
+      benevolat:   '#f43f5e',
+      ecologiser:  '#16a34a',
+      formation:   '#3b82f6',
+      rencontres:  '#facc15',
+      entreprendre:'#f59e0b',
+      histoires:   '#a855f7',
+      default:     '#7e5bef'
+    };
+    const emojis = {
+      benevolat:   '❤️',
+      ecologiser:  '🌱',
+      formation:   '📘',
+      rencontres:  '🤝',
+      entreprendre:'🚀',
+      histoires:   '✨',
+      default:     '📍'
+    };
+
+    const iconFor = (c) => {
+      const em = emojis[c] || emojis.default;
+      const baseStyle =
+        "width:26px;height:26px;border-radius:9999px;border:2px solid #fff;" +
+        "display:grid;place-items:center;color:#fff;font-size:14px;" +
+        "box-shadow:0 1px 4px rgba(0,0,0,.25);";
+      let extraStyle;
+      if (c === 'histoires') {
+        extraStyle =
+          "background:linear-gradient(135deg,#f97316,#ec4899,#3b82f6,#22c55e,#f59e0b);" +
+          "background-size:320% 320%;animation:gradientShift 8s ease infinite;";
+      } else {
+        const bg = colors[c] || colors.default;
+        extraStyle = `background:${bg};`;
+      }
+
+      return L.divIcon({
+        className: '',
+        html: `<div style="${baseStyle}${extraStyle}"><span>${em}</span></div>`,
+        iconSize: [26, 32],
+        iconAnchor: [13, 28],
+        popupAnchor: [0, -16],
+        zIndexOffset: c === 'histoires' ? 0 : 100
+      });
+    };
+
+    const esc = s => (s || '').toString()
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
+
+    function mdPlain(s){
+      return (s||'')
+        .replace(/### À quoi ça ressemble \?/gi, '')
+        .replace(/💡/g, '')
+        .replace(/!\[[^\]]*\]\([^\)]+\)/g,' ')
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'$1')
+        .replace(/https?:\/\/\S+/g,' ')
+        .replace(/[\*_`>#]/g,'')
+        .replace(/\s+/g,' ')
+        .trim();
+    }
+
+    function popupHtml(o){
+      const cats = {
+        benevolat:    { color: '#f43f5e', label: 'Bénévolat' },
+        ecologiser:   { color: '#16a34a', label: 'Écologie' },
+        formation:    { color: '#3b82f6', label: 'Formation' },
+        rencontres:   { color: '#facc15', label: 'Rencontres' },
+        entreprendre: { color: '#f59e0b', label: 'Entreprise' },
+        histoires:    { color: '#a855f7', label: 'Témoignage' },
+        default:      { color: '#7e5bef', label: 'Initiative' }
+      };
+
+      const cKey = (o.category||'').toLowerCase();
+      const conf = cats[cKey] || cats.default;
+
+      const base = (cKey==='histoires') ? '/stories' : '/opportunities';
+      const url = `${base}/${o.slug||o.id}`;
+
+      let dateStr = "";
+      if(o.starts_at || o.date) {
+        const d = new Date(o.starts_at || o.date);
+        dateStr = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+      }
+
+      const img = (function thumbForJs(obj){
+        if(obj.image_url) return obj.image_url;
+        if(cKey==='benevolat') return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400&q=80&fit=crop';
+        if(cKey==='formation') return 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=400&q=80&fit=crop';
+        if(cKey==='rencontres') return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=400&q=80&fit=crop';
+        return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80&fit=crop';
+      })(o);
+
+      const safeTitle = esc(mdPlain(o.title||''));
+      const safeLoc = esc(o.location || '');
+      const safeOrg = esc(o.organization || '');
+
+      return `
+        <div class="dc-pop-card" style="--cat-color: ${conf.color}">
+          <div class="dc-pop-hero" style="background-image: url('${img}')">
+            <span class="dc-pop-badge">${conf.label}</span>
+          </div>
+
+          <div class="dc-pop-body">
+            <h3 class="dc-pop-title">${safeTitle}</h3>
+
+            <div class="dc-pop-meta">
+              ${safeOrg ? `<span>🏢 ${safeOrg}</span>` : ''}
+              ${dateStr ? `<span>🗓️ ${dateStr}</span>` : ''}
+              ${safeLoc ? `<span>📍 ${safeLoc}</span>` : ''}
+            </div>
+
+            <a href="${url}" class="dc-pop-btn">
+              Voir le déclic →
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    const dataLayer = L.layerGroup().addTo(map);
+    window._declicDataLayer = dataLayer;
+    let dataset = [];
+
+    function plot(items){
+      dataLayer.clearLayers();
+      const seen = new Map();
+      const bounds=[];
+      (items||[]).forEach(o=>{
+
+        const lat = Number(o.latitude);
+        const lng = Number(o.longitude);
+
+        if(isNaN(lat) || isNaN(lng) || lat === null || lng === null) return;
+
+        const key = lat.toFixed(4) + ',' + lng.toFixed(4);
+        const jitterCount = seen.get(key) || 0;
+        seen.set(key, jitterCount + 1);
+        const jLat = lat + (jitterCount * 0.0003 * Math.cos(jitterCount * 2.4));
+        const jLng = lng + (jitterCount * 0.0003 * Math.sin(jitterCount * 2.4));
+
+        const marker = L.marker([jLat, jLng], { icon:iconFor((o.category||'').toLowerCase()) })
+          .addTo(dataLayer)
+          .bindPopup(popupHtml(o), {
+            autoPan: window.innerWidth <= 768,
+            autoPanPadding: [10, 90],
+            maxWidth: 300,
+            minWidth: 280,
+            maxHeight: window.innerHeight * 0.65,
+            closeButton: true,
+            autoClose: true,
+            offset: [0, 0]
+          });
+
+        marker.on('mouseover', function() {
+          if (o.image_url) { const img = new Image(); img.src = o.image_url; }
+        });
+
+        marker.on('popupopen', function(e) {
+          const popup = e.popup;
+
+          setTimeout(function() {
+            const popupEl = popup._container;
+            if (!popupEl) return;
+
+            const popupHeight = popupEl.offsetHeight;
+            const mapSize = map.getSize();
+
+            const navbarHeight = window.innerWidth <= 640 ? 64 : 72;
+            const topPadding = 20;
+            const totalTopSpace = navbarHeight + topPadding;
+
+            const visibleHeight = mapSize.y - totalTopSpace;
+            const mapCenterX = mapSize.x / 2;
+            const mapCenterY = totalTopSpace + (visibleHeight / 2);
+
+            const markerPoint = map.latLngToContainerPoint(marker.getLatLng());
+            const popupCenterY = markerPoint.y - (popupHeight / 2);
+            const popupCenterX = markerPoint.x;
+
+            const offsetX = mapCenterX - popupCenterX;
+            const offsetY = mapCenterY - popupCenterY;
+
+            map.panBy([-offsetX, -offsetY], { animate: true, duration: 0.3 });
+
+            setTimeout(function() {
+              popup.options.autoPan = false;
+            }, 400);
+
+            const closeBtn = popup._closeButton;
+            if (closeBtn) {
+              closeBtn.style.width = '44px';
+              closeBtn.style.height = '44px';
+              closeBtn.style.fontSize = '28px';
+              closeBtn.style.lineHeight = '44px';
+              closeBtn.style.display = 'flex';
+              closeBtn.style.alignItems = 'center';
+              closeBtn.style.justifyContent = 'center';
+              closeBtn.style.cursor = 'pointer';
+              closeBtn.style.touchAction = 'manipulation';
+              closeBtn.style.zIndex = '10001';
+              closeBtn.style.position = 'absolute';
+              closeBtn.style.top = '8px';
+              closeBtn.style.right = '8px';
+              closeBtn.style.background = 'rgba(0,0,0,0.7)';
+              closeBtn.style.borderRadius = '50%';
+              closeBtn.style.color = 'white';
+
+              closeBtn.addEventListener('touchstart', function(event) {
+                event.stopPropagation(); event.preventDefault(); map.closePopup();
+              }, { passive: false });
+
+              closeBtn.addEventListener('click', function(event) {
+                event.stopPropagation(); event.preventDefault(); map.closePopup();
+              });
+            }
+          }, 100);
+        });
+
+        bounds.push([lat, lng]);
+      });
+
+      if(bounds.length){ map.fitBounds(bounds,{padding:[30,30]}); }
+    }
+
+    Promise.all([
+      fetch('/api/v1/opportunities').then(r=>r.ok?r.json():[]).catch(()=>[]),
+      fetch('/api/v1/stories').then(r=>r.ok?r.json():[]).catch(()=>[])
+    ]).then(([opps, stories])=>{
+      (stories||[]).forEach(s=> s.category='histoires');
+      dataset = ([]).concat(opps||[], stories||[]);
+      plot(dataset);
+    });
+
+    window._declicFilter = function(cat){
+      if(!cat || cat==='toutes'){ plot(dataset); return; }
+      plot((dataset||[]).filter(o=> (o.category||'').toLowerCase()===cat));
+    };
+
+    window._declicDataInit = true;
+    window._declicPlot = plot;
+  }
+
+  if (!window._declicMeLayer) window._declicMeLayer = L.layerGroup().addTo(map);
+  window._declicMeLayer.clearLayers();
+
+  let meDot=null, meHalo=null, meAcc=null;
+
+  function updateMe(lat, lng, acc){
+    const p=[lat,lng];
+
+    if (!meHalo) {
+      meHalo = L.circleMarker(p, { radius:12, color:'#ffffff', opacity:0.9, weight:3, fill:true, fillOpacity:.15 })
+        .addTo(window._declicMeLayer);
+    } else { meHalo.setLatLng(p); }
+
+    if (!meDot) {
+      meDot = L.circleMarker(p, { radius:7, color:'#2563eb', weight:2, fill:true, fillOpacity:1 })
+        .addTo(window._declicMeLayer);
+    } else { meDot.setLatLng(p); }
+
+    const r = (acc && isFinite(acc)) ? Math.min(Math.max(acc, 80), 1200) : 0;
+    if (r) {
+      if (!meAcc) meAcc = L.circle(p, { radius:r, color:'#60a5fa', weight:1, fill:true, fillOpacity:.12 })
+        .addTo(window._declicMeLayer);
+      meAcc.setLatLng(p); meAcc.setRadius(r);
+    }
+  }
+
+  if ('geolocation' in navigator) {
+    navigator.geolocation.getCurrentPosition(
+      pos => { updateMe(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy); },
+      err => {},
+      { enableHighAccuracy:true, timeout:8000, maximumAge:60000 }
+    );
+  }
+
+  const btnEl = document.getElementById('btn-locate');
+  function bindLocateButton(){
+    if (!btnEl) return;
+    const btn = btnEl.cloneNode(true); btnEl.replaceWith(btn);
+    btn.addEventListener('click', ()=> (window._declicWatchId ? stopFollow() : startFollow()));
+    window._declicButton = btn;
+  }
+  bindLocateButton();
+
+  function startFollow(){
+    if (!('geolocation' in navigator)) {
+      alert("La géolocalisation n'est pas disponible sur cet appareil.");
+      return;
+    }
+    if (window._declicWatchId) return;
+
+    if (window._declicButton) window._declicButton.innerHTML = '<span>⏳</span> <span>Recherche...</span>';
+
+    const geoOptions = { enableHighAccuracy:true, timeout:15000, maximumAge:0 };
+
+    navigator.geolocation.getCurrentPosition(
+      p => {
+        updateMe(p.coords.latitude, p.coords.longitude, p.coords.accuracy);
+        if (window._declicButton) window._declicButton.innerHTML = '<span>🛑</span> <span>Arrêter le suivi</span>';
+        const map = window._declicMap;
+        if(map) map.panTo([p.coords.latitude, p.coords.longitude], { animate:true });
+      },
+      e => {
+        console.warn('[geo] getCurrentPosition ERR', e);
+        if(e.code === 1) alert("Vous devez autoriser la géolocalisation pour que cela fonctionne.");
+        else if(e.code === 3) alert("Le délai d'attente GPS est dépassé. Réessayez dehors ou avec une meilleure connexion.");
+        stopFollow();
+      },
+      geoOptions
+    );
+
+    window._declicWatchId = navigator.geolocation.watchPosition(
+      p => updateMe(p.coords.latitude, p.coords.longitude, p.coords.accuracy),
+      e => console.warn('[geo] watch ERR', e),
+      geoOptions
+    );
+  }
+
+  function stopFollow(){
+    if (window._declicWatchId) { navigator.geolocation.clearWatch(window._declicWatchId); window._declicWatchId=null; }
+    if (window._declicButton) window._declicButton.innerHTML = '<span>📍</span> <span>Me localiser</span>';
+  }
+}
+</script>
+<% end %>

@@ -11,6 +11,10 @@
       <label>
         <input type="checkbox" name="missing_coords" value="1" <%= "checked" if @missing %>> 📍 Coords manquantes
       </label>
+      <label>
+        <input type="checkbox" name="geocoding_flagged" value="1" <%= "checked" if @flagged %>>
+        🚩 Géocodage signalé (<%= @counts[:geocoding_flagged] %>)
+      </label>
       <button type="submit" class="btn-dark">Filtrer</button>
       <%= link_to "Reset", admin_stories_path, class: "reset-link" %>
     <% end %>
@@ -44,6 +48,11 @@
             <span class="<%= 'warning' if s.latitude.blank? %>">
               <%= s.location.presence || "—" %>
             </span>
+            <% if s.geocoding_flagged_reason.present? %>
+              <div class="geocoding-flag" title="<%= s.geocoding_flagged_reason %>">
+                🚩 géocodage rejeté — <%= s.geocoding_flagged_reason %>
+              </div>
+            <% end %>
           </td>
           <td class="date-cell"><%= s.created_at.strftime("%d/%m/%Y") %></td>
           <td class="text-right">
@@ -78,6 +87,7 @@
   .row-title { font-weight: bold; color: #0f172a; }
   .row-subtitle { font-size: 12px; color: #64748b; }
   .warning { color: #ef4444; font-weight: bold; }
+  .geocoding-flag { margin-top: 4px; font-size: 11px; font-weight: 700; color: #b45309; }
   .action-links { display: flex; gap: 10px; justify-content: flex-end; }
   .btn-delete { background: none; border: none; cursor: pointer; color: #ef4444; }
 </style>

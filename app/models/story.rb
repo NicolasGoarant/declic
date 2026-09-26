@@ -1,4 +1,6 @@
 class Story < ApplicationRecord
+  include NancyGeocodable
+
   # Image principale (hero)
   has_one_attached :image
 
@@ -14,11 +16,12 @@ class Story < ApplicationRecord
   validates :title, presence: true
   validates :slug, uniqueness: true, allow_blank: true
 
-  # Configure la géolocalisation
-  geocoded_by :location
+  # Configure la géolocalisation, restreinte à la zone de Nancy (voir
+  # NancyGeocodable — même mécanisme que Opportunity).
+  nancy_geocoded_by :location
 
   # Ne géocoder automatiquement que si coords manquantes ET location a changé
-  before_validation :geocode, if: -> {
+  before_validation :geocode_and_guard, if: -> {
     location.present? &&
     (latitude.blank? || longitude.blank?) &&
     will_save_change_to_location?

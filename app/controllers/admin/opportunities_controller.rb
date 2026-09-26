@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Admin::OpportunitiesController < ApplicationController
+class Admin::OpportunitiesController < Admin::BaseController
   before_action :set_opportunity, only: [:edit, :update, :destroy, :toggle_active]
 
   def index
@@ -10,18 +10,23 @@ class Admin::OpportunitiesController < ApplicationController
     @cat = params[:category].to_s.strip
     @only_in = params[:only_inactive].present?
     @missing = params[:missing_coords].present?
+    @flagged = params[:geocoding_flagged].present?
 
     scope = scope.where("title ILIKE ?", "%#{@q}%") if @q.present?
     scope = scope.where(category: @cat) if @cat.present?
     scope = scope.where(is_active: false) if @only_in
     scope = scope.where(latitude: nil).or(scope.where(longitude: nil)) if @missing
+    scope = scope.where.not(geocoding_flagged_reason: nil) if @flagged
 
     @opportunities = scope.order(created_at: :desc)
 
     @counts = {
       total: Opportunity.count,
       active: Opportunity.where(is_active: true).count,
-      missing_coords: Opportunity.where(latitude: nil).or(Opportunity.where(longitude: nil)).count
+      missing_coords: Opportunity.where(latitude: nil).or(Opportunity.where(longitude: nil)).count,
+      # Signalées par le garde-fou de distance (NancyGeocodable) : un résultat
+      # de géocodage à plus de 30 km de Nancy, refusé au lieu d'enregistré.
+      geocoding_flagged: Opportunity.where.not(geocoding_flagged_reason: nil).count
     }
   end
 
@@ -69,14 +74,21 @@ class Admin::OpportunitiesController < ApplicationController
 
   def geocode_missing
     count = 0
+    signalees = 0
     Opportunity.where(latitude: nil).or(Opportunity.where(longitude: nil)).find_each do |o|
-      o.geocode
+      o.geocode_and_guard
       if o.latitude.present? && o.longitude.present?
         o.save(validate: false)
         count += 1
+      elsif o.geocoding_flagged_reason.present?
+        # Rejeté par le garde-fou de distance (NancyGeocodable) : on écrit le
+        # motif quand même, pour que l'admin le voie, mais pas de coordonnées.
+        o.save(validate: false)
+        signalees += 1
       end
     end
-    redirect_to admin_opportunities_path, notice: "Géocodage terminé (#{count} mises à jour)."
+    redirect_to admin_opportunities_path,
+                notice: "Géocodage terminé (#{count} mises à jour, #{signalees} signalée(s) hors zone)."
   end
 
   private

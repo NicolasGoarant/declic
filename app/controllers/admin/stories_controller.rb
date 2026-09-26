@@ -5,6 +5,7 @@ class Admin::StoriesController < Admin::BaseController
   def index
     @q       = params[:q].to_s.strip
     @missing = ActiveModel::Type::Boolean.new.cast(params[:missing_coords])
+    @flagged = ActiveModel::Type::Boolean.new.cast(params[:geocoding_flagged])
 
     scope = Story.all
     if @q.present?
@@ -15,15 +16,17 @@ class Admin::StoriesController < Admin::BaseController
       )
     end
     scope = scope.where(latitude: nil).or(scope.where(longitude: nil)) if @missing
+    scope = scope.where.not(geocoding_flagged_reason: nil) if @flagged
 
     @stories = scope
       .order(Arel.sql("COALESCE(updated_at, created_at) DESC"))
       .limit(500)
 
     @counts = {
-      total:          Story.count,
-      missing_coords: Story.where(latitude: nil).or(Story.where(longitude: nil)).count,
-      active:         Story.where(is_active: true).count
+      total:             Story.count,
+      missing_coords:    Story.where(latitude: nil).or(Story.where(longitude: nil)).count,
+      active:            Story.where(is_active: true).count,
+      geocoding_flagged: Story.where.not(geocoding_flagged_reason: nil).count
     }
   end
 
@@ -133,11 +136,15 @@ class Admin::StoriesController < Admin::BaseController
 
     scope.find_each do |s|
       if s.location.present?
-        s.geocode
+        s.geocode_and_guard
 
         if s.latitude.present? && s.longitude.present?
           s.update_columns(latitude: s.latitude, longitude: s.longitude, updated_at: Time.current)
           done += 1
+        elsif s.geocoding_flagged_reason.present?
+          # Rejeté par le garde-fou de distance : le motif s'écrit quand
+          # même, pour que l'admin le voie.
+          s.update_columns(geocoding_flagged_reason: s.geocoding_flagged_reason, updated_at: Time.current)
         end
       end
     end
@@ -203,8 +210,8 @@ class Admin::StoriesController < Admin::BaseController
 
       if story.location.present? &&
          (story.latitude.blank? || story.longitude.blank?) &&
-         story.respond_to?(:geocode)
-        story.geocode
+         story.respond_to?(:geocode_and_guard)
+        story.geocode_and_guard
       end
     rescue ImportStoryParser::ParseError => e
       story.errors.add(:base, "Import Story : #{e.message}")
