@@ -1,5 +1,11 @@
 # db/seeds.rb
 
+# Ce fichier VIDE les tables Story et Opportunity : jamais en production sans accord explicite.
+if Rails.env.production? && ENV["SEED_ALLOW_DESTROY"] != "oui"
+  abort "db/seeds.rb refuse de s'exécuter en production : il supprime toutes les histoires et " \
+        "opportunités. Pour le forcer quand même : SEED_ALLOW_DESTROY=oui bin/rails db:seed"
+end
+
 puts "🧹 Nettoyage de la base de données..."
 defined?(Story) && Story.destroy_all
 defined?(Opportunity) && Opportunity.destroy_all
