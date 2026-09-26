@@ -18,7 +18,7 @@ class DioramaTuiles
 
   LOT = "toits-v1".freeze                   # {z}/{x}/{y}.webp, niveaux 0 à 8
   MASQUE = "masque-bati".freeze             # {z}/{x}/{y}.png, niveaux 6 à 8, centre-ville
-  PROPRIETE = "toits-v1-propriete".freeze   # dalles/8/{x}/{y}.png
+  PROPRIETE = "propriete-toits-v1".freeze   # 8/{x}/{y}.png (pas de dossier dalles/)
   AMBIANCES_DOSSIER = "ambiances".freeze    # {nom}-actuelle.json (format nancy-3d/ambiance)
   AMBIANCES = %w[heure-bleue automne hiver].freeze
 

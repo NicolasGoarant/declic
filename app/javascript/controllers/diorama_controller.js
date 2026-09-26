@@ -199,7 +199,8 @@ export default class extends Controller {
     }
     if (this.dioramaDispo) {
       try {
-        await this.chargerManifeste()
+        // Le masque se lit avant la carte : sans sa liste de dalles, on demanderait des dalles absentes (404).
+        await Promise.all([this.chargerManifeste(), t.disponibles.blanche ? this.chargerMasque() : null])
         this.preparerDecoupe(await contour)
       } catch (erreur) {
         console.error("diorama :", erreur)
@@ -213,7 +214,6 @@ export default class extends Controller {
     this.construireCarte()
     this.vueInitiale()
     this.majCalques()
-    if (this.dioramaDispo && t.disponibles.blanche) this.chargerMasque()
     if (this.dioramaDispo && t.disponibles.ambiances?.length) {
       this.minuterieAuto = setInterval(() => { if (this.ambianceChoisie === "auto") this.appliquerAmbiance("auto") }, 60000)
     }
@@ -455,7 +455,7 @@ export default class extends Controller {
       parametres.catch((erreur) => console.error("ambiance :", erreur))
       this.couches[nom] = this.decouper(creerCoucheAmbiance(this.L, {
         dalle: (chemin) => this.url(t.lot, `${chemin}.webp`),
-        propriete: (chemin) => this.url(t.propriete, `dalles/${chemin}.png`),
+        propriete: (chemin) => this.url(t.propriete, `${chemin}.png`),
         masque: (chemin) => this.url(t.masque, `${chemin}.png`),
         estListee: this.estListee, masqueListe: this.masqueListe,
         parametres: parametres.catch(() => null), options: this.optionsCouche
