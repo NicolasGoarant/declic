@@ -8,10 +8,9 @@
   - Filtre par catégorie : `window._declicFilter(cat)`, appelé par les chips/select de la home.
   - Une seule carte par page (`id="map"`, globals `window._declic*`).
   - Option `locate: false` pour masquer le bouton « Me localiser ».
+- Corrigé : `_declicButton` dans `stopFollow` ; Leaflet n'est plus rechargé par le partial (markercluster en `defer`, après le Leaflet du layout).
 
 ## Reste à faire
-- Corriger `_eclicButton` → `_declicButton` dans `stopFollow` (partial).
-- Retirer le double chargement de Leaflet (déjà dans `application.html.erb`).
 - Décider du sort de `app/views/pages/home.html.erb.bak` (ancienne copie, non rendue).
 - Fichiers non suivis à trier : `app/assets/images/markers/`, `docs/`.
 
