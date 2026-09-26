@@ -1,0 +1,48 @@
+require "application_system_test_case"
+require "minitest/mock"
+
+# L'écran Carte de /labo/accueil, au format mobile (la tab bar et la bottom sheet n'existent pas
+# sur bureau). Les tuiles sont déclarées absentes : ni carte ni CDN, seul l'écran est éprouvé.
+class AccueilTest < ApplicationSystemTestCase
+  setup do
+    page.driver.browser.manage.window.resize_to(390, 844)
+    @tuiles = DioramaTuiles.new(base: "https://tuiles.test/#{SecureRandom.hex(4)}", sonde: ->(_) { false })
+  end
+
+  def sur_l_ecran_carte(&bloc)
+    DioramaTuiles.stub(:new, @tuiles) do
+      visit labo_accueil_path
+      bloc.call
+    end
+  end
+
+  test "la bottom sheet est repliée au chargement puis s'ouvre au clic sur la poignée" do
+    sur_l_ecran_carte do
+      assert_selector ".acc-poignee[aria-expanded='false']"
+      assert_no_selector ".acc-volet--ouvert"
+      assert_equal "acc-volet-panneau", find(".acc-poignee")["aria-controls"]
+
+      find(".acc-poignee").click
+
+      assert_selector ".acc-poignee[aria-expanded='true']"
+      assert_selector ".acc-volet--ouvert"
+
+      find("body").send_keys(:escape)
+      assert_selector ".acc-poignee[aria-expanded='false']"
+    end
+  end
+
+  test "la tab bar a cinq emplacements, le « + » Proposer en troisième position" do
+    sur_l_ecran_carte do
+      onglets = all(".acc-onglets > *")
+      assert_equal 5, onglets.size
+      assert_equal %w[Carte Explorer Proposer Favoris Profil], onglets.map { |o| o.text.strip }
+
+      plus = onglets[2]
+      assert_includes plus[:class], "acc-onglet-plus"
+      assert_equal "Proposer", plus["aria-label"]
+      assert_equal new_opportunity_path, URI(plus[:href]).path
+      assert_equal "page", onglets[0]["aria-current"]
+    end
+  end
+end

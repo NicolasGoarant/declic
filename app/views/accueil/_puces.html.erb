@@ -1,0 +1,19 @@
+<%# Filtres rapides, flottants sous les catégories (mobile) ou en haut de la carte (bureau). %>
+  <div class="acc-puces">
+    <button type="button" class="acc-puce acc-puce-autour" aria-pressed="false"
+            data-diorama-target="autour" data-action="diorama#autourDeMoi">
+      <%= picto(:viseur, taille: 16) %> Autour de moi
+    </button>
+    <button type="button" class="acc-puce" aria-pressed="false" data-diorama-target="quand"
+            data-action="diorama#filtrerDate" data-diorama-quand-param="aujourdhui">
+      <%= picto(:calendrier, taille: 16) %> Aujourd'hui
+    </button>
+    <button type="button" class="acc-puce" aria-pressed="false" data-diorama-target="quand"
+            data-action="diorama#filtrerDate" data-diorama-quand-param="semaine">
+      <%= picto(:horloge, taille: 16) %> Cette semaine
+    </button>
+    <button type="button" class="acc-puce" aria-pressed="false" aria-controls="acc-filtres"
+            data-diorama-target="boutonFiltres" data-action="diorama#basculerFiltres">
+      <%= picto(:reglages, taille: 16) %> Filtres
+    </button>
+  </div>

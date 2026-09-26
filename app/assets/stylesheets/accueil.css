@@ -14,7 +14,10 @@
   --ombre: 0 6px 24px rgba(29, 26, 43, 0.10);
   --ombre-legere: 0 2px 10px rgba(29, 26, 43, 0.08);
   --rayon: 18px;
-  --onglets-h: 68px;
+  /* Hauteur réelle de la tab bar (safe area iPhone comprise) : utilisée par la barre, la carte plein écran et le corps de page. */
+  --tabbar-h: calc(64px + env(safe-area-inset-bottom));
+  --poignee-h: 56px; /* poignée de la bottom sheet repliée */
+  --sheet-h: 55dvh; /* bottom sheet dépliée */
   --barre-h: 68px;
   --gouttiere: 16px;
 }
@@ -29,11 +32,12 @@ body.acc-corps {
   color: var(--encre);
   background: var(--fond);
   overflow-x: hidden;
-  padding-bottom: calc(var(--onglets-h) + env(safe-area-inset-bottom));
+  padding-bottom: var(--tabbar-h);
 }
 
-.acc a { color: inherit; }
-.acc button, .acc select, .acc input { font: inherit; color: inherit; }
+/* :where() : spécificité nulle, les classes de composants prennent le pas sur ces remises à zéro. */
+.acc :where(a) { color: inherit; }
+.acc :where(button, select, input) { font: inherit; color: inherit; }
 .acc svg { flex: none; }
 .acc img { max-width: 100%; }
 .acc-violet { color: var(--violet); }
@@ -66,43 +70,54 @@ body.acc-corps {
 /* ─── Barre du haut (bureau seulement) ─────────────────────────────────────────── */
 .acc-barre { display: none; }
 
-/* ─── Écran principal : en-tête + carte + volet ────────────────────────────────── */
+/* ─── Écran principal : le diorama occupe tout l'espace entre le haut et la tab bar ── */
 .acc-ecran {
   position: relative;
   display: grid;
-  grid-template-areas: "carte" "volet";
+  grid-template-areas: "carte";
   grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  height: calc(100vh - var(--tabbar-h));
+  height: calc(100dvh - var(--tabbar-h)); /* dvh : suit la barre d'URL mobile */
+  overflow: clip; /* la sheet repliée dépasse sous l'écran : clip la coupe sans rendre l'élément défilable */
 }
 
+/* Les commandes flottent au-dessus de la carte : fond blanc translucide, flou, coins arrondis. */
 .acc-tete {
   grid-area: carte;
   position: relative; z-index: 500;
   align-self: start;
+  display: flex; flex-direction: column; gap: 8px;
   padding: calc(10px + env(safe-area-inset-top)) var(--gouttiere) 0;
   pointer-events: none;
-  /* Le haut de la carte s'éclaircit sous le texte, comme sur la maquette. */
-  background: linear-gradient(to bottom, rgba(247, 246, 251, 0.96) 0%, rgba(247, 246, 251, 0.88) 62%, rgba(247, 246, 251, 0) 100%);
-  padding-bottom: 26px;
 }
 .acc-tete > * { pointer-events: auto; }
 
 .acc-entete { display: flex; align-items: center; justify-content: space-between; min-height: 48px; }
 .acc-entete-actions { display: flex; align-items: center; gap: 10px; }
+.acc-entete .acc-logo {
+  padding: 4px 14px 4px 4px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: var(--ombre-legere);
+}
 .acc-rond {
   display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85); box-shadow: var(--ombre-legere); color: var(--encre);
+  background: rgba(255, 255, 255, 0.82); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: var(--ombre-legere); color: var(--encre);
 }
 
+/* Hors bureau, l'accroche ne prend pas de hauteur au-dessus du diorama : elle reste dans la page
+   (titre h1, lu par les lecteurs d'écran) mais masquée. Elle s'affiche dans le panneau gauche du bureau. */
 .acc-accroche {
-  margin: 10px 0 12px; font-size: clamp(19px, 5.2vw, 24px); line-height: 1.28;
-  font-weight: 800; letter-spacing: -0.015em; max-width: 30ch;
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
 }
 .acc-accroche em { font-style: normal; color: var(--violet); }
 
 .acc-recherche { display: flex; gap: 8px; }
 .acc-territoire, .acc-champ {
   display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 12px;
-  background: var(--blanc); border: 1px solid var(--gris-clair); border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid rgba(232, 230, 240, 0.9); border-radius: 999px;
   box-shadow: var(--ombre-legere);
 }
 .acc-territoire { flex: none; position: relative; }
@@ -117,15 +132,17 @@ body.acc-corps {
 .acc-champ input::placeholder { color: var(--gris); }
 
 .acc-categories {
-  display: flex; gap: 4px; margin: 10px calc(-1 * var(--gouttiere)) 0; padding: 2px var(--gouttiere) 4px;
+  display: flex; gap: 4px; padding: 4px 6px;
   overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
+  border-radius: 20px; background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: var(--ombre-legere);
 }
 .acc-categories::-webkit-scrollbar { display: none; }
 .acc-cat {
   position: relative; flex: none; scroll-snap-align: start;
   display: flex; flex-direction: column; align-items: center; gap: 2px;
   min-width: 72px; padding: 4px 4px 6px; border: 0; border-radius: 14px; background: transparent;
-  cursor: pointer; font-size: 11.5px; font-weight: 700; text-shadow: 0 0 6px var(--blanc), 0 0 2px var(--blanc);
+  cursor: pointer; font-size: 11.5px; font-weight: 700;
 }
 .acc-cat img { width: 44px; height: 44px; filter: drop-shadow(0 3px 4px rgba(29, 26, 43, 0.18)); transition: transform 0.15s; }
 .acc-cat span { white-space: nowrap; }
@@ -143,11 +160,11 @@ body.acc-corps {
 .acc-carte {
   grid-area: carte;
   position: relative;
-  height: max(62svh, 540px);
   background: #dfe6e2;
   overflow: hidden;
 }
-.acc-carte-fond { position: absolute; inset: 0; background: #e9ece8; }
+/* z-index : Leaflet numérote ses volets jusqu'à 1000, ils restent enfermés ici, sous la sheet. */
+.acc-carte-fond { position: absolute; inset: 0; z-index: 0; background: #e9ece8; }
 .acc-carte-fond.leaflet-container { font: inherit; background: #e9ece8; }
 
 .acc-carte-message {
@@ -157,8 +174,9 @@ body.acc-corps {
 }
 
 .acc-commandes {
-  position: absolute; right: var(--gouttiere); bottom: 88px; z-index: 600;
+  position: absolute; right: var(--gouttiere); bottom: calc(var(--poignee-h) + 16px); z-index: 600;
   display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+  transition: opacity 250ms ease-out, visibility 250ms;
 }
 .acc-fonds { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .acc-bascule {
@@ -184,13 +202,14 @@ body.acc-corps {
 .acc-rond-bouton:hover, .acc-zoom-pile button:hover { background: var(--violet-pale); }
 
 .acc-puces {
-  position: absolute; left: 0; right: 0; bottom: 38px; z-index: 600;
-  display: flex; gap: 8px; padding: 0 var(--gouttiere); overflow-x: auto; scrollbar-width: none;
+  display: flex; gap: 8px; margin: 0 calc(-1 * var(--gouttiere)); padding: 0 var(--gouttiere) 4px;
+  overflow-x: auto; scrollbar-width: none;
 }
 .acc-puces::-webkit-scrollbar { display: none; }
 .acc-puce {
   flex: none; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px;
-  border: 1px solid var(--gris-clair); border-radius: 999px; background: var(--blanc);
+  border: 1px solid rgba(232, 230, 240, 0.9); border-radius: 999px; background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
   box-shadow: var(--ombre-legere); font-size: 13px; font-weight: 700; cursor: pointer;
 }
 .acc-puce[aria-pressed="true"] { background: var(--violet); border-color: var(--violet); color: var(--blanc); }
@@ -198,7 +217,7 @@ body.acc-corps {
 .acc-puce[aria-busy="true"] { opacity: 0.7; }
 
 .acc-filtres {
-  position: absolute; left: var(--gouttiere); right: var(--gouttiere); bottom: 86px; z-index: 700;
+  position: absolute; left: var(--gouttiere); right: var(--gouttiere); bottom: calc(var(--poignee-h) + 16px); z-index: 700;
   display: grid; gap: 10px; padding: 14px; border-radius: var(--rayon); background: var(--blanc); box-shadow: var(--ombre);
   max-width: 360px;
 }
@@ -227,7 +246,13 @@ body.acc-corps {
 .acc-attribution:not(.acc-attribution--ouverte) { font-size: 0; width: 26px; height: 26px; padding: 0; display: grid; place-items: center; }
 .acc-attribution:not(.acc-attribution--ouverte)::before { content: "ⓘ"; font-size: 15px; color: var(--encre); }
 .acc-attribution--ouverte { border-radius: 12px; }
-.acc-carte .leaflet-bottom.leaflet-left { bottom: 80px; }
+.acc-carte .leaflet-bottom.leaflet-left { bottom: var(--poignee-h); transition: transform 250ms ease-out; }
+/* Sheet dépliée : l'attribution (obligatoire) monte avec elle ; zoom et recentrage s'effacent, le
+   temps de l'ouverture, plutôt que de recouvrir les commandes du haut (le pincement zoome toujours). */
+.acc-ecran:has(.acc-volet--ouvert) .acc-carte .leaflet-bottom.leaflet-left {
+  transform: translateY(calc(var(--poignee-h) - var(--sheet-h)));
+}
+.acc-ecran:has(.acc-volet--ouvert) .acc-commandes { opacity: 0; visibility: hidden; }
 
 /* Les marqueurs : pictogramme sur une tige fine, petit socle coloré au pied. */
 .leaflet-marker-icon.acc-pin, .leaflet-marker-icon.acc-grappe { background: none; border: 0; }
@@ -262,38 +287,55 @@ body.acc-corps {
 .acc-visiteur { fill: #2f6bff; fill-opacity: 1; stroke: var(--blanc); stroke-width: 3; }
 .acc-precision { fill: #2f6bff; fill-opacity: 0.14; stroke: #2f6bff; stroke-opacity: 0.35; stroke-width: 1; }
 
-/* ─── Le volet ─────────────────────────────────────────────────────────────────── */
+/* ─── Le volet : bottom sheet repliée sur sa poignée (mobile et tablette) ────────────── */
+/* Ancrée au bas de l'écran, donc au-dessus de la tab bar, qu'elle ne masque jamais. Elle bouge par
+   transform seulement (jamais height) : --glisse suit le doigt pendant un glissement. */
 .acc-volet {
-  grid-area: volet;
-  position: relative; z-index: 650;
-  margin-top: -26px; padding: 8px 0 14px;
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 650;
+  display: flex; flex-direction: column;
+  height: var(--sheet-h);
   border-radius: 26px 26px 0 0; background: var(--blanc);
-  box-shadow: 0 -6px 24px rgba(29, 26, 43, 0.08);
+  box-shadow: 0 -6px 24px rgba(29, 26, 43, 0.10);
+  transform: translateY(calc(100% - var(--poignee-h) + var(--glisse, 0px)));
+  transition: transform 250ms ease-out;
 }
+.acc-volet--ouvert { transform: translateY(var(--glisse, 0px)); }
+.acc-volet--glisse, .acc-volet--glisse ~ * { transition: none; }
+
 .acc-poignee {
-  display: block; width: 100%; height: 22px; border: 0; background: transparent; cursor: pointer; position: relative;
+  position: relative; flex: none; display: flex; align-items: flex-start; gap: 8px;
+  width: 100%; height: var(--poignee-h); padding: 20px var(--gouttiere) 0;
+  border: 0; border-radius: 26px 26px 0 0; background: transparent; text-align: left; cursor: pointer;
+  touch-action: none; /* le glissement vertical est géré par le contrôleur */
 }
-.acc-poignee::before {
-  content: ""; position: absolute; left: 50%; top: 6px; width: 42px; height: 5px; margin-left: -21px;
-  border-radius: 3px; background: var(--gris-clair);
+.acc-poignee::before { /* le trait de poignée : 36 × 4 px */
+  content: ""; position: absolute; left: 50%; top: 8px; width: 36px; height: 4px; margin-left: -18px;
+  border-radius: 2px; background: #c9c6d6;
 }
+.acc-poignee-titre { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; line-height: 20px; }
+.acc-poignee-compte { font-size: 13px; font-weight: 700; color: var(--gris); line-height: 20px; }
+.acc-poignee-chevron { margin-left: auto; margin-top: -1px; transition: transform 250ms ease-out; }
+.acc-poignee[aria-expanded="true"] .acc-poignee-chevron { transform: rotate(180deg); }
+
+.acc-volet-panneau { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 10px; }
 .acc-volet-tete {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 0 var(--gouttiere) 10px;
+  display: flex; align-items: baseline; justify-content: flex-end; gap: 12px; padding: 0 var(--gouttiere) 10px;
 }
-.acc-volet-tete h2 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -0.01em; }
+.acc-volet-tete h2 { display: none; margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -0.01em; }
 
 .acc-fiches {
   display: flex; gap: 12px; padding: 4px var(--gouttiere) 10px;
   overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 var(--gouttiere); scrollbar-width: none;
 }
 .acc-fiches::-webkit-scrollbar { display: none; }
-.acc-volet--ouvert .acc-fiches {
-  flex-direction: column; overflow-x: hidden; overflow-y: auto; max-height: 72svh; scroll-snap-type: none;
-}
 .acc-volet-vide { margin: 0; padding: 8px var(--gouttiere) 12px; color: var(--gris); font-size: 14px; }
 .acc-volet-vide[hidden] { display: none; }
 .acc-stats { margin: 0; padding: 4px var(--gouttiere) 0; color: #9a97aa; font-size: 11px; line-height: 1.45; }
 .acc-stats b { font-weight: 700; }
+
+@media (prefers-reduced-motion: reduce) {
+  .acc-volet, .acc-commandes, .acc-poignee-chevron, .acc-carte .leaflet-bottom.leaflet-left { transition: none; }
+}
 
 /* Une fiche. Photo ou pictogramme sur la teinte de catégorie : la même boîte dans les deux cas. */
 .fiche {
@@ -301,14 +343,12 @@ body.acc-corps {
   border-radius: 16px; background: var(--blanc); box-shadow: var(--ombre-legere); border: 1px solid var(--gris-clair);
   overflow: hidden; cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s;
 }
-.acc-volet--ouvert .fiche { width: auto; display: grid; grid-template-columns: 120px 1fr; }
 .fiche:hover, .fiche:focus-within { box-shadow: var(--ombre); border-color: color-mix(in srgb, var(--c) 50%, var(--gris-clair)); }
 .fiche--active { border-color: var(--c); box-shadow: 0 0 0 2px var(--c), var(--ombre); }
 
 .fiche-bandeau {
   position: relative; height: 96px; background: color-mix(in srgb, var(--c) 18%, var(--blanc));
 }
-.acc-volet--ouvert .fiche-bandeau { height: 100%; min-height: 104px; }
 .fiche-photo[hidden], .fiche-picto-seul[hidden] { display: none; }
 .fiche-photo { display: block; width: 100%; height: 100%; object-fit: cover; }
 .fiche-picto-seul {
@@ -323,10 +363,8 @@ body.acc-corps {
   position: absolute; left: 8px; bottom: -14px; width: 34px; height: 34px;
   filter: drop-shadow(0 0 1.5px var(--blanc)) drop-shadow(0 0 2.5px var(--blanc)) drop-shadow(0 2px 3px rgba(29, 26, 43, 0.25));
 }
-.acc-volet--ouvert .fiche-cat { bottom: 8px; }
 .fiche-corps { position: relative; padding: 18px 12px 12px; }
-.acc-volet--ouvert .fiche-corps { padding: 12px 40px 12px 12px; }
-.fiche h3 { margin: 0 0 6px; font-size: 14px; line-height: 1.3; font-weight: 800; }
+.fiche h3 { margin: 0 0 6px; padding-right: 26px; font-size: 14px; line-height: 1.3; font-weight: 800; }
 .fiche-lien { text-decoration: none; }
 .fiche-lien:hover { color: var(--violet); }
 .fiche p {
@@ -337,7 +375,7 @@ body.acc-corps {
 .fiche-distance { color: var(--encre) !important; font-weight: 700; }
 .fiche-distance svg { color: var(--violet); }
 .fiche-signet {
-  position: absolute; right: 6px; bottom: 6px; z-index: 2;
+  position: absolute; right: 6px; top: 12px; z-index: 2;
   display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%;
   background: transparent; color: var(--gris); cursor: pointer;
 }
@@ -401,34 +439,46 @@ body.acc-corps {
 .acc-pied a:hover { color: var(--violet); }
 .acc-pied p { margin: 0; line-height: 1.5; }
 
-/* ─── Barre d'onglets (mobile et tablette) ─────────────────────────────────────── */
+/* ─── Barre d'onglets (mobile et tablette) ─────────────────────────────────────────── */
+/* Pas d'overflow hidden : le « + » dépasse de 16 px au-dessus de la barre, ombre comprise. */
 .acc-onglets {
-  position: fixed; left: 10px; right: 10px; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 1100;
-  display: grid; grid-template-columns: repeat(5, 1fr); height: var(--onglets-h);
-  border-radius: 22px; background: rgba(255, 255, 255, 0.97); box-shadow: 0 8px 30px rgba(29, 26, 43, 0.16);
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 1100;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  height: var(--tabbar-h); padding-bottom: env(safe-area-inset-bottom);
+  border-radius: 22px 22px 0 0; background: var(--blanc);
+  box-shadow: 0 -6px 24px rgba(29, 26, 43, 0.10);
 }
 .acc-onglets > * {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  border: 0; background: transparent; text-decoration: none; font-size: 11.5px; font-weight: 700; cursor: pointer;
+  min-width: 44px; min-height: 44px; border: 0; background: transparent; color: var(--encre);
+  text-decoration: none; font-size: 11.5px; font-weight: 600; cursor: pointer;
 }
-.acc-onglets [aria-current="page"], .acc-onglets [aria-pressed="true"] { color: var(--violet); }
+.acc-onglets [aria-current="page"], .acc-onglets [aria-pressed="true"] { color: var(--violet); font-weight: 800; }
 .acc-onglets [aria-current="page"] svg { fill: color-mix(in srgb, var(--violet) 25%, transparent); }
 .acc-onglets [aria-pressed="true"] svg { fill: currentColor; }
 .acc-onglet-inactif { opacity: 0.45; cursor: default !important; }
 
+/* Le « + » central : rond de 56 px, surélevé, couleur d'accent, lien « Proposer ». */
+.acc-onglet-plus { position: relative; justify-content: flex-end; padding-bottom: 6px; color: var(--violet) !important; font-weight: 700 !important; }
+.acc-plus-bouton {
+  position: absolute; top: -16px; left: 50%; width: 56px; height: 56px; margin-left: -28px;
+  display: grid; place-items: center; border-radius: 50%; background: var(--violet); color: var(--blanc);
+  box-shadow: 0 8px 20px rgba(91, 61, 245, 0.45), 0 2px 6px rgba(29, 26, 43, 0.18);
+  transition: transform 0.15s, background 0.15s;
+}
+.acc-onglet-plus:hover .acc-plus-bouton { background: var(--violet-fonce); }
+.acc-onglet-plus:active .acc-plus-bouton { transform: scale(0.94); }
+
 /* ─── Tablette : le mobile, élargi ─────────────────────────────────────────────── */
 @media (min-width: 768px) {
   :root { --gouttiere: 28px; }
-  .acc-accroche { font-size: 28px; max-width: 26ch; }
   .acc-recherche { max-width: 640px; }
   .acc-categories { justify-content: flex-start; }
   .acc-cat { width: 96px; font-size: 13px; }
   .acc-cat img { width: 52px; height: 52px; }
-  .acc-carte { height: max(62svh, 620px); }
   .fiche { width: 210px; }
   .fiche-bandeau { height: 118px; }
   .acc-presse-grille { grid-template-columns: repeat(2, 1fr); }
-  .acc-onglets { left: 50%; right: auto; width: 560px; transform: translateX(-50%); }
   .acc-filtres { left: auto; right: 90px; width: 360px; }
 }
 
@@ -461,30 +511,48 @@ body.acc-corps {
     height: calc(100svh - var(--barre-h));
     scroll-margin-top: var(--barre-h);
   }
+  /* Panneau gauche : fond plein, accroche visible. `position: static` laisse les puces se placer
+     par rapport à l'écran, en haut de la carte. */
   .acc-tete {
-    grid-area: tete; z-index: auto; background: var(--blanc); padding: 22px var(--gouttiere) 8px;
+    grid-area: tete; position: static; z-index: auto; display: block;
+    background: var(--blanc); padding: 22px var(--gouttiere) 8px;
   }
-  .acc-accroche { margin-top: 0; font-size: 24px; }
+  .acc-accroche {
+    position: static; width: auto; height: auto; margin: 0 0 12px; overflow: visible;
+    clip-path: none; white-space: normal; font-size: 24px; line-height: 1.28; font-weight: 800;
+    letter-spacing: -0.015em; max-width: 30ch;
+  }
   .acc-recherche { flex-direction: column; }
+  .acc-territoire, .acc-champ {
+    background: var(--blanc); -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
   .acc-territoire { align-self: flex-start; }
   .acc-champ { flex: none; }
   .acc-categories {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 14px 0 0; padding: 0; overflow: visible;
+    border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
   }
-  .acc-cat { width: auto; padding: 8px 4px; text-shadow: none; }
+  .acc-cat { width: auto; padding: 8px 4px; }
   .acc-cat:hover { background: var(--fond); }
+  .acc-puces {
+    position: absolute; top: 18px; left: calc(380px + var(--gouttiere)); z-index: 600;
+    margin: 0; padding: 0; overflow: visible;
+  }
 
   .acc-carte { grid-area: carte; height: auto; border-left: 1px solid var(--gris-clair); }
   .acc-commandes { bottom: 28px; right: 24px; }
-  .acc-puces { top: 18px; bottom: auto; left: 0; }
   .acc-filtres { top: 66px; bottom: auto; left: var(--gouttiere); right: auto; }
   .acc-carte .leaflet-bottom.leaflet-left { bottom: 16px; }
 
+  /* Le volet est un panneau fixe : plus de sheet ni de glissement. */
   .acc-volet {
-    grid-area: volet; margin: 0; padding: 12px 0 0; border-radius: 0; box-shadow: none;
-    display: flex; flex-direction: column; min-height: 0; border-top: 1px solid var(--gris-clair);
+    grid-area: volet; position: static; z-index: auto; height: auto; transform: none; transition: none;
+    margin: 0; padding: 12px 0 0; border-radius: 0; box-shadow: none;
+    min-height: 0; border-top: 1px solid var(--gris-clair);
   }
-  .acc-volet-tete h2 { font-size: 17px; }
+  .acc-volet-panneau { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
+  .acc-volet-tete { justify-content: space-between; }
+  .acc-volet-tete h2 { display: block; font-size: 17px; }
   .acc-fiches {
     flex: 1; min-height: 0; flex-direction: column; overflow-x: hidden; overflow-y: auto;
     scroll-snap-type: none; padding-bottom: 16px; scrollbar-width: thin;
@@ -492,7 +560,7 @@ body.acc-corps {
   .fiche { width: auto; display: grid; grid-template-columns: 112px 1fr; }
   .fiche-bandeau { height: 100%; min-height: 108px; }
   .fiche-cat { bottom: 8px; }
-  .fiche-corps { padding: 12px 40px 12px 12px; }
+  .fiche-corps { padding: 12px; }
   .acc-stats { padding-bottom: 10px; }
 
   .acc-suite { max-width: 1240px; margin: 0 auto; gap: 44px; padding: 44px 0 56px; }
