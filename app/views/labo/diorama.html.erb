@@ -12,54 +12,154 @@
     #hud { position: fixed; left: 10px; top: 10px; background: rgba(0,0,0,.6); padding: 8px 10px; border-radius: 6px; pointer-events: none; }
     #hud label { pointer-events: auto; }
     #attr { position: fixed; right: 8px; bottom: 6px; font-size: 11px; opacity: .7; max-width: 60vw; text-align: right; }
+    #pop { position: fixed; z-index: 5; width: 280px; background: #fff; color: #0f172a; border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,.45); overflow: hidden; display: none; font-family: system-ui, sans-serif; }
+    #pop .hero { aspect-ratio: 16/9; background-size: cover; background-position: center; position: relative; }
+    #pop .badge { position: absolute; top: 12px; left: 12px; background: var(--cat); color: #fff; font-size: .65rem; font-weight: 800; text-transform: uppercase; padding: 4px 8px; border-radius: 99px; letter-spacing: .05em; }
+    #pop .body { padding: 16px; }
+    #pop h3 { margin: 0 0 6px; font-size: 1rem; line-height: 1.3; font-weight: 800; }
+    #pop .desc { margin: 0 0 8px; font-size: .8rem; line-height: 1.4; color: #334155; }
+    #pop .meta { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; font-size: .8rem; color: #64748b; font-weight: 500; }
+    #pop .btn { display: block; text-align: center; background: #0f172a; color: #fff; text-decoration: none; padding: 10px 0; border-radius: 8px; font-weight: 700; font-size: .85rem; }
+    #pop .close { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border: 0; border-radius: 50%; background: rgba(0,0,0,.45); color: #fff; font-size: 16px; line-height: 1; cursor: pointer; }
     #err { color: #ff8a8a; }
   </style>
 </head>
 <body>
   <canvas id="c"></canvas>
   <div id="hud">
-    <div><strong>Diorama — test</strong> · <span id="info">chargement du manifeste…</span></div>
+    <div><strong>Diorama — test</strong> · <span id="info">chargement du manifeste…</span><span id="opps"></span></div>
     <div><label><input type="checkbox" id="grid"> grille des dalles</label> · molette / pinch : zoom · glisser : déplacer · double-clic : zoom ×2</div>
     <div id="err"></div>
   </div>
   <div id="attr"></div>
+  <div id="pop"></div>
   <%= javascript_importmap_tags "diorama_projection" %>
   <script type="module">
     import { creerProjection } from "diorama_projection";
-    // Points de test en WGS84. `zSol` = altitude au sol ESTIMÉE (m NGF, approximative) : sert
-    // uniquement à montrer le décalage dû au relief (anneau vert). Le marqueur rouge est posé
-    // à z_ref, comme le fera Déclic faute de MNS.
-    const POINTS = [
-      { nom: "Place Stanislas",     lat: 48.69353, lon: 6.18316, zSol: 212 },
-      { nom: "Gare de Nancy",       lat: 48.68975, lon: 6.17418, zSol: 206 },
-      { nom: "Porte de la Craffe",  lat: 48.69569, lon: 6.17383, zSol: 208 },
-      { nom: "Saint-Epvre",         lat: 48.69420, lon: 6.18590, zSol: 210 },
-    ];
+    // Opportunités réelles (même endpoint que la carte de la home), posées à z_ref faute de MNS.
+    // Celles hors du secteur couvert par la mosaïque sont écartées silencieusement.
+    const POINTS = [];
+    const STATS = { chargees: 0, dansRectangle: 0, affichees: 0 };
     let proj = null;
-    window.__dioramaOverlay = (ctx, versEcran) => {
+    let dallesNiv8 = null;
+
+    function projeter(opps) {
       const D = window.__diorama;
-      if (!D) return;
       proj = proj || creerProjection(D.M);
-      ctx.save();
-      ctx.font = "12px system-ui, sans-serif";
-      for (const p of POINTS) {
-        const [sx, sy] = versEcran(...proj.pixel(p.lat, p.lon));
-        const [ax, ay] = versEcran(...proj.pixel(p.lat, p.lon, p.zSol));
-        ctx.strokeStyle = "#5fe08a"; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(ax, ay, 7, 0, 7); ctx.stroke();
-        ctx.fillStyle = "#ff3b3b"; ctx.strokeStyle = "#fff";
-        ctx.beginPath(); ctx.arc(sx, sy, 5, 0, 7); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = "#fff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3;
-        ctx.strokeText(p.nom, sx + 10, sy + 4); ctx.fillText(p.nom, sx + 10, sy + 4);
+      const D8 = D.M.cote_dalle_px * Math.pow(2, D.M.niveau_max - 8);
+      dallesNiv8 = dallesNiv8 || new Set(D.M.dalles["8"].map(([x, y]) => x + "/" + y));
+      POINTS.length = 0;
+      STATS.chargees = opps.length;
+      STATS.dansRectangle = 0;
+      const vus = new Map();
+      for (const o of opps) {
+        const lat0 = parseFloat(o.latitude), lon0 = parseFloat(o.longitude);
+        if (!isFinite(lat0) || !isFinite(lon0)) continue;
+        // Même décalage que la carte Leaflet pour les points superposés
+        const cle = lat0.toFixed(4) + "," + lon0.toFixed(4), n = vus.get(cle) || 0;
+        vus.set(cle, n + 1);
+        const lat = lat0 + n * 0.0003 * Math.cos(n * 2.4), lon = lon0 + n * 0.0003 * Math.sin(n * 2.4);
+        const px = proj.pixel(lat, lon);
+        if (!proj.dansLaMosaique(px)) continue;
+        STATS.dansRectangle++;
+        // Secteur couvert = dalle listée au niveau max (la mosaïque n'est pas un rectangle plein).
+        if (!dallesNiv8.has(Math.floor(px[0] / D8) + "/" + Math.floor(px[1] / D8))) continue;
+        POINTS.push({ o, cat: (o.category || "").toLowerCase(), lat, lon, px });
       }
-      ctx.restore();
+      STATS.affichees = POINTS.length;
+      document.getElementById("opps").textContent =
+        ` · ${STATS.affichees}/${STATS.chargees} opportunités dans le secteur couvert`;
+      D.schedule();
+    }
+
+    // Le manifeste (window.__diorama) est chargé par le viewer : on attend qu'il soit prêt.
+    const attente = setInterval(() => {
+      if (!window.__diorama) return;
+      clearInterval(attente);
+      fetch("/api/v1/opportunities").then(r => r.ok ? r.json() : []).catch(() => [])
+        .then(projeter);
+    }, 100);
+
+    // --- Popup (même contenu que la carte Leaflet : badge catégorie, titre, organisation, date, lieu) ---
+    const CATS = {
+      benevolat: ["#f43f5e", "Bénévolat"], ecologiser: ["#16a34a", "Écologie"], formation: ["#3b82f6", "Formation"],
+      rencontres: ["#facc15", "Rencontres"], entreprendre: ["#f59e0b", "Entreprise"], default: ["#7e5bef", "Initiative"],
     };
-    // Test : window.__dioramaAller("Gare de Nancy") centre et zoome sur un point
-    window.__dioramaAller = (nom, s = 0.5) => {
-      const p = POINTS.find(q => q.nom === nom), D = window.__diorama;
-      [D.view.cx, D.view.cy] = creerProjection(D.M).pixel(p.lat, p.lon); D.view.s = s; D.schedule();
+    const IMG = {
+      benevolat: "photo-1488521787991-ed7bbaae773c", formation: "photo-1555949963-ff9fe0c870eb",
+      rencontres: "photo-1511632765486-a01980e01a18", default: "photo-1500648767791-00dcc994a43e",
+    };
+    const esc = s => (s || "").toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const mdPlain = s => (s || "")
+      .replace(/!\[[^\]]*\]\([^)]+\)/g, " ").replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, "$1")
+      .replace(/https?:\/\/\S+/g, " ").replace(/[*_`>#💡]/g, "").replace(/\s+/g, " ").trim();
+
+    function popupHtml(o) {
+      const cat = (o.category || "").toLowerCase(), [color, label] = CATS[cat] || CATS.default;
+      const img = o.image_url || `https://images.unsplash.com/${IMG[cat] || IMG.default}?w=400&q=80&fit=crop`;
+      let date = "";
+      if (o.starts_at) date = new Date(o.starts_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+      const desc = mdPlain(o.description), court = desc.length > 140 ? desc.slice(0, 140).replace(/\s+\S*$/, "") + "…" : desc;
+      return `<div style="--cat:${color}">
+        <div class="hero" style="background-image:url('${esc(img)}')"><span class="badge">${label}</span></div>
+        <button class="close" aria-label="Fermer">×</button>
+        <div class="body">
+          <h3>${esc(mdPlain(o.title))}</h3>
+          ${court ? `<p class="desc">${esc(court)}</p>` : ""}
+          <div class="meta">
+            ${o.organization ? `<span>🏢 ${esc(o.organization)}</span>` : ""}
+            ${date ? `<span>🗓️ ${date}</span>` : ""}
+            ${o.location ? `<span>📍 ${esc(o.location)}</span>` : ""}
+          </div>
+          <a class="btn" href="${esc(o.url || "/opportunities/" + (o.slug || o.id))}">Voir le déclic →</a>
+        </div></div>`;
+    };
+
+    const pop = document.getElementById("pop");
+    let ouvert = null;
+    const fermer = () => { ouvert = null; pop.style.display = "none"; };
+    function placerPopup() {
+      if (!ouvert) return;
+      const D = window.__diorama, v = D.view;
+      const sx = (ouvert.px[0] - v.cx) * v.s + window.innerWidth / 2, sy = (ouvert.px[1] - v.cy) * v.s + window.innerHeight / 2;
+      const w = pop.offsetWidth, h = pop.offsetHeight;
+      pop.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, sx - w / 2)) + "px";
+      pop.style.top = Math.max(8, sy - h - 14) + "px";
+    }
+    pop.addEventListener("click", e => { if (e.target.closest(".close")) fermer(); });
+    pop.addEventListener("pointerdown", e => e.stopPropagation());
+    pop.addEventListener("wheel", e => e.stopPropagation());
+
+    // Clic = pointerdown/pointerup à moins de 5 px (sinon c'est un glisser)
+    const canvasEl = document.getElementById("c");
+    let bas = null;
+    canvasEl.addEventListener("pointerdown", e => { bas = [e.clientX, e.clientY]; });
+    canvasEl.addEventListener("pointerup", e => {
+      if (!bas || Math.hypot(e.clientX - bas[0], e.clientY - bas[1]) > 5 || !window.__diorama) return;
+      const v = window.__diorama.view;
+      let touche = null, dmin = 12; // rayon de sélection en px écran
+      for (const p of POINTS) {
+        const d = Math.hypot((p.px[0] - v.cx) * v.s + window.innerWidth / 2 - e.clientX,
+                             (p.px[1] - v.cy) * v.s + window.innerHeight / 2 - e.clientY);
+        if (d <= dmin) { dmin = d; touche = p; }
+      }
+      if (!touche) return fermer();
+      ouvert = touche; pop.innerHTML = popupHtml(touche.o); pop.style.display = "block"; placerPopup();
+    });
+    window.addEventListener("keydown", e => { if (e.key === "Escape") fermer(); });
+
+    window.__dioramaOverlay = (ctx, versEcran) => {
+      for (const p of POINTS) {
+        const [sx, sy] = versEcran(...p.px);
+        const sel = p === ouvert;
+        ctx.fillStyle = (CATS[p.cat] || CATS.default)[0];
+        ctx.strokeStyle = "#fff"; ctx.lineWidth = sel ? 3 : 2;
+        ctx.beginPath(); ctx.arc(sx, sy, sel ? 9 : 7, 0, 7); ctx.fill(); ctx.stroke();
+      }
+      placerPopup();
     };
     window.__dioramaPoints = POINTS;
+    window.__dioramaStats = STATS;
   </script>
 
 <script>
