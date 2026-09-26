@@ -21,6 +21,11 @@
   --legende-h: 62px; /* légende des catégories, posée au-dessus de la poignée */
   --barre-h: 68px;
   --gouttiere: 16px;
+  /* La table sur laquelle la maquette est posée (diorama/contour.js), son socle et son ombre. */
+  --table: #f1ebe1;
+  --table-fond: radial-gradient(ellipse 120% 90% at 50% 45%, #f6f1e9 0%, var(--table) 55%, #e9e0d2 100%);
+  --socle: #cdb899;
+  --socle-h: 6px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -140,12 +145,15 @@ body.acc-corps {
 .acc-carte {
   grid-area: carte;
   position: relative;
-  background: #dfe6e2;
+  background: var(--table-fond);
   overflow: hidden;
 }
 /* z-index : Leaflet numérote ses volets jusqu'à 1000, ils restent enfermés ici, sous la sheet. */
-.acc-carte-fond { position: absolute; inset: 0; z-index: 0; background: #e9ece8; }
-.acc-carte-fond.leaflet-container { font: inherit; background: #e9ece8; }
+.acc-carte-fond { position: absolute; inset: 0; z-index: 0; background: var(--table-fond); }
+.acc-carte-fond.leaflet-container { font: inherit; background: var(--table-fond); }
+/* Sous le bord bas du plateau : une tranche de terre, et l'ombre portée sur la table. */
+.leaflet-container .diorama-socle { fill: var(--socle); transform: translateY(var(--socle-h)); }
+.leaflet-container .diorama-ombre { fill: rgba(92, 70, 40, 0.28); transform: translateY(calc(var(--socle-h) + 6px)); filter: url(#diorama-flou-ombre); }
 
 .acc-carte-message {
   position: absolute; left: var(--gouttiere); right: var(--gouttiere); bottom: 50%; z-index: 600;
