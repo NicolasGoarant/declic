@@ -36,11 +36,11 @@ namespace :declic do
       fin   = o.date_fin
       image = if hote.nil?
                 nil
-              elsif o.image.attached?
+      elsif o.image.attached?
                 Rails.application.routes.url_helpers.rails_blob_url(o.image, host: hote, protocol: "https")
-              elsif o.image_url.present?
+      elsif o.image_url.present?
                 o.image_url =~ /\Ahttps?:\/\//i ? o.image_url : "https://#{hote}/#{o.image_url.delete_prefix('/')}"
-              end
+      end
       {
         id: o.id,
         titre: o.title,

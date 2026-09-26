@@ -12,7 +12,7 @@ namespace :declic do
     Rake::Task[:environment].invoke
 
     # [décalage du début en jours, durée en jours] : aujourd'hui, demain, dans la semaine, au-delà.
-    calendrier = [[0, 0], [0, 2], [1, 0], [2, 0], [3, 1], [5, 0], [6, 0], [8, 0], [10, 3], [13, 0]].freeze
+    calendrier = [ [ 0, 0 ], [ 0, 2 ], [ 1, 0 ], [ 2, 0 ], [ 3, 1 ], [ 5, 0 ], [ 6, 0 ], [ 8, 0 ], [ 10, 3 ], [ 13, 0 ] ].freeze
 
     jour = Date.current
     cibles = Opportunity.active.with_coords.order(:id).limit(calendrier.size).to_a

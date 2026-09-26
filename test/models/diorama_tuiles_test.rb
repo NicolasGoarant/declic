@@ -8,11 +8,11 @@ class DioramaTuilesTest < ActiveSupport::TestCase
   end
 
   test "seul le lot toits-v1 : pas de maquette blanche ni d'ambiance" do
-    assert_equal({ vrai: true, blanche: false, ambiances: [] }, tuiles(["toits-v1/manifeste.json"]).disponibles)
+    assert_equal({ vrai: true, blanche: false, ambiances: [] }, tuiles([ "toits-v1/manifeste.json" ]).disponibles)
   end
 
   test "la maquette blanche exige le lot et le masque" do
-    t = tuiles(["toits-v1/manifeste.json", "masque-bati/manifeste.json"])
+    t = tuiles([ "toits-v1/manifeste.json", "masque-bati/manifeste.json" ])
     assert t.disponibles[:blanche]
     assert_empty t.disponibles[:ambiances]
   end
@@ -24,7 +24,7 @@ class DioramaTuilesTest < ActiveSupport::TestCase
   end
 
   test "sans le lot, rien n'est disponible" do
-    assert_equal({ vrai: false, blanche: false, ambiances: [] }, tuiles(["masque-bati/manifeste.json"]).disponibles)
+    assert_equal({ vrai: false, blanche: false, ambiances: [] }, tuiles([ "masque-bati/manifeste.json" ]).disponibles)
   end
 
   test "la base vient de DIORAMA_TILES_URL, sinon du domaine par défaut" do

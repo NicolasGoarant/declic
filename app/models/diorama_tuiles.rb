@@ -61,7 +61,7 @@ class DioramaTuiles
   def parametres_ambiance(nom) = "#{AMBIANCES_DOSSIER}/#{nom}-actuelle.json"
 
   def urls_a_sonder
-    [url("#{LOT}/manifeste.json"), url("#{MASQUE}/manifeste.json"), url("#{PROPRIETE}/manifeste.json")] +
+    [ url("#{LOT}/manifeste.json"), url("#{MASQUE}/manifeste.json"), url("#{PROPRIETE}/manifeste.json") ] +
       AMBIANCES.map { |nom| url(parametres_ambiance(nom)) }
   end
 
@@ -70,7 +70,7 @@ class DioramaTuiles
       entree = CACHE[base]
       return entree[:resultat] if entree && entree[:le] > DUREE_CACHE.ago
     end
-    resultat = urls_a_sonder.map { |u| Thread.new { [u, @sonde.call(u)] } }.to_h(&:value)
+    resultat = urls_a_sonder.map { |u| Thread.new { [ u, @sonde.call(u) ] } }.to_h(&:value)
     VERROU.synchronize { CACHE[base] = { le: Time.current, resultat: resultat } }
     resultat
   end

@@ -40,8 +40,8 @@ export default class extends Controller {
   static values = { points: Array, categories: Array, tuiles: Object, developpement: Boolean }
   static targets = [
     "carte", "rendu", "ambiance", "autour", "quand", "boutonFiltres", "filtres", "rayon", "rayonTexte",
-    "noteFiltres", "alerte", "volet", "poignee", "voletTitre", "fiches", "vide", "stats",
-    "modeleFiche", "modelePin", "recherche", "categorie", "ongletFavoris"
+    "noteFiltres", "alerte", "voletTitre", "poigneeTitre", "compteur", "fiches", "vide", "stats",
+    "modeleFiche", "modelePin", "recherche", "categorie", "ongletFavoris", "ongletCarte"
   ]
 
   connect() {
@@ -61,6 +61,8 @@ export default class extends Controller {
 
   disconnect() {
     clearInterval(this.minuterieAuto)
+    this.observateur?.disconnect()
+    window.removeEventListener("orientationchange", this.surOrientation)
     this.carte?.remove()
     this.carte = null
   }
@@ -130,8 +132,23 @@ export default class extends Controller {
     }).addTo(this.carte)
     this.grappes.on("animationend spiderfied unspiderfied", () => this.marquerSurvol())
 
-    this.carte.on("moveend", () => { if (!this.position) this.majVolet() })
-    this.carte.on("click", () => this.selectionner(null))
+    this.carte.on("moveend", () => { if (!this.position) this.majVolet(); else this.majCompteur() })
+    this.carte.on("click", () => {
+      this.selectionner(null)
+      this.dispatch("carte-cliquee") // la bottom sheet se replie
+    })
+    this.suivreTaille()
+  }
+
+  // La carte occupe tout l'écran (100dvh moins la tab bar) : sa taille change avec la barre d'URL
+  // mobile, la rotation ou le redimensionnement, et Leaflet doit recalculer sa surface à chaque fois.
+  suivreTaille() {
+    const recalculer = () => this.carte?.invalidateSize()
+    this.observateur = new ResizeObserver(recalculer)
+    this.observateur.observe(this.carteTarget)
+    this.surOrientation = () => setTimeout(recalculer, 200) // les dimensions se stabilisent après l'événement
+    window.addEventListener("orientationchange", this.surOrientation)
+    requestAnimationFrame(recalculer)
   }
 
   // L'attribution est obligatoire (licences IGN, Géonancy, OSM) : repliée en « ⓘ », elle
@@ -343,7 +360,7 @@ export default class extends Controller {
     this.rayonTexteTarget.textContent = "sans limite"
     this.categorieTargets.forEach((b) => b.setAttribute("aria-pressed", "false"))
     this.quandTargets.forEach((b) => b.setAttribute("aria-pressed", "false"))
-    if (this.hasOngletFavorisTarget) this.ongletFavorisTarget.setAttribute("aria-pressed", "false")
+    this.majOnglets()
     this.appliquerFiltres()
   }
 
@@ -369,9 +386,27 @@ export default class extends Controller {
 
   basculerFavoris() {
     this.filtre.favoris = !this.filtre.favoris
-    this.ongletFavorisTarget.setAttribute("aria-pressed", String(this.filtre.favoris))
+    this.majOnglets()
     this.appliquerFiltres()
-    this.voletTarget.scrollIntoView({ behavior: "smooth", block: "start" })
+    if (this.filtre.favoris) this.dispatch("ouvrir-volet") // la bottom sheet montre les favoris
+  }
+
+  // Toucher « Carte » quand les favoris sont affichés revient à la carte complète.
+  voirCarte() {
+    if (!this.filtre.favoris) return
+    this.filtre.favoris = false
+    this.majOnglets()
+    this.appliquerFiltres()
+  }
+
+  // L'onglet courant : Carte, sauf pendant que le filtre Favoris est actif.
+  majOnglets() {
+    const favoris = this.filtre.favoris
+    if (this.hasOngletFavorisTarget) this.ongletFavorisTarget.setAttribute("aria-pressed", String(favoris))
+    if (this.hasOngletCarteTarget) {
+      if (favoris) this.ongletCarteTarget.removeAttribute("aria-current")
+      else this.ongletCarteTarget.setAttribute("aria-current", "page")
+    }
   }
 
   // ─── Le volet (majVolet de la v3) ────────────────────────────────────────────────────
@@ -392,7 +427,9 @@ export default class extends Controller {
 
     let titre = this.position ? "À proximité de vous" : "Au centre de la vue"
     if (!aVenir.length) titre = "Toujours d'actualité"
-    this.voletTitreTarget.textContent = this.filtre.favoris ? "Vos favoris" : titre
+    const titreVolet = this.filtre.favoris ? "Vos favoris" : titre
+    this.voletTitreTarget.textContent = titreVolet
+    this.poigneeTitreTarget.textContent = titreVolet
 
     let liste = [...aVenir, ...sansDate]
     if (this.selection) {
@@ -405,6 +442,14 @@ export default class extends Controller {
       ? "Aucun favori pour l'instant : touchez le signet d'une fiche pour la garder ici."
       : "Aucune initiative ne correspond à ces filtres."
     if (this.developpementValue && this.hasStatsTarget) this.statsTarget.innerHTML = this.statistiques(liste.length, jour)
+    this.majCompteur()
+  }
+
+  // Nombre de lieux (filtres compris) dans le cadrage actuel de la carte ; sans carte, le total filtré.
+  majCompteur() {
+    const bornes = this.carte?.getBounds()
+    const n = (this.poses || this.points).filter((p) => this.passe(p) && (!bornes || (p.latlng && bornes.contains(p.latlng)))).length
+    this.compteurTarget.textContent = `${n} ${n > 1 ? "lieux" : "lieu"}`
   }
 
   fiche(p) {
@@ -528,7 +573,10 @@ export default class extends Controller {
     this.marquerSurvol()
     if (!id || !depuisCarte) return
     const fiche = this.fichesTarget.querySelector(`[data-id="${id}"]`)
-    fiche?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" })
+    if (!fiche) return
+    // On fait défiler la liste elle-même : scrollIntoView remonterait jusqu'à la page.
+    const liste = this.fichesTarget, f = fiche.getBoundingClientRect(), l = liste.getBoundingClientRect()
+    liste.scrollTo({ left: liste.scrollLeft + f.left - l.left - 16, top: liste.scrollTop + f.top - l.top - 8, behavior: "smooth" })
   }
 
   // ─── Commandes de carte ──────────────────────────────────────────────────────────────
@@ -556,13 +604,8 @@ export default class extends Controller {
     event.preventDefault()
     this.selectionner(null)
     if (this.carte) this.cadrer()
+    this.dispatch("voir-tout") // la bottom sheet se replie
     this.element.querySelector("#carte")?.scrollIntoView({ behavior: "smooth", block: "start" })
-  }
-
-  basculerVolet() {
-    const ouvert = this.voletTarget.classList.toggle("acc-volet--ouvert")
-    this.poigneeTarget.setAttribute("aria-expanded", String(ouvert))
-    this.poigneeTarget.setAttribute("aria-label", ouvert ? "Replier la liste" : "Déplier la liste")
   }
 
   // ─── Géolocalisation ─────────────────────────────────────────────────────────────────

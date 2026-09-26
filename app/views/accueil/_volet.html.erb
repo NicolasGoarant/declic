@@ -1,20 +1,30 @@
-<%# Le volet : carrousel sur mobile, liste verticale dans le panneau gauche sur bureau.
-    Les fiches sont clonées depuis le modèle ci-dessous par le contrôleur Stimulus. %>
-<section class="acc-volet" aria-labelledby="acc-volet-titre" data-diorama-target="volet">
-  <button type="button" class="acc-poignee" aria-label="Déplier la liste" aria-expanded="false"
-          data-diorama-target="poignee" data-action="diorama#basculerVolet"></button>
-  <div class="acc-volet-tete">
-    <h2 id="acc-volet-titre" data-diorama-target="voletTitre">Au centre de la vue</h2>
-    <a href="#carte" class="acc-lien-violet" data-action="diorama#voirTout">
-      Voir tout sur la carte <%= picto(:fleche, taille: 16) %>
-    </a>
-  </div>
-  <div class="acc-fiches" data-diorama-target="fiches"
-       data-action="click->diorama#clicFiches mouseover->diorama#survolFiche mouseleave->diorama#finSurvol focusin->diorama#survolFiche"></div>
-  <p class="acc-volet-vide" hidden data-diorama-target="vide"></p>
+<%# Le volet. Mobile et tablette : bottom sheet repliée sur sa poignée (contrôleur `sheet`), qui
+    révèle le carrousel de fiches. Bureau : liste verticale dans le panneau gauche, toujours ouverte.
+    Les fiches sont clonées depuis le modèle ci-dessous par le contrôleur Stimulus `diorama`. %>
+<section class="acc-volet" aria-label="Lieux au centre de la vue" data-controller="sheet"
+         data-action="keydown@window->sheet#echap diorama:carte-cliquee@window->sheet#replier diorama:voir-tout@window->sheet#replier diorama:ouvrir-volet@window->sheet#ouvrir">
+  <button type="button" class="acc-poignee" aria-expanded="false" aria-controls="acc-volet-panneau"
+          aria-label="Afficher les lieux au centre de la vue"
+          data-sheet-target="poignee"
+          data-action="sheet#basculer pointerdown->sheet#debutGlisse pointermove->sheet#glisse pointerup->sheet#finGlisse pointercancel->sheet#finGlisse">
+    <span class="acc-poignee-titre" data-diorama-target="poigneeTitre">Au centre de la vue</span>
+    <span class="acc-poignee-compte" data-diorama-target="compteur" aria-live="polite"></span>
+    <%= picto(:chevron, taille: 22, class: "acc-poignee-chevron") %>
+  </button>
+  <div class="acc-volet-panneau" id="acc-volet-panneau" data-sheet-target="panneau">
+    <div class="acc-volet-tete">
+      <h2 id="acc-volet-titre" data-diorama-target="voletTitre">Au centre de la vue</h2>
+      <a href="#carte" class="acc-lien-violet" data-action="diorama#voirTout">
+        Voir tout sur la carte <%= picto(:fleche, taille: 16) %>
+      </a>
+    </div>
+    <div class="acc-fiches" data-diorama-target="fiches"
+         data-action="click->diorama#clicFiches mouseover->diorama#survolFiche mouseleave->diorama#finSurvol focusin->diorama#survolFiche"></div>
+    <p class="acc-volet-vide" hidden data-diorama-target="vide"></p>
   <% if Rails.env.development? %>
     <p class="acc-stats" data-diorama-target="stats"></p>
   <% end %>
+  </div>
 
   <template data-diorama-target="modeleFiche">
     <article class="fiche">
