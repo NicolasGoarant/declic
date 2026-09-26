@@ -47,6 +47,9 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Charge .env (ADMIN_USERNAME, ADMIN_PASSWORD, etc.) en développement et en test.
+  gem "dotenv-rails"
 end
 
 group :development do
