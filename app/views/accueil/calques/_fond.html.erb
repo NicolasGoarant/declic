@@ -1,0 +1,15 @@
+<%# Fond : le diorama (par défaut) ou le plan OpenStreetMap. Sans diorama publié, seul le plan reste
+    (le choix « Diorama » est désactivé par le JS). %>
+<fieldset class="acc-calques-rubrique" data-rubrique="fond">
+  <legend>Fond</legend>
+  <div class="acc-calques-choix">
+    <label class="acc-calques-option">
+      <input type="radio" name="calques-fond" value="diorama" data-diorama-target="choixFond" data-action="diorama#choisirFond">
+      <span>Diorama</span>
+    </label>
+    <label class="acc-calques-option">
+      <input type="radio" name="calques-fond" value="plan" data-diorama-target="choixFond" data-action="diorama#choisirFond">
+      <span>Plan</span>
+    </label>
+  </div>
+</fieldset>

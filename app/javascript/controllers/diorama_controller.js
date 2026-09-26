@@ -1,4 +1,9 @@
-// La page d'accueil sur le diorama (/labo/accueil), portée de maquette-declic-v3 (nancy-3d).
+// La page d'accueil sur la carte (/labo/accueil), portée de maquette-declic-v3 (nancy-3d).
+//
+// Deux fonds, au choix dans le panneau « Calques » : le diorama (mosaïque axonométrique, CRS.Simple)
+// et le plan (OpenStreetMap, Web Mercator). La bascule recrée la carte Leaflet au même endroit
+// (centre et zoom d'échelle équivalente, par diorama_projection) ; les marqueurs, bouquets, popups,
+// filtres et le volet ne connaissent que `p.latlng`, recalculé pour chaque fond par poserPoints.
 //
 // Leaflet est importé À LA DEMANDE, dans connect() : ce contrôleur est chargé d'office sur toutes
 // les pages (eagerLoadControllersFrom), et les autres pages n'ont pas à tirer le CDN. Les pins
@@ -10,15 +15,25 @@ import { creerCoucheAmbiance, lireAmbiance } from "diorama/ambiance"
 import { resoudreAuto } from "diorama/soleil"
 import { regrouper, eventail, FLEURS_MAX } from "diorama/bouquets"
 import { chargerContour, creerDecoupe, poserSocle } from "diorama/contour"
+import { CLE_FOND, CLE_AMBIANCE, CLE_BLANCHE, lire, ecrire, fondDeDepart } from "diorama/preferences"
 import { lireDate, aujourdhui, estPasse, estAVenir, etiquette, periode, jourCourt } from "diorama/dates"
 
 const NIVEAU_MAX = 8
-// Vue initiale, à retoucher ici : place Stanislas (WGS84) et niveau de zoom Leaflet (0-8, 8 = pleine
-// résolution). Ajouter ?debug_vue=1 à l'URL affiche en direct le centre et le zoom courants.
+// Vue initiale, à retoucher ici : place Stanislas (WGS84) et niveau de zoom Leaflet du diorama (0-8,
+// 8 = pleine résolution) ; le plan prend le zoom d'échelle équivalente. Ajouter ?debug_vue=1 à l'URL
+// affiche en direct le centre et le zoom courants.
 const CENTRE_INITIAL = { lat: 48.6936, lon: 6.1833 }
 const ZOOM_INITIAL = 6
+const ZOOM_PLAN_INITIAL = 16 // ≈ ZOOM_INITIAL du diorama (zoomPlan), quand le diorama manque
 const ATTRIBUTION = "IGN BD TOPO®, BD ORTHO® et LiDAR HD (LO 2.0) · Métropole du Grand Nancy, Géonancy · " +
                     "© les contributeurs OpenStreetMap (ODbL)"
+// Le plan : le fond OpenStreetMap de l'ancienne page d'accueil (shared/_map), avec son attribution.
+const PLAN = {
+  url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">les contributeurs OpenStreetMap</a>',
+  minZoom: 10, maxZoom: 19
+}
+const AMBIANCES = { origine: "origine", "heure-bleue": "heure bleue", automne: "automne", hiver: "hiver" }
 const FICHES_MAX = 24
 const HISTOIRES = "histoires" // Categorie::HISTOIRES : les Belles Histoires
 const CLE_FAVORIS = "declic:favoris"
@@ -35,8 +50,10 @@ export default class extends Controller {
   // mini : petite carte d'une fiche (un seul point, sans volet ni commandes, voir demarrerMini).
   static values = { points: Array, categories: Array, tuiles: Object, developpement: Boolean, mini: Boolean }
   static targets = [
-    "carte", "rendu", "ambiance", "alerte", "voletTitre", "poigneeTitre", "compteur", "fiches", "vide", "stats",
-    "modeleFiche", "modelePin", "modelePopup", "categorie", "ongletFavoris", "ongletCarte"
+    "carte", "alerte", "voletTitre", "poigneeTitre", "compteur", "fiches", "vide", "stats",
+    "modeleFiche", "modelePin", "modelePopup", "categorie", "ongletFavoris", "ongletCarte",
+    "boutonCalques", "panneauCalques", "voileCalques", "choixFond", "rubriqueAmbiance", "choixAmbiance",
+    "choixBlanche", "ambianceAuto"
   ]
 
   connect() {
@@ -55,9 +72,17 @@ export default class extends Controller {
     if (new URLSearchParams(window.location.search).get("favoris") === "1") setTimeout(() => this.basculerFavoris())
   }
 
+  disconnect() {
+    clearInterval(this.minuterieAuto)
+    this.observateur?.disconnect()
+    window.removeEventListener("orientationchange", this.surOrientation)
+    this.carte?.remove()
+    this.carte = null
+  }
+
   // ─── Petite carte d'une fiche ────────────────────────────────────────────────────────
-  // Le point dans l'emprise du diorama (sur une dalle publiée) : le diorama, figé, pin de la
-  // catégorie au centre. Hors emprise, ou diorama indisponible : Leaflet sur fond OpenStreetMap.
+  // Elle suit le fond choisi sur la carte. Diorama, et point dans son emprise (sur une dalle
+  // publiée, dans la Métropole) : le diorama, figé, pin de la catégorie au centre. Sinon : le plan.
   async demarrerMini() {
     const p = this.pointsValue[0]
     if (!p || !Number.isFinite(p.latitude) || !Number.isFinite(p.longitude)) return
@@ -69,15 +94,11 @@ export default class extends Controller {
       return
     }
     let pixel = null
-    if (this.tuilesValue.disponibles?.vrai) {
+    if (this.tuilesValue.disponibles?.vrai && fondDeDepart() === "diorama") {
       try {
-        const reponse = await fetch(`${this.tuilesValue.base}/${this.tuilesValue.lot}/manifeste.json`)
-        if (!reponse.ok) throw new Error(`manifeste HTTP ${reponse.status}`)
         const contour = this.chargerContour()
-        this.manifeste = await reponse.json()
-        this.projection = creerProjection(this.manifeste)
-        this.dallesListees = this.indexerDalles(this.manifeste)
-        await this.preparerDecoupe(await contour)
+        await this.chargerManifeste()
+        this.preparerDecoupe(await contour)
         pixel = this.pixelDansLeDiorama(p)
       } catch (erreur) {
         console.warn("diorama indisponible, fond OpenStreetMap :", erreur)
@@ -85,8 +106,17 @@ export default class extends Controller {
     }
     if (!this.carteTarget.isConnected) return
     if (pixel) this.miniDiorama(p, pixel)
-    else this.miniOSM(p)
+    else this.miniPlan(p)
     this.suivreTaille()
+  }
+
+  async chargerManifeste() {
+    const t = this.tuilesValue
+    const reponse = await fetch(`${t.base}/${t.lot}/manifeste.json`)
+    if (!reponse.ok) throw new Error(`manifeste HTTP ${reponse.status}`)
+    this.manifeste = await reponse.json()
+    this.projection = creerProjection(this.manifeste)
+    this.dallesListees = this.indexerDalles(this.manifeste)
   }
 
   // Pixel du point dans la mosaïque (niveau 8), ou null hors couverture : hors de la mosaïque, sur
@@ -129,28 +159,20 @@ export default class extends Controller {
 
   miniDiorama(p, pixel) {
     const L = this.L
-    const [largeur, hauteur] = this.manifeste.taille_mosaique_px
     this.carte = L.map(this.carteTarget, { crs: L.CRS.Simple, minZoom: 0, maxZoom: NIVEAU_MAX, attributionControl: false, ...this.optionsFigees() })
-    this.bornes = L.latLngBounds(this.carte.unproject([0, hauteur], NIVEAU_MAX), this.carte.unproject([largeur, 0], NIVEAU_MAX))
-    this.optionsCouche = {
-      minZoom: 0, maxZoom: NIVEAU_MAX, maxNativeZoom: NIVEAU_MAX, tileSize: 256,
-      noWrap: true, bounds: this.bornes, attribution: ATTRIBUTION
-    }
+    this.preparerCouchesDiorama(NIVEAU_MAX)
     this.poserAttribution()
-    this.couches = {}
     this.poserSocle()
-    this.poserFond(this.coucheVraie())
+    this.poserCoucheFond(this.coucheVraie())
     const latlng = this.carte.unproject(L.point(pixel[0], pixel[1]), NIVEAU_MAX)
     this.poserPinMini(p, latlng, NIVEAU_MAX - 1)
   }
 
-  miniOSM(p) {
+  miniPlan(p) {
     const L = this.L
-    this.carte = L.map(this.carteTarget, this.optionsFigees())
-    this.carte.attributionControl.setPrefix(false)
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">les contributeurs OpenStreetMap</a>'
-    }).addTo(this.carte)
+    this.carte = L.map(this.carteTarget, { attributionControl: false, ...this.optionsFigees() })
+    this.poserAttribution()
+    this.couchePlan().addTo(this.carte)
     this.poserPinMini(p, L.latLng(p.latitude, p.longitude), 15)
   }
 
@@ -161,43 +183,39 @@ export default class extends Controller {
     this.carte.panBy([0, -40], { animate: false })
   }
 
-  disconnect() {
-    clearInterval(this.minuterieAuto)
-    this.observateur?.disconnect()
-    window.removeEventListener("orientationchange", this.surOrientation)
-    this.carte?.remove()
-    this.carte = null
-  }
-
   // ─── Démarrage : bibliothèques, manifeste, projection, carte ─────────────────────────
+  // Sans diorama (non publié, ou manifeste illisible), la carte démarre sur le plan.
   async demarrer() {
     const t = this.tuilesValue
-    if (!t.disponibles?.vrai) return
+    this.dioramaDispo = Boolean(t.disponibles?.vrai)
+    const contour = this.dioramaDispo ? this.chargerContour() : null
     try {
-      const contour = this.chargerContour()
       const module = await import("leaflet")
       this.L = module.default ?? module
-      const reponse = await fetch(`${t.base}/${t.lot}/manifeste.json`)
-      if (!reponse.ok) throw new Error(`manifeste HTTP ${reponse.status}`)
-      this.manifeste = await reponse.json()
-      this.anneau = await contour
     } catch (erreur) {
-      console.error("diorama :", erreur)
-      this.alerter("Le diorama n'a pas pu se charger. Les initiatives restent listées ci-dessous.")
+      console.error("carte :", erreur)
+      this.alerter("La carte n'a pas pu se charger. Les initiatives restent listées ci-dessous.")
       return
     }
+    if (this.dioramaDispo) {
+      try {
+        await this.chargerManifeste()
+        this.preparerDecoupe(await contour)
+      } catch (erreur) {
+        console.error("diorama :", erreur)
+        this.dioramaDispo = false
+        this.alerter("Le diorama n'a pas pu se charger : voici le plan.")
+      }
+    }
     if (!this.carteTarget.isConnected) return
-    this.projection = creerProjection(this.manifeste)
-    this.dallesListees = this.indexerDalles(this.manifeste)
-    this.preparerDecoupe(this.anneau)
+    this.fond = this.dioramaDispo ? fondDeDepart() : "plan"
+    this.lireAmbianceMemorisee()
     this.construireCarte()
-    this.poserPoints()
-    this.appliquerFiltres()
     this.vueInitiale()
-    this.afficherDebugVue()
-    if (t.disponibles.blanche) this.chargerMasque()
-    if (t.disponibles.ambiances?.length) {
-      this.minuterieAuto = setInterval(() => { if (this.ambianceChoisie === "auto") this.choisirAmbianceNommee("auto") }, 60000)
+    this.majCalques()
+    if (this.dioramaDispo && t.disponibles.blanche) this.chargerMasque()
+    if (this.dioramaDispo && t.disponibles.ambiances?.length) {
+      this.minuterieAuto = setInterval(() => { if (this.ambianceChoisie === "auto") this.appliquerAmbiance("auto") }, 60000)
     }
   }
 
@@ -206,47 +224,74 @@ export default class extends Controller {
       .map(([z, liste]) => [z, new Set(liste.map(([x, y]) => `${x}/${y}`))]))
   }
 
+  // La carte du fond courant, ses couches, puis la couche de marqueurs (commune aux deux fonds).
   construireCarte() {
     const L = this.L
-    const [largeur, hauteur] = this.manifeste.taille_mosaique_px
-    const plafond = () => (window.matchMedia(ETROIT).matches ? NIVEAU_MAX : NIVEAU_MAX + 1)
-    this.carte = L.map(this.carteTarget, {
-      crs: L.CRS.Simple, minZoom: 0, maxZoom: plafond(), zoomSnap: 1,
-      zoomControl: false, attributionControl: false
-    })
-    this.bornes = L.latLngBounds(this.carte.unproject([0, hauteur], NIVEAU_MAX), this.carte.unproject([largeur, 0], NIVEAU_MAX))
-    // On ne sort pas de la table : la Métropole et une marge autour, sans élasticité au bord.
-    this.carte.setMaxBounds(this.bornesContour().pad(0.25))
-    this.carte.options.maxBoundsViscosity = 0.95
-    this.majZoomMin()
-    this.carte.fitBounds(this.bornesContour()) // une vue d'abord : le regroupement en bouquets en a besoin
-    this.optionsCouche = {
-      minZoom: 0, maxZoom: NIVEAU_MAX + 1, maxNativeZoom: NIVEAU_MAX, tileSize: 256,
-      noWrap: true, bounds: this.bornes, attribution: ATTRIBUTION
-    }
-    this.poserAttribution()
-
-    this.couches = {}
-    this.poserSocle()
-    this.rendu = "vrai"
-    this.ambianceChoisie = "origine"
-    this.ambianceEffective = "origine"
-    this.poserFond(this.coucheVraie())
+    if (this.fond === "diorama") this.creerDiorama()
+    else this.creerPlan()
+    this.element.dataset.fond = this.fond
 
     this.calquePins = L.layerGroup().addTo(this.carte)
     this.carte.on("zoomend", () => this.dessinerPins())
-
     this.carte.on("moveend", () => this.majVolet())
     this.carte.on("click", () => {
       this.selectionner(null)
       this.dispatch("carte-cliquee") // la bottom sheet se replie
     })
+    this.brancherDebugVue()
+    this.poserPoints()
+    this.appliquerFiltres()
     this.suivreTaille()
+  }
+
+  creerDiorama() {
+    const L = this.L
+    const plafond = window.matchMedia(ETROIT).matches ? NIVEAU_MAX : NIVEAU_MAX + 1
+    this.carte = L.map(this.carteTarget, {
+      crs: L.CRS.Simple, minZoom: 0, maxZoom: plafond, zoomSnap: 1,
+      zoomControl: false, attributionControl: false
+    })
+    this.preparerCouchesDiorama(NIVEAU_MAX + 1)
+    // On ne sort pas de la table : la Métropole et une marge autour, sans élasticité au bord.
+    this.carte.setMaxBounds(this.bornesContour().pad(0.25))
+    this.carte.options.maxBoundsViscosity = 0.95
+    this.majZoomMin()
+    this.carte.fitBounds(this.bornesContour()) // une vue d'abord : le regroupement en bouquets en a besoin
+    this.poserAttribution()
+    this.poserSocle()
+    this.poserCoucheFond(this.coucheCourante())
+  }
+
+  creerPlan() {
+    this.carte = this.L.map(this.carteTarget, {
+      minZoom: PLAN.minZoom, maxZoom: PLAN.maxZoom, zoomSnap: 1, zoomControl: false, attributionControl: false
+    })
+    this.carte.setView([CENTRE_INITIAL.lat, CENTRE_INITIAL.lon], ZOOM_PLAN_INITIAL) // une vue d'abord, comme au diorama
+    this.poserAttribution()
+    this.couchePlan().addTo(this.carte)
+  }
+
+  couchePlan() {
+    return this.L.tileLayer(PLAN.url, { maxZoom: PLAN.maxZoom, attribution: PLAN.attribution })
+  }
+
+  // Emprise de la mosaïque et options des couches de dalles, pour une carte diorama neuve.
+  preparerCouchesDiorama(zoomMax) {
+    const [largeur, hauteur] = this.manifeste.taille_mosaique_px
+    this.bornes = this.L.latLngBounds(this.carte.unproject([0, hauteur], NIVEAU_MAX), this.carte.unproject([largeur, 0], NIVEAU_MAX))
+    this.optionsCouche = {
+      minZoom: 0, maxZoom: zoomMax, maxNativeZoom: NIVEAU_MAX, tileSize: 256,
+      noWrap: true, bounds: this.bornes, attribution: ATTRIBUTION
+    }
+    this.couches = {}
+    this.coucheFond = null
   }
 
   // La carte occupe tout l'écran (100dvh moins la tab bar) : sa taille change avec la barre d'URL
   // mobile, la rotation ou le redimensionnement, et Leaflet doit recalculer sa surface à chaque fois.
+  // Branché une fois : les cartes successives (bascule de fond) partagent le même conteneur.
   suivreTaille() {
+    if (this.observateur) return
     const recalculer = () => {
       this.carte?.invalidateSize()
       if (!this.miniValue) this.majZoomMin()
@@ -260,7 +305,7 @@ export default class extends Controller {
 
   // Au dézoom maximal, la Métropole entière tient dans la partie visible de la carte (hors logo et volet).
   majZoomMin() {
-    if (!this.carte) return
+    if (!this.carte || this.fond !== "diorama") return
     const { haut, bas } = this.marges()
     const zoom = this.carte.getBoundsZoom(this.bornesContour(), false, this.L.point(2 * 16, haut + bas))
     this.carte.setMinZoom(Math.max(0, Math.min(zoom, NIVEAU_MAX - 1)))
@@ -274,7 +319,7 @@ export default class extends Controller {
     el.classList.add("acc-attribution")
     el.tabIndex = 0
     el.setAttribute("role", "button")
-    el.setAttribute("aria-label", "Sources et licences du diorama")
+    el.setAttribute("aria-label", "Sources et licences de la carte")
     el.setAttribute("aria-expanded", "false")
     const basculer = (e) => {
       e.stopPropagation()
@@ -286,7 +331,83 @@ export default class extends Controller {
     el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); basculer(e) } })
   }
 
-  // ─── Les couches de fond ─────────────────────────────────────────────────────────────
+  // ─── Bascule Diorama / Plan ──────────────────────────────────────────────────────────
+  choisirFond(event) {
+    this.changerFond(event.target.value)
+  }
+
+  // Recrée la carte sur l'autre fond, au même endroit. Le choix est gardé sur l'appareil.
+  changerFond(fond) {
+    if (!this.carte || fond === this.fond || (fond === "diorama" && !this.dioramaDispo)) { this.majCalques(); return }
+    const vue = this.vueGeo()
+    this.fermerPopup()
+    this.carte.remove()
+    this.popup = null
+    this.fond = fond
+    ecrire(CLE_FOND, fond)
+    this.construireCarte()
+    this.poserVueGeo(vue)
+    this.majCalques()
+  }
+
+  // Centre (WGS84, au sol) et zoom du plan d'échelle équivalente à la vue courante.
+  vueGeo() {
+    const c = this.carte.getCenter(), z = this.carte.getZoom()
+    if (this.fond === "plan") return { lat: c.lat, lon: c.lng, zoomPlan: z }
+    const { x, y } = this.carte.project(c, NIVEAU_MAX)
+    const [lon, lat] = this.projection.versWGS84(x, y)
+    return { lat, lon, zoomPlan: this.projection.zoomPlan(z, lat) }
+  }
+
+  poserVueGeo({ lat, lon, zoomPlan }) {
+    if (this.fond === "plan") {
+      this.carte.setView([lat, lon], Math.round(zoomPlan), { animate: false })
+      return
+    }
+    const [px, py] = this.projection.pixel(lat, lon)
+    const zoom = Math.round(this.projection.zoomDiorama(zoomPlan, lat))
+    this.carte.setView(this.carte.unproject(this.L.point(px, py), NIVEAU_MAX), zoom, { animate: false })
+  }
+
+  // ─── Le panneau « Calques » ──────────────────────────────────────────────────────────
+  basculerCalques() {
+    if (this.panneauCalquesTarget.hidden) this.ouvrirCalques()
+    else this.fermerCalques()
+  }
+
+  ouvrirCalques() {
+    this.fermerPopup()
+    this.majCalques()
+    this.panneauCalquesTarget.hidden = false
+    this.voileCalquesTarget.hidden = false
+    this.boutonCalquesTarget.setAttribute("aria-expanded", "true")
+    this.panneauCalquesTarget.querySelector("input:checked:not(:disabled), input:not(:disabled)")?.focus()
+  }
+
+  fermerCalques() {
+    if (!this.hasPanneauCalquesTarget || this.panneauCalquesTarget.hidden) return
+    const focusDedans = this.panneauCalquesTarget.contains(document.activeElement)
+    this.panneauCalquesTarget.hidden = true
+    this.voileCalquesTarget.hidden = true
+    this.boutonCalquesTarget.setAttribute("aria-expanded", "false")
+    if (focusDedans) this.boutonCalquesTarget.focus()
+  }
+
+  // Les commandes du panneau reflètent l'état de la carte.
+  majCalques() {
+    this.choixFondTargets.forEach((c) => {
+      c.checked = c.value === this.fond
+      c.disabled = c.value === "diorama" && !this.dioramaDispo
+      c.closest("label").title = c.disabled ? "Diorama momentanément indisponible" : ""
+    })
+    if (this.hasRubriqueAmbianceTarget) this.rubriqueAmbianceTarget.hidden = this.fond !== "diorama"
+    this.choixAmbianceTargets.forEach((c) => { c.checked = c.value === this.ambianceChoisie })
+    if (this.hasChoixBlancheTarget) this.choixBlancheTarget.checked = this.rendu === "blanche"
+    // Ce que « Automatique » donnerait maintenant, qu'il soit coché ou non.
+    if (this.hasAmbianceAutoTarget) this.ambianceAutoTarget.textContent = ` : ${AMBIANCES[this.resoudre("auto")]}`
+  }
+
+  // ─── Les couches de fond du diorama ──────────────────────────────────────────────────
   url(dossier, chemin) { return `${this.tuilesValue.base}/${dossier}/${chemin}` }
 
   // Une dalle publiée, et pas entièrement hors du contour de la Métropole.
@@ -343,56 +464,68 @@ export default class extends Controller {
     return this.couches[nom]
   }
 
+  // Maquette blanche et ambiance sont exclusives : la blanche l'emporte tant qu'elle est cochée.
+  coucheCourante() {
+    return this.rendu === "blanche" ? this.coucheBlanche() : this.coucheAmbiance(this.ambianceEffective)
+  }
+
   // On ajoute avant de retirer : l'attribution ne doit pas s'effacer le temps d'une bascule.
-  poserFond(nouvelle) {
+  poserCoucheFond(nouvelle) {
     nouvelle.addTo(this.carte)
-    if (this.fond && this.fond !== nouvelle) this.carte.removeLayer(this.fond)
-    this.fond = nouvelle
+    if (this.coucheFond && this.coucheFond !== nouvelle) this.carte.removeLayer(this.coucheFond)
+    this.coucheFond = nouvelle
   }
 
-  choisirRendu({ params: { rendu } }) {
-    if (!this.carte) return
-    this.appliquerRendu(rendu)
+  // ─── Ambiance et maquette blanche (diorama seulement), gardées sur l'appareil ─────────
+  lireAmbianceMemorisee() {
+    const d = this.tuilesValue.disponibles || {}
+    const nom = lire(CLE_AMBIANCE)
+    const valide = nom === "origine" || (d.ambiances?.length && (nom === "auto" || d.ambiances.includes(nom)))
+    this.rendu = d.blanche && lire(CLE_BLANCHE) === "1" ? "blanche" : "vrai"
+    this.ambianceChoisie = valide ? nom : "origine"
+    this.ambianceEffective = this.resoudre(this.ambianceChoisie)
   }
 
-  appliquerRendu(rendu) {
-    this.rendu = rendu
-    this.poserFond(rendu === "blanche" ? this.coucheBlanche() : this.coucheAmbiance(this.ambianceEffective))
-    this.renduTargets.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.dioramaRenduParam === rendu)))
+  // L'ambiance réellement posée : « auto » résolu (diorama/soleil), repli sur l'origine si absente.
+  resoudre(nom) {
+    const effective = nom === "auto" ? resoudreAuto() : nom
+    return effective === "origine" || this.tuilesValue.disponibles?.ambiances?.includes(effective) ? effective : "origine"
   }
 
   choisirAmbiance(event) {
-    if (!this.carte) return
-    this.choisirAmbianceNommee(event.target.value)
-    // Ambiance et maquette blanche sont exclusives : l'ambiance choisie l'emporte.
-    if (this.rendu === "blanche") this.appliquerRendu("vrai")
+    ecrire(CLE_AMBIANCE, event.target.value)
+    if (this.rendu === "blanche") { this.rendu = "vrai"; ecrire(CLE_BLANCHE, "0") } // l'ambiance choisie l'emporte
+    this.appliquerAmbiance(event.target.value, { forcer: true })
   }
 
-  choisirAmbianceNommee(nom) {
-    const disponibles = this.tuilesValue.disponibles.ambiances
-    let effective = nom === "auto" ? resoudreAuto() : nom
-    if (effective !== "origine" && !disponibles.includes(effective)) effective = "origine"
+  choisirBlanche(event) {
+    this.rendu = event.target.checked ? "blanche" : "vrai"
+    ecrire(CLE_BLANCHE, this.rendu === "blanche" ? "1" : "0")
+    if (this.carte && this.fond === "diorama") this.poserCoucheFond(this.coucheCourante())
+    this.majCalques()
+  }
+
+  appliquerAmbiance(nom, { forcer = false } = {}) {
+    const effective = this.resoudre(nom)
+    const change = forcer || effective !== this.ambianceEffective
     this.ambianceChoisie = nom
-    const change = effective !== this.ambianceEffective
     this.ambianceEffective = effective
-    if (this.hasAmbianceTarget) {
-      const auto = this.ambianceTarget.querySelector('option[value="auto"]')
-      const libelle = this.ambianceTarget.querySelector(`option[value="${effective}"]`)?.textContent || "Origine"
-      if (auto) auto.textContent = nom === "auto" ? `Auto (${libelle.toLowerCase()})` : "Auto"
-    }
-    if (change && this.rendu !== "blanche") this.appliquerRendu("vrai")
+    if (change && this.carte && this.fond === "diorama") this.poserCoucheFond(this.coucheCourante())
+    this.majCalques()
   }
 
   // ─── Les points et leurs marqueurs ───────────────────────────────────────────────────
+  // Position Leaflet de chaque point sur le fond courant. Diorama : hors de la mosaïque, sur une
+  // dalle vide ou hors de la Métropole, pas de marqueur. Plan : tous les points géolocalisés.
   poserPoints() {
     const L = this.L
     this.points.forEach((p) => {
+      p.latlng = null
+      p.marqueur = null // l'icône suit le point : on la refait sur la nouvelle carte
       if (!Number.isFinite(p.latitude) || !Number.isFinite(p.longitude)) return
-      // Hors de la mosaïque, sur une dalle vide ou hors de la Métropole : pas de marqueur.
+      if (this.fond === "plan") { p.latlng = L.latLng(p.latitude, p.longitude); return }
       const px = this.pixelDansLeDiorama(p)
-      if (!px) return
-      p.l93 = this.projection.versL93(p.longitude, p.latitude)
-      p.latlng = this.carte.unproject(L.point(px[0], px[1]), NIVEAU_MAX)
+      if (px) p.latlng = this.carte.unproject(L.point(px[0], px[1]), NIVEAU_MAX)
     })
     this.poses = this.points.filter((p) => p.latlng)
     this.majCompteurs()
@@ -445,10 +578,11 @@ export default class extends Controller {
   // en éventail, 6 fleurs au plus et une pastille « +n » qui zoome sur le groupe.
   bouquet(groupe) {
     const L = this.L
-    const pixels = groupe.map((p) => this.carte.project(p.latlng, NIVEAU_MAX))
+    const zMax = this.carte.getMaxZoom()
+    const pixels = groupe.map((p) => this.carte.project(p.latlng, zMax))
     const centre = this.carte.unproject(L.point(
       pixels.reduce((s, q) => s + q.x, 0) / pixels.length, pixels.reduce((s, q) => s + q.y, 0) / pixels.length
-    ), NIVEAU_MAX)
+    ), zMax)
     const fleurs = groupe.slice(0, FLEURS_MAX).sort((a, b) => a.latlng.lng - b.latlng.lng) // d'ouest en est
     const el = document.createElement("div")
     el.className = "bouquet"
@@ -567,8 +701,11 @@ export default class extends Controller {
     return el
   }
 
+  // Échap ferme d'abord le panneau Calques, puis la popup.
   echap(event) {
-    if (event.key === "Escape") this.fermerPopup()
+    if (event.key !== "Escape") return
+    if (this.hasPanneauCalquesTarget && !this.panneauCalquesTarget.hidden) this.fermerCalques()
+    else this.fermerPopup()
   }
 
   fermerPopup() {
@@ -812,32 +949,38 @@ export default class extends Controller {
     const pts = this.poses.filter((p) => this.passe(p)).map((p) => p.latlng)
     // Le logo, la légende et le volet recouvrent la carte : on cadre dans ce qui reste visible.
     const { haut, bas } = this.marges()
-    const options = { paddingTopLeft: [30, haut + 80], paddingBottomRight: [80, bas + 10], maxZoom: 6 }
+    const maxZoom = this.fond === "diorama" ? 6 : 16
+    const options = { paddingTopLeft: [30, haut + 80], paddingBottomRight: [80, bas + 10], maxZoom }
     if (pts.length) this.carte.fitBounds(this.L.latLngBounds(pts), options)
-    else this.carte.fitBounds(this.bornes)
+    else if (this.fond === "diorama") this.carte.fitBounds(this.bornesContour())
+    else this.vueInitiale()
   }
 
-  // Centre la carte sur CENTRE_INITIAL (projeté dans la mosaïque) au zoom ZOOM_INITIAL.
+  // Centre la carte sur CENTRE_INITIAL au zoom ZOOM_INITIAL (diorama) ou ZOOM_PLAN_INITIAL (plan).
   vueInitiale() {
-    const [x, y] = this.projection.versL93(CENTRE_INITIAL.lon, CENTRE_INITIAL.lat)
-    const [px, py] = this.projection.pixelL93(x, y)
+    if (this.fond === "plan") {
+      this.carte.setView([CENTRE_INITIAL.lat, CENTRE_INITIAL.lon], ZOOM_PLAN_INITIAL, { animate: false })
+      return
+    }
+    const [px, py] = this.projection.pixel(CENTRE_INITIAL.lat, CENTRE_INITIAL.lon)
     this.carte.setView(this.carte.unproject(this.L.point(px, py), NIVEAU_MAX), ZOOM_INITIAL, { animate: false })
   }
 
-  // Réglage de la vue : ?debug_vue=1 affiche le centre (lat/lon) et le zoom courants. Sans ce paramètre, rien.
-  afficherDebugVue() {
+  // Réglage de la vue : ?debug_vue=1 affiche le centre (lat/lon), le zoom et le fond courants. Sans ce
+  // paramètre, rien. Rebranché à chaque carte (bascule de fond), sur le même encart.
+  brancherDebugVue() {
     if (new URLSearchParams(window.location.search).get("debug_vue") !== "1") return
-    const encart = document.createElement("output")
-    encart.className = "acc-debug-vue"
-    this.carteTarget.parentElement.appendChild(encart)
+    if (!this.encartDebug) {
+      this.encartDebug = document.createElement("output")
+      this.encartDebug.className = "acc-debug-vue"
+      this.carteTarget.parentElement.appendChild(this.encartDebug)
+    }
     const maj = () => {
-      const c = this.carte.getCenter()
-      const { x, y } = this.carte.project(c, NIVEAU_MAX)
-      const [lon, lat] = this.projection.versWGS84(x, y)
-      encart.textContent = `centre ${lat.toFixed(5)}, ${lon.toFixed(5)} · zoom ${this.carte.getZoom()}`
+      const { lat, lon } = this.vueGeo()
+      this.encartDebug.textContent = `${this.fond} · centre ${lat.toFixed(5)}, ${lon.toFixed(5)} · zoom ${this.carte.getZoom()}`
     }
     this.carte.on("move zoom", maj)
-    maj()
+    this.carte.whenReady(maj)
   }
 
   zoomer({ params: { sens } }) {

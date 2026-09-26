@@ -87,8 +87,15 @@ export function creerProjection(manifeste) {
     return depuisL93(cx + u * droite[0] - v * versOeil[0], cy + u * droite[1] - v * versOeil[1]);
   }
 
+  // Zooms d'échelle équivalente entre le diorama (niveau 8 = `echelle` px par mètre, horizontalement)
+  // et le plan Web Mercator (256 × 2^Z px pour la circonférence, réduite par cos(latitude)).
+  const CIRCONFERENCE_M = 40075016.686
+  const pxParMetrePlan = (Z, lat) => 256 * 2 ** Z / (CIRCONFERENCE_M * Math.cos(lat * Math.PI / 180))
+  const zoomPlan = (z, lat) => Math.log2(echelle * 2 ** (z - 8) / pxParMetrePlan(0, lat))
+  const zoomDiorama = (Z, lat) => 8 + Math.log2(pxParMetrePlan(Z, lat) / echelle)
+
   const dansLaMosaique = ([px, py]) =>
     px >= 0 && py >= 0 && px < manifeste.taille_mosaique_px[0] && py < manifeste.taille_mosaique_px[1];
 
-  return { pixel, pixelL93, versL93, versWGS84, dansLaMosaique, zRef, pxParMetreAltitude: facteurHauteur * echelle };
+  return { pixel, pixelL93, versL93, versWGS84, dansLaMosaique, zoomPlan, zoomDiorama, zRef, pxParMetreAltitude: facteurHauteur * echelle };
 }

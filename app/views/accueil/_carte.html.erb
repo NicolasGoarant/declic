@@ -1,35 +1,13 @@
-<%# Le diorama. Les couches de fond dont les fichiers manquent sur le domaine des tuiles
-    (voir DioramaTuiles) ne sont pas rendues : pas de bouton mort, pas d'erreur JS. %>
+<%# La carte : diorama ou plan (panneau « Calques »). Les couches de fond dont les fichiers manquent
+    sur le domaine des tuiles (voir DioramaTuiles) ne sont pas proposées : pas de bouton mort. %>
 <section class="acc-carte" aria-label="Carte des initiatives du Grand Nancy">
   <div class="acc-carte-fond" data-diorama-target="carte"></div>
 
-  <% unless disponibles[:vrai] %>
-    <p class="acc-carte-message">Le diorama est momentanément indisponible. Les initiatives restent listées ci-dessous.</p>
-  <% end %>
-
+  <%# Sans diorama publié, la carte passe sur le plan (diorama#demarrer) : pas de message ici. %>
   <div class="acc-commandes">
-    <% if disponibles[:blanche] || disponibles[:ambiances].any? %>
-      <div class="acc-fonds">
-        <% if disponibles[:blanche] %>
-          <div class="acc-bascule" role="group" aria-label="Rendu du fond de carte">
-            <button type="button" aria-pressed="true" data-diorama-target="rendu"
-                    data-action="diorama#choisirRendu" data-diorama-rendu-param="vrai">Vrai Nancy</button>
-            <button type="button" aria-pressed="false" data-diorama-target="rendu"
-                    data-action="diorama#choisirRendu" data-diorama-rendu-param="blanche">Maquette blanche</button>
-          </div>
-        <% end %>
-        <% if disponibles[:ambiances].any? %>
-          <select class="acc-ambiance" aria-label="Ambiance du fond de carte"
-                  data-diorama-target="ambiance" data-action="diorama#choisirAmbiance">
-            <option value="origine">Origine</option>
-            <% { "heure-bleue" => "Heure bleue", "automne" => "Automne", "hiver" => "Hiver" }.each do |nom, libelle| %>
-              <% if disponibles[:ambiances].include?(nom) %><option value="<%= nom %>"><%= libelle %></option><% end %>
-            <% end %>
-            <option value="auto">Auto</option>
-          </select>
-        <% end %>
-      </div>
-    <% end %>
+    <button type="button" class="acc-rond-calques" aria-label="Calques : fond et ambiance de la carte"
+            aria-expanded="false" aria-controls="acc-calques" data-diorama-target="boutonCalques"
+            data-action="diorama#basculerCalques"><%= picto(:calques, taille: 22) %></button>
 
     <div class="acc-zoom">
       <div class="acc-zoom-pile">
@@ -55,6 +33,8 @@
       </div>
     </article>
   </template>
+
+  <%= render "accueil/calques", disponibles: disponibles %>
 
   <p class="acc-alerte" role="status" hidden data-diorama-target="alerte"></p>
 </section>

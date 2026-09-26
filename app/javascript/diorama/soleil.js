@@ -1,14 +1,13 @@
-// Le mode automatique des ambiances, porté de maquette-declic-v3 : l'heure bleue passe devant
-// la saison, et hors de ces fenêtres c'est l'origine.
-//
-// Saisons en « mois-jour », bornes comprises ; une saison qui enjambe le 1er janvier se
-// déclare telle quelle (début après fin).
-const AUTOMNE = ["09-22", "11-30"]
-const HIVER = ["12-01", "02-29"]
-// L'heure bleue va du coucher (centre du disque à −0,833°) à la nuit (fin du crépuscule
-// civil, −6°), le soir seulement.
+// Le mode automatique des ambiances : l'heure bleue passe devant la saison, et hors de ces
+// fenêtres c'est l'origine.
+//   heure bleue : du coucher du soleil (centre du disque à −0,833°) à 23 h, heure de Nancy ;
+//   hiver : décembre à février ; automne : octobre et novembre.
+// L'heure est lue sur le fuseau Europe/Paris, quel que soit celui de l'appareil.
+const MOIS_HIVER = [12, 1, 2], MOIS_AUTOMNE = [10, 11]
+const FIN_HEURE_BLEUE = 23
 const NANCY_LAT = 48.6937, NANCY_LON = 6.1834
-const HAUTEUR_COUCHER_DEG = -0.833, HAUTEUR_NUIT_DEG = -6.0
+const HAUTEUR_COUCHER_DEG = -0.833
+const FUSEAU = "Europe/Paris"
 
 // Hauteur du soleil à Nancy, formules de la NOAA (Meeus simplifié), sans service externe.
 // Rend la hauteur géométrique en degrés et l'angle horaire (> 0 le soir).
@@ -35,27 +34,30 @@ export function soleil(date) {
   return { hauteur: 90 - Math.acos(Math.max(-1, Math.min(1, cz))) / rad, angleHoraire: ah }
 }
 
-// Coucher et nuit du jour local de `date`, à la minute près, par balayage depuis midi.
-function fenetreDuSoir(date) {
-  const midi = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0)
-  const r = { coucher: null, nuit: null }
-  for (let m = 0; m < 720 && !r.nuit; m++) {
-    const t = new Date(midi.getTime() + m * 60000), s = soleil(t)
-    if (s.angleHoraire <= 0) continue
-    if (!r.coucher && s.hauteur < HAUTEUR_COUCHER_DEG) r.coucher = t
-    if (!r.nuit && s.hauteur < HAUTEUR_NUIT_DEG) r.nuit = t
-  }
-  return r
+// Date, heure et minute à Nancy.
+function aNancy(date) {
+  const parties = Object.fromEntries(new Intl.DateTimeFormat("fr-FR", {
+    timeZone: FUSEAU, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", hourCycle: "h23"
+  }).formatToParts(date).map((p) => [p.type, Number(p.value)]))
+  return { annee: parties.year, mois: parties.month, jour: parties.day, heure: parties.hour, minute: parties.minute }
 }
 
-const dansSaison = (md, [debut, fin]) => debut <= fin ? (md >= debut && md <= fin) : (md >= debut || md <= fin)
+// Coucher du soleil du jour de Nancy donné, à la minute près, par balayage depuis 10 h UTC (midi en été).
+export function coucher({ annee, mois, jour }) {
+  const debut = Date.UTC(annee, mois - 1, jour, 10, 0, 0)
+  for (let m = 0; m < 720; m++) {
+    const t = new Date(debut + m * 60000), s = soleil(t)
+    if (s.angleHoraire > 0 && s.hauteur < HAUTEUR_COUCHER_DEG) return t
+  }
+  return null
+}
 
 // Nom de l'ambiance que le mode automatique retient pour `date`.
 export function resoudreAuto(date = new Date()) {
-  const { coucher, nuit } = fenetreDuSoir(date)
-  const md = `${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
-  if (coucher && nuit && date >= coucher && date < nuit) return "heure-bleue"
-  if (dansSaison(md, HIVER)) return "hiver"
-  if (dansSaison(md, AUTOMNE)) return "automne"
+  const ici = aNancy(date)
+  const c = coucher(ici)
+  if (c && date >= c && ici.heure < FIN_HEURE_BLEUE) return "heure-bleue"
+  if (MOIS_HIVER.includes(ici.mois)) return "hiver"
+  if (MOIS_AUTOMNE.includes(ici.mois)) return "automne"
   return "origine"
 }

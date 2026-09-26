@@ -1,4 +1,5 @@
 require "test_helper"
+require_relative "support/tuiles_factices"
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # CHROME_BIN : chemin d'un Chrome/Chromium quand il n'est pas à l'emplacement habituel.
@@ -7,4 +8,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     options.binary = ENV["CHROME_BIN"] if ENV["CHROME_BIN"].present?
     options.add_argument("--no-sandbox") if ENV["CHROME_NO_SANDBOX"].present?
   end
+
+  # Le serveur des tests sert aussi un domaine de tuiles factice (voir TuilesFactices).
+  Capybara.app = Rack::URLMap.new(TuilesFactices::PREFIXE => TuilesFactices.new, "/" => Rails.application)
 end
