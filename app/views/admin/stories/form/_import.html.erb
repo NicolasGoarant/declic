@@ -1,0 +1,10 @@
+<div class="form-section import">
+  <h3 class="form-section-title">⚡ Import Story (bêta)</h3>
+  <p class="form-section-subtitle">Collez un bloc complet (frontmatter + body). À l'enregistrement, les champs seront pré-remplis.</p>
+  <div class="field">
+    <label class="field-label" for="import_blob">Bloc Import</label>
+    <textarea id="import_blob" name="import_blob" rows="10" class="field-input"
+              placeholder="---&#10;title: ...&#10;chapo: ...&#10;date: 2023-06-03&#10;location: ...&#10;tags: a, b, c&#10;source_name: ...&#10;source_url: ...&#10;image_hero: ...&#10;lat: 48.69&#10;lng: 6.18&#10;---&#10;Body markdown..."><%= params[:import_blob].to_s %></textarea>
+    <div class="field-hint">💡 Si ce bloc est renseigné, il est prioritaire sur les champs ci-dessous.</div>
+  </div>
+</div>

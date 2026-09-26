@@ -26,6 +26,7 @@
         <th>Statut</th>
         <th>Titre & Auteur</th>
         <th>Lieu</th>
+        <%= render "admin/shared/entete_fiche", tri: @tri, sens: @sens %>
         <th>Date</th>
         <th class="text-right">Actions</th>
       </tr>
@@ -54,6 +55,7 @@
               </div>
             <% end %>
           </td>
+          <td><%= render "admin/shared/cellule_fiche", record: s %></td>
           <td class="date-cell"><%= s.created_at.strftime("%d/%m/%Y") %></td>
           <td class="text-right">
             <div class="action-links">
@@ -90,4 +92,8 @@
   .geocoding-flag { margin-top: 4px; font-size: 11px; font-weight: 700; color: #b45309; }
   .action-links { display: flex; gap: 10px; justify-content: flex-end; }
   .btn-delete { background: none; border: none; cursor: pointer; color: #ef4444; }
+  .fiche-pct { font-weight: 800; font-size: 12px; padding: 3px 10px; border-radius: 20px; }
+  .fiche-pct.ok { background: #dcfce7; color: #15803d; }
+  .fiche-pct.moyen { background: #fef3c7; color: #b45309; }
+  .fiche-pct.bas { background: #fee2e2; color: #b91c1c; }
 </style>

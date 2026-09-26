@@ -1,0 +1,5 @@
+<%# Colonne « Fiche » des listes : pourcentage de complétude, champs manquants en infobulle. %>
+<% pct = record.completude %>
+<% manquants = record.champs_manquants %>
+<span class="fiche-pct <%= pct >= 80 ? 'ok' : (pct >= 50 ? 'moyen' : 'bas') %>"
+      title="<%= manquants.any? ? "Manque : #{manquants.join(', ')}" : 'Fiche complète' %>"><%= pct %> %</span>

@@ -1,0 +1,34 @@
+<div class="form-section">
+  <h3 class="form-section-title">📝 Identité</h3>
+  <p class="form-section-subtitle">Titre, catégorie et organisation : l'en-tête de la fiche</p>
+
+  <div class="form-row">
+    <div class="field wide">
+      <%= f.label :title, "Titre *", class: "field-label" %>
+      <%= f.text_field :title, placeholder: "Ex: Repair Café : apprenez à réparer vos objets du quotidien", class: "field-input" %>
+    </div>
+    <div class="field">
+      <%= f.label :category, "Catégorie *", class: "field-label" %>
+      <%= f.select :category,
+            [ [ "Bénévolat", "benevolat" ], [ "Formation", "formation" ], [ "Rencontres", "rencontres" ],
+              [ "Entreprendre", "entreprendre" ], [ "Écologiser", "ecologiser" ] ],
+            { include_blank: "(choisir)" }, { class: "field-input" } %>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="field">
+      <%= f.label :organization, "Organisation", class: "field-label" %>
+      <%= f.text_field :organization, placeholder: "Ex: MJC Lillebonne / Collectif Zéro Déchet", class: "field-input" %>
+    </div>
+    <div class="field">
+      <%= f.label :organization_logo, "Logo de l'organisation", class: "field-label" %>
+      <% if @opportunity.persisted? && @opportunity.organization_logo.attached? %>
+        <%= image_tag url_for(@opportunity.organization_logo), class: "apercu-logo", alt: "Logo actuel" %>
+        <label class="checkbox-field"><%= check_box_tag :supprimer_logo, "1" %> <span>Supprimer le logo</span></label>
+      <% end %>
+      <%= f.file_field :organization_logo, accept: "image/png,image/jpeg,image/webp,image/svg+xml", class: "field-input" %>
+      <div class="field-hint">Carré ou rond de préférence, affiché dans « Organisé par »</div>
+    </div>
+  </div>
+</div>

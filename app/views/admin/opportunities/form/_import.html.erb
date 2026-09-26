@@ -1,0 +1,37 @@
+<div class="form-section import">
+  <h3 class="form-section-title">⚡ Import Opportunité (bêta)</h3>
+  <p class="form-section-subtitle">
+    Collez un bloc complet (frontmatter + description). À l'enregistrement, les champs seront pré-remplis.
+  </p>
+
+  <div class="field">
+    <label class="field-label" for="import_blob">Bloc Import</label>
+    <%= text_area_tag :import_blob, params[:import_blob],
+          rows: 12,
+          placeholder: <<~TXT,
+---
+title: "🧶 Aidez à acheminer des tricots solidaires"
+category: benevolat
+organization: Collectif solidaire de Fraize
+location: "Fraize, Vosges"
+lat: 48.1736
+lng: 6.9987
+time_commitment: "Selon disponibilité"
+quote: "À 99 ans, je tricote pour les enfants."
+quote_author: "Marie-Louise"
+source_url: "https://www.vosgesmatin.fr/..."
+website: "https://..."
+contact_email: "contact@..."
+contact_phone: "06 12 34 56 78"
+tags:
+  - solidarité
+  - bénévolat
+  - Ukraine
+---
+Ici la **description complète** de l'opportunité, réécrite, claire et actionnable.
+TXT
+          class: "field-input",
+          style: "font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;" %>
+    <div class="field-hint">💡 Si ce bloc est renseigné, il est prioritaire sur les champs ci-dessous.</div>
+  </div>
+</div>

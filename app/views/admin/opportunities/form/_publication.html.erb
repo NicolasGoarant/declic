@@ -1,0 +1,29 @@
+<div class="form-section">
+  <h3 class="form-section-title">🚀 Publication</h3>
+  <p class="form-section-subtitle">Visibilité, date de parution, adresse de la fiche et mots-clés</p>
+
+  <div class="field">
+    <label class="checkbox-field">
+      <%= f.check_box :is_active %>
+      <span>✅ Visible sur le site (publier l'opportunité)</span>
+    </label>
+  </div>
+
+  <div class="form-row">
+    <div class="field">
+      <%= f.label :published_at, "Publiée le", class: "field-label" %>
+      <%= f.datetime_local_field :published_at, class: "field-input" %>
+      <div class="field-hint">Date affichée « Publiée le … » sur la fiche</div>
+    </div>
+    <div class="field">
+      <%= f.label :slug, "Slug (URL)", class: "field-label" %>
+      <%= f.text_field :slug, placeholder: "repair-cafe-nancy", class: "field-input" %>
+      <div class="field-hint">Laissez vide pour génération automatique</div>
+    </div>
+    <div class="field">
+      <%= f.label :tags, "Tags", class: "field-label" %>
+      <%= f.text_field :tags, placeholder: "réparation, écologie", class: "field-input" %>
+      <div class="field-hint">Séparés par des virgules</div>
+    </div>
+  </div>
+</div>

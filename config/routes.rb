@@ -60,6 +60,9 @@ Rails.application.routes.draw do
       member do
         patch :toggle_active
       end
+      collection do
+        post :geocode_missing
+      end
     end
 
     resources :stories do

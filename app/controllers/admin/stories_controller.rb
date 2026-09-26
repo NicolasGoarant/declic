@@ -1,5 +1,6 @@
 class Admin::StoriesController < Admin::BaseController
-  before_action :set_story, only: [:edit, :update, :destroy, :toggle_active]
+  before_action :set_story, only: [ :edit, :update, :destroy, :toggle_active ]
+  include TriParCompletude
 
   # GET /admin/stories
   def index
@@ -18,9 +19,13 @@ class Admin::StoriesController < Admin::BaseController
     scope = scope.where(latitude: nil).or(scope.where(longitude: nil)) if @missing
     scope = scope.where.not(geocoding_flagged_reason: nil) if @flagged
 
-    @stories = scope
-      .order(Arel.sql("COALESCE(updated_at, created_at) DESC"))
-      .limit(500)
+    @tri, @sens = tri_fiche_params
+    @stories = trier_par_completude(
+      scope.includes(:image_attachment, :photos_attachments)
+           .order(Arel.sql("COALESCE(updated_at, created_at) DESC"))
+           .limit(500),
+      @tri, @sens
+    )
 
     @counts = {
       total:             Story.count,
@@ -45,6 +50,7 @@ class Admin::StoriesController < Admin::BaseController
     apply_import_blob(@story)
 
     if @story.errors.none? && @story.save
+      appliquer_galerie(@story)
       redirect_to admin_stories_path, notice: "Histoire créée."
     else
       flash.now[:alert] = @story.errors.full_messages.to_sentence
@@ -65,6 +71,7 @@ class Admin::StoriesController < Admin::BaseController
     apply_import_blob(@story)
 
     if @story.errors.none? && @story.save
+      appliquer_galerie(@story)
       redirect_to admin_stories_path(request.query_parameters), notice: "Histoire mise à jour."
     else
       flash.now[:alert] = @story.errors.full_messages.to_sentence
@@ -170,15 +177,20 @@ class Admin::StoriesController < Admin::BaseController
       :inline_caption_2,
       :inline_image_3,
       :inline_caption_3,
-      :source_name, :source_url,
+      :source_name, :source_url, :source_published_on,
       :slug, :tags, :active, :is_active, :published,
-      :highlights_title,
-      :highlights_text,
-      :highlights_items,
+      :venue_name, :discover_url, :quote, :quote_author,
       :contact_info,
       :author_name, :author_email, :phone, :address, :city, :postal_code,
-      photos: []
+      points_forts_saisie: [ :icone, :titre, :texte ]
     )
+  end
+
+  # Galerie : nouveaux fichiers, suppressions et positions saisies (voir GaleriePhotos).
+  def appliquer_galerie(story)
+    galerie = params.fetch(:galerie, {}).permit(nouvelles: [], supprimer: [], positions: {})
+    story.appliquer_galerie(nouvelles: galerie[:nouvelles], supprimer: galerie[:supprimer],
+                            positions: galerie[:positions])
   end
 
   # ✅ NOUVELLE MÉTHODE : Attache les images inline uploadées

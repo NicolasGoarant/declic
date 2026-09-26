@@ -1,0 +1,6 @@
+<%# En-tête triable de la colonne « Fiche » : clic = croissant, puis décroissant. %>
+<% sens = (tri == "fiche" && sens == "asc") ? "desc" : "asc" %>
+<th><%= link_to "Fiche#{tri == 'fiche' ? (sens == 'desc' ? ' ▲' : ' ▼') : ''}",
+                "#{request.path}?#{request.query_parameters.merge('tri' => 'fiche', 'sens' => sens).to_query}",
+                title: "Trier par complétude : les fiches à compléter d'abord (croissant)",
+                style: "color: inherit; text-decoration: none;" %></th>

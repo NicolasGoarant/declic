@@ -1,0 +1,28 @@
+<%# Galerie photos (has_many_attached :photos). Champs : galerie[nouvelles][], galerie[supprimer][], galerie[positions][id]. %>
+<% photos = record.persisted? ? record.photos_ordonnees : [] %>
+<% if photos.any? %>
+  <div class="galerie">
+    <% photos.each_with_index do |photo, i| %>
+      <div class="galerie-photo <%= 'couverture' if i.zero? %>">
+        <% if i.zero? %><span class="galerie-badge">★ Couverture</span><% end %>
+        <%= image_tag url_for(photo), alt: "Photo #{i + 1}", loading: "lazy" %>
+        <label>Position
+          <%= number_field_tag "galerie[positions][#{photo.id}]", i + 1, min: 1, max: photos.size %>
+        </label>
+        <label>
+          <%= check_box_tag "galerie[supprimer][]", photo.id, false, id: "galerie_supprimer_#{photo.id}" %>
+          Supprimer
+        </label>
+      </div>
+    <% end %>
+  </div>
+  <div class="field-hint" style="margin-bottom: 1rem;">La photo en position 1 est la couverture de la fiche. Changez les numéros pour réordonner, puis enregistrez.</div>
+<% elsif record.respond_to?(:image) && record.image.attached? %>
+  <div class="field-hint" style="margin-bottom: 1rem;">Aucune photo dans la galerie : la fiche utilise l'image principale.</div>
+<% end %>
+
+<div class="field">
+  <%= label_tag "galerie_nouvelles", "Ajouter des photos", class: "field-label" %>
+  <%= file_field_tag "galerie[nouvelles][]", id: "galerie_nouvelles", multiple: true, accept: "image/png,image/jpeg,image/gif,image/webp", class: "field-input" %>
+  <div class="field-hint">Plusieurs fichiers possibles. Les nouvelles photos passent à la suite des existantes.</div>
+</div>

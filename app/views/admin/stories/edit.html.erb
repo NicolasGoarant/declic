@@ -5,6 +5,7 @@
     <%= link_to "← Retour à la liste", admin_stories_path, class: "back-link" %>
     <h1>✏️ Éditer la story #<%= @story.id %></h1>
     <p class="story-title-preview"><%= @story.title %></p>
+    <%= render "admin/stories/aide_recit" %>
   </div>
 
   <%= render "form" %>

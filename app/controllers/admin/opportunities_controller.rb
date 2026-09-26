@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class Admin::OpportunitiesController < Admin::BaseController
-  before_action :set_opportunity, only: [:edit, :update, :destroy, :toggle_active]
+  before_action :set_opportunity, only: [ :edit, :update, :destroy, :toggle_active ]
+  include TriParCompletude
 
   def index
     scope = Opportunity.all
@@ -12,13 +13,15 @@ class Admin::OpportunitiesController < Admin::BaseController
     @missing = params[:missing_coords].present?
     @flagged = params[:geocoding_flagged].present?
 
-    scope = scope.where("title ILIKE ?", "%#{@q}%") if @q.present?
+    # matches : ILIKE en Postgres, LIKE en SQLite ; les jokers saisis sont échappés.
+    scope = scope.where(Opportunity.arel_table[:title].matches("%#{Opportunity.sanitize_sql_like(@q)}%", "\\")) if @q.present?
     scope = scope.where(category: @cat) if @cat.present?
     scope = scope.where(is_active: false) if @only_in
     scope = scope.where(latitude: nil).or(scope.where(longitude: nil)) if @missing
     scope = scope.where.not(geocoding_flagged_reason: nil) if @flagged
 
-    @opportunities = scope.order(created_at: :desc)
+    @tri, @sens = tri_fiche_params
+    @opportunities = trier_par_completude(scope.includes(:image_attachment, :photos_attachments).order(created_at: :desc), @tri, @sens)
 
     @counts = {
       total: Opportunity.count,
@@ -43,6 +46,7 @@ class Admin::OpportunitiesController < Admin::BaseController
     apply_import_blob!(@opportunity) if params[:import_blob].present?
 
     if @opportunity.save
+      appliquer_galerie(@opportunity)
       redirect_to admin_opportunities_path, notice: "Opportunité créée ✅"
     else
       render :new, status: :unprocessable_entity
@@ -52,11 +56,12 @@ class Admin::OpportunitiesController < Admin::BaseController
   def update
     @opportunity.assign_attributes(opportunity_params)
 
-  # N'applique l'import_blob QUE s'il est présent
+    # N'applique l'import_blob QUE s'il est présent
     apply_import_blob!(@opportunity) if params[:import_blob].present?
 
     if @opportunity.save
-     redirect_to admin_opportunities_path, notice: "Opportunité mise à jour ✅"
+      appliquer_galerie(@opportunity)
+      redirect_to admin_opportunities_path, notice: "Opportunité mise à jour ✅"
     else
       render :edit, status: :unprocessable_entity
     end
@@ -99,75 +104,43 @@ class Admin::OpportunitiesController < Admin::BaseController
 
   def opportunity_params
     params.require(:opportunity).permit(
-      # Contenu principal
-      :title,
-      :category,
-      :organization,
-      :description,
-      :is_active,
+      # Identité
+      :title, :category, :organization, :organization_logo, :is_active,
 
-      # Citation / Témoignage
-      :quote,
-      :quote_author,
+      # Dates & horaires (les chaînes start_date / end_date sont écrites par le pont du modèle)
+      :starts_on, :ends_on, :start_time, :end_time, :schedule_text, :time_commitment,
 
-      # Statistiques d'impact
-      :stat_1_number,
-      :stat_1_label,
-      :stat_2_number,
-      :stat_2_label,
-      :stat_3_number,
-      :stat_3_label,
-      :stat_4_number,
-      :stat_4_label,
+      # Lieu
+      :location, :latitude, :longitude, :address, :city, :postal_code,
 
-      # Défis surmontés
+      # Contenu
+      :description, :audience, :programme_texte, :quote, :quote_author,
+      :stat_1_number, :stat_1_label, :stat_2_number, :stat_2_label,
+      :stat_3_number, :stat_3_label, :stat_4_number, :stat_4_label,
       :challenges,
 
-      # Localisation
-      :location,
-      :latitude,
-      :longitude,
-      :address,
-      :city,
-      :postal_code,
+      # Images (la galerie `photos` passe par appliquer_galerie)
+      :image, :image_url,
+      :inline_image_1, :inline_image_2, :inline_image_3,
+      :inline_caption_1, :inline_caption_2, :inline_caption_3,
 
-      # Dates & horaires
-      :start_date,
-      :end_date,
-      :time_commitment,
+      # Action
+      :cta_button_text, :cta_button_url,
 
-      # Images
-      :image,
-      :image_url,
+      # Source & contact
+      :source_name, :source_url, :website, :contact_email, :contact_phone, :phone,
 
-      # Images inline (système <!-- IMAGE_1/2/3 -->)
-      :inline_image_1,
-      :inline_image_2,
-      :inline_image_3,
-      :inline_caption_1,
-      :inline_caption_2,
-      :inline_caption_3,
-
-      # Anciennes images galerie (pour compatibilité si encore utilisées)
-      :gallery_image_1,
-      :gallery_image_2,
-      :gallery_image_3,
-
-      # Source & Contact
-      :source_name,
-      :source_url,
-      :website,
-      :contact_email,
-      :contact_phone,
-      :phone,
-
-      # SEO & Organisation
-      :slug,
-      :tags,
-
-      # Photos multiples (si utilisé)
-      photos: []
+      # Publication
+      :published_at, :slug, :tags
     )
+  end
+
+  # Galerie : nouveaux fichiers, suppressions et positions saisies (voir GaleriePhotos).
+  def appliquer_galerie(opportunity)
+    galerie = params.fetch(:galerie, {}).permit(nouvelles: [], supprimer: [], positions: {})
+    opportunity.organization_logo.purge if params[:supprimer_logo] == "1"
+    opportunity.appliquer_galerie(nouvelles: galerie[:nouvelles], supprimer: galerie[:supprimer],
+                                  positions: galerie[:positions])
   end
 
   def apply_import_blob!(opportunity)
@@ -190,19 +163,4 @@ class Admin::OpportunitiesController < Admin::BaseController
       opportunity.errors.add(:base, "Erreur lors de l'import du bloc")
     end
   end
-
-  def filtered_opportunity_params
-  # Ne garde que les paramètres dont la colonne existe
-  permitted = opportunity_params
-  existing_columns = Opportunity.column_names.map(&:to_sym)
-
-  permitted.select do |key, value|
-    # Les uploads sont toujours autorisés
-    value.is_a?(ActionDispatch::Http::UploadedFile) ||
-    key == :photos ||
-    existing_columns.include?(key.to_sym)
-  end
-end
-
-
 end

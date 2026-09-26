@@ -1,0 +1,34 @@
+<div class="form-section">
+  <h3 class="form-section-title">📄 Contenu</h3>
+  <p class="form-section-subtitle">Le texte doit inviter le lecteur à agir : participer, s'inscrire, donner, se former</p>
+
+  <div class="field">
+    <%= f.label :description, "En quelques mots (Markdown supporté) *", class: "field-label" %>
+    <%= f.text_area :description, rows: 8, placeholder: "Apportez vos objets cassés et apprenez à les réparer avec des bénévoles experts…", class: "field-input" %>
+    <div class="field-hint">
+      Photos dans le texte : insérez <code>&lt;!-- IMAGE_1 --&gt;</code>, <code>&lt;!-- IMAGE_2 --&gt;</code> ou <code>&lt;!-- IMAGE_3 --&gt;</code> (voir section Photos).
+    </div>
+  </div>
+
+  <div class="field">
+    <%= f.label :programme_texte, "Au programme", class: "field-label" %>
+    <%= f.text_area :programme_texte, rows: 5, placeholder: "Diagnostic de votre objet avec un expert\nAtelier de réparation accompagné\nMoment d'échange autour d'un café", class: "field-input" %>
+    <div class="field-hint">Une étape par ligne</div>
+  </div>
+
+  <div class="field">
+    <%= f.label :audience, "À qui s'adresse cette opportunité ?", class: "field-label" %>
+    <%= f.text_area :audience, rows: 3, placeholder: "À toutes les personnes curieuses, bricoleuses ou débutantes…", class: "field-input" %>
+  </div>
+
+  <div class="form-row">
+    <div class="field wide">
+      <%= f.label :quote, "Citation", class: "field-label" %>
+      <%= f.text_area :quote, rows: 3, placeholder: "« Ici, on apprend, on échange et on donne une seconde vie à nos objets ! »", class: "field-input" %>
+    </div>
+    <div class="field">
+      <%= f.label :quote_author, "Auteur de la citation", class: "field-label" %>
+      <%= f.text_field :quote_author, placeholder: "L'équipe de la MJC Lillebonne", class: "field-input" %>
+    </div>
+  </div>
+</div>
