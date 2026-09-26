@@ -10,10 +10,10 @@
 - Admin : formulaires en partiels, galerie, colonne « Fiche ». `.env` chargé par dotenv-rails (dev/test).
 - Vues publiques `opportunities#show` / `stories#show` refondues, layout `fiche` (accueil.css + fiche.css) : galerie (`galerie_controller`), favoris/partage/retour (`fiche_controller`, clé `declic:favoris`), mini-carte = `diorama` en mode `mini` (OSM hors emprise), OG/Twitter. `/labo/accueil?favoris=1` ouvre les favoris.
 - `Opportunity.actuelles`, `#similaires` ; `Story#categorie_opportunite` (étiquettes), `#opportunites_proches`, `#autres_histoires`.
-- Images de repli 1200 × 630 : `script/images_repli.py` (Pillow) → og_default, fallback-opportunity[-<catégorie>], fallback-story.
-- Captures 390/1280 : `docs/captures/fiche-*-v1.png` (dont `fiche-opportunite-galerie-390-v1.png`).
+- Images de repli 1200 × 630 : `script/images_repli.py` (Pillow).
 - Histoire : « Où se rendre » + `venue_name` ; colonne `thematique` (admin) prioritaire pour les opportunités suggérées.
-- Seeds réécrits (`db/seeds.rb`, `db/seeds/{opportunites,histoires}.rb`, photos `db/seeds/images/`) : 20 opportunités (10 datées, 6 permanentes, 4 passées), 6 histoires dont 1 hors Métropole ; idempotents ; vident Story/Opportunity (garde production).
+- Seeds (`db/seeds.rb`, `db/seeds/`) : 20 opportunités, 6 histoires dont 1 hors Métropole ; idempotents.
+- Bords du diorama (`diorama/contour.js`) : contour `public/data/contour-metropole-v1.geojson` (geo.api.gouv.fr, EPCI 245400676, Admin Express IGN, Licence Ouverte 2.0, 256 pts) ; dalles hors contour non demandées, masque SVG flouté sur les dalles du bord, socle + ombre (volet Leaflet), table `--table-fond` ; maxBounds, minZoom au contour ; points hors contour non posés. Aussi mini-carte. Captures `docs/captures/diorama-bords-*-v1.png`. `versWGS84` corrigé (y en miroir).
 
 ## Tests
 - `bin/rails test` : 85 verts. Système (8 verts) : `CHROME_NO_SANDBOX=1 CHROME_BIN=~/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome bin/rails test test/system` (pas de Chrome système ; le MCP Playwright ne trouve pas Chrome non plus).

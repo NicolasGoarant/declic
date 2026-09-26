@@ -9,6 +9,7 @@ import { creerCoucheDalles, creerCoucheBlanche } from "diorama/couches"
 import { creerCoucheAmbiance, lireAmbiance } from "diorama/ambiance"
 import { resoudreAuto } from "diorama/soleil"
 import { regrouper, eventail, FLEURS_MAX } from "diorama/bouquets"
+import { chargerContour, creerDecoupe, poserSocle } from "diorama/contour"
 import { lireDate, aujourdhui, estPasse, estAVenir, etiquette, periode, jourCourt } from "diorama/dates"
 
 const NIVEAU_MAX = 8
@@ -72,9 +73,11 @@ export default class extends Controller {
       try {
         const reponse = await fetch(`${this.tuilesValue.base}/${this.tuilesValue.lot}/manifeste.json`)
         if (!reponse.ok) throw new Error(`manifeste HTTP ${reponse.status}`)
+        const contour = this.chargerContour()
         this.manifeste = await reponse.json()
         this.projection = creerProjection(this.manifeste)
         this.dallesListees = this.indexerDalles(this.manifeste)
+        await this.preparerDecoupe(await contour)
         pixel = this.pixelDansLeDiorama(p)
       } catch (erreur) {
         console.warn("diorama indisponible, fond OpenStreetMap :", erreur)
@@ -86,13 +89,36 @@ export default class extends Controller {
     this.suivreTaille()
   }
 
-  // Pixel du point dans la mosaïque (niveau 8), ou null hors couverture (même règle que poserPoints).
+  // Pixel du point dans la mosaïque (niveau 8), ou null hors couverture : hors de la mosaïque, sur
+  // une dalle vide ou hors du contour de la Métropole (même règle pour la carte et la mini-carte).
   pixelDansLeDiorama(p) {
     const [x, y] = this.projection.versL93(p.longitude, p.latitude)
     const px = this.projection.pixelL93(x, y)
     if (!this.projection.dansLaMosaique(px)) return null
+    if (this.decoupe && !this.decoupe.contient(px)) return null
     return this.dallesListees[NIVEAU_MAX]?.has(`${Math.floor(px[0] / 256)}/${Math.floor(px[1] / 256)}`) ? px : null
   }
+
+  // Le contour de la Métropole (diorama/contour) ; sans lui, le diorama s'affiche sur sa grille de dalles.
+  chargerContour() {
+    return chargerContour().catch((erreur) => { console.warn("diorama : contour indisponible", erreur); return null })
+  }
+
+  preparerDecoupe(anneau) {
+    this.decoupe = anneau ? creerDecoupe(anneau, this.projection) : null
+  }
+
+  // Emprise du contour (ou de la mosaïque) en coordonnées Leaflet.
+  bornesContour() {
+    if (!this.decoupe) return this.bornes
+    const [x0, y0, x1, y1] = this.decoupe.emprise
+    return this.L.latLngBounds(this.carte.unproject([x0, y1], NIVEAU_MAX), this.carte.unproject([x1, y0], NIVEAU_MAX))
+  }
+
+  // Les dalles d'une couche, découpées au contour ; le socle et l'ombre dessous.
+  decouper(couche) { return this.decoupe ? this.decoupe.decouper(couche) : couche }
+
+  poserSocle() { if (this.decoupe) poserSocle(this.L, this.carte, this.decoupe.pixels) }
 
   optionsFigees() {
     return {
@@ -112,6 +138,7 @@ export default class extends Controller {
     }
     this.poserAttribution()
     this.couches = {}
+    this.poserSocle()
     this.poserFond(this.coucheVraie())
     const latlng = this.carte.unproject(L.point(pixel[0], pixel[1]), NIVEAU_MAX)
     this.poserPinMini(p, latlng, NIVEAU_MAX - 1)
@@ -147,11 +174,13 @@ export default class extends Controller {
     const t = this.tuilesValue
     if (!t.disponibles?.vrai) return
     try {
+      const contour = this.chargerContour()
       const module = await import("leaflet")
       this.L = module.default ?? module
       const reponse = await fetch(`${t.base}/${t.lot}/manifeste.json`)
       if (!reponse.ok) throw new Error(`manifeste HTTP ${reponse.status}`)
       this.manifeste = await reponse.json()
+      this.anneau = await contour
     } catch (erreur) {
       console.error("diorama :", erreur)
       this.alerter("Le diorama n'a pas pu se charger. Les initiatives restent listées ci-dessous.")
@@ -160,6 +189,7 @@ export default class extends Controller {
     if (!this.carteTarget.isConnected) return
     this.projection = creerProjection(this.manifeste)
     this.dallesListees = this.indexerDalles(this.manifeste)
+    this.preparerDecoupe(this.anneau)
     this.construireCarte()
     this.poserPoints()
     this.appliquerFiltres()
@@ -185,8 +215,11 @@ export default class extends Controller {
       zoomControl: false, attributionControl: false
     })
     this.bornes = L.latLngBounds(this.carte.unproject([0, hauteur], NIVEAU_MAX), this.carte.unproject([largeur, 0], NIVEAU_MAX))
-    this.carte.setMaxBounds(this.bornes.pad(0.6))
-    this.carte.fitBounds(this.bornes) // une vue d'abord : le regroupement en bouquets en a besoin
+    // On ne sort pas de la table : la Métropole et une marge autour, sans élasticité au bord.
+    this.carte.setMaxBounds(this.bornesContour().pad(0.25))
+    this.carte.options.maxBoundsViscosity = 0.95
+    this.majZoomMin()
+    this.carte.fitBounds(this.bornesContour()) // une vue d'abord : le regroupement en bouquets en a besoin
     this.optionsCouche = {
       minZoom: 0, maxZoom: NIVEAU_MAX + 1, maxNativeZoom: NIVEAU_MAX, tileSize: 256,
       noWrap: true, bounds: this.bornes, attribution: ATTRIBUTION
@@ -194,6 +227,7 @@ export default class extends Controller {
     this.poserAttribution()
 
     this.couches = {}
+    this.poserSocle()
     this.rendu = "vrai"
     this.ambianceChoisie = "origine"
     this.ambianceEffective = "origine"
@@ -213,12 +247,23 @@ export default class extends Controller {
   // La carte occupe tout l'écran (100dvh moins la tab bar) : sa taille change avec la barre d'URL
   // mobile, la rotation ou le redimensionnement, et Leaflet doit recalculer sa surface à chaque fois.
   suivreTaille() {
-    const recalculer = () => this.carte?.invalidateSize()
+    const recalculer = () => {
+      this.carte?.invalidateSize()
+      if (!this.miniValue) this.majZoomMin()
+    }
     this.observateur = new ResizeObserver(recalculer)
     this.observateur.observe(this.carteTarget)
     this.surOrientation = () => setTimeout(recalculer, 200) // les dimensions se stabilisent après l'événement
     window.addEventListener("orientationchange", this.surOrientation)
     requestAnimationFrame(recalculer)
+  }
+
+  // Au dézoom maximal, la Métropole entière tient dans la partie visible de la carte (hors logo et volet).
+  majZoomMin() {
+    if (!this.carte) return
+    const { haut, bas } = this.marges()
+    const zoom = this.carte.getBoundsZoom(this.bornesContour(), false, this.L.point(2 * 16, haut + bas))
+    this.carte.setMinZoom(Math.max(0, Math.min(zoom, NIVEAU_MAX - 1)))
   }
 
   // L'attribution est obligatoire (licences IGN, Géonancy, OSM) : repliée en « ⓘ », elle
@@ -244,7 +289,9 @@ export default class extends Controller {
   // ─── Les couches de fond ─────────────────────────────────────────────────────────────
   url(dossier, chemin) { return `${this.tuilesValue.base}/${dossier}/${chemin}` }
 
-  estListee = (coords) => this.dallesListees[coords.z]?.has(`${coords.x}/${coords.y}`) ?? false
+  // Une dalle publiée, et pas entièrement hors du contour de la Métropole.
+  estListee = (coords) =>
+    (this.dallesListees[coords.z]?.has(`${coords.x}/${coords.y}`) ?? false) && this.decoupe?.etat(coords) !== "dehors"
 
   masqueListe = (coords) => {
     if (coords.z < 6 || coords.z > NIVEAU_MAX) return false
@@ -264,18 +311,18 @@ export default class extends Controller {
   }
 
   coucheVraie() {
-    this.couches.vrai ||= creerCoucheDalles(this.L, {
+    this.couches.vrai ||= this.decouper(creerCoucheDalles(this.L, {
       modele: this.url(this.tuilesValue.lot, "{z}/{x}/{y}.webp"), estListee: this.estListee, options: this.optionsCouche
-    })
+    }))
     return this.couches.vrai
   }
 
   coucheBlanche() {
-    this.couches.blanche ||= creerCoucheBlanche(this.L, {
+    this.couches.blanche ||= this.decouper(creerCoucheBlanche(this.L, {
       dalle: (chemin) => this.url(this.tuilesValue.lot, `${chemin}.webp`),
       masque: (chemin) => this.url(this.tuilesValue.masque, `${chemin}.png`),
       estListee: this.estListee, masqueListe: this.masqueListe, options: this.optionsCouche
-    })
+    }))
     return this.couches.blanche
   }
 
@@ -285,13 +332,13 @@ export default class extends Controller {
     if (!this.couches[nom]) {
       const parametres = lireAmbiance(`${t.base}/${t.ambiances[nom]}`)
       parametres.catch((erreur) => console.error("ambiance :", erreur))
-      this.couches[nom] = creerCoucheAmbiance(this.L, {
+      this.couches[nom] = this.decouper(creerCoucheAmbiance(this.L, {
         dalle: (chemin) => this.url(t.lot, `${chemin}.webp`),
         propriete: (chemin) => this.url(t.propriete, `dalles/${chemin}.png`),
         masque: (chemin) => this.url(t.masque, `${chemin}.png`),
         estListee: this.estListee, masqueListe: this.masqueListe,
         parametres: parametres.catch(() => null), options: this.optionsCouche
-      })
+      }))
     }
     return this.couches[nom]
   }
@@ -339,14 +386,12 @@ export default class extends Controller {
   // ─── Les points et leurs marqueurs ───────────────────────────────────────────────────
   poserPoints() {
     const L = this.L
-    const niveau8 = this.dallesListees[NIVEAU_MAX]
     this.points.forEach((p) => {
       if (!Number.isFinite(p.latitude) || !Number.isFinite(p.longitude)) return
-      const [x, y] = this.projection.versL93(p.longitude, p.latitude)
-      const px = this.projection.pixelL93(x, y)
-      // Hors de la mosaïque, ou sur une dalle vide (hors de la couverture) : pas de marqueur.
-      if (!this.projection.dansLaMosaique(px) || !niveau8?.has(`${Math.floor(px[0] / 256)}/${Math.floor(px[1] / 256)}`)) return
-      p.l93 = [x, y]
+      // Hors de la mosaïque, sur une dalle vide ou hors de la Métropole : pas de marqueur.
+      const px = this.pixelDansLeDiorama(p)
+      if (!px) return
+      p.l93 = this.projection.versL93(p.longitude, p.latitude)
       p.latlng = this.carte.unproject(L.point(px[0], px[1]), NIVEAU_MAX)
     })
     this.poses = this.points.filter((p) => p.latlng)

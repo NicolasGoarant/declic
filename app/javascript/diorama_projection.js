@@ -83,7 +83,7 @@ export function creerProjection(manifeste) {
   function versWGS84(px, py) {
     const u = (px - marge - ORIGINE_MOSAIQUE_PX[0]) / echelle + umin;
     const h = hmax - (py - marge - ORIGINE_MOSAIQUE_PX[1]) / echelle;
-    const v = -(h / compression);
+    const v = h / compression; // h = v × compression (pixelL93)
     return depuisL93(cx + u * droite[0] - v * versOeil[0], cy + u * droite[1] - v * versOeil[1]);
   }
 

@@ -211,9 +211,9 @@ a.fch-organisateur:hover { border-color: color-mix(in srgb, var(--violet) 40%, v
 
 /* ─── Carte ───────────────────────────────────────────────────────────────────── */
 .fch-bloc.fch-carte-bloc { padding: 0; overflow: hidden; }
-.fch-carte { position: relative; height: 200px; background: #e9ece8; }
+.fch-carte { position: relative; height: 200px; background: var(--table-fond); }
 .fch-carte-fond { position: absolute; inset: 0; z-index: 0; }
-.fch-carte-fond.leaflet-container { font: inherit; background: #e9ece8; cursor: default; }
+.fch-carte-fond.leaflet-container { font: inherit; background: var(--table-fond); cursor: default; }
 .fch-carte .leaflet-control-attribution:not(.acc-attribution) { font-size: 10.5px; }
 .fch-carte .leaflet-control-attribution.acc-attribution { margin: 0 0 8px 8px !important; }
 .fch-carte-pied { display: grid; gap: 8px; padding: 12px 16px 14px; }
