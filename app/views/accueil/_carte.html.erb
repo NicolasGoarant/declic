@@ -1,0 +1,76 @@
+<%# Le diorama. Les couches de fond dont les fichiers manquent sur le domaine des tuiles
+    (voir DioramaTuiles) ne sont pas rendues : pas de bouton mort, pas d'erreur JS. %>
+<section class="acc-carte" aria-label="Carte des initiatives du Grand Nancy">
+  <div class="acc-carte-fond" data-diorama-target="carte"></div>
+
+  <% unless disponibles[:vrai] %>
+    <p class="acc-carte-message">Le diorama est momentanément indisponible. Les initiatives restent listées ci-dessous.</p>
+  <% end %>
+
+  <div class="acc-commandes">
+    <% if disponibles[:blanche] || disponibles[:ambiances].any? %>
+      <div class="acc-fonds">
+        <% if disponibles[:blanche] %>
+          <div class="acc-bascule" role="group" aria-label="Rendu du fond de carte">
+            <button type="button" aria-pressed="true" data-diorama-target="rendu"
+                    data-action="diorama#choisirRendu" data-diorama-rendu-param="vrai">Vrai Nancy</button>
+            <button type="button" aria-pressed="false" data-diorama-target="rendu"
+                    data-action="diorama#choisirRendu" data-diorama-rendu-param="blanche">Maquette blanche</button>
+          </div>
+        <% end %>
+        <% if disponibles[:ambiances].any? %>
+          <select class="acc-ambiance" aria-label="Ambiance du fond de carte"
+                  data-diorama-target="ambiance" data-action="diorama#choisirAmbiance">
+            <option value="origine">Origine</option>
+            <% { "heure-bleue" => "Heure bleue", "automne" => "Automne", "hiver" => "Hiver" }.each do |nom, libelle| %>
+              <% if disponibles[:ambiances].include?(nom) %><option value="<%= nom %>"><%= libelle %></option><% end %>
+            <% end %>
+            <option value="auto">Auto</option>
+          </select>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class="acc-zoom">
+      <button type="button" class="acc-rond-bouton" aria-label="Recentrer la carte" data-action="diorama#recentrer">
+        <%= picto(:recentrer, taille: 20) %>
+      </button>
+      <div class="acc-zoom-pile">
+        <button type="button" aria-label="Zoomer" data-action="diorama#zoomer" data-diorama-sens-param="1"><%= picto(:plus, taille: 20) %></button>
+        <button type="button" aria-label="Dézoomer" data-action="diorama#zoomer" data-diorama-sens-param="-1"><%= picto(:moins, taille: 20) %></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="acc-puces">
+    <button type="button" class="acc-puce acc-puce-autour" aria-pressed="false"
+            data-diorama-target="autour" data-action="diorama#autourDeMoi">
+      <%= picto(:viseur, taille: 16) %> Autour de moi
+    </button>
+    <button type="button" class="acc-puce" aria-pressed="false" data-diorama-target="quand"
+            data-action="diorama#filtrerDate" data-diorama-quand-param="aujourdhui">
+      <%= picto(:calendrier, taille: 16) %> Aujourd'hui
+    </button>
+    <button type="button" class="acc-puce" aria-pressed="false" data-diorama-target="quand"
+            data-action="diorama#filtrerDate" data-diorama-quand-param="semaine">
+      <%= picto(:horloge, taille: 16) %> Cette semaine
+    </button>
+    <button type="button" class="acc-puce" aria-pressed="false" aria-controls="acc-filtres"
+            data-diorama-target="boutonFiltres" data-action="diorama#basculerFiltres">
+      <%= picto(:reglages, taille: 16) %> Filtres
+    </button>
+  </div>
+
+  <div class="acc-filtres" id="acc-filtres" hidden data-diorama-target="filtres">
+    <label>
+      <span>Distance</span>
+      <input type="range" min="200" max="12000" step="200" value="12000"
+             data-diorama-target="rayon" data-action="input->diorama#changerRayon">
+      <output data-diorama-target="rayonTexte">sans limite</output>
+    </label>
+    <p class="acc-note" data-diorama-target="noteFiltres">La distance se mesure depuis votre position : touchez « Autour de moi ».</p>
+    <button type="button" data-action="diorama#reinitialiser">Tout réinitialiser</button>
+  </div>
+
+  <p class="acc-alerte" role="status" hidden data-diorama-target="alerte"></p>
+</section>

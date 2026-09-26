@@ -1,0 +1,33 @@
+<%# Les passages médias réels (mêmes liens que la home actuelle). France Bleu Lorraine
+    s'appelle ICI Lorraine depuis 2025 : c'est le même podcast, une seule carte. %>
+<% passages = [
+  { media: "ICI Lorraine (France Bleu)", logo: "Radio_France.jpeg", cta: "Écouter le podcast",
+    titre: "Déclic, la plateforme qui veut créer du lien dans la métropole du Grand Nancy",
+    url: "https://www.radiofrance.fr/francebleu/podcasts/ici-ca-marche-ici-lorraine-meurthe-et-moselle-et-vosges/declic-la-plateforme-qui-veut-creer-du-lien-dans-la-metropole-du-grand-nancy-7222300" },
+  { media: "RCF Radio", logo: "RCF.jpeg", cta: "Écouter l'émission",
+    titre: "Le grand témoin régional — Déclic, l'initiative citoyenne qui cartographie les opportunités",
+    url: "https://www.rcf.fr/actualite/le-grand-temoin-regional/embed?episodeId=676550" },
+  { media: "L'Est Républicain", logo: "L'Est Républicain.png", cta: "Lire l'article",
+    titre: "Déclic, la plateforme qui recense les opportunités citoyennes près de chez vous",
+    url: "https://c.estrepublicain.fr/environnement/2026/04/10/declic-la-plateforme-qui-recense-les-opportunites-citoyennes-pres-de-chez-vous" },
+  { media: "Radio Fajet", logo: "radiofajet.png", cta: "Écouter l'interview",
+    titre: "Un écran tourné vers l'autre",
+    url: "https://radiofajet.net/2026/04/29/declic/" }
+] %>
+<section class="acc-section acc-presse" aria-labelledby="acc-presse-titre">
+  <div class="acc-section-tete">
+    <h2 id="acc-presse-titre">Ils parlent de nous</h2>
+  </div>
+  <div class="acc-presse-grille">
+    <% passages.each do |p| %>
+      <%= link_to p[:url], class: "passage", target: "_blank", rel: "noopener" do %>
+        <%= image_tag p[:logo], alt: "", class: "passage-logo", width: 48, height: 48, loading: "lazy" %>
+        <span class="passage-texte">
+          <span class="passage-media"><%= p[:media] %></span>
+          <span class="passage-titre">« <%= p[:titre] %> »</span>
+          <span class="acc-lien-violet"><%= p[:cta] %> <%= picto(:fleche, taille: 14) %></span>
+        </span>
+      <% end %>
+    <% end %>
+  </div>
+</section>

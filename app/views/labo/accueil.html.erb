@@ -1,0 +1,30 @@
+<%# Future page d'accueil sur le diorama. Une section = un partiel de app/views/accueil/. %>
+<%= tag.div class: "acc", data: {
+      controller: "diorama",
+      diorama_points_value: points_diorama(@opportunites, @histoires_carte).to_json,
+      diorama_categories_value: categories_pour_js.to_json,
+      diorama_tuiles_value: @tuiles.pour_js.to_json,
+      diorama_developpement_value: Rails.env.development?
+    } do %>
+  <%= render "accueil/barre_haute" %>
+
+  <div class="acc-ecran" id="carte">
+    <div class="acc-tete">
+      <%= render "accueil/entete" %>
+      <%= render "accueil/accroche" %>
+      <%= render "accueil/recherche" %>
+      <%= render "accueil/categories" %>
+    </div>
+    <%= render "accueil/carte", disponibles: @tuiles.disponibles %>
+    <%= render "accueil/volet" %>
+  </div>
+
+  <main class="acc-suite">
+    <%= render "accueil/histoires", histoires: @histoires %>
+    <%= render "accueil/temoignages" %>
+    <%= render "accueil/presse" %>
+  </main>
+
+  <%= render "accueil/pied" %>
+  <%= render "accueil/barre_onglets" %>
+<% end %>

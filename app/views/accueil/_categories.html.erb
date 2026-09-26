@@ -1,0 +1,12 @@
+<%# Les six catégories filtrent la carte et le volet ; le nombre est rempli par le JS. %>
+<div class="acc-categories" role="group" aria-label="Catégories">
+  <% Categorie::TOUTES.each do |categorie| %>
+    <button type="button" class="acc-cat" aria-pressed="false"
+            data-cle="<%= categorie.cle %>" data-diorama-target="categorie"
+            data-action="diorama#basculerCategorie" data-diorama-cle-param="<%= categorie.cle %>">
+      <%= icone_categorie(categorie, taille: 44) %>
+      <span><%= categorie.libelle %></span>
+      <small data-compte></small>
+    </button>
+  <% end %>
+</div>

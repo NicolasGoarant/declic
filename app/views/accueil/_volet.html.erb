@@ -1,0 +1,46 @@
+<%# Le volet : carrousel sur mobile, liste verticale dans le panneau gauche sur bureau.
+    Les fiches sont clonées depuis le modèle ci-dessous par le contrôleur Stimulus. %>
+<section class="acc-volet" aria-labelledby="acc-volet-titre" data-diorama-target="volet">
+  <button type="button" class="acc-poignee" aria-label="Déplier la liste" aria-expanded="false"
+          data-diorama-target="poignee" data-action="diorama#basculerVolet"></button>
+  <div class="acc-volet-tete">
+    <h2 id="acc-volet-titre" data-diorama-target="voletTitre">Au centre de la vue</h2>
+    <a href="#carte" class="acc-lien-violet" data-action="diorama#voirTout">
+      Voir tout sur la carte <%= picto(:fleche, taille: 16) %>
+    </a>
+  </div>
+  <div class="acc-fiches" data-diorama-target="fiches"
+       data-action="click->diorama#clicFiches mouseover->diorama#survolFiche mouseleave->diorama#finSurvol focusin->diorama#survolFiche"></div>
+  <p class="acc-volet-vide" hidden data-diorama-target="vide"></p>
+  <% if Rails.env.development? %>
+    <p class="acc-stats" data-diorama-target="stats"></p>
+  <% end %>
+
+  <template data-diorama-target="modeleFiche">
+    <article class="fiche">
+      <div class="fiche-bandeau">
+        <img class="fiche-photo" alt="" loading="lazy" decoding="async">
+        <img class="fiche-picto-seul" alt="">
+        <span class="fiche-date"></span>
+        <img class="fiche-cat" alt="" width="34" height="34">
+      </div>
+      <div class="fiche-corps">
+        <h3><a class="fiche-lien" href="#"></a></h3>
+        <p class="fiche-commune"><%= picto(:lieu, taille: 14) %><span></span></p>
+        <p class="fiche-quand"><%= picto(:horloge, taille: 14) %><span></span></p>
+        <p class="fiche-distance"><%= picto(:distance, taille: 14) %><span></span></p>
+        <button type="button" class="fiche-signet" aria-pressed="false" aria-label="Garder en favori">
+          <%= picto(:signet, taille: 18) %>
+        </button>
+      </div>
+    </article>
+  </template>
+
+  <template data-diorama-target="modelePin">
+    <div class="pin">
+      <img class="pin-picto" alt="" width="40" height="40">
+      <span class="pin-tige"></span>
+      <span class="pin-socle"></span>
+    </div>
+  </template>
+</section>
