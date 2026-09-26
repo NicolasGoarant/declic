@@ -14,7 +14,7 @@ class PointsFortsTest < ActiveSupport::TestCase
   end
 
   test "une histoire accepte 3 points forts au plus" do
-    histoire = Story.new(title: "Une histoire")
+    histoire = Story.new(title: "Une histoire", location: "Nancy", latitude: 48.69, longitude: 6.18)
     histoire.points_forts = [ { "texte" => "a" } ] * 3
     assert histoire.valid?, histoire.errors.full_messages.to_sentence
     histoire.points_forts = [ { "texte" => "a" } ] * 4

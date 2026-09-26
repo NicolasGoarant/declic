@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_09_26_090300) do
+ActiveRecord::Schema[7.2].define(version: 2026_09_27_090000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -132,6 +132,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_26_090300) do
     t.date "ends_on"
     t.time "start_time"
     t.time "end_time"
+    t.json "photos_order"
     t.index ["ends_at"], name: "index_opportunities_on_ends_at"
     t.index ["ends_on"], name: "index_opportunities_on_ends_on"
     t.index ["slug"], name: "index_opportunities_on_slug", unique: true
@@ -177,6 +178,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_26_090300) do
     t.string "quote_author"
     t.json "points_forts"
     t.date "source_published_on"
+    t.json "photos_order"
   end
 
   create_table "testimonials", force: :cascade do |t|

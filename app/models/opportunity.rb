@@ -15,8 +15,9 @@ class Opportunity < ApplicationRecord
   has_one_attached :inline_image_2
   has_one_attached :inline_image_3
 
-  # Autres photos (si besoin ultérieur)
-  has_many_attached :photos
+  # Galerie photos : ordre, couverture, suppressions (voir GaleriePhotos)
+  include GaleriePhotos
+  include FicheCompletude
 
   # --- Slug ---
   extend FriendlyId
@@ -86,9 +87,12 @@ class Opportunity < ApplicationRecord
   def date_debut = starts_on || self.class.date_iso(start_date)
   def date_fin   = ends_on || self.class.date_iso(end_date)
 
-  # Pont temporaire : tant que l'admin écrit encore start_date / end_date, on recopie l'ISO
-  # dans starts_on / ends_on. Chaîne vidée -> date vidée ; texte libre -> date inchangée.
-  before_save :reporter_dates_saisies
+  # Pont temporaire dans les deux sens, tant que des vues de production lisent encore les chaînes :
+  #   - starts_on / ends_on modifiés (formulaire admin) -> start_date / end_date en AAAA-MM-JJ ;
+  #   - sinon start_date / end_date modifiés (anciens écrans, import) -> starts_on / ends_on.
+  # Les colonnes dates l'emportent si les deux changent. Un texte libre dans start_date n'est
+  # jamais écrasé tant que starts_on ne change pas.
+  before_save :synchroniser_dates
 
   # --- Affichage des dates (fiche Opportunité) ---
   JOURS_ABREGES = %w[dim. lun. mar. mer. jeu. ven. sam.].freeze
@@ -122,6 +126,26 @@ class Opportunity < ApplicationRecord
 
   # « Au programme » : liste de chaînes (colonne json).
   def programme_liste = Array(programme).map { |etape| etape.to_s.strip }.reject(&:empty?)
+
+  # Saisie admin : un textarea, une étape par ligne <-> tableau json.
+  def programme_texte = programme_liste.join("\n")
+
+  def programme_texte=(texte)
+    self.programme = texte.to_s.lines.map(&:strip).reject(&:empty?)
+  end
+
+  # Champs que la nouvelle fiche affiche (voir FicheCompletude).
+  def criteres_fiche
+    {
+      "photo" => a_une_photo?,
+      "dates ou horaires" => starts_on.present? || schedule_text.present?,
+      "adresse" => address.present? || location.present?,
+      "résumé" => description.present?,
+      "programme" => programme_liste.any?,
+      "public" => audience.present?,
+      "bouton" => cta_button_text.present? && cta_button_url.present?
+    }
+  end
 
   # =========== Helpers « virage » CSV ===========
   def skills_list
@@ -175,15 +199,17 @@ class Opportunity < ApplicationRecord
     Rails.logger.warn("[geocode_if_needed] #{e.class}: #{e.message}")
   end
 
-  def reporter_dates_saisies
-    { start_date: :starts_on, end_date: :ends_on }.each do |source, cible|
-      next unless will_save_change_to_attribute?(source)
-
-      texte = self[source].to_s.strip
-      if texte.empty?
-        self[cible] = nil
-      elsif (date = self.class.date_iso(texte))
-        self[cible] = date
+  def synchroniser_dates
+    { start_date: :starts_on, end_date: :ends_on }.each do |chaine, date|
+      if will_save_change_to_attribute?(date)
+        self[chaine] = self[date]&.iso8601
+      elsif will_save_change_to_attribute?(chaine)
+        texte = self[chaine].to_s.strip
+        if texte.empty?
+          self[date] = nil
+        elsif (iso = self.class.date_iso(texte))
+          self[date] = iso
+        end
       end
     end
   end
