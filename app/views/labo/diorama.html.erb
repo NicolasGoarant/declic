@@ -21,6 +21,13 @@
     #pop .meta { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; font-size: .8rem; color: #64748b; font-weight: 500; }
     #pop .btn { display: block; text-align: center; background: #0f172a; color: #fff; text-decoration: none; padding: 10px 0; border-radius: 8px; font-weight: 700; font-size: .85rem; }
     #pop .close { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border: 0; border-radius: 50%; background: rgba(0,0,0,.45); color: #fff; font-size: 16px; line-height: 1; cursor: pointer; }
+    #tools { position: fixed; left: 10px; bottom: 10px; right: 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; pointer-events: none; }
+    #tools > * { pointer-events: auto; }
+    #chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { --c: #94a3b8; background: rgba(15,23,42,.85); color: #e2e8f0; border: 2px solid var(--c); border-radius: 99px; padding: 6px 12px; font: 700 12px/1.1 system-ui, sans-serif; cursor: pointer; }
+    .chip.is-active { background: var(--c); color: #0f172a; }
+    #btn-locate { background: #0f172a; color: #fff; border: 2px solid #2563eb; border-radius: 99px; padding: 9px 16px; font: 700 13px/1 system-ui, sans-serif; cursor: pointer; display: inline-flex; gap: 6px; }
+    #toast { display: none; max-width: 420px; background: #fff; color: #0f172a; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 10px 14px; font: 13px/1.4 system-ui, sans-serif; box-shadow: 0 4px 16px rgba(0,0,0,.4); }
     #err { color: #ff8a8a; }
   </style>
 </head>
@@ -33,6 +40,19 @@
   </div>
   <div id="attr"></div>
   <div id="pop"></div>
+  <div id="tools">
+    <div id="toast" role="status"></div>
+    <div id="chips">
+      <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
+      <button class="chip" data-cat="benevolat" style="--c:#f43f5e">❤️ Bénévolat</button>
+      <button class="chip" data-cat="ecologiser" style="--c:#16a34a">🌱 Écologiser</button>
+      <button class="chip" data-cat="formation" style="--c:#3b82f6">📘 Formation</button>
+      <button class="chip" data-cat="rencontres" style="--c:#facc15">👥 Rencontres</button>
+      <button class="chip" data-cat="entreprendre" style="--c:#f59e0b">🚀 Entreprendre</button>
+      <button class="chip" data-cat="histoires" style="--c:#a855f7">✨ Belles histoires</button>
+    </div>
+    <button id="btn-locate"><span>📍</span> <span>Me localiser</span></button>
+  </div>
   <%= javascript_importmap_tags "diorama_projection" %>
   <script type="module">
     import { creerProjection } from "diorama_projection";
@@ -43,11 +63,18 @@
     let proj = null;
     let dallesNiv8 = null;
 
+    // Secteur couvert = dalle listée au niveau max (la mosaïque n'est pas un rectangle plein).
+    function couvert(px) {
+      const D = window.__diorama;
+      proj = proj || creerProjection(D.M);
+      dallesNiv8 = dallesNiv8 || new Set(D.M.dalles["8"].map(([x, y]) => x + "/" + y));
+      const c = D.M.cote_dalle_px * Math.pow(2, D.M.niveau_max - 8);
+      return proj.dansLaMosaique(px) && dallesNiv8.has(Math.floor(px[0] / c) + "/" + Math.floor(px[1] / c));
+    }
+
     function projeter(opps) {
       const D = window.__diorama;
       proj = proj || creerProjection(D.M);
-      const D8 = D.M.cote_dalle_px * Math.pow(2, D.M.niveau_max - 8);
-      dallesNiv8 = dallesNiv8 || new Set(D.M.dalles["8"].map(([x, y]) => x + "/" + y));
       POINTS.length = 0;
       STATS.chargees = opps.length;
       STATS.dansRectangle = 0;
@@ -60,30 +87,49 @@
         vus.set(cle, n + 1);
         const lat = lat0 + n * 0.0003 * Math.cos(n * 2.4), lon = lon0 + n * 0.0003 * Math.sin(n * 2.4);
         const px = proj.pixel(lat, lon);
-        if (!proj.dansLaMosaique(px)) continue;
-        STATS.dansRectangle++;
-        // Secteur couvert = dalle listée au niveau max (la mosaïque n'est pas un rectangle plein).
-        if (!dallesNiv8.has(Math.floor(px[0] / D8) + "/" + Math.floor(px[1] / D8))) continue;
+        if (proj.dansLaMosaique(px)) STATS.dansRectangle++;
+        if (!couvert(px)) continue;
         POINTS.push({ o, cat: (o.category || "").toLowerCase(), lat, lon, px });
       }
       STATS.affichees = POINTS.length;
-      document.getElementById("opps").textContent =
-        ` · ${STATS.affichees}/${STATS.chargees} opportunités dans le secteur couvert`;
+      majCompteur();
       D.schedule();
     }
+
+    // --- Filtre par catégorie (même mécanisme que window._declicFilter du partial Leaflet) ---
+    let filtre = "toutes";
+    const visibles = () => filtre === "toutes" ? POINTS : POINTS.filter(p => p.cat === filtre);
+    function majCompteur() {
+      document.getElementById("opps").textContent =
+        ` · ${STATS.affichees}/${STATS.chargees} dans le secteur couvert` +
+        (filtre === "toutes" ? "" : ` · filtre « ${filtre} » : ${visibles().length}`);
+    }
+    window._declicFilter = cat => {
+      filtre = (!cat || cat === "toutes") ? "toutes" : cat.toLowerCase();
+      document.querySelectorAll("#chips .chip").forEach(b => b.classList.toggle("is-active", b.dataset.cat === filtre));
+      if (ouvert && !visibles().includes(ouvert)) fermer();
+      majCompteur();
+      window.__diorama && window.__diorama.schedule();
+    };
+    document.getElementById("chips").addEventListener("click", e => {
+      const b = e.target.closest(".chip"); if (b) window._declicFilter(b.dataset.cat);
+    });
 
     // Le manifeste (window.__diorama) est chargé par le viewer : on attend qu'il soit prêt.
     const attente = setInterval(() => {
       if (!window.__diorama) return;
       clearInterval(attente);
-      fetch("/api/v1/opportunities").then(r => r.ok ? r.json() : []).catch(() => [])
-        .then(projeter);
+      const get = u => fetch(u).then(r => r.ok ? r.json() : []).catch(() => []);
+      Promise.all([get("/api/v1/opportunities"), get("/api/v1/stories")]).then(([opps, stories]) => {
+        (stories || []).forEach(s => { s.category = "histoires"; });
+        projeter([].concat(opps || [], stories || []));
+      });
     }, 100);
 
     // --- Popup (même contenu que la carte Leaflet : badge catégorie, titre, organisation, date, lieu) ---
     const CATS = {
       benevolat: ["#f43f5e", "Bénévolat"], ecologiser: ["#16a34a", "Écologie"], formation: ["#3b82f6", "Formation"],
-      rencontres: ["#facc15", "Rencontres"], entreprendre: ["#f59e0b", "Entreprise"], default: ["#7e5bef", "Initiative"],
+      rencontres: ["#facc15", "Rencontres"], entreprendre: ["#f59e0b", "Entreprise"], histoires: ["#a855f7", "Témoignage"], default: ["#7e5bef", "Initiative"],
     };
     const IMG = {
       benevolat: "photo-1488521787991-ed7bbaae773c", formation: "photo-1555949963-ff9fe0c870eb",
@@ -99,7 +145,7 @@
       const img = o.image_url || `https://images.unsplash.com/${IMG[cat] || IMG.default}?w=400&q=80&fit=crop`;
       let date = "";
       if (o.starts_at) date = new Date(o.starts_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-      const desc = mdPlain(o.description), court = desc.length > 140 ? desc.slice(0, 140).replace(/\s+\S*$/, "") + "…" : desc;
+      const desc = mdPlain(o.description || o.chapo), court = desc.length > 140 ? desc.slice(0, 140).replace(/\s+\S*$/, "") + "…" : desc;
       return `<div style="--cat:${color}">
         <div class="hero" style="background-image:url('${esc(img)}')"><span class="badge">${label}</span></div>
         <button class="close" aria-label="Fermer">×</button>
@@ -111,7 +157,7 @@
             ${date ? `<span>🗓️ ${date}</span>` : ""}
             ${o.location ? `<span>📍 ${esc(o.location)}</span>` : ""}
           </div>
-          <a class="btn" href="${esc(o.url || "/opportunities/" + (o.slug || o.id))}">Voir le déclic →</a>
+          <a class="btn" href="${esc(o.url || (cat === "histoires" ? "/stories/" : "/opportunities/") + (o.slug || o.id))}">Voir le déclic →</a>
         </div></div>`;
     };
 
@@ -138,7 +184,7 @@
       if (!bas || Math.hypot(e.clientX - bas[0], e.clientY - bas[1]) > 5 || !window.__diorama) return;
       const v = window.__diorama.view;
       let touche = null, dmin = 12; // rayon de sélection en px écran
-      for (const p of POINTS) {
+      for (const p of visibles()) {
         const d = Math.hypot((p.px[0] - v.cx) * v.s + window.innerWidth / 2 - e.clientX,
                              (p.px[1] - v.cy) * v.s + window.innerHeight / 2 - e.clientY);
         if (d <= dmin) { dmin = d; touche = p; }
@@ -149,22 +195,95 @@
     window.addEventListener("keydown", e => { if (e.key === "Escape") fermer(); });
 
     window.__dioramaOverlay = (ctx, versEcran) => {
-      for (const p of POINTS) {
+      for (const p of visibles()) {
         const [sx, sy] = versEcran(...p.px);
         const sel = p === ouvert;
         ctx.fillStyle = (CATS[p.cat] || CATS.default)[0];
         ctx.strokeStyle = "#fff"; ctx.lineWidth = sel ? 3 : 2;
         ctx.beginPath(); ctx.arc(sx, sy, sel ? 9 : 7, 0, 7); ctx.fill(); ctx.stroke();
       }
+      dessinerMoi(ctx, versEcran);
       placerPopup();
     };
+
+    // --- Géolocalisation (même comportement que le bouton « Me localiser » du partial Leaflet) ---
+    let moi = null; // { lat, lon, acc, px } ; px = null si hors du secteur couvert
+    let watchId = null, toastT = 0;
+    const btn = document.getElementById("btn-locate"), toast = document.getElementById("toast");
+    const dire = (msg, ms = 6000) => {
+      clearTimeout(toastT);
+      toast.textContent = msg; toast.style.display = msg ? "block" : "none";
+      if (msg && ms) toastT = setTimeout(() => { toast.style.display = "none"; }, ms);
+    };
+
+    function majMoi(lat, lon, acc, centrer) {
+      const px = proj && window.__diorama ? proj.pixel(lat, lon) : null;
+      const ok = px && couvert(px);
+      moi = { lat, lon, acc, px: ok ? px : null };
+      if (!ok) {
+        dire("Vous êtes en dehors du secteur couvert par le diorama (Nancy et alentours) : votre position ne peut pas y être affichée.", 0);
+      } else {
+        dire("");
+        if (centrer) { const D = window.__diorama; [D.view.cx, D.view.cy] = px; D.view.s = Math.max(D.view.s, 0.3); }
+      }
+      window.__diorama.schedule();
+    }
+
+    // Halo blanc + point bleu + cercle de précision (comme Leaflet : rayon borné à 80-1200 m).
+    // Le cercle est tracé en Lambert-93 puis projeté : c'est une ellipse à l'écran (vue oblique).
+    function dessinerMoi(ctx, versEcran) {
+      if (!moi || !moi.px) return;
+      const [sx, sy] = versEcran(...moi.px);
+      const r = (moi.acc && isFinite(moi.acc)) ? Math.min(Math.max(moi.acc, 80), 1200) : 0;
+      if (r) {
+        const [x, y] = proj.versL93(moi.lon, moi.lat);
+        ctx.beginPath();
+        for (let i = 0; i <= 48; i++) {
+          const a = i / 48 * 2 * Math.PI, [ex, ey] = versEcran(...proj.pixelL93(x + r * Math.cos(a), y + r * Math.sin(a)));
+          i ? ctx.lineTo(ex, ey) : ctx.moveTo(ex, ey);
+        }
+        ctx.fillStyle = "rgba(96,165,250,.12)"; ctx.strokeStyle = "#60a5fa"; ctx.lineWidth = 1; ctx.fill(); ctx.stroke();
+      }
+      ctx.fillStyle = "rgba(255,255,255,.15)"; ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(sx, sy, 12, 0, 7); ctx.fill(); ctx.stroke();
+      // Losange bleu : forme distincte des ronds d'opportunités
+      ctx.fillStyle = "#2563eb"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(sx, sy - 9); ctx.lineTo(sx + 9, sy); ctx.lineTo(sx, sy + 9); ctx.lineTo(sx - 9, sy); ctx.closePath();
+      ctx.fill(); ctx.stroke();
+    }
+
+    const etat = (icone, texte) => { btn.innerHTML = `<span>${icone}</span> <span>${texte}</span>`; };
+    function stopFollow() {
+      if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+      etat("📍", "Me localiser");
+    }
+    function startFollow() {
+      if (!("geolocation" in navigator)) { dire("La géolocalisation n'est pas disponible sur cet appareil."); return; }
+      if (watchId !== null) return;
+      etat("⏳", "Recherche...");
+      const opts = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+      navigator.geolocation.getCurrentPosition(
+        p => { majMoi(p.coords.latitude, p.coords.longitude, p.coords.accuracy, true); etat("🛑", "Arrêter le suivi"); },
+        e => {
+          if (e.code === 1) dire("Vous devez autoriser la géolocalisation pour que cela fonctionne.");
+          else if (e.code === 3) dire("Le délai d'attente GPS est dépassé. Réessayez dehors ou avec une meilleure connexion.");
+          else dire("Position indisponible.");
+          stopFollow();
+        }, opts);
+      watchId = navigator.geolocation.watchPosition(
+        p => majMoi(p.coords.latitude, p.coords.longitude, p.coords.accuracy, false),
+        e => console.warn("[geo] watch ERR", e), opts);
+    }
+    btn.addEventListener("click", () => (watchId !== null ? stopFollow() : startFollow()));
+
+    window.__dioramaMoi = () => moi;
     window.__dioramaPoints = POINTS;
     window.__dioramaStats = STATS;
   </script>
 
 <script>
 (() => {
-  const BASE = "https://pub-9c5c8e74063440d2bb30f449d9fff60e.r2.dev/toits-v1/";
+  const BASE = "https://tuiles-declic.mist-media.eu/toits-v1/";
   const canvas = document.getElementById("c");
   const ctx = canvas.getContext("2d");
   const info = document.getElementById("info");
