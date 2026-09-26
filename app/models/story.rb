@@ -15,6 +15,10 @@ class Story < ApplicationRecord
 
   validates :title, presence: true
   validates :slug, uniqueness: true, allow_blank: true
+  validate :points_forts_limites
+
+  # « Ce qu'il faut retenir » : au plus 3 points {icone, titre, texte} (voir PointsForts).
+  def points_forts_liste = PointsForts.normaliser(points_forts)
 
   # Configure la géolocalisation, restreinte à la zone de Nancy (voir
   # NancyGeocodable — même mécanisme que Opportunity).
@@ -64,6 +68,13 @@ class Story < ApplicationRecord
 
   def ensure_slug
     self.slug = title.to_s.parameterize if slug.blank? && title.present?
+  end
+
+  def points_forts_limites
+    return if points_forts.nil?
+    return errors.add(:points_forts, "doit être une liste") unless points_forts.is_a?(Array)
+
+    errors.add(:points_forts, ": #{PointsForts::MAX} au plus") if points_forts.size > PointsForts::MAX
   end
 
   def set_default_active

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_09_22_065709) do
+ActiveRecord::Schema[7.2].define(version: 2026_09_26_090300) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -126,10 +126,18 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_22_065709) do
     t.string "inline_caption_2"
     t.string "inline_caption_3"
     t.string "geocoding_flagged_reason"
+    t.text "audience"
+    t.json "programme"
+    t.date "starts_on"
+    t.date "ends_on"
+    t.time "start_time"
+    t.time "end_time"
     t.index ["ends_at"], name: "index_opportunities_on_ends_at"
+    t.index ["ends_on"], name: "index_opportunities_on_ends_on"
     t.index ["slug"], name: "index_opportunities_on_slug", unique: true
     t.index ["source", "external_id"], name: "index_opportunities_on_source_and_external_id", unique: true
     t.index ["starts_at"], name: "index_opportunities_on_starts_at"
+    t.index ["starts_on"], name: "index_opportunities_on_starts_on"
   end
 
   create_table "stories", force: :cascade do |t|
@@ -164,6 +172,11 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_22_065709) do
     t.string "address"
     t.string "postal_code"
     t.string "geocoding_flagged_reason"
+    t.string "venue_name"
+    t.string "discover_url"
+    t.string "quote_author"
+    t.json "points_forts"
+    t.date "source_published_on"
   end
 
   create_table "testimonials", force: :cascade do |t|
