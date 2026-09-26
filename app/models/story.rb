@@ -19,6 +19,7 @@ class Story < ApplicationRecord
   # Nouvelles fiches seulement : ne rend invalide aucune histoire existante.
   validates :location, presence: true, on: :create
   validate :points_forts_limites
+  validates :thematique, inclusion: { in: Opportunity::CATEGORIES }, allow_blank: true
 
   # « Ce qu'il faut retenir » : au plus 3 points {icone, titre, texte} (voir PointsForts).
   def points_forts_liste = PointsForts.normaliser(points_forts)
@@ -34,9 +35,11 @@ class Story < ApplicationRecord
     self.points_forts = PointsForts.normaliser(blocs).first(PointsForts::MAX)
   end
 
-  # Catégorie d'opportunité que l'histoire porte dans ses étiquettes (clé ou libellé,
-  # « ecologiser », « Écologiser »…), sinon nil. Les histoires n'ont pas de colonne catégorie.
+  # Catégorie d'opportunité de l'histoire : la thématique choisie dans l'admin, sinon celle que
+  # portent ses étiquettes (clé ou libellé : « ecologiser », « Écologiser »…), sinon nil.
   def categorie_opportunite
+    return thematique if thematique.present? && Opportunity::CATEGORIES.include?(thematique)
+
     etiquettes = tags.to_s.split(/[;,]/).map { |t| t.strip.parameterize }
     Opportunity::CATEGORIES.find do |cle|
       etiquettes.include?(cle) || etiquettes.include?(Categorie.trouver(cle).libelle.parameterize)
@@ -44,7 +47,7 @@ class Story < ApplicationRecord
   end
 
   # « Des opportunités pour avoir ton déclic » : actives et pas terminées, de la catégorie de
-  # l'histoire si elle en porte une, complétées par les plus proches géographiquement.
+  # l'histoire (thématique, puis étiquettes), complétées par les plus proches géographiquement.
   def opportunites_proches(limite = 3)
     base = Opportunity.active.actuelles
     choix = categorie_opportunite ? base.where(category: categorie_opportunite).limit(limite).to_a : []

@@ -5,7 +5,6 @@
 <% cat = categorie_de(s) %>
 <% url = story_url(s) %>
 <% lieu, adresse = lieu_et_adresse(s) %>
-<% qui = s.author_name.to_s.split.first.presence || s.venue_name.presence %>
 <% points = s.points_forts_liste %>
 <% content_for :onglet_courant, "histoires" %>
 <%= render "fiches/meta_partage", fiche: s, url: url, resume: resume_partage(s.chapo.presence || s.body), image: image_partage(s) %>
@@ -57,7 +56,7 @@
       <% if lieu || adresse || s.discover_url.present? %>
         <section class="fch-pratique" aria-labelledby="fch-rencontrer">
           <h2 id="fch-rencontrer" class="fch-pratique-titre">
-            <%= qui ? "Où rencontrer #{qui} ?" : "Où se rendre ?" %>
+            Où se rendre<% if s.venue_name.present? %> <strong><%= s.venue_name %></strong><% end %>
           </h2>
           <% if lieu || adresse %>
             <div class="fch-pratique-ligne">
