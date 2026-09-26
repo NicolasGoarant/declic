@@ -7,6 +7,8 @@ class PagesPubliquesTest < ActionDispatch::IntegrationTest
               latitude: 48.69, longitude: 6.18, city: "Nancy", location: "54000 Nancy" }
     Opportunity.create!(attrs.merge(title: "Datée", starts_on: Date.current + 3, ends_on: Date.current + 5))
     Opportunity.create!(attrs.merge(title: "Permanente"))
+    # Ancienne fiche : seules les chaînes start_date / end_date sont remplies (date_debut renvoie une String).
+    Opportunity.create!(attrs.merge(title: "Ancienne")).update_columns(start_date: "2026-10-01", end_date: "2026-10-02")
     @tuiles = DioramaTuiles.new(base: "https://tuiles.test/#{SecureRandom.hex(4)}", sonde: ->(_) { true })
   end
 
