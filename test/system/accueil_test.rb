@@ -45,4 +45,18 @@ class AccueilTest < ApplicationSystemTestCase
       assert_equal "page", onglets[0]["aria-current"]
     end
   end
+
+  test "l'écran Carte ne garde que recherche, six catégories et zoom" do
+    sur_l_ecran_carte do
+      %w[.acc-puces .acc-territoire .acc-filtres .acc-rond .acc-entete-actions].each { |css| assert_no_selector css }
+      assert_no_selector "[aria-label='Recentrer la carte']"
+      assert_selector "[aria-label='Zoomer']"
+      assert_selector "[aria-label='Dézoomer']"
+      assert_selector ".acc-entete .acc-logo", text: "Déclic"
+
+      categories = all(".acc-cat").map { |c| c.find("span").text }
+      assert_equal 6, categories.size
+      assert_equal "Belles Histoires", categories.last
+    end
+  end
 end

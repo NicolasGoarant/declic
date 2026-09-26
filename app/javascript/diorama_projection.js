@@ -39,6 +39,20 @@ export function versL93(lon, lat) {
   return [XS + R * Math.sin(gamma), YS - R * Math.cos(gamma)];
 }
 
+// Lambert-93 (EPSG:2154) → WGS84 : inverse de versL93. Renvoie [lon, lat] en degrés.
+export function depuisL93(x, y) {
+  const dx = x - XS, dy = YS - y;
+  const R = Math.hypot(dx, dy);
+  const lon = (LON0 + Math.atan2(dx, dy) / N) * 180.0 / Math.PI;
+  const L = -Math.log(R / C) / N;
+  let phi = 2 * Math.atan(Math.exp(L)) - Math.PI / 2;
+  for (let i = 0; i < 8; i++) {
+    const s = E * Math.sin(phi);
+    phi = 2 * Math.atan(Math.exp(L) * Math.pow((1 + s) / (1 - s), E / 2)) - Math.PI / 2;
+  }
+  return [lon, phi * 180.0 / Math.PI];
+}
+
 // Construit le projecteur depuis le manifeste (objet JSON déjà chargé).
 export function creerProjection(manifeste) {
   const r = manifeste.reference_de_pose;
@@ -65,8 +79,16 @@ export function creerProjection(manifeste) {
     return pixelL93(x, y, z);
   }
 
+  // Pixel de la mosaïque → WGS84 [lon, lat], au sol (z = z_ref) : inverse de `pixel`, pour le réglage de la vue.
+  function versWGS84(px, py) {
+    const u = (px - marge - ORIGINE_MOSAIQUE_PX[0]) / echelle + umin;
+    const h = hmax - (py - marge - ORIGINE_MOSAIQUE_PX[1]) / echelle;
+    const v = -(h / compression);
+    return depuisL93(cx + u * droite[0] - v * versOeil[0], cy + u * droite[1] - v * versOeil[1]);
+  }
+
   const dansLaMosaique = ([px, py]) =>
     px >= 0 && py >= 0 && px < manifeste.taille_mosaique_px[0] && py < manifeste.taille_mosaique_px[1];
 
-  return { pixel, pixelL93, versL93, dansLaMosaique, zRef, pxParMetreAltitude: facteurHauteur * echelle };
+  return { pixel, pixelL93, versL93, versWGS84, dansLaMosaique, zRef, pxParMetreAltitude: facteurHauteur * echelle };
 }

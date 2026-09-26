@@ -9,15 +9,18 @@ import { creerProjection } from "diorama_projection"
 import { creerCoucheDalles, creerCoucheBlanche } from "diorama/couches"
 import { creerCoucheAmbiance, lireAmbiance } from "diorama/ambiance"
 import { resoudreAuto } from "diorama/soleil"
-import { lireDate, aujourdhui, estPasse, estAVenir, dansLaFenetre, etiquette, periode, jourCourt } from "diorama/dates"
+import { lireDate, aujourdhui, estPasse, estAVenir, etiquette, periode, jourCourt } from "diorama/dates"
 
 const NIVEAU_MAX = 8
+// Vue initiale, à retoucher ici : place Stanislas (WGS84) et niveau de zoom Leaflet (0-8, 8 = pleine
+// résolution). Ajouter ?debug_vue=1 à l'URL affiche en direct le centre et le zoom courants.
+const CENTRE_INITIAL = { lat: 48.6936, lon: 6.1833 }
+const ZOOM_INITIAL = 6
 const ATTRIBUTION = "IGN BD TOPO®, BD ORTHO® et LiDAR HD (LO 2.0) · Métropole du Grand Nancy, Géonancy · " +
                     "© les contributeurs OpenStreetMap (ODbL)"
 // Seuil de regroupement mesuré dans la v3 (m02-chevauchement.py) : deux marqueurs plus
 // proches se chevauchent.
 const SEUIL_GROUPE_PX = 42
-const RAYON_SANS_LIMITE = 12000
 const FICHES_MAX = 24
 const CLE_FAVORIS = "declic:favoris"
 const ETROIT = "(max-width: 699.98px)"
@@ -32,23 +35,17 @@ function encreSur(hex) {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.4 ? "#1d1a2b" : "#ffffff"
 }
 
-function distanceTexte(m) {
-  return m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1).replace(".", ",")} km`
-}
-
 export default class extends Controller {
   static values = { points: Array, categories: Array, tuiles: Object, developpement: Boolean }
   static targets = [
-    "carte", "rendu", "ambiance", "autour", "quand", "boutonFiltres", "filtres", "rayon", "rayonTexte",
-    "noteFiltres", "alerte", "voletTitre", "poigneeTitre", "compteur", "fiches", "vide", "stats",
+    "carte", "rendu", "ambiance", "alerte", "voletTitre", "poigneeTitre", "compteur", "fiches", "vide", "stats",
     "modeleFiche", "modelePin", "recherche", "categorie", "ongletFavoris", "ongletCarte"
   ]
 
   connect() {
     this.categoriesParCle = Object.fromEntries(this.categoriesValue.map((c) => [c.cle, c]))
-    this.filtre = { categories: new Set(), texte: "", quand: null, rayon: Infinity, favoris: false }
+    this.filtre = { categories: new Set(), texte: "", favoris: false }
     this.favoris = this.lireFavoris()
-    this.position = null
     this.selection = null
     this.points = this.pointsValue.map((p) => ({
       ...p, debut: lireDate(p.debut), fin: lireDate(p.fin), recherche: normaliser(`${p.titre} ${p.commune}`)
@@ -89,7 +86,8 @@ export default class extends Controller {
     this.construireCarte()
     this.poserPoints()
     this.appliquerFiltres()
-    this.cadrer()
+    this.vueInitiale()
+    this.afficherDebugVue()
     if (t.disponibles.blanche) this.chargerMasque()
     if (t.disponibles.ambiances?.length) {
       this.minuterieAuto = setInterval(() => { if (this.ambianceChoisie === "auto") this.choisirAmbianceNommee("auto") }, 60000)
@@ -132,7 +130,7 @@ export default class extends Controller {
     }).addTo(this.carte)
     this.grappes.on("animationend spiderfied unspiderfied", () => this.marquerSurvol())
 
-    this.carte.on("moveend", () => { if (!this.position) this.majVolet(); else this.majCompteur() })
+    this.carte.on("moveend", () => this.majVolet())
     this.carte.on("click", () => {
       this.selectionner(null)
       this.dispatch("carte-cliquee") // la bottom sheet se replie
@@ -306,9 +304,7 @@ export default class extends Controller {
     const f = this.filtre
     if (f.categories.size && !f.categories.has(p.categorie)) return false
     if (f.texte && !p.recherche.includes(f.texte)) return false
-    if (f.quand && !dansLaFenetre(p, f.quand)) return false
     if (f.favoris && !this.favoris.has(p.id)) return false
-    if (f.rayon !== Infinity && !(this.distance(p) <= f.rayon)) return false
     return true
   }
 
@@ -332,34 +328,10 @@ export default class extends Controller {
     this.appliquerFiltres()
   }
 
-  filtrerDate({ params: { quand } }) {
-    this.filtre.quand = this.filtre.quand === quand ? null : quand
-    this.quandTargets.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.dioramaQuandParam === this.filtre.quand)))
-    this.appliquerFiltres()
-  }
-
-  basculerFiltres() {
-    const ouvert = this.filtresTarget.hidden
-    this.filtresTarget.hidden = !ouvert
-    this.boutonFiltresTarget.setAttribute("aria-pressed", String(ouvert))
-    this.boutonFiltresTarget.setAttribute("aria-expanded", String(ouvert))
-  }
-
-  changerRayon() {
-    const v = Number(this.rayonTarget.value)
-    this.filtre.rayon = v >= RAYON_SANS_LIMITE ? Infinity : v
-    this.rayonTexteTarget.textContent = this.filtre.rayon === Infinity ? "sans limite" : distanceTexte(v)
-    if (this.filtre.rayon !== Infinity && !this.position) this.autourDeMoi()
-    this.appliquerFiltres()
-  }
-
   reinitialiser() {
-    this.filtre = { categories: new Set(), texte: "", quand: null, rayon: Infinity, favoris: false }
+    this.filtre = { categories: new Set(), texte: "", favoris: false }
     this.rechercheTarget.value = ""
-    this.rayonTarget.value = RAYON_SANS_LIMITE
-    this.rayonTexteTarget.textContent = "sans limite"
     this.categorieTargets.forEach((b) => b.setAttribute("aria-pressed", "false"))
-    this.quandTargets.forEach((b) => b.setAttribute("aria-pressed", "false"))
     this.majOnglets()
     this.appliquerFiltres()
   }
@@ -410,22 +382,21 @@ export default class extends Controller {
   }
 
   // ─── Le volet (majVolet de la v3) ────────────────────────────────────────────────────
-  // Avec une position : « À proximité de vous », tri par distance réelle (Lambert-93).
-  // Sans : « Au centre de la vue », tri par distance à l'écran au centre de la carte, et
-  // aucun nombre de mètres n'est inventé. Les dates à venir passent devant, sous leur
+  // « Au centre de la vue » : tri par distance à l'écran au centre de la carte ; aucun nombre de
+  // mètres n'est affiché. Les dates à venir passent devant, sous leur
   // étiquette ; s'il n'y en a aucune, le volet devient « Toujours d'actualité » et ne liste
   // que les fiches sans date. Une fiche passée quitte le volet.
   majVolet() {
     const jour = aujourdhui()
     const visibles = (this.poses || this.points).filter((p) => this.passe(p) && !estPasse(p, jour))
-    const cle = this.position ? (p) => this.distance(p) : this.carte ? (p) => this.distanceEcran(p) : () => 0
+    const cle = this.carte ? (p) => this.distanceEcran(p) : () => 0
     visibles.forEach((p) => { p.tri = cle(p) })
     const parDistance = (a, b) => a.tri - b.tri
     const aVenir = visibles.filter((p) => estAVenir(p, jour))
       .sort((a, b) => Math.max(a.debut, jour) - Math.max(b.debut, jour) || parDistance(a, b))
     const sansDate = visibles.filter((p) => !p.debut && !p.fin).sort(parDistance)
 
-    let titre = this.position ? "À proximité de vous" : "Au centre de la vue"
+    let titre = "Au centre de la vue"
     if (!aVenir.length) titre = "Toujours d'actualité"
     const titreVolet = this.filtre.favoris ? "Vos favoris" : titre
     this.voletTitreTarget.textContent = titreVolet
@@ -479,8 +450,6 @@ export default class extends Controller {
     lien.textContent = p.titre
     this.remplir(el, ".fiche-commune", p.commune)
     this.remplir(el, ".fiche-quand", [periode(p), p.horaire].filter(Boolean).join(" · "))
-    const d = this.distance(p)
-    this.remplir(el, ".fiche-distance", d === null ? null : distanceTexte(d))
     const signet = el.querySelector(".fiche-signet")
     const favori = this.favoris.has(p.id)
     signet.setAttribute("aria-pressed", String(favori))
@@ -501,7 +470,7 @@ export default class extends Controller {
     const aVenir = dates.filter((p) => estAVenir(p, jour))
     const mots = [`<b>${n}</b> sur ${total} posées.`]
     if (!dates.length) {
-      mots.push("<b>Aucune n'est datée</b> — la base ne porte ni début ni fin : « Aujourd'hui » et « Cette semaine » rendent <b>0</b>.")
+      mots.push("<b>Aucune n'est datée</b> — la base ne porte ni début ni fin : Aucune date à venir à montrer.")
     } else if (!aVenir.length) {
       const derniere = new Date(Math.max(...dates.map((p) => (p.fin || p.debut).getTime())))
       mots.push(`<b>${dates.length}</b> sur ${this.points.length} portent une date, et <b>toutes sont passées</b> — ` +
@@ -511,13 +480,8 @@ export default class extends Controller {
       mots.push(`<b>${dates.length}</b> sur ${this.points.length} portent une date, dont <b>${aVenir.length}</b> à venir.`)
     }
     mots.push(`<b>${this.points.filter((p) => p.photo).length}</b> portent une photo.`)
-    if (!this.position) mots.push("Tri par distance au centre de la vue.")
+    mots.push("Tri par distance au centre de la vue.")
     return mots.join(" ")
-  }
-
-  distance(p) {
-    if (!this.position || !p.l93) return null
-    return Math.hypot(p.l93[0] - this.position.x, p.l93[1] - this.position.y)
   }
 
   distanceEcran(p) {
@@ -590,10 +554,27 @@ export default class extends Controller {
     else this.carte.fitBounds(this.bornes)
   }
 
-  recentrer() {
-    if (!this.carte) return
-    if (this.position) this.carte.setView(this.position.latlng, Math.max(this.carte.getZoom(), 6))
-    else this.cadrer()
+  // Centre la carte sur CENTRE_INITIAL (projeté dans la mosaïque) au zoom ZOOM_INITIAL.
+  vueInitiale() {
+    const [x, y] = this.projection.versL93(CENTRE_INITIAL.lon, CENTRE_INITIAL.lat)
+    const [px, py] = this.projection.pixelL93(x, y)
+    this.carte.setView(this.carte.unproject(this.L.point(px, py), NIVEAU_MAX), ZOOM_INITIAL, { animate: false })
+  }
+
+  // Réglage de la vue : ?debug_vue=1 affiche le centre (lat/lon) et le zoom courants. Sans ce paramètre, rien.
+  afficherDebugVue() {
+    if (new URLSearchParams(window.location.search).get("debug_vue") !== "1") return
+    const encart = document.createElement("output")
+    encart.className = "acc-debug-vue"
+    this.carteTarget.parentElement.appendChild(encart)
+    const maj = () => {
+      const c = this.carte.getCenter()
+      const { x, y } = this.carte.project(c, NIVEAU_MAX)
+      const [lon, lat] = this.projection.versWGS84(x, y)
+      encart.textContent = `centre ${lat.toFixed(5)}, ${lon.toFixed(5)} · zoom ${this.carte.getZoom()}`
+    }
+    this.carte.on("move zoom", maj)
+    maj()
   }
 
   zoomer({ params: { sens } }) {
@@ -606,47 +587,6 @@ export default class extends Controller {
     if (this.carte) this.cadrer()
     this.dispatch("voir-tout") // la bottom sheet se replie
     this.element.querySelector("#carte")?.scrollIntoView({ behavior: "smooth", block: "start" })
-  }
-
-  // ─── Géolocalisation ─────────────────────────────────────────────────────────────────
-  autourDeMoi() {
-    if (!this.carte) return
-    if (!navigator.geolocation) { this.alerter("La géolocalisation n'est pas disponible sur cet appareil."); return }
-    this.autourTarget.setAttribute("aria-busy", "true")
-    navigator.geolocation.getCurrentPosition((pos) => {
-      this.autourTarget.removeAttribute("aria-busy")
-      this.poserVisiteur(pos.coords)
-    }, () => {
-      this.autourTarget.removeAttribute("aria-busy")
-      this.alerter("Position refusée ou introuvable : la liste reste triée depuis le centre de la vue.")
-    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 })
-  }
-
-  poserVisiteur({ latitude, longitude, accuracy }) {
-    const L = this.L
-    const [x, y] = this.projection.versL93(longitude, latitude)
-    const px = this.projection.pixelL93(x, y)
-    if (!this.projection.dansLaMosaique(px)) {
-      this.alerter("Vous êtes hors du Grand Nancy couvert par le diorama : la liste reste triée depuis le centre de la vue.")
-      return
-    }
-    const latlng = this.carte.unproject(L.point(px[0], px[1]), NIVEAU_MAX)
-    this.position = { x, y, latlng }
-    // Le cercle de précision est tracé AU SOL : une ellipse, aplatie comme la maquette.
-    const contour = Array.from({ length: 48 }, (_, i) => {
-      const a = (i / 48) * 2 * Math.PI
-      const q = this.projection.pixelL93(x + accuracy * Math.cos(a), y + accuracy * Math.sin(a))
-      return this.carte.unproject(L.point(q[0], q[1]), NIVEAU_MAX)
-    })
-    this.calqueVisiteur?.remove()
-    this.calqueVisiteur = L.layerGroup([
-      L.polygon(contour, { className: "acc-precision", interactive: false }),
-      L.circleMarker(latlng, { radius: 8, className: "acc-visiteur", interactive: false })
-    ]).addTo(this.carte)
-    this.autourTarget.setAttribute("aria-pressed", "true")
-    this.noteFiltresTarget.hidden = true
-    this.carte.setView(latlng, Math.max(this.carte.getZoom(), 6))
-    this.appliquerFiltres()
   }
 
   alerter(texte) {
