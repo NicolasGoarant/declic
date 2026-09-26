@@ -1,27 +1,25 @@
 # NOTES
 
-## Fait
-- Branche `refonte-accueil` (partie de `export-diorama-dates`, PR #27) : `/labo/accueil`, future home sur le diorama. Home actuelle et route racine intactes.
-  - Vue `labo/accueil` + partiels `app/views/accueil/`, layout `layouts/accueil`, CSS `accueil.css` (mobile, tablette ≥ 768, bureau ≥ 1024 avec panneau gauche de 380 px).
-  - `diorama_controller.js` : Leaflet importé à la demande (jsdelivr `+esm`, `preload: false`), favoris localStorage, volet « Au centre de la vue » trié par distance au centre. `DioramaTuiles` sonde les tuiles publiées ; `Categorie` = source unique des 6 catégories ; `declic:dates_demo` (dev) déjà lancée.
-- Écran Carte mobile (< 1024 px) : `.acc-ecran` = `100dvh - var(--tabbar-h)` (64 px + safe area). En haut : le seul logo « Déclic » (sans fond, halo blanc). Accroche h1 masquée hors bureau.
-  - Légende des 6 catégories (compteurs, filtre) : dans le volet, au-dessus de la poignée (`--legende-h` 62 px, 84 px tablette). Choix : elle MONTE avec le volet ouvert. Zoom +/- et (i) décalés au-dessus. Bureau : en tête du panneau gauche.
-  - Bottom sheet `sheet_controller.js` : poignée 56 px (`--poignee-h`), ouverte 55 dvh (`--sheet-h`), `translateY` 250 ms, seuil de glissement 60 px, Échap, tap carte. Émet `sheet:ouverte` (ferme la popup).
-  - Tab bar : Carte · Explorer · [+] Proposer · Favoris · Profil.
-- Pins : `diorama/bouquets.js` remplace Leaflet.markercluster (supprimé : import, importmap, CSS). Pieds à < 28 px à l'écran → bouquet : pied commun au barycentre, tiges en éventail -45°…+45°, longueurs alternées, 6 fleurs max + « +n » (zoome sur le groupe). Recalcul à chaque `zoomend` et filtre (`dessinerPins`).
-  - Popup au clic (pin ou fleur) : photo ou icône, catégorie, titre, date, commune, « Voir la fiche » / « Lire l'histoire ». Autopan avec `marges()` (logo en haut, légende et volet en bas). Fermeture : tap carte, Échap, ouverture du volet.
-  - Vue initiale : `CENTRE_INITIAL` (place Stanislas) et `ZOOM_INITIAL` (6) ; `?debug_vue=1` affiche centre et zoom.
-- Tests système `test/system/accueil_test.rb` (sans tuiles : sheet, tab bar, légende). Sans Chrome : `CHROME_BIN=~/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome CHROME_NO_SANDBOX=1 bin/rails test test/system`.
+## Règle éditoriale (fiches)
+- **Opportunité** : le texte invite à agir (participer, s'inscrire, donner, se former). Datée ou permanente (« Ouvert toute l'année, sur rendez-vous » va dans `schedule_text`). Porte un bouton d'action (`cta_button_text` / `cta_button_url`).
+- **Belle Histoire** : récit inspirant du parcours de quelqu'un, sans appel à l'action : aucun horaire, aucun bouton personnalisé. Dit où trouver la personne (`venue_name`, `discover_url`), ce qu'elle dit (`quote`, `quote_author`), d'où vient le récit (`source_name`, `source_url`, `source_published_on`).
+- La maquette `declic-maquette-fiche-belle-histoire-v1.png` (Maison du Don) est une opportunité par son contenu : seule sa mise en page sert de modèle.
+
+## Fait (branche `refonte-fiches`, chantier données)
+- Opportunity : `audience`, `programme` (json), `organization_logo`, `starts_on`/`ends_on` (date), `start_time`/`end_time` (time). Affichage : `date_affichee`, `horaire_affiche`, `permanente?`, `a_venir?` (pas encore terminée), `passee?`, `programme_liste`. `date_debut`/`date_fin` préfèrent `starts_on`/`ends_on`.
+- Reprise des dates : `ConversionDates` (migration + rake `declic:dates_rapport`, lecture seule). starts_at à minuit UTC pile = date sans heure. Pont `before_save` start_date/end_date ISO -> starts_on/ends_on.
+- Story : `venue_name`, `discover_url`, `quote_author`, `points_forts` (json, 3 max, `PointsForts`), `source_published_on` ; highlights_items repris dans points_forts.
+- Sécurité : seeds refusés en production sans `SEED_ALLOW_DESTROY=oui` ; admin en 403 si ADMIN_USERNAME / ADMIN_PASSWORD absent ou vide (développement compris).
+- `pages_controller_test` réparé (`root_url`). Suite verte.
 
 ## Reste à faire
-- Zoom initial provisoire : `docs/maquettes/declic-vue-initiale-stanislas-v1.png` absente ; ajuster `ZOOM_INITIAL` avec `?debug_vue=1`.
-- 4 paires d'opportunités ont des coordonnées identiques en base : elles restent en bouquet de 2 au zoom max.
-- Publier sur R2 `masque-bati/`, `toits-v1-propriete/`, `ambiances/` ; licence Géonancy (« local seulement »).
-- Sur mobile, histoires, témoignages et presse restent sous l'écran Carte : les mettre dans la sheet ou sur Explorer ?
-- Préexistant : `pages_controller_test` en échec (`pages_home_url`) ; images Unsplash mortes en dev ; `home.html.erb.bak`.
-- Témoignages dupliqués depuis la home ; altitude des marqueurs (z = z_ref) ; MJC Desforges (id 104) à vérifier en prod.
+- Refonte des vues fiches Opportunité / Belle Histoire (maquettes `docs/maquettes/declic-maquette-fiche-*-v1.png`) ; champs nouveaux à ajouter aux formulaires admin (permit).
+- Lancer `declic:dates_rapport` en production avant/après la migration ; version de transition puis suppression de start_date / end_date / highlights_*.
+- Histoire #8 (jardin participatif) : plutôt une opportunité. Sections « Et moi, comment je peux avoir le Déclic ? » = appels à l'action, contraires à la règle. #9 : location à Saint-Malo pour un atelier dans les Vosges.
+- Diorama (branche `refonte-accueil`) : zoom initial, bouquets de coordonnées identiques, publication R2, licence Géonancy.
+- Préexistant : images Unsplash mortes en dev ; `home.html.erb.bak`.
 
 ## Fichiers clés
-- `app/views/labo/accueil.html.erb`, `app/views/accueil/*`, `app/assets/stylesheets/accueil.css`
-- `app/javascript/controllers/{diorama,sheet}_controller.js`, `app/javascript/diorama/*` (bouquets, couches, dates…)
-- `app/models/diorama_tuiles.rb`, `app/models/categorie.rb`, `app/helpers/accueil_helper.rb`
+- `app/models/{opportunity,story,conversion_dates,points_forts}.rb`, `db/migrate/20260926090*`
+- `lib/tasks/declic_dates_rapport.rake`, `app/controllers/admin/base_controller.rb`, `db/seeds.rb`
+- Tests : `test/models/{conversion_dates,opportunity_dates,points_forts,seeds}_test.rb`, `test/controllers/admin_acces_test.rb`
