@@ -1,0 +1,18 @@
+<%# En-tête d'une fiche : Retour, badge, date de publication, titre précédé de l'icône de
+    catégorie (celle des pins), commune. %>
+<header class="fch-entete">
+  <%= link_to retour, class: "fch-retour", data: { action: "fiche#retour" } do %>
+    <%= picto(:retour, taille: 18) %> Retour
+  <% end %>
+  <div class="fch-meta">
+    <span class="fch-badge" style="--c: <%= cat.couleur %>; color: <%= encre_sur(cat.couleur) %>"><%= badge %></span>
+    <span class="fch-publication"><%= publication(fiche) %></span>
+  </div>
+  <h1 class="fch-titre">
+    <%= icone_categorie(cat, taille: 36, class: "fch-titre-icone") %>
+    <span><%= fiche.title %></span>
+  </h1>
+  <% if (commune = commune_de(fiche.city, fiche.location)).present? %>
+    <p class="fch-commune"><%= picto(:lieu, taille: 16) %><span><%= commune %></span></p>
+  <% end %>
+</header>

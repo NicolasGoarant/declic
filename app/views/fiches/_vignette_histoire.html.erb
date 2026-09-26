@@ -1,0 +1,17 @@
+<% cat = categorie_de(histoire) %>
+<%= link_to story_path(histoire), class: "fch-vignette", style: "--c: #{cat.couleur}" do %>
+  <span class="fch-vignette-photo">
+    <%= icone_categorie(cat, taille: 44) %>
+    <% if (photo = histoire.couverture ? url_for(histoire.couverture) : photo_de(histoire)) %>
+      <%= image_tag photo, alt: "", loading: "lazy", decoding: "async", data: { repli: true } %>
+    <% end %>
+  </span>
+  <span class="fch-vignette-texte">
+    <span class="fch-vignette-titre"><%= histoire.title %></span>
+    <% if (commune = commune_de(histoire.city, histoire.location)) %>
+      <span class="fch-vignette-infos"><span><%= picto(:lieu, taille: 13) %><%= commune %></span></span>
+    <% end %>
+    <span class="fch-puce" style="color: <%= encre_sur(cat.couleur) %>">Belle histoire</span>
+  </span>
+  <%= picto(:suivant, taille: 20, class: "fch-vignette-chevron") %>
+<% end %>

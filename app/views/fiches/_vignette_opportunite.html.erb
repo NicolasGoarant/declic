@@ -1,0 +1,22 @@
+<% cat = categorie_de(opportunite) %>
+<%= link_to opportunity_path(opportunite), class: "fch-vignette", style: "--c: #{cat.couleur}" do %>
+  <span class="fch-vignette-photo">
+    <%= icone_categorie(cat, taille: 44) %>
+    <% if (photo = opportunite.couverture ? url_for(opportunite.couverture) : photo_de(opportunite)) %>
+      <%= image_tag photo, alt: "", loading: "lazy", decoding: "async", data: { repli: true } %>
+    <% end %>
+  </span>
+  <span class="fch-vignette-texte">
+    <span class="fch-vignette-titre"><%= opportunite.title %></span>
+    <span class="fch-vignette-infos">
+      <% if (quand = opportunite.date_affichee || opportunite.schedule_text.presence) %>
+        <span><%= picto(:calendrier, taille: 13) %><%= quand %></span>
+      <% end %>
+      <% if (commune = commune_de(opportunite.city, opportunite.location)) %>
+        <span><%= picto(:lieu, taille: 13) %><%= commune %></span>
+      <% end %>
+    </span>
+    <span class="fch-puce" style="color: <%= encre_sur(cat.couleur) %>"><%= cat.libelle %></span>
+  </span>
+  <%= picto(:suivant, taille: 20, class: "fch-vignette-chevron") %>
+<% end %>

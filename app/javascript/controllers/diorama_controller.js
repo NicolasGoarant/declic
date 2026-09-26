@@ -31,7 +31,8 @@ function encreSur(hex) {
 }
 
 export default class extends Controller {
-  static values = { points: Array, categories: Array, tuiles: Object, developpement: Boolean }
+  // mini : petite carte d'une fiche (un seul point, sans volet ni commandes, voir demarrerMini).
+  static values = { points: Array, categories: Array, tuiles: Object, developpement: Boolean, mini: Boolean }
   static targets = [
     "carte", "rendu", "ambiance", "alerte", "voletTitre", "poigneeTitre", "compteur", "fiches", "vide", "stats",
     "modeleFiche", "modelePin", "modelePopup", "categorie", "ongletFavoris", "ongletCarte"
@@ -39,6 +40,7 @@ export default class extends Controller {
 
   connect() {
     this.categoriesParCle = Object.fromEntries(this.categoriesValue.map((c) => [c.cle, c]))
+    if (this.miniValue) { this.demarrerMini(); return }
     this.filtre = { categories: new Set(), favoris: false }
     this.favoris = this.lireFavoris()
     this.selection = null
@@ -47,6 +49,89 @@ export default class extends Controller {
     this.majCompteurs()
     this.majVolet()
     this.demarrer()
+    // Onglet Favoris des fiches (/labo/accueil?favoris=1). Après la connexion du volet, qui écoute
+    // l'événement d'ouverture.
+    if (new URLSearchParams(window.location.search).get("favoris") === "1") setTimeout(() => this.basculerFavoris())
+  }
+
+  // ─── Petite carte d'une fiche ────────────────────────────────────────────────────────
+  // Le point dans l'emprise du diorama (sur une dalle publiée) : le diorama, figé, pin de la
+  // catégorie au centre. Hors emprise, ou diorama indisponible : Leaflet sur fond OpenStreetMap.
+  async demarrerMini() {
+    const p = this.pointsValue[0]
+    if (!p || !Number.isFinite(p.latitude) || !Number.isFinite(p.longitude)) return
+    try {
+      const module = await import("leaflet")
+      this.L = module.default ?? module
+    } catch (erreur) {
+      console.error("carte :", erreur)
+      return
+    }
+    let pixel = null
+    if (this.tuilesValue.disponibles?.vrai) {
+      try {
+        const reponse = await fetch(`${this.tuilesValue.base}/${this.tuilesValue.lot}/manifeste.json`)
+        if (!reponse.ok) throw new Error(`manifeste HTTP ${reponse.status}`)
+        this.manifeste = await reponse.json()
+        this.projection = creerProjection(this.manifeste)
+        this.dallesListees = this.indexerDalles(this.manifeste)
+        pixel = this.pixelDansLeDiorama(p)
+      } catch (erreur) {
+        console.warn("diorama indisponible, fond OpenStreetMap :", erreur)
+      }
+    }
+    if (!this.carteTarget.isConnected) return
+    if (pixel) this.miniDiorama(p, pixel)
+    else this.miniOSM(p)
+    this.suivreTaille()
+  }
+
+  // Pixel du point dans la mosaïque (niveau 8), ou null hors couverture (même règle que poserPoints).
+  pixelDansLeDiorama(p) {
+    const [x, y] = this.projection.versL93(p.longitude, p.latitude)
+    const px = this.projection.pixelL93(x, y)
+    if (!this.projection.dansLaMosaique(px)) return null
+    return this.dallesListees[NIVEAU_MAX]?.has(`${Math.floor(px[0] / 256)}/${Math.floor(px[1] / 256)}`) ? px : null
+  }
+
+  optionsFigees() {
+    return {
+      zoomControl: false, dragging: false, touchZoom: false, scrollWheelZoom: false, doubleClickZoom: false,
+      boxZoom: false, keyboard: false
+    }
+  }
+
+  miniDiorama(p, pixel) {
+    const L = this.L
+    const [largeur, hauteur] = this.manifeste.taille_mosaique_px
+    this.carte = L.map(this.carteTarget, { crs: L.CRS.Simple, minZoom: 0, maxZoom: NIVEAU_MAX, attributionControl: false, ...this.optionsFigees() })
+    this.bornes = L.latLngBounds(this.carte.unproject([0, hauteur], NIVEAU_MAX), this.carte.unproject([largeur, 0], NIVEAU_MAX))
+    this.optionsCouche = {
+      minZoom: 0, maxZoom: NIVEAU_MAX, maxNativeZoom: NIVEAU_MAX, tileSize: 256,
+      noWrap: true, bounds: this.bornes, attribution: ATTRIBUTION
+    }
+    this.poserAttribution()
+    this.couches = {}
+    this.poserFond(this.coucheVraie())
+    const latlng = this.carte.unproject(L.point(pixel[0], pixel[1]), NIVEAU_MAX)
+    this.poserPinMini(p, latlng, NIVEAU_MAX - 1)
+  }
+
+  miniOSM(p) {
+    const L = this.L
+    this.carte = L.map(this.carteTarget, this.optionsFigees())
+    this.carte.attributionControl.setPrefix(false)
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">les contributeurs OpenStreetMap</a>'
+    }).addTo(this.carte)
+    this.poserPinMini(p, L.latLng(p.latitude, p.longitude), 15)
+  }
+
+  // Le pin (40 × 88, ancré au pied) : on descend la vue pour que le pictogramme soit au centre.
+  poserPinMini(p, latlng, zoom) {
+    this.L.marker(latlng, { icon: this.iconePin(p), title: p.titre, interactive: false, keyboard: false }).addTo(this.carte)
+    this.carte.setView(latlng, zoom, { animate: false })
+    this.carte.panBy([0, -40], { animate: false })
   }
 
   disconnect() {

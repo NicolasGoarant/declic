@@ -34,6 +34,34 @@ class Story < ApplicationRecord
     self.points_forts = PointsForts.normaliser(blocs).first(PointsForts::MAX)
   end
 
+  # Catégorie d'opportunité que l'histoire porte dans ses étiquettes (clé ou libellé,
+  # « ecologiser », « Écologiser »…), sinon nil. Les histoires n'ont pas de colonne catégorie.
+  def categorie_opportunite
+    etiquettes = tags.to_s.split(/[;,]/).map { |t| t.strip.parameterize }
+    Opportunity::CATEGORIES.find do |cle|
+      etiquettes.include?(cle) || etiquettes.include?(Categorie.trouver(cle).libelle.parameterize)
+    end
+  end
+
+  # « Des opportunités pour avoir ton déclic » : actives et pas terminées, de la catégorie de
+  # l'histoire si elle en porte une, complétées par les plus proches géographiquement.
+  def opportunites_proches(limite = 3)
+    base = Opportunity.active.actuelles
+    choix = categorie_opportunite ? base.where(category: categorie_opportunite).limit(limite).to_a : []
+    return choix if choix.size >= limite
+
+    reste = base.where.not(id: choix.map(&:id))
+    if latitude.present? && longitude.present?
+      reste = reste.with_coords.to_a.sort_by { |o| (o.latitude.to_f - latitude)**2 + ((o.longitude.to_f - longitude) * Math.cos(latitude * Math::PI / 180))**2 }
+    end
+    choix + reste.first(limite - choix.size)
+  end
+
+  # « D'autres belles histoires ».
+  def autres_histoires(limite = 3)
+    Story.active.where.not(id: id).order(happened_on: :desc, created_at: :desc).limit(limite)
+  end
+
   # Champs que la nouvelle fiche affiche (voir FicheCompletude).
   def criteres_fiche
     {

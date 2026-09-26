@@ -32,6 +32,20 @@ class Opportunity < ApplicationRecord
   scope :active,      -> { where(is_active: true) }
   scope :with_coords, -> { where.not(latitude: nil, longitude: nil) }
 
+  # Pas terminées : à venir, en cours ou permanentes (même règle que passee?). Les datées
+  # d'abord, par date de début, puis les permanentes.
+  scope :actuelles, lambda {
+    derniere = "COALESCE(opportunities.ends_on, opportunities.starts_on)"
+    where("#{derniere} IS NULL OR #{derniere} >= ?", Time.current.in_time_zone(ConversionDates::FUSEAU).to_date)
+      .order(Arel.sql("COALESCE(opportunities.starts_on, opportunities.ends_on) IS NULL, " \
+                      "COALESCE(opportunities.starts_on, opportunities.ends_on), opportunities.id"))
+  }
+
+  # « Opportunités similaires » de la fiche : même catégorie, actives, pas terminées.
+  def similaires(limite = 3)
+    self.class.active.actuelles.where(category: category).where.not(id: id).limit(limite)
+  end
+
   # --- Géocodage (location -> lat/lng), restreint à la zone de Nancy ---
   # `nancy_geocoded_by` (NancyGeocodable) ajoute une boîte de recherche à la
   # requête Nominatim ET un garde-fou de distance après coup : voir le
