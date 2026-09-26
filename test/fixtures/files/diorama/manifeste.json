@@ -1,0 +1,65 @@
+{
+  "note": "Extrait du manifeste toits-v1 (nancy-3d/publication-r2) pour les tests système : la liste des dalles est reconstruite par test/support/tuiles_factices.rb (grille pleine).",
+  "jeu": "toits-v1",
+  "taille_mosaique_px": [
+    41371,
+    23806
+  ],
+  "cote_dalle_px": 256,
+  "niveau_min": 0,
+  "niveau_max": 8,
+  "grille_par_niveau": {
+    "8": [
+      162,
+      93
+    ],
+    "7": [
+      81,
+      47
+    ],
+    "6": [
+      41,
+      24
+    ],
+    "5": [
+      21,
+      12
+    ],
+    "4": [
+      11,
+      6
+    ],
+    "3": [
+      6,
+      3
+    ],
+    "2": [
+      3,
+      2
+    ],
+    "1": [
+      2,
+      1
+    ],
+    "0": [
+      1,
+      1
+    ]
+  },
+  "reference_de_pose": {
+    "tuile": "t+00+00",
+    "centre_l93": [
+      931997.0,
+      6849250.0
+    ],
+    "z_ref": 231.17,
+    "azimut_deg": 200.0,
+    "azimut_convention": "relèvement de l'œil vu du centre de la scène, grille Lambert-93, nord de grille 0°, sens horaire",
+    "compression": 0.6427876096865393,
+    "facteur_hauteur": 0.766044443118978,
+    "echelle_px_par_m": 2.2625974252586483,
+    "marge_px": 40,
+    "umin": -512.6851056446309,
+    "hmax": 421.2967765315631
+  }
+}

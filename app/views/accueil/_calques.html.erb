@@ -1,0 +1,20 @@
+<%# Le panneau « Calques », ouvert par le bouton rond au-dessus du zoom (diorama#basculerCalques).
+    Bureau : panneau flottant en verre dépoli, à gauche du bouton. Mobile : feuille basse compacte,
+    au-dessus d'un voile. Refermé par Échap, par un tap sur le voile ou à côté, ou par la croix.
+
+    Une rubrique = un partiel de app/views/accueil/calques/. La rubrique « Style » est prévue mais
+    pas encore affichée : l'ajouter à `rubriques` ci-dessous (et écrire calques/_style) quand elle existera. %>
+<% rubriques = %w[fond ambiance] # à venir : "style" %>
+<div class="acc-calques-voile" hidden data-diorama-target="voileCalques" data-action="click->diorama#fermerCalques"></div>
+<div class="acc-calques" id="acc-calques" role="dialog" aria-modal="false" aria-labelledby="acc-calques-titre"
+     hidden data-diorama-target="panneauCalques">
+  <div class="acc-calques-tete">
+    <h2 id="acc-calques-titre">Calques</h2>
+    <button type="button" class="acc-calques-fermer" aria-label="Fermer les calques" data-action="diorama#fermerCalques">
+      <%= picto(:fermer, taille: 18) %>
+    </button>
+  </div>
+  <% rubriques.each do |rubrique| %>
+    <%= render "accueil/calques/#{rubrique}", disponibles: disponibles %>
+  <% end %>
+</div>

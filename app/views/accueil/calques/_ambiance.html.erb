@@ -1,0 +1,32 @@
+<%# Ambiance du diorama (masquée en mode Plan). Une option n'est rendue que si toutes ses couches
+    répondent sur le domaine des tuiles (DioramaTuiles#disponibles) ; sans aucune, pas de rubrique. %>
+<% ambiances = { "heure-bleue" => "Heure bleue", "automne" => "Automne", "hiver" => "Hiver" }.slice(*disponibles[:ambiances]) %>
+<% if disponibles[:blanche] || ambiances.any? %>
+  <fieldset class="acc-calques-rubrique" data-rubrique="ambiance" data-diorama-target="rubriqueAmbiance">
+    <legend>Ambiance</legend>
+    <% if ambiances.any? %>
+      <div class="acc-calques-liste">
+        <label class="acc-calques-ligne">
+          <input type="radio" name="calques-ambiance" value="auto" data-diorama-target="choixAmbiance" data-action="diorama#choisirAmbiance">
+          <span>Automatique<small data-diorama-target="ambianceAuto"></small></span>
+        </label>
+        <label class="acc-calques-ligne">
+          <input type="radio" name="calques-ambiance" value="origine" data-diorama-target="choixAmbiance" data-action="diorama#choisirAmbiance">
+          <span>Origine</span>
+        </label>
+        <% ambiances.each do |nom, libelle| %>
+          <label class="acc-calques-ligne">
+            <input type="radio" name="calques-ambiance" value="<%= nom %>" data-diorama-target="choixAmbiance" data-action="diorama#choisirAmbiance">
+            <span><%= libelle %></span>
+          </label>
+        <% end %>
+      </div>
+    <% end %>
+    <% if disponibles[:blanche] %>
+      <label class="acc-calques-interrupteur">
+        <span>Maquette blanche</span>
+        <input type="checkbox" role="switch" data-diorama-target="choixBlanche" data-action="diorama#choisirBlanche">
+      </label>
+    <% end %>
+  </fieldset>
+<% end %>

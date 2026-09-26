@@ -8,7 +8,7 @@
 // appliquée au pixel par la PREMIÈRE règle dont la classe le contient. Classes : 0 exclu,
 // 1 sol, 2 volume, 3 feuillage. La classe vient de la carte de propriété au niveau 8, du
 // masque du bâti aux niveaux 6-7, et ailleurs tout pixel non transparent est un volume.
-import { COTE } from "diorama/couches"
+import { COTE, creerCache } from "diorama/couches"
 
 const REGLES_MAX = 4
 const SOURCE_VS = "attribute vec2 p; varying vec2 uv; void main(){ uv = p * 0.5 + 0.5; gl_Position = vec4(p, 0.0, 1.0); }"
@@ -157,6 +157,7 @@ export async function lireAmbiance(url) {
 // masqueListe(coords) ; parametres (Promise du JSON) ; options (options de couche Leaflet).
 export function creerCoucheAmbiance(L, opts) {
   let moteur = null
+  const cache = creerCache() // un étalonnage par dalle, pas un de plus
   const Couche = L.GridLayer.extend({
     createTile(coords, fini) {
       const toile = document.createElement("canvas")
@@ -166,6 +167,7 @@ export function creerCoucheAmbiance(L, opts) {
         return toile
       }
       const chemin = `${coords.z}/${coords.x}/${coords.y}`
+      if (cache.lire(chemin, toile)) { setTimeout(() => fini(null, toile), 0); return toile }
       let urlClasse = null, mode = 2
       if (coords.z === 8) { urlClasse = opts.propriete(chemin); mode = 0 }
       else if (coords.z >= 6 && opts.masqueListe(coords)) { urlClasse = opts.masque(chemin); mode = 1 }
@@ -177,6 +179,7 @@ export function creerCoucheAmbiance(L, opts) {
           if (!regles.length) { ctx.drawImage(base, 0, 0); fini(null, toile); return }
           moteur ||= new Moteur()
           ctx.drawImage(moteur.traiter(base, classe, classe ? mode : 2, regles), 0, 0)
+          cache.garder(chemin, toile)
           fini(null, toile)
         })
         .catch((erreur) => fini(erreur, toile))

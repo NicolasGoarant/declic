@@ -155,29 +155,94 @@ body.acc-corps {
 .leaflet-container .diorama-socle { fill: var(--socle); transform: translateY(var(--socle-h)); }
 .leaflet-container .diorama-ombre { fill: rgba(92, 70, 40, 0.28); transform: translateY(calc(var(--socle-h) + 6px)); filter: url(#diorama-flou-ombre); }
 
-.acc-carte-message {
-  position: absolute; left: var(--gouttiere); right: var(--gouttiere); bottom: 50%; z-index: 600;
-  margin: 0; padding: 12px 14px; border-radius: 14px; background: var(--blanc); box-shadow: var(--ombre);
-  font-size: 14px; text-align: center;
-}
-
 .acc-commandes {
-  position: absolute; right: var(--gouttiere); bottom: calc(var(--poignee-h) + var(--legende-h) + 20px); z-index: 600;
+  --commandes-bas: calc(var(--poignee-h) + var(--legende-h) + 20px);
+  position: absolute; right: var(--gouttiere); bottom: var(--commandes-bas); z-index: 600;
   display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
   transition: opacity 250ms ease-out, visibility 250ms;
 }
-.acc-fonds { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-.acc-bascule {
-  display: flex; padding: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.92); box-shadow: var(--ombre-legere);
+.acc-rond-calques {
+  display: grid; place-items: center; width: 46px; height: 46px; border: 0; border-radius: 50%;
+  background: var(--blanc); box-shadow: var(--ombre); cursor: pointer;
 }
-.acc-bascule button {
-  border: 0; border-radius: 999px; padding: 5px 9px; background: transparent;
-  font-size: 11px; font-weight: 700; cursor: pointer; color: var(--gris);
+.acc-rond-calques:hover, .acc-rond-calques[aria-expanded="true"] { background: var(--violet-pale); color: var(--violet); }
+
+/* ─── Le panneau « Calques » : verre dépoli, à gauche du bouton (feuille basse sur mobile) ── */
+.acc-calques-voile { position: absolute; inset: 0; z-index: 590; }
+.acc-calques {
+  position: absolute; z-index: 700;
+  right: calc(var(--gouttiere) + 46px + 12px);
+  bottom: calc(var(--poignee-h) + var(--legende-h) + 20px + 92px + 10px); /* bas du bouton Calques */
+  width: 256px; max-height: calc(100% - 120px); overflow: auto;
+  padding: 12px 14px 14px; border-radius: var(--rayon);
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow: var(--ombre), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
 }
-.acc-bascule button[aria-pressed="true"] { background: var(--violet); color: var(--blanc); }
-.acc-ambiance {
-  border: 0; border-radius: 999px; padding: 5px 10px; font-size: 11px; font-weight: 700;
-  background: rgba(255, 255, 255, 0.92); box-shadow: var(--ombre-legere); cursor: pointer;
+.acc-calques[hidden], .acc-calques-voile[hidden], .acc-calques-rubrique[hidden] { display: none; }
+.acc-calques-tete { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.acc-calques-tete h2 { margin: 0; font-size: 15px; font-weight: 800; }
+.acc-calques-fermer {
+  display: grid; place-items: center; width: 32px; height: 32px; margin-right: -6px;
+  border: 0; border-radius: 50%; background: transparent; cursor: pointer; color: var(--gris);
+}
+.acc-calques-fermer:hover { background: rgba(29, 26, 43, 0.06); color: var(--encre); }
+.acc-calques-rubrique { margin: 8px 0 0; padding: 0; border: 0; min-width: 0; }
+.acc-calques-rubrique legend {
+  padding: 0; margin-bottom: 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--gris);
+}
+/* Fond : deux choix côte à côte, en segment. */
+.acc-calques-choix { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; border-radius: 12px; background: rgba(29, 26, 43, 0.06); }
+.acc-calques-option { position: relative; }
+.acc-calques-option input, .acc-calques-ligne input { position: absolute; opacity: 0; pointer-events: none; }
+.acc-calques-option span {
+  display: block; padding: 8px 6px; border-radius: 9px; text-align: center;
+  font-size: 13px; font-weight: 700; color: var(--gris); cursor: pointer;
+}
+.acc-calques-option input:checked + span { background: var(--blanc); color: var(--violet); box-shadow: var(--ombre-legere); }
+.acc-calques-option input:disabled + span { opacity: 0.45; cursor: not-allowed; }
+.acc-calques-option input:focus-visible + span,
+.acc-calques-ligne input:focus-visible + span { outline: 3px solid color-mix(in srgb, var(--violet) 55%, transparent); outline-offset: 1px; }
+/* Ambiance : une liste, le choix coché en violet ; « Automatique » dit ce qu'il a retenu. */
+.acc-calques-liste { display: flex; flex-direction: column; gap: 2px; }
+.acc-calques-ligne { position: relative; }
+.acc-calques-ligne span {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  padding: 7px 10px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.acc-calques-ligne span:hover { background: rgba(29, 26, 43, 0.05); }
+.acc-calques-ligne input:checked + span { background: var(--violet-pale); color: var(--violet); font-weight: 700; }
+/* Sous « Automatique » : l'ambiance qu'il retient maintenant (« Automatique : heure bleue »). */
+.acc-calques-ligne:has(small) span { justify-content: flex-start; gap: 0; }
+.acc-calques-ligne small { font-size: inherit; font-weight: 500; color: var(--gris); white-space: pre; }
+.acc-calques-ligne small:empty { display: none; }
+.acc-calques-interrupteur {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: 8px; padding: 7px 10px; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.acc-calques-interrupteur input {
+  appearance: none; position: relative; flex: none; width: 38px; height: 22px; margin: 0;
+  border-radius: 11px; background: #cfccda; cursor: pointer; transition: background 150ms;
+}
+.acc-calques-interrupteur input::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--blanc); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); transition: transform 150ms;
+}
+.acc-calques-interrupteur input:checked { background: var(--violet); }
+.acc-calques-interrupteur input:checked::after { transform: translateX(16px); }
+
+/* Mobile : feuille basse compacte, par-dessus la tab bar, sur un voile qui assombrit la carte. */
+@media (max-width: 699.98px) {
+  .acc-calques-voile { position: fixed; z-index: 1140; background: rgba(29, 26, 43, 0.28); }
+  .acc-calques {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 1150; width: auto; max-height: 70dvh;
+    padding: 10px var(--gouttiere) calc(18px + env(safe-area-inset-bottom));
+    border-radius: 22px 22px 0 0; background: rgba(255, 255, 255, 0.92);
+  }
+  .acc-calques::before {
+    content: ""; display: block; width: 36px; height: 4px; margin: 0 auto 6px; border-radius: 2px; background: #cfccda;
+  }
 }
 
 .acc-zoom { display: flex; flex-direction: column; align-items: center; gap: 10px; }
@@ -523,6 +588,7 @@ body.acc-corps {
   .acc-cat:hover { background: var(--fond); }
   .acc-carte { grid-area: carte; height: auto; border-left: 1px solid var(--gris-clair); }
   .acc-commandes { bottom: 28px; right: 24px; }
+  .acc-calques { right: calc(24px + 46px + 12px); bottom: calc(28px + 92px + 10px); }
   .acc-carte .leaflet-bottom.leaflet-left { bottom: 16px; }
 
   /* Le volet est un panneau fixe : plus de sheet ni de glissement. */

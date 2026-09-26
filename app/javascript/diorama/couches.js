@@ -23,6 +23,29 @@ export function creerCoucheDalles(L, { modele, estListee, options }) {
   return new Couche(modele, { ...options, crossOrigin: "anonymous" })
 }
 
+// Les dalles recalculées (maquette blanche, ambiance) : calculées une fois, puis recopiées depuis ce
+// cache quand Leaflet les redemande (retour sur une zone, zoom arrière puis avant). Le canevas de la
+// dalle est gardé tel quel : Leaflet ne réutilise pas ses tuiles. Les plus anciennes sortent au-delà
+// de `max` (≈ 256 Kio chacune).
+export function creerCache(max = 160) {
+  const dalles = new Map()
+  return {
+    // Recopie la dalle gardée dans `toile` ; false si elle n'a pas encore été calculée.
+    lire(chemin, toile) {
+      const gardee = dalles.get(chemin)
+      if (!gardee) return false
+      dalles.delete(chemin)
+      dalles.set(chemin, gardee) // la plus récemment servie passe en dernier
+      toile.getContext("2d").drawImage(gardee, 0, 0)
+      return true
+    },
+    garder(chemin, toile) {
+      dalles.set(chemin, toile)
+      if (dalles.size > max) dalles.delete(dalles.keys().next().value)
+    }
+  }
+}
+
 function charger(url) {
   return new Promise((ok) => {
     const image = new Image()
@@ -40,6 +63,7 @@ const DESAT = 0.85 // vers le gris, part du chemin
 const CLAIR = 0.55 // puis vers le blanc
 
 export function creerCoucheBlanche(L, { dalle, masque, estListee, masqueListe, options }) {
+  const cache = creerCache()
   const Couche = L.GridLayer.extend({
     createTile(coords, fini) {
       if (!estListee(coords)) return tuileVide(fini)
@@ -47,12 +71,14 @@ export function creerCoucheBlanche(L, { dalle, masque, estListee, masqueListe, o
       toile.width = COTE
       toile.height = COTE
       const chemin = `${coords.z}/${coords.x}/${coords.y}`
+      if (cache.lire(chemin, toile)) { setTimeout(() => fini(null, toile), 0); return toile }
       const urlMasque = masqueListe(coords) ? masque(chemin) : null
       Promise.all([charger(dalle(chemin)), urlMasque ? charger(urlMasque) : null]).then(([fond, couverture]) => {
         if (!fond) { fini(new Error("dalle absente"), toile); return }
         const ctx = toile.getContext("2d", { willReadFrequently: true })
         ctx.drawImage(fond, 0, 0, COTE, COTE)
         if (couverture) blanchir(ctx, couverture)
+        cache.garder(chemin, toile)
         fini(null, toile)
       })
       return toile
