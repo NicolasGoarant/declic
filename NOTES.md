@@ -14,6 +14,8 @@
   - Secteur couvert = dalle listée au niveau 8 du manifeste (pas le simple rectangle) ; hors secteur = exclu en silence. Actuellement 17/18 (reste : Landremont).
   - Sans MNS : z = z_ref (231,17 m) ; ~1,73 px de mosaïque par mètre d'écart → marqueurs ~35-45 px trop hauts en ville basse.
   - Vérifié en Chromium headless (`~/.cache/ms-playwright/chromium-1243`, piloté via CDP) ; le Chrome du MCP Playwright reste absent.
+  - Filtres par catégorie (`window._declicFilter`, chips en bas à gauche) et bouton « Me localiser » (losange bleu + ellipse de précision ; message si hors secteur couvert). Testés en Chromium headless avec géolocalisation simulée : le vrai prompt de permission reste à essayer à la main.
+  - Tuiles servies par `https://tuiles-declic.mist-media.eu/toits-v1/` (ancienne URL r2.dev abandonnée). Côté `~/Documents/nancy-3d` : `publier-r2.py` modifié mais NON commité ; le manifeste en ligne contient encore l'ancienne URL dans `modele_url_dalle` (republier avec publier-r2.py).
 - MJC Desforges (id 104) : coordonnées corrigées en base de DEV seulement (était dans le Loiret) ; à refaire en prod si la fiche y existe.
 
 ## Reste à faire
