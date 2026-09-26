@@ -75,7 +75,7 @@ class FichesTest < ApplicationSystemTestCase
     assert_selector "#fch-similaires .fch-vignette", text: "Vélo-École"
   end
 
-  test "belle histoire : où rencontrer, points forts, source, suggestions, sans bloc d'action ni horaire" do
+  test "belle histoire : où se rendre, points forts, source, suggestions, sans bloc d'action ni horaire" do
     s = Story.create!(title: "Serena, parfumeuse", chapo: "Un chapô.", body: "Le récit.", is_active: true,
                       location: "27 rue Frédéric Bazille, 35400 Saint-Malo", venue_name: "Atelier Serena",
                       discover_url: "https://exemple.org/atelier", quote: "Tout part d'un souvenir.", quote_author: "Serena",
@@ -87,7 +87,9 @@ class FichesTest < ApplicationSystemTestCase
     visit story_path(s)
 
     assert_selector ".fch-badge", text: "Belle histoire"
-    assert_selector ".fch-pratique h2", text: "Où rencontrer Atelier Serena ?"
+    assert_selector ".fch-pratique h2", text: "Où se rendre Atelier Serena"
+    assert_selector ".fch-pratique h2 strong", text: "Atelier Serena"
+    assert_no_text "Où rencontrer"
     assert_selector ".fch-pratique a[href='https://exemple.org/atelier']", text: "Découvrir Atelier Serena"
     assert_selector "h2", text: "À propos de cette histoire"
     assert_selector ".fch-points li", text: "Des essences locales."

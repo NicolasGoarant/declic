@@ -11,6 +11,12 @@
     <%= f.text_area :chapo, rows: 3, placeholder: "Ex: Bénédicte a troqué ses fichiers Excel contre des tomes de fromage.", class: "field-input" %>
   </div>
   <div class="field">
+    <%= f.label :thematique, "Thématique", class: "field-label" %>
+    <%= f.select :thematique, Opportunity::CATEGORIES.map { |cle| [ Categorie.trouver(cle).libelle, cle ] },
+                 { include_blank: "— Aucune (étiquettes, puis proximité) —" }, class: "field-input" %>
+    <div class="field-hint">Oriente « Des opportunités pour avoir ton déclic » sur la fiche de l'histoire</div>
+  </div>
+  <div class="field">
     <%= f.label :happened_on, "Date de l'histoire", class: "field-label" %>
     <%= f.date_field :happened_on, class: "field-input" %>
   </div>

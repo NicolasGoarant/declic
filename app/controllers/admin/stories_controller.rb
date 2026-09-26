@@ -179,7 +179,7 @@ class Admin::StoriesController < Admin::BaseController
       :inline_caption_3,
       :source_name, :source_url, :source_published_on,
       :slug, :tags, :active, :is_active, :published,
-      :venue_name, :discover_url, :quote, :quote_author,
+      :venue_name, :discover_url, :quote, :quote_author, :thematique,
       :contact_info,
       :author_name, :author_email, :phone, :address, :city, :postal_code,
       points_forts_saisie: [ :icone, :titre, :texte ]
