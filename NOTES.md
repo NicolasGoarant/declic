@@ -10,7 +10,8 @@
   - `Opportunity.date_iso` (ISO strict), partagée avec l'export ; `declic:dates_demo` (dev seulement, déjà lancée le 2026-09-26).
 - Écran Carte plein écran (mobile/tablette < 1024 px) :
   - `.acc-ecran` = `100dvh - var(--tabbar-h)` ; `--tabbar-h` = 64 px + `env(safe-area-inset-bottom)` (une seule définition, dans `:root` de `accueil.css`, réutilisée par la tab bar, la carte et le corps de page). Leaflet recalcule sa taille via ResizeObserver + `orientationchange`.
-  - Contrôles flottants, du haut vers le bas : en-tête (logo, cloche, profil), recherche, catégories, puces « Autour de moi / Aujourd'hui / Cette semaine / Filtres » ; fond blanc translucide + `backdrop-filter: blur`, coins arrondis. Les puces sont dans `_puces` (rendu dans `.acc-tete`).
+  - Contrôles flottants, du haut vers le bas : logo « Déclic » (sans fond, halo blanc en text-shadow), recherche pleine largeur, six catégories sur une ligne (Belles Histoires en 6e, compteurs, filtre) ; fond blanc translucide + `backdrop-filter: blur`. Supprimés (2026-09-26) : puces Autour de moi / Aujourd'hui / Cette semaine / Filtres, sélecteur Grand Nancy, recentrage, cloche et profil du haut, et le JS associé (géolocalisation, filtres temporels, rayon). Le volet est toujours « Au centre de la vue », trié par distance au centre.
+  - Vue initiale : constantes `CENTRE_INITIAL` (place Stanislas 48.6936 N, 6.1833 E, via `diorama_projection.js`) et `ZOOM_INITIAL` en tête de `diorama_controller.js`. `?debug_vue=1` affiche centre lat/lon + zoom en direct (`versWGS84`, inverse au sol). « Voir tout » recadre encore sur tous les pins (`cadrer`).
   - Accroche (h1) : masquée visuellement hors bureau (reste dans le DOM pour les lecteurs d'écran), affichée dans le panneau gauche ≥ 1024 px. Choix le plus simple : aucun autre écran « Explorer » n'existe dans cette page.
   - Bottom sheet `sheet_controller.js` (partiel `_volet`) : repliée = poignée de 56 px (`--poignee-h`) ; dépliée = 55 dvh (`--sheet-h`). Déplacement par `transform: translateY` (250 ms ease-out), jamais `height`. Tap sur la poignée, glisser (seuil 60 px : > 60 haut = ouvre, > 60 bas = ferme, sinon retour), Échap, tap sur la carte ou « Voir tout » = replie. Focus sur la 1re fiche à l'ouverture ; panneau `inert` tant qu'elle est repliée. La poignée affiche titre, « n lieux » (cadrage courant, mis à jour à chaque déplacement/zoom) et chevron. Sur bureau : panneau fixe, sans sheet.
   - Sheet dépliée : zoom/recentrage s'effacent, l'attribution monte avec elle.
@@ -19,6 +20,7 @@
 - Antérieur (PR #27) : export diorama, `/labo/diorama`, `diorama_projection.js`, carte de la home dans `shared/_map`.
 
 ## Reste à faire
+- Zoom initial (6) provisoire : `docs/maquettes/declic-vue-initiale-stanislas-v1.png` absente du dépôt ; comparer et ajuster `ZOOM_INITIAL` avec `?debug_vue=1`.
 - Publier sur R2 `masque-bati/`, `toits-v1-propriete/` (chacun avec un `manifeste.json`) et `ambiances/{nom}-actuelle.json` : bascule et ambiances apparaîtront seules.
 - Licence Géonancy : le manifeste dit encore « local seulement ».
 - Sur mobile, « Des histoires qui inspirent », témoignages et presse restent sous l'écran Carte (scroll de page, atteignable seulement en glissant hors de la carte). À décider : les mettre dans la sheet ou sur l'écran Explorer.

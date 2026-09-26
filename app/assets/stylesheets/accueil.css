@@ -93,16 +93,11 @@ body.acc-corps {
 }
 .acc-tete > * { pointer-events: auto; }
 
-.acc-entete { display: flex; align-items: center; justify-content: space-between; min-height: 48px; }
-.acc-entete-actions { display: flex; align-items: center; gap: 10px; }
+.acc-entete { display: flex; align-items: center; min-height: 48px; }
+/* Logo : sans fond, le diorama apparaît derrière ; un léger halo blanc garde « Déclic » lisible. */
 .acc-entete .acc-logo {
-  padding: 4px 14px 4px 4px; border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-  box-shadow: var(--ombre-legere);
-}
-.acc-rond {
-  display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%;
-  background: rgba(255, 255, 255, 0.82); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: var(--ombre-legere); color: var(--encre);
+  padding: 4px 0;
+  text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 1px 10px rgba(255, 255, 255, 0.9);
 }
 
 /* Hors bureau, l'accroche ne prend pas de hauteur au-dessus du diorama : elle reste dans la page
@@ -114,16 +109,11 @@ body.acc-corps {
 .acc-accroche em { font-style: normal; color: var(--violet); }
 
 .acc-recherche { display: flex; gap: 8px; }
-.acc-territoire, .acc-champ {
+.acc-champ {
   display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 12px;
   background: rgba(255, 255, 255, 0.82); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
   border: 1px solid rgba(232, 230, 240, 0.9); border-radius: 999px;
   box-shadow: var(--ombre-legere);
-}
-.acc-territoire { flex: none; position: relative; }
-.acc-territoire select {
-  appearance: none; border: 0; background: transparent; font-weight: 700; font-size: 14px;
-  padding-right: 4px; cursor: pointer;
 }
 .acc-champ { flex: 1; min-width: 0; color: var(--gris); }
 .acc-champ input {
@@ -131,25 +121,24 @@ body.acc-corps {
 }
 .acc-champ input::placeholder { color: var(--gris); }
 
+/* Six catégories sur une seule ligne (375 px sans défilement) : cellules égales, texte à la ligne si besoin. */
 .acc-categories {
-  display: flex; gap: 4px; padding: 4px 6px;
-  overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
+  display: flex; gap: 0; padding: 4px 2px;
   border-radius: 20px; background: rgba(255, 255, 255, 0.78);
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: var(--ombre-legere);
 }
-.acc-categories::-webkit-scrollbar { display: none; }
 .acc-cat {
-  position: relative; flex: none; scroll-snap-align: start;
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  min-width: 72px; padding: 4px 4px 6px; border: 0; border-radius: 14px; background: transparent;
-  cursor: pointer; font-size: 11.5px; font-weight: 700;
+  position: relative; flex: 1 1 0; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 3px 0 4px; border: 0; border-radius: 12px; background: transparent;
+  cursor: pointer; font-size: 9px; line-height: 1.1; font-weight: 700; text-align: center; letter-spacing: -0.02em;
 }
-.acc-cat img { width: 44px; height: 44px; filter: drop-shadow(0 3px 4px rgba(29, 26, 43, 0.18)); transition: transform 0.15s; }
-.acc-cat span { white-space: nowrap; }
+.acc-cat img { width: 34px; height: 34px; filter: drop-shadow(0 3px 4px rgba(29, 26, 43, 0.18)); transition: transform 0.15s; }
+.acc-cat span { max-width: 100%; }
 .acc-cat small {
-  position: absolute; top: 0; right: 8px; min-width: 18px; height: 18px; padding: 0 5px;
-  border-radius: 9px; background: var(--c, var(--violet)); color: var(--blanc);
-  font-size: 11px; line-height: 18px; text-shadow: none;
+  position: absolute; top: -1px; right: 3px; min-width: 16px; height: 16px; padding: 0 4px;
+  border-radius: 8px; background: var(--c, var(--violet)); color: var(--blanc);
+  font-size: 10px; line-height: 16px; text-shadow: none;
 }
 .acc-cat small:empty { display: none; }
 .acc-cat:hover img { transform: translateY(-2px); }
@@ -193,42 +182,12 @@ body.acc-corps {
 }
 
 .acc-zoom { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.acc-rond-bouton, .acc-zoom-pile button {
+.acc-zoom-pile button {
   display: grid; place-items: center; width: 46px; height: 46px; border: 0; background: var(--blanc); cursor: pointer;
 }
-.acc-rond-bouton { border-radius: 50%; box-shadow: var(--ombre); }
 .acc-zoom-pile { display: flex; flex-direction: column; border-radius: 23px; overflow: hidden; box-shadow: var(--ombre); }
 .acc-zoom-pile button + button { border-top: 1px solid var(--gris-clair); }
-.acc-rond-bouton:hover, .acc-zoom-pile button:hover { background: var(--violet-pale); }
-
-.acc-puces {
-  display: flex; gap: 8px; margin: 0 calc(-1 * var(--gouttiere)); padding: 0 var(--gouttiere) 4px;
-  overflow-x: auto; scrollbar-width: none;
-}
-.acc-puces::-webkit-scrollbar { display: none; }
-.acc-puce {
-  flex: none; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px;
-  border: 1px solid rgba(232, 230, 240, 0.9); border-radius: 999px; background: rgba(255, 255, 255, 0.82);
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-  box-shadow: var(--ombre-legere); font-size: 13px; font-weight: 700; cursor: pointer;
-}
-.acc-puce[aria-pressed="true"] { background: var(--violet); border-color: var(--violet); color: var(--blanc); }
-.acc-puce-autour { background: var(--violet); border-color: var(--violet); color: var(--blanc); }
-.acc-puce[aria-busy="true"] { opacity: 0.7; }
-
-.acc-filtres {
-  position: absolute; left: var(--gouttiere); right: var(--gouttiere); bottom: calc(var(--poignee-h) + 16px); z-index: 700;
-  display: grid; gap: 10px; padding: 14px; border-radius: var(--rayon); background: var(--blanc); box-shadow: var(--ombre);
-  max-width: 360px;
-}
-.acc-filtres[hidden] { display: none; }
-.acc-filtres label { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; }
-.acc-filtres input[type="range"] { accent-color: var(--violet); }
-.acc-filtres output { font-size: 13px; color: var(--gris); min-width: 7ch; text-align: right; }
-.acc-filtres button {
-  justify-self: start; border: 1px solid var(--gris-clair); border-radius: 999px; background: var(--blanc);
-  padding: 6px 14px; font-size: 13px; font-weight: 700; cursor: pointer;
-}
+.acc-zoom-pile button:hover { background: var(--violet-pale); }
 
 .acc-alerte {
   position: absolute; left: var(--gouttiere); right: var(--gouttiere); top: 50%; z-index: 800;
@@ -372,8 +331,6 @@ body.acc-corps {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .fiche p span { overflow: hidden; text-overflow: ellipsis; }
-.fiche-distance { color: var(--encre) !important; font-weight: 700; }
-.fiche-distance svg { color: var(--violet); }
 .fiche-signet {
   position: absolute; right: 6px; top: 12px; z-index: 2;
   display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%;
@@ -474,12 +431,12 @@ body.acc-corps {
   :root { --gouttiere: 28px; }
   .acc-recherche { max-width: 640px; }
   .acc-categories { justify-content: flex-start; }
-  .acc-cat { width: 96px; font-size: 13px; }
+  .acc-categories { justify-content: flex-start; gap: 4px; }
+  .acc-cat { flex: none; width: 96px; font-size: 13px; }
   .acc-cat img { width: 52px; height: 52px; }
   .fiche { width: 210px; }
   .fiche-bandeau { height: 118px; }
   .acc-presse-grille { grid-template-columns: repeat(2, 1fr); }
-  .acc-filtres { left: auto; right: 90px; width: 360px; }
 }
 
 /* ─── Bureau : barre du haut, panneau gauche de 380 px, carte à droite ─────────── */
@@ -523,25 +480,17 @@ body.acc-corps {
     letter-spacing: -0.015em; max-width: 30ch;
   }
   .acc-recherche { flex-direction: column; }
-  .acc-territoire, .acc-champ {
-    background: var(--blanc); -webkit-backdrop-filter: none; backdrop-filter: none;
+  .acc-champ {
+    background: var(--blanc); -webkit-backdrop-filter: none; backdrop-filter: none; flex: none;
   }
-  .acc-territoire { align-self: flex-start; }
-  .acc-champ { flex: none; }
   .acc-categories {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 14px 0 0; padding: 0; overflow: visible;
     border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
   }
-  .acc-cat { width: auto; padding: 8px 4px; }
+  .acc-cat { flex: none; width: auto; padding: 8px 4px; }
   .acc-cat:hover { background: var(--fond); }
-  .acc-puces {
-    position: absolute; top: 18px; left: calc(380px + var(--gouttiere)); z-index: 600;
-    margin: 0; padding: 0; overflow: visible;
-  }
-
   .acc-carte { grid-area: carte; height: auto; border-left: 1px solid var(--gris-clair); }
   .acc-commandes { bottom: 28px; right: 24px; }
-  .acc-filtres { top: 66px; bottom: auto; left: var(--gouttiere); right: auto; }
   .acc-carte .leaflet-bottom.leaflet-left { bottom: 16px; }
 
   /* Le volet est un panneau fixe : plus de sheet ni de glissement. */
@@ -570,4 +519,10 @@ body.acc-corps {
   .temoignage { width: calc((100% - 36px) / 4); }
   .acc-presse-grille { grid-template-columns: repeat(4, 1fr); }
   .acc-pied { max-width: 1240px; margin: 0 auto; }
+}
+
+/* Réglage de la vue initiale (?debug_vue=1) : centre et zoom courants. */
+.acc-debug-vue {
+  position: absolute; left: 8px; top: 50%; z-index: 900; padding: 4px 8px; border-radius: 6px;
+  background: rgba(29, 26, 43, 0.85); color: #fff; font: 12px/1.3 ui-monospace, monospace; pointer-events: none;
 }

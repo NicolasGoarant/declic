@@ -1,11 +1,6 @@
-<%# Mobile et tablette : en-tête flottant sur la carte. La consultation se fait sans compte :
-    cloche et profil sont des emplacements, pas encore des fonctions. %>
+<%# Mobile et tablette : le logo flotte sur la carte, sans fond (halo blanc pour la lisibilité). %>
 <div class="acc-entete">
   <%= link_to labo_accueil_path, class: "acc-logo", aria: { label: "Déclic, accueil" } do %>
     <span class="acc-logo-carre" aria-hidden="true">D</span><span>Déclic</span>
   <% end %>
-  <div class="acc-entete-actions">
-    <span class="acc-rond" role="img" aria-label="Notifications (bientôt)" title="Notifications : bientôt"><%= picto(:cloche, taille: 22) %></span>
-    <span class="acc-rond acc-rond-profil" role="img" aria-label="Profil (consultation sans compte)" title="Consultation sans compte"><%= picto(:profil, taille: 22) %></span>
-  </div>
 </div>

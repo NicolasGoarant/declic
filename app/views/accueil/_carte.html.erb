@@ -32,25 +32,11 @@
     <% end %>
 
     <div class="acc-zoom">
-      <button type="button" class="acc-rond-bouton" aria-label="Recentrer la carte" data-action="diorama#recentrer">
-        <%= picto(:recentrer, taille: 20) %>
-      </button>
       <div class="acc-zoom-pile">
         <button type="button" aria-label="Zoomer" data-action="diorama#zoomer" data-diorama-sens-param="1"><%= picto(:plus, taille: 20) %></button>
         <button type="button" aria-label="Dézoomer" data-action="diorama#zoomer" data-diorama-sens-param="-1"><%= picto(:moins, taille: 20) %></button>
       </div>
     </div>
-  </div>
-
-  <div class="acc-filtres" id="acc-filtres" hidden data-diorama-target="filtres">
-    <label>
-      <span>Distance</span>
-      <input type="range" min="200" max="12000" step="200" value="12000"
-             data-diorama-target="rayon" data-action="input->diorama#changerRayon">
-      <output data-diorama-target="rayonTexte">sans limite</output>
-    </label>
-    <p class="acc-note" data-diorama-target="noteFiltres">La distance se mesure depuis votre position : touchez « Autour de moi ».</p>
-    <button type="button" data-action="diorama#reinitialiser">Tout réinitialiser</button>
   </div>
 
   <p class="acc-alerte" role="status" hidden data-diorama-target="alerte"></p>
