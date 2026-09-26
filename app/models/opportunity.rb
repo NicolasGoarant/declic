@@ -79,17 +79,49 @@ class Opportunity < ApplicationRecord
   # Ce sont des chaînes : le formulaire admin écrit de l'ISO (AAAA-MM-JJ, <input type=date>),
   # mais l'historique contient du texte libre (« Toute l'année », « Inscriptions jusqu'au … »).
   # Seul l'ISO strict compte comme une date ; tout le reste vaut « sans date ».
-  def self.date_iso(valeur)
-    texte = valeur.to_s.strip
-    return nil unless texte.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+  # Les colonnes de référence sont désormais starts_on / ends_on (+ start_time / end_time) ;
+  # la reprise de l'historique est décrite dans ConversionDates.
+  def self.date_iso(valeur) = ConversionDates.date_iso(valeur)
 
-    Date.iso8601(texte)
-  rescue Date::Error
-    nil
+  def date_debut = starts_on || self.class.date_iso(start_date)
+  def date_fin   = ends_on || self.class.date_iso(end_date)
+
+  # Pont temporaire : tant que l'admin écrit encore start_date / end_date, on recopie l'ISO
+  # dans starts_on / ends_on. Chaîne vidée -> date vidée ; texte libre -> date inchangée.
+  before_save :reporter_dates_saisies
+
+  # --- Affichage des dates (fiche Opportunité) ---
+  JOURS_ABREGES = %w[dim. lun. mar. mer. jeu. ven. sam.].freeze
+  MOIS = %w[janvier février mars avril mai juin juillet août septembre octobre novembre décembre].freeze
+
+  # Sans aucune date : « Ouvert toute l'année », etc. (le détail va dans schedule_text).
+  def permanente? = starts_on.nil? && ends_on.nil?
+
+  # Pas encore terminée (inclut une opportunité en cours) ; faux si permanente.
+  def a_venir? = !permanente? && derniere_date >= aujourdhui_a_paris
+  def passee?  = !permanente? && derniere_date < aujourdhui_a_paris
+
+  # « Sam. 14 février 2026 », « Du sam. 14 février au dim. 15 mars 2026 », « Jusqu'au … » ; nil si permanente.
+  def date_affichee
+    return nil if permanente?
+    return "Jusqu'au #{jour_en_toutes_lettres(ends_on)}" if starts_on.nil?
+    return jour_en_toutes_lettres(starts_on).upcase_first if ends_on.nil? || ends_on == starts_on
+
+    debut = jour_en_toutes_lettres(starts_on, annee: starts_on.year != ends_on.year)
+    "Du #{debut} au #{jour_en_toutes_lettres(ends_on)}"
   end
 
-  def date_debut = self.class.date_iso(start_date)
-  def date_fin   = self.class.date_iso(end_date)
+  # « 14h - 18h », « 9h30 », sinon schedule_text (« Ouvert toute l'année, sur rendez-vous »).
+  def horaire_affiche
+    heures = [ start_time, end_time ].compact.map { |t| t.min.zero? ? "#{t.hour}h" : "%dh%02d" % [ t.hour, t.min ] }
+    heures.any? ? heures.join(" - ") : schedule_text.presence
+  end
+
+  # --- Contenu de la fiche ---
+  has_one_attached :organization_logo
+
+  # « Au programme » : liste de chaînes (colonne json).
+  def programme_liste = Array(programme).map { |etape| etape.to_s.strip }.reject(&:empty?)
 
   # =========== Helpers « virage » CSV ===========
   def skills_list
@@ -141,6 +173,26 @@ class Opportunity < ApplicationRecord
     geocode_and_guard
   rescue => e
     Rails.logger.warn("[geocode_if_needed] #{e.class}: #{e.message}")
+  end
+
+  def reporter_dates_saisies
+    { start_date: :starts_on, end_date: :ends_on }.each do |source, cible|
+      next unless will_save_change_to_attribute?(source)
+
+      texte = self[source].to_s.strip
+      if texte.empty?
+        self[cible] = nil
+      elsif (date = self.class.date_iso(texte))
+        self[cible] = date
+      end
+    end
+  end
+
+  def derniere_date = ends_on || starts_on
+  def aujourdhui_a_paris = Time.current.in_time_zone(ConversionDates::FUSEAU).to_date
+
+  def jour_en_toutes_lettres(date, annee: true)
+    [ JOURS_ABREGES[date.wday], date.day, MOIS[date.month - 1], (date.year if annee) ].compact.join(" ")
   end
 
   def honeypot_must_be_blank
