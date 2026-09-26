@@ -7,3 +7,4 @@ pin "@hotwired/stimulus-loading", to: "stimulus-loading.js"
 pin_all_from "app/javascript/controllers", under: "controllers"
 
 pin "map", to: "map.js"
+pin "diorama_projection", to: "diorama_projection.js"
