@@ -1,0 +1,33 @@
+<%# Belles Histoires réelles de la base (les plus récentes). %>
+<section class="acc-section acc-histoires" aria-labelledby="acc-histoires-titre">
+  <div class="acc-section-tete">
+    <h2 id="acc-histoires-titre">Des histoires qui inspirent</h2>
+    <%= link_to stories_path, class: "acc-lien-violet" do %>
+      Voir toutes les histoires <%= picto(:fleche, taille: 16) %>
+    <% end %>
+  </div>
+  <% if histoires.any? %>
+    <div class="acc-histoires-rangee">
+      <% histoires.each do |histoire| %>
+        <%= link_to story_path(histoire), class: "histoire" do %>
+          <% if (photo = photo_de(histoire)) %>
+            <%= image_tag photo, alt: "", class: "histoire-photo", loading: "lazy", decoding: "async" %>
+          <% else %>
+            <span class="histoire-photo histoire-photo-vide"><%= icone_categorie(Categorie.trouver(Categorie::HISTOIRES), taille: 40) %></span>
+          <% end %>
+          <span class="histoire-texte">
+            <span class="histoire-titre"><%= histoire.title %></span>
+            <% if (extrait = histoire.quote.presence || histoire.chapo.presence) %>
+              <span class="histoire-extrait"><%= truncate(strip_tags(extrait), length: 110, separator: " ") %></span>
+            <% end %>
+            <% if (lieu = [histoire.author_name.presence, commune_de(nil, histoire.location)].compact).any? %>
+              <span class="histoire-lieu"><%= lieu.join(" · ") %></span>
+            <% end %>
+          </span>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="acc-note">Les premières Belles Histoires arrivent bientôt.</p>
+  <% end %>
+</section>

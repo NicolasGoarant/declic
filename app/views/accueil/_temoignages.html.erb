@@ -1,0 +1,26 @@
+<%# Même contenu que la section témoignages de pages/home.html.erb (la home actuelle reste
+    intacte : à supprimer de là-bas quand cette page la remplacera). %>
+<% temoignages = [
+  { nom: "Lucile", role: "Chargée de communication", photo: "avatars/lucile.png",
+    texte: "Je cherchais un engagement local sans trop savoir par où commencer. Grâce à Déclic, j'ai trouvé une mission de bénévolat dans une épicerie solidaire à 10 minutes de chez moi." },
+  { nom: "Matthieu", role: "En reconversion", photo: "avatars/francois.png",
+    texte: "Je regardais les offres d'emploi sans trop savoir ce qui me correspondait. Avec Déclic, j'ai trouvé un atelier de bilan de compétences animé localement. Ça a totalement réorienté ma trajectoire." },
+  { nom: "Karim", role: "Développeur junior", photo: "avatars/luc.png",
+    texte: "Je voulais entreprendre mais je ne savais pas par où commencer. Sur Déclic, j'ai participé à un afterwork d'entrepreneurs. J'y ai pitché mon projet pour la première fois et décroché un vrai coup de pouce." },
+  { nom: "Emma", role: "Jeune diplômée", photo: "avatars/emma.jpeg",
+    texte: "Après mes études, je me sentais un peu perdue. En explorant Déclic, j'ai découvert un atelier d'accompagnement pour jeunes actifs. J'y ai rencontré d'autres personnes motivées et retrouvé de la confiance." }
+] %>
+<section class="acc-section acc-temoignages" aria-labelledby="acc-temoignages-titre">
+  <div class="acc-section-tete">
+    <h2 id="acc-temoignages-titre">Elles et ils ont trouvé leur déclic</h2>
+  </div>
+  <div class="acc-temoignages-rangee">
+    <% temoignages.each do |t| %>
+      <figure class="temoignage">
+        <%= image_tag t[:photo], alt: "", class: "temoignage-photo", width: 56, height: 56, loading: "lazy" %>
+        <blockquote>« <%= t[:texte] %> »</blockquote>
+        <figcaption><strong><%= t[:nom] %></strong> · <%= t[:role] %></figcaption>
+      </figure>
+    <% end %>
+  </div>
+</section>

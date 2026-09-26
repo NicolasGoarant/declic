@@ -75,6 +75,22 @@ class Opportunity < ApplicationRecord
   # --- Defaults ---
   before_validation :apply_defaults
 
+  # --- Dates saisies (start_date / end_date) ---
+  # Ce sont des chaînes : le formulaire admin écrit de l'ISO (AAAA-MM-JJ, <input type=date>),
+  # mais l'historique contient du texte libre (« Toute l'année », « Inscriptions jusqu'au … »).
+  # Seul l'ISO strict compte comme une date ; tout le reste vaut « sans date ».
+  def self.date_iso(valeur)
+    texte = valeur.to_s.strip
+    return nil unless texte.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+
+    Date.iso8601(texte)
+  rescue Date::Error
+    nil
+  end
+
+  def date_debut = self.class.date_iso(start_date)
+  def date_fin   = self.class.date_iso(end_date)
+
   # =========== Helpers « virage » CSV ===========
   def skills_list
     skills.to_s.split(/[;,]/).map(&:strip).reject(&:blank?)

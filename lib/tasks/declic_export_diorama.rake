@@ -27,19 +27,13 @@ namespace :declic do
     # type=date>, donc au format ISO "YYYY-MM-DD"). C'est là que vivent les vraies dates.
     # Quelques valeurs historiques sont du texte libre ("Toute l'année", "Inscriptions
     # jusqu'au ...") : non convertibles, traitées comme absence de date (offre permanente).
-    parse_date = lambda do |valeur|
-      next nil if valeur.blank?
-      Date.iso8601(valeur)
-    rescue ArgumentError
-      nil
-    end
-
+    # La règle de lecture est Opportunity.date_iso, partagée avec la page d'accueil.
     hote = ENV["APP_HOST"].presence
     lignes = scope.order(:id).map do |o|
       lat = o.latitude&.to_f
       lon = o.longitude&.to_f
-      debut = parse_date.call(o.start_date)
-      fin   = parse_date.call(o.end_date)
+      debut = o.date_debut
+      fin   = o.date_fin
       image = if hote.nil?
                 nil
               elsif o.image.attached?

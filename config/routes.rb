@@ -35,6 +35,8 @@ Rails.application.routes.draw do
 
   # Page de test du pyramide de tuiles diorama (non liée depuis la navigation)
   get "labo/diorama", to: "labo#diorama", as: :labo_diorama
+  # Future page d'accueil sur le diorama (non liée depuis la navigation)
+  get "labo/accueil", to: "labo#accueil", as: :labo_accueil
   # --- API PUBLIQUE ---
 
   namespace :api do

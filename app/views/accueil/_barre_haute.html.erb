@@ -1,0 +1,15 @@
+<%# Bureau seulement (≥ 1024 px) : logo, navigation, bouton « Proposer une initiative ». %>
+<header class="acc-barre">
+  <%= link_to labo_accueil_path, class: "acc-logo", aria: { label: "Déclic, accueil" } do %>
+    <span class="acc-logo-carre" aria-hidden="true">D</span><span>Déclic</span>
+  <% end %>
+  <nav class="acc-barre-nav" aria-label="Navigation principale">
+    <a href="#carte" aria-current="page">Carte</a>
+    <%= link_to "Explorer", opportunities_path %>
+    <%= link_to "Belles Histoires", stories_path %>
+    <%= link_to "Pourquoi Déclic ?", philosophie_path %>
+  </nav>
+  <%= link_to new_opportunity_path, class: "acc-bouton-proposer" do %>
+    <%= picto(:plus, taille: 18) %> Proposer une initiative
+  <% end %>
+</header>
