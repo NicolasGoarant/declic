@@ -107,11 +107,14 @@ export class Precipitations {
       const contour = pl.contour_largeur_px * echelle
       const marge = flou * 3 + contour + 1
       c.width = c.height = Math.ceil((rayon + marge) * 2)
-      cx.filter = flou ? `blur(${flou}px)` : "none"
       cx.beginPath()
       cx.arc(c.width / 2, c.height / 2, rayon, 0, Math.PI * 2)
+      cx.filter = flou ? `blur(${flou}px)` : "none"
       cx.fillStyle = r.couleur_flocon
       cx.fill()
+      // Le contour reste NET (jamais flouté, même sur les plans les plus proches) : c'est lui qui
+      // garde le flocon visible sur la maquette claire, un flou l'aurait dilué jusqu'à disparaître.
+      cx.filter = "none"
       cx.strokeStyle = r.contour_couleur
       cx.lineWidth = contour
       cx.stroke()
