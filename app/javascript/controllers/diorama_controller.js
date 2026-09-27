@@ -15,6 +15,8 @@ import { creerCoucheAmbiance, lireAmbiance, uniformesEtat } from "diorama/ambian
 import { momentAuto, saisonAuto, libelleAuto } from "diorama/soleil"
 import { meteoAuto, meteoGardee } from "diorama/meteo"
 import { Precipitations } from "diorama/precipitations"
+import { chargerLampadaires, compterLampadaires } from "diorama/lampadaires"
+import { LAMPADAIRES } from "diorama/reglages"
 import { regrouper, eventail, FLEURS_MAX } from "diorama/bouquets"
 import { chargerContour, creerDecoupe, poserSocle } from "diorama/contour"
 import { CLE_FOND, CLE_AMBIANCE, CLE_AUTO, CLES_REGLAGES, CLE_BLANCHE, lire, ecrire, fondDeDepart } from "diorama/preferences"
@@ -211,11 +213,11 @@ export default class extends Controller {
     if (this.dioramaDispo) {
       try {
         // Les masques se lisent avant la carte : sans leur liste de dalles, on demanderait des dalles absentes (404).
-        const [, masque, arbres, lumieres] = await Promise.all([
+        const [, masque, arbres] = await Promise.all([
           this.chargerManifeste(), t.disponibles.blanche ? this.chargerListe(t.masque) : null,
-          t.disponibles.arbres ? this.chargerListe(t.arbres) : null, t.disponibles.lumieres ? this.chargerListe(t.lumieres) : null
+          t.disponibles.arbres ? this.chargerListe(t.arbres) : null
         ])
-        Object.assign(this, { dallesMasque: masque, dallesArbres: arbres, dallesLumieres: lumieres })
+        Object.assign(this, { dallesMasque: masque, dallesArbres: arbres })
         this.preparerDecoupe(await contour)
       } catch (erreur) {
         console.error("diorama :", erreur)
@@ -486,19 +488,42 @@ export default class extends Controller {
         .then((jsons) => Object.fromEntries(PUBLIEES.map((nom, i) => [nom, jsons[i]])))
       this.couches[cle] = this.decouper(creerCoucheAmbiance(this.L, {
         cle,
-        uniformes: publies.then((p) => uniformesEtat(etat, p, { arbres: Boolean(this.dallesArbres), lumieres: Boolean(this.dallesLumieres) })),
+        uniformes: publies.then((p) => uniformesEtat(etat, p, { arbres: Boolean(this.dallesArbres) })),
         dalle: (chemin) => this.url(t.lot, `${chemin}.webp`),
         propriete: (chemin) => this.url(t.propriete, `${chemin}.png`),
         masque: (chemin) => this.url(t.masque, `${chemin}.png`),
         arbres: (chemin) => this.url(t.arbres, `${chemin}.png`),
-        lumieres: (chemin) => this.url(t.lumieres, `${chemin}.png`),
         estListee: this.estListee, masqueListe: this.masqueListe,
         arbresListe: (coords) => this.listee(this.dallesArbres, coords),
-        lumieresListe: (coords) => this.listee(this.dallesLumieres, coords),
+        moment: etat.moment,
+        lampadaires: LAMPADAIRES.intensite[etat.moment] ? this.lampadaires() : null,
         options: this.optionsCouche
       }))
     }
     return this.couches[cle]
+  }
+
+  // Les lampadaires (diorama/lampadaires), lus une fois, au premier moment éclairé ; null sans eux.
+  lampadaires() {
+    const t = this.tuilesValue
+    this.promesseLampadaires ||= t.lumieres && t.disponibles?.lumieres
+      ? chargerLampadaires(`${t.base}/${t.lumieres}`).catch((erreur) => {
+        console.error(`lampadaires : ${t.base}/${t.lumieres} illisible, la nuit reste sans lumières.`, erreur)
+        return null
+      })
+      : Promise.resolve().then(() => {
+        if (this.developpementValue) console.warn("lampadaires : ni lumieres-nuit/ ni lampadaires-bdtopo/ publiés sur R2, la nuit reste sans lumières.")
+        return null
+      })
+    return this.promesseLampadaires
+  }
+
+  // Nombre de lampadaires éclairés dont le pied est dans la vue (null tant qu'ils ne sont pas lus).
+  async lampadairesDansLaVue() {
+    const index = await this.lampadaires()
+    if (!index || !this.carte) return null
+    const b = this.carte.getPixelBounds(), k = 2 ** (8 - this.carte.getZoom())
+    return compterLampadaires(index, b.min.x * k, b.min.y * k, b.max.x * k, b.max.y * k)
   }
 
   // L'étalonnage publié `nom` (JSON), lu une fois ; null s'il est illisible.

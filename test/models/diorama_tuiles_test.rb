@@ -28,11 +28,17 @@ class DioramaTuilesTest < ActiveSupport::TestCase
                  tuiles(%w[masque-bati/manifeste.json masque-arbres/manifeste.json]).disponibles)
   end
 
-  test "masque des arbres et lumières de nuit : facultatifs, sondés sur leur manifeste" do
-    t = tuiles(%w[toits-v1/manifeste.json masque-arbres/manifeste.json lumieres-nuit/manifeste.json])
+  test "masque des arbres et lampadaires : facultatifs, sondés sur leur manifeste" do
+    t = tuiles(%w[toits-v1/manifeste.json masque-arbres/manifeste.json lampadaires-bdtopo/manifeste.json])
     assert t.disponibles[:arbres]
     assert t.disponibles[:lumieres]
-    assert_equal %w[masque-arbres lumieres-nuit], t.pour_js.values_at(:arbres, :lumieres)
+    assert_equal %w[masque-arbres lampadaires-bdtopo/lampadaires-bdtopo.json], t.pour_js.values_at(:arbres, :lumieres)
+    assert_nil tuiles(%w[toits-v1/manifeste.json]).pour_js[:lumieres]
+  end
+
+  test "les lanternes relevées passent avant les lampadaires BD TOPO" do
+    t = tuiles(%w[toits-v1/manifeste.json lampadaires-bdtopo/manifeste.json lumieres-nuit/manifeste.json])
+    assert_equal "lumieres-nuit/lanternes.json", t.pour_js[:lumieres]
   end
 
   test "la base vient de DIORAMA_TILES_URL, sinon du domaine par défaut" do
