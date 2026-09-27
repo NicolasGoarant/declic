@@ -15,9 +15,15 @@
 .lb-contenu { max-width: 1200px; margin: 0 auto; padding: 0 var(--gouttiere); }
 .lb-degrade { background: var(--degrade); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
-/* ─── En-tête ─── */
-.lb-hero { padding: 28px 0 36px; background: #f3effb; }
-.lb-hero-grille { display: grid; gap: 24px; align-items: center; }
+/* ─── En-tête ───
+   Mobile (<700px) : photo recadrée sur le sujet (jeune femme / collage), au-dessus du texte.
+   Desktop (≥700px) : même photo en fond plein cadre, texte posé sur sa zone claire (à gauche pour
+   Belles Histoires, centrée pour Opportunités — voir .lb-hero-centre) ; fond de secours #f3effb
+   pendant le chargement pour éviter tout flash de blanc pur. */
+.lb-hero { position: relative; overflow: hidden; background: #f3effb; }
+.lb-hero-image { position: relative; aspect-ratio: 750 / 500; }
+.lb-hero-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.lb-hero-grille { position: relative; padding: 24px var(--gouttiere) 32px; }
 .lb-etiquette {
   display: inline-block; margin-bottom: 12px; padding: 6px 12px; border-radius: 999px;
   background: var(--blanc); box-shadow: var(--ombre-legere); font-size: 12px; font-weight: 800;
@@ -33,11 +39,11 @@
   box-shadow: 0 10px 22px rgba(107, 61, 245, 0.3); transition: transform 0.15s;
 }
 .lb-bouton:hover { transform: translateY(-1px); }
-.lb-hero-visuel img { display: block; width: 100%; height: 260px; object-fit: cover; border-radius: 22px; box-shadow: var(--ombre); }
-.lb-hero-repli {
-  display: grid; place-items: center; height: 260px; border-radius: 22px; color: var(--blanc);
-  background: var(--degrade);
-}
+
+/* Opportunités : la zone claire de la photo est au centre, pas à gauche. */
+.lb-hero-centre { text-align: center; }
+.lb-hero-centre .lb-chapo { margin-left: auto; margin-right: auto; }
+.lb-hero-centre .lb-boutons { justify-content: center; }
 
 /* ─── Filtre catégories / thématiques ─── */
 .lb-categories { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 22px var(--gouttiere) 0; }
@@ -146,7 +152,12 @@
 .lb-final p { color: rgba(255, 255, 255, 0.92) !important; max-width: 480px; margin: 0 auto !important; }
 .lb-final .lb-bouton { margin-top: 24px; background: var(--blanc); color: var(--violet) !important; box-shadow: var(--ombre); }
 
-@media (min-width: 640px) { .lb-hero-grille { grid-template-columns: 1.2fr 1fr; } }
+@media (min-width: 700px) {
+  .lb-hero { min-height: 420px; display: flex; align-items: center; }
+  .lb-hero-image { position: absolute; inset: 0; aspect-ratio: auto; }
+  .lb-hero-grille { z-index: 1; width: 100%; padding: 48px var(--gouttiere); }
+  .lb-hero-centre { max-width: 560px; margin-inline: auto; }
+}
 
 @media (min-width: 900px) {
   .lb-explorer { grid-template-columns: 1.3fr 1fr; align-items: start; }
