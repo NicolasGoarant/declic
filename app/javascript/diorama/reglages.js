@@ -263,6 +263,43 @@ export const LAMPADAIRES = {
   }
 }
 
+// Les pins et les fleurs des bouquets : taille visible unique, et tous les effets (transformations
+// CSS pures, voir diorama/bouquets.js et diorama_controller.js#iconePin/#bouquet).
+//
+// TAILLE UNIQUE : les PNG de app/assets/images/markers/ n'ont pas la même « boîte utile » (les pixels
+// non transparents) — mesurée sur les @2x (192 × 192) avec la bbox du canal alpha (script jetable,
+// PIL) :
+//   benevolat 171×151 (78,6 % de la hauteur), ecologiser 150×168 (87,5 %), entreprendre 154×175
+//   (91,1 %), formation 135×118 (61,5 %), histoires 156×155 (80,7 %), rencontres 152×160 (83,3 %).
+// `fraction_utile` retient ce ratio par catégorie ; l'échelle à l'affichage est 1 / fraction_utile,
+// appliquée avec `transform-origin` au pied de l'icône (pin-picto, bouquet-fleur) pour qu'elle
+// grandisse vers le haut sans déplacer son pied.
+export const PINS = {
+  hauteur_px: { large: 52, etroit: 44 }, // hauteur VISIBLE (encre), ordinateur / mobile
+  fraction_utile: {
+    benevolat: 0.786, ecologiser: 0.875, entreprendre: 0.911,
+    formation: 0.615, histoires: 0.807, rencontres: 0.833
+  },
+  tige_longueur_px: 60,   // partagée par les pins isolés et les fleurs des bouquets
+  recouvrement_px: 4,     // l'icône mord légèrement sur la tige (pied commun aux deux tailles)
+  socle: { largeur_px: 19, hauteur_px: 12.2 },
+  // Éventail des bouquets (bouquets.js#eventail) : demi-angle (degrés) qui s'élargit avec le nombre de
+  // fleurs, pour qu'elles ne se chevauchent pas malgré une tige commune (unique, comme les pins
+  // isolés). Avec des icônes compensées jusqu'à 1,63× (« formation »), deux grandes catégories
+  // adjacentes dans l'éventail peuvent encore effleurer leurs boîtes : bouquet() écarte les plus
+  // grandes catégories les unes des autres avant de répartir l'éventail (voir diorama_controller.js).
+  eventail: { demi_angle_base: 34, demi_angle_pas: 26, demi_angle_max: 160 },
+  // Respiration : flottement vertical continu, phase (période + retard) tirée de l'identifiant du
+  // point (bouquets.js#respiration), pour que les pins ne pulsent pas en même temps.
+  respiration: { amplitude_px: 3, periode_min_s: 2.8, periode_max_s: 3.6 },
+  // Apparition : rebond à l'échelle au premier dessin (pins isolés seulement : un bouquet est
+  // redessiné à chaque zoom/filtre, une fleur ne peut donc pas « n'apparaître qu'une fois »).
+  apparition: { duree_ms: 420, decalage_ms: 30, decalage_max_ms: 600 },
+  survol: { echelle: 1.15, elevation_px: 4 },
+  selection: { echelle: 1.22, duree_ms: 380, onde_duree_ms: 550 },
+  rendezVousJour: { periode_s: 2.4 } // lueur pulsée d'une opportunité datée d'aujourd'hui
+}
+
 // Mode automatique.
 export const AUTO = {
   // Moment selon la hauteur du soleil à Nancy, en degrés.
