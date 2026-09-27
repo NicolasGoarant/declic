@@ -1,0 +1,192 @@
+/* « Pourquoi Déclic ? » (layout « fiche ») : s'appuie sur accueil.css (variables, logo, barre haute,
+   barre d'onglets, pied). Mobile d'abord ; deux colonnes à partir de 900 px. */
+
+.pq {
+  --rose: #e8409a;
+  --degrade: linear-gradient(90deg, #7b3ff2 0%, #d63cc0 55%, #ef4f8f 100%);
+  --lavande: #f4f0ff;
+  --jaune: #ffd84d;
+  --carte: 0 10px 30px rgba(49, 28, 120, 0.08);
+  overflow-x: clip;
+  background: var(--blanc);
+}
+.pq :where(h1, h2, h3, p, ul, figure) { margin: 0; }
+.pq h2 { font-size: clamp(28px, 4vw, 40px); line-height: 1.12; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 18px; }
+.pq h3 { font-size: 17px; font-weight: 800; line-height: 1.3; }
+.pq p { line-height: 1.65; color: #3d3a52; }
+
+.pq-contenu { max-width: 1160px; margin: 0 auto; padding: 0 var(--gouttiere); }
+.pq-degrade { background: var(--degrade); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pq-jaune { color: var(--jaune); }
+.pq-centre { text-align: center; }
+.pq-etiquette {
+  margin-bottom: 10px !important; font-size: 12px; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--violet) !important;
+}
+.pq-etiquette--pastille {
+  display: inline-block; padding: 6px 12px; border-radius: 999px; background: var(--blanc);
+  box-shadow: var(--ombre-legere);
+}
+.pq-icone { display: block; object-fit: contain; }
+
+/* Boutons */
+.pq-boutons { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+.pq-bouton {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; padding: 0 22px;
+  border-radius: 14px; font-weight: 800; font-size: 15px; text-decoration: none; transition: transform .15s ease, box-shadow .15s ease;
+}
+.pq-bouton:hover { transform: translateY(-1px); }
+.pq-bouton--plein { background: linear-gradient(90deg, #6a3df5, #8b3dff); color: var(--blanc) !important; box-shadow: 0 10px 22px rgba(107, 61, 245, 0.35); }
+.pq-bouton--blanc { background: var(--blanc); color: var(--encre) !important; box-shadow: var(--ombre); }
+.pq-bouton--grand { min-height: 56px; padding: 0 30px; color: var(--violet) !important; }
+.pq-etoile { fill: #ffc21a; stroke: #f0a800; }
+
+/* ─── En-tête ─── */
+.pq-hero { position: relative; padding: 28px 0 150px; background: #f3effb; isolation: isolate; }
+.pq-hero-photo {
+  position: absolute; inset: 0 0 0 auto; width: 100%; z-index: -1;
+  background: center 30% / cover no-repeat;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,.15) 70%, transparent);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,.15) 70%, transparent);
+}
+.pq-hero-texte { position: relative; }
+.pq-hero h1 { font-size: clamp(38px, 7vw, 60px); line-height: 1.05; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 18px; }
+.pq-chapo { max-width: 520px; font-size: 17px; color: var(--encre) !important; }
+
+/* ─── Chiffres ─── */
+.pq-chiffres { position: relative; z-index: 1; display: grid; gap: 12px; margin-top: -120px; }
+.pq-chiffre {
+  display: flex; align-items: center; gap: 18px; padding: 20px 22px; border-radius: var(--rayon);
+  background: var(--blanc); box-shadow: var(--carte); border: 1px solid #efedf6;
+}
+.pq-pastille {
+  flex: none; display: grid; place-items: center; width: 68px; height: 68px; border-radius: 18px;
+  background: color-mix(in srgb, var(--c, var(--violet)) 14%, var(--blanc));
+}
+.pq-chiffre p { display: grid; line-height: 1.3; }
+.pq-chiffre strong { font-size: 34px; font-weight: 800; color: var(--encre); line-height: 1.1; }
+.pq-chiffre-libelle { font-weight: 800; color: var(--encre); font-size: 15px; }
+.pq-chiffre-detail { font-size: 13px; color: var(--gris); }
+
+/* ─── Deux colonnes ─── */
+.pq-deux { display: grid; gap: 40px; align-items: center; }
+.pq-deux p + p { margin-top: 14px; }
+.pq-conviction { padding-top: 64px; padding-bottom: 72px; }
+.pq-encadre {
+  display: flex; align-items: center; gap: 12px; margin-top: 26px !important; padding: 16px 20px; border-radius: 14px;
+  background: #fff1c7; color: var(--encre) !important; font-weight: 800;
+}
+.pq-encadre svg { color: #e0a100; }
+
+/* Collage */
+.pq-collage { position: relative; display: grid; grid-template-columns: 1.25fr 1fr; grid-template-rows: 150px 150px 130px; gap: 12px; padding: 18px 0; }
+.pq-collage-case { position: relative; margin: 0; border-radius: 18px; overflow: visible; }
+.pq-collage-case > img { width: 100%; height: 100%; object-fit: cover; border-radius: 18px; box-shadow: var(--carte); border: 4px solid var(--blanc); }
+.pq-collage-case--1 { grid-row: 1 / 3; }
+.pq-collage-case--2 { grid-row: 1 / 2; }
+.pq-collage-case--3 { grid-row: 2 / 4; }
+.pq-collage-case--4 { grid-row: 3 / 4; grid-column: 1; }
+.pq-collage-etiquette {
+  position: absolute; display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px 7px 9px;
+  border-radius: 12px; background: var(--blanc); box-shadow: var(--ombre); font-size: 13px; font-weight: 800;
+  color: var(--c); white-space: nowrap;
+}
+.pq-collage-case--1 .pq-collage-etiquette { top: -14px; left: 12px; }
+.pq-collage-case--2 .pq-collage-etiquette { top: -14px; right: 8px; }
+.pq-collage-case--3 .pq-collage-etiquette { bottom: 14px; right: 8px; }
+.pq-collage-case--4 .pq-collage-etiquette { bottom: -12px; left: 12px; }
+
+/* ─── Bandes ─── */
+.pq-bande { padding: 64px 0; }
+.pq-bande--lavande { background: linear-gradient(180deg, #f5f1ff 0%, #f8f5ff 100%); }
+.pq-points { list-style: none; padding: 0; margin-top: 26px !important; display: grid; gap: 18px; }
+.pq-points li { display: flex; gap: 16px; align-items: flex-start; }
+.pq-points strong { display: block; color: var(--encre); margin-bottom: 2px; }
+.pq-points li > span:last-child { font-size: 14px; line-height: 1.55; color: #55526a; }
+.pq-point-icone {
+  flex: none; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 14px;
+  background: var(--blanc); color: var(--c); box-shadow: var(--ombre-legere);
+}
+
+/* Carte du territoire */
+.pq-carte { position: relative; display: block; padding-top: 36px; text-decoration: none; border-radius: var(--rayon); }
+.pq-carte svg { display: block; width: 100%; height: auto; overflow: visible; transition: transform .25s ease; }
+.pq-carte:hover svg { transform: scale(1.015); }
+.pq-carte-fond { fill: #fbf9ff; }
+.pq-carte-bord { fill: none; stroke: #a78bfa; stroke-width: 2; stroke-linejoin: round; }
+.pq-carte-voirie path { fill: none; stroke: #cdbdf6; stroke-width: 0.7; }
+.pq-pin path { fill: var(--c); filter: drop-shadow(0 4px 6px rgba(49, 28, 120, 0.25)); }
+.pq-manuscrit {
+  position: absolute; top: 0; right: 0; max-width: 200px; transform: rotate(-4deg);
+  font-family: "Caveat", "Segoe Print", cursive; font-size: 24px; line-height: 1.05; color: var(--violet) !important; text-align: right;
+}
+
+/* ─── Sections centrées et cartes ─── */
+.pq-section { padding-top: 64px; padding-bottom: 64px; }
+.pq-bande .pq-section { padding-top: 0; padding-bottom: 0; }
+.pq-sous-titre { text-align: center; margin: -8px auto 30px !important; color: var(--gris) !important; }
+.pq-grille { display: grid; gap: 16px; }
+.pq-carte-texte {
+  padding: 24px; border-radius: var(--rayon); background: var(--blanc); box-shadow: var(--carte); border: 1px solid #efedf6;
+}
+.pq-carte-texte p { font-size: 14px; color: #55526a; margin-top: 8px; }
+.pq-carte-texte--ligne { display: flex; gap: 18px; align-items: flex-start; }
+.pq-carte-texte--centre { text-align: center; }
+.pq-carte-texte--centre .pq-icone { margin: 0 auto 12px; }
+
+/* ─── Fondateur ─── */
+.pq-fondateur {
+  display: grid; justify-items: center; gap: 22px; text-align: center; padding-top: 8px; padding-bottom: 64px; max-width: 820px;
+}
+.pq-fondateur h2 { font-size: 26px; margin-bottom: 12px; }
+.pq-fondateur p + p { margin-top: 12px; }
+.pq-fondateur-photo { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--blanc); box-shadow: var(--carte); }
+.pq-conviction-fondateur { font-style: italic; font-weight: 700; color: var(--encre) !important; }
+
+/* ─── Appel final ─── */
+.pq-final { position: relative; isolation: isolate; overflow: hidden; padding: 60px 0; background: var(--degrade); text-align: center; }
+.pq-final-photo {
+  position: absolute; inset: 0; z-index: -1; background: center 35% / cover no-repeat;
+  opacity: 0.22; mix-blend-mode: luminosity; filter: blur(1.5px);
+}
+.pq-final h2 { color: var(--blanc); }
+.pq-final p { color: rgba(255, 255, 255, 0.92) !important; }
+.pq-final .pq-bouton { margin-top: 26px; }
+.pq-final-note { margin-top: 16px !important; font-size: 13px; }
+.pq-eclair { display: block; margin: 0 auto 10px; fill: var(--jaune); }
+
+/* Barre haute : deux boutons rapprochés (la barre espace ses enfants de 36 px). */
+.acc-bouton-temoignage { margin-right: -24px; background: var(--rose, #e8409a) !important; box-shadow: 0 6px 16px rgba(232, 64, 154, 0.3) !important; }
+
+@media (min-width: 640px) {
+  .pq-chiffres { grid-template-columns: repeat(3, 1fr); }
+  .pq-chiffre { flex-direction: column; align-items: flex-start; }
+  .pq-grille--4 { grid-template-columns: repeat(2, 1fr); }
+  .pq-collage { grid-template-rows: 190px 190px 160px; }
+}
+
+@media (min-width: 900px) {
+  .pq-hero { padding: 64px 0 170px; background: linear-gradient(90deg, #f4f0fb 0%, #f4f0fb 38%, #eae4f6 100%); }
+  .pq-hero-photo {
+    width: 64%;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 38%), linear-gradient(to bottom, #000 70%, transparent);
+    mask-image: linear-gradient(to right, transparent 0%, #000 38%), linear-gradient(to bottom, #000 70%, transparent);
+    -webkit-mask-composite: source-in; mask-composite: intersect;
+  }
+  .pq-hero-texte { max-width: 1160px; }
+  .pq-hero-texte > * { max-width: 560px; }
+  .pq-chiffres { margin-top: -110px; }
+  .pq-chiffre { flex-direction: row; align-items: center; }
+  .pq-deux { grid-template-columns: 1fr 1fr; gap: 56px; }
+  .pq-grille--3 { grid-template-columns: repeat(3, 1fr); }
+  .pq-grille--4 { grid-template-columns: repeat(4, 1fr); }
+  .pq-fondateur { grid-template-columns: 140px 1fr; justify-items: start; text-align: left; gap: 36px; }
+  .pq-fondateur-photo { width: 140px; height: 140px; }
+  .pq-bande, .pq-section { padding-top: 80px; padding-bottom: 80px; }
+  .pq-bande .pq-section { padding-top: 0; padding-bottom: 0; }
+  .pq-final { padding: 80px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pq-bouton, .pq-carte svg { transition: none; }
+}

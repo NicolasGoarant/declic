@@ -26,4 +26,16 @@ class PagesPubliquesTest < ActionDispatch::IntegrationTest
     DioramaTuiles.stub(:new, @tuiles) { get labo_diorama_url }
     assert_response :success
   end
+
+  test "GET /philosophie : page « Pourquoi Déclic ? » refondue" do
+    Rails.cache.delete("pourquoi/chiffres")
+    get philosophie_url
+    assert_response :success
+    assert_select "h1", /Pourquoi/
+    assert_select ".pq-chiffres strong", text: Opportunity.active.count.to_s
+    assert_select "a.pq-carte[href=?]", labo_accueil_path
+    assert_select "img[alt=?]", "Portrait de Nicolas Goarant, fondateur de Déclic"
+    assert_select "meta[property='og:image'][content*='place-stanislas']"
+    assert_no_match(/Térence|Ton parcours en 3 étapes/, response.body)
+  end
 end

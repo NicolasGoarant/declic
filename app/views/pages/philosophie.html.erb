@@ -1,891 +1,219 @@
-<%# app/views/pages/philosophie.html.erb — version corrigée (stats réelles) %>
-
-<style>
-/* =========================================================
-   Palette locale (scopée)
-   ========================================================= */
-.philo-page {
-  --philo-purple-600: #9333ea;
-  --philo-purple-700: #7e22ce;
-  --philo-pink-500:   #ec4899;
-  --philo-yellow-400: #fbbf24;
-  --philo-emerald-500:#10b981;
-  --philo-gray-900:   #111827;
-  --philo-gray-700:   #374151;
-  --philo-gray-600:   #4b5563;
-  --philo-gray-100:   #f3f4f6;
-  --philo-white:      #ffffff;
-}
-
-/* Wrapper général de la page (pour ne rien polluer autour) */
-.philo-page {
-  background: #ffffff;
-  color: var(--philo-gray-900);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-/* Conteneur local (ne touche pas .container globale) */
-.philo-container {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 0 1.25rem;
-}
-
-/* =========================================================
-   HERO
-   ========================================================= */
-.philo-hero {
-  position: relative;
-  overflow: hidden;
-  padding: 5.2rem 0 4.2rem;
-  text-align: center;
-  color: var(--philo-white);
-  background: linear-gradient(135deg, var(--philo-purple-600), var(--philo-pink-500));
-}
-
-.philo-hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0);
-  background-size: 26px 26px;
-  opacity: .35;
-  pointer-events: none;
-}
-
-.philo-hero-inner {
-  position: relative;
-  z-index: 1;
-}
-
-/* CITATION */
-.philo-hero-quote {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.18rem;
-  padding: 0.4rem 1.4rem;
-  margin: 0 auto 0.6rem;
-  max-width: calc(100% - 2.5rem);
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.26);
-  background: rgba(255,255,255,.14);
-  backdrop-filter: blur(12px);
-  font-style: italic;
-  opacity: .97;
-  box-sizing: border-box;
-}
-
-.philo-hero-quote-mark {
-  font-size: 1.2rem;
-  line-height: 1;
-}
-
-.philo-hero-quote-text {
-  font-size: 0.95rem;
-  white-space: nowrap;
-}
-
-.philo-hero-quote-author {
-  font-size: 0.95rem;
-  font-weight: 500;
-  opacity: .9;
-  margin-bottom: 1.6rem;
-}
-
-.philo-hero-title {
-  font-size: 3rem;
-  line-height: 1.05;
-  font-weight: 800;
-  margin-bottom: 1.75rem;
-  letter-spacing: -0.02em;
-}
-
-.philo-hero-lead {
-  font-size: 1.1rem;
-  max-width: 46rem;
-  margin: 0 auto 1.75rem;
-  line-height: 1.7;
-  opacity: .96;
-}
-
-.philo-hero-highlight {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 3rem;
-}
-
-/* CTA hero */
-.philo-hero-cta {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.75rem;
-  margin-bottom: 3rem;
-}
-
-/* Boutons */
-.philo-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
-  padding: .9rem 1.9rem;
-  border-radius: .9rem;
-  font-weight: 600;
-  font-size: .98rem;
-  text-decoration: none;
-  border: 2px solid transparent;
-  cursor: pointer;
-  text-align: center;
-  transition: transform .16s ease, box-shadow .16s ease,
-              background .16s ease, border-color .16s ease;
-}
-
-.philo-btn-primary {
-  background: #ffffff;
-  color: var(--philo-purple-600);
-  box-shadow: 0 14px 30px rgba(15,23,42,.25);
-}
-
-.philo-btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 40px rgba(15,23,42,.35);
-}
-
-.philo-btn-ghost {
-  background: rgba(255,255,255,.14);
-  color: #ffffff;
-  border-color: rgba(255,255,255,.38);
-}
-
-.philo-btn-ghost:hover {
-  background: rgba(255,255,255,.22);
-}
-
-/* Stats */
-.philo-stats {
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  max-width: 40rem;
-  margin: 0 auto;
-}
-
-.philo-stat {
-  background: rgba(255,255,255,.18);
-  backdrop-filter: blur(14px);
-  border-radius: 1rem;
-  padding: 1.4rem 1.3rem;
-  border: 1px solid rgba(255,255,255,.28);
-}
-
-.philo-stat-number {
-  font-size: 2.4rem;
-  font-weight: 800;
-  margin-bottom: .15rem;
-}
-
-.philo-stat-label {
-  font-size: .95rem;
-  opacity: .95;
-}
-
-/* =========================================================
-   MANIFESTE
-   ========================================================= */
-.philo-manifeste {
-  padding: 4.5rem 0;
-  background: var(--philo-white);
-}
-
-.philo-manifeste-inner {
-  max-width: 46rem;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.philo-manifeste-title {
-  font-size: 2.4rem;
-  font-weight: 800;
-  margin-bottom: 2rem;
-  letter-spacing: -0.02em;
-}
-
-.philo-manifeste-text {
-  font-size: 1.1rem;
-  color: var(--philo-gray-700);
-  line-height: 1.8;
-  margin-bottom: 1.2rem;
-}
-
-.philo-manifeste-highlight {
-  margin-top: 2rem;
-  padding: 1.1rem 1.4rem;
-  border-radius: 1rem;
-  border-left: 4px solid var(--philo-yellow-400);
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  font-weight: 600;
-}
-
-.philo-manifeste-img {
-  margin-top: 3rem;
-  border-radius: 1.5rem;
-  overflow: hidden;
-  box-shadow: 0 18px 50px rgba(15,23,42,.18);
-}
-
-.philo-manifeste-img img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* =========================================================
-   SOLUTION
-   ========================================================= */
-.philo-solution {
-  padding: 4.5rem 0;
-  background: var(--philo-gray-100);
-}
-
-.philo-section-title {
-  font-size: 2.4rem;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: .8rem;
-  letter-spacing: -0.02em;
-}
-
-.philo-section-subtitle {
-  text-align: center;
-  font-size: 1.05rem;
-  color: var(--philo-gray-600);
-  margin-bottom: 3rem;
-}
-
-.philo-solution-grid {
-  display: grid;
-  gap: 2rem;
-  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
-}
-
-.philo-solution-card {
-  background: #ffffff;
-  border-radius: 1.4rem;
-  padding: 2.3rem 2rem;
-  box-shadow: 0 4px 16px rgba(15,23,42,.08);
-  border-top: 4px solid transparent;
-  transition: transform .16s ease, box-shadow .16s ease;
-}
-
-.philo-solution-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 14px 40px rgba(15,23,42,.14);
-}
-
-.philo-solution-card:nth-child(1) { border-top-color: var(--philo-yellow-400); }
-.philo-solution-card:nth-child(2) { border-top-color: var(--philo-purple-600); }
-.philo-solution-card:nth-child(3) { border-top-color: var(--philo-emerald-500); }
-
-.philo-solution-emoji {
-  font-size: 2.6rem;
-  margin-bottom: .75rem;
-}
-
-.philo-solution-card h3 {
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin-bottom: .4rem;
-}
-
-.philo-solution-card p {
-  font-size: .98rem;
-  color: var(--philo-gray-700);
-  line-height: 1.7;
-}
-
-/* =========================================================
-   COMMENT (3 étapes)
-   ========================================================= */
-.philo-comment {
-  padding: 4.5rem 0;
-  background: #ffffff;
-}
-
-.philo-comment-grid {
-  display: grid;
-  gap: 2.3rem;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  margin-top: 2.5rem;
-}
-
-.philo-comment-step {
-  text-align: center;
-}
-
-.philo-step-number {
-  width: 4.5rem;
-  height: 4.5rem;
-  margin: 0 auto 1.2rem;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--philo-purple-600), var(--philo-pink-500));
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  font-weight: 800;
-  box-shadow: 0 10px 30px rgba(147,51,234,.35);
-}
-
-.philo-comment-step h3 {
-  font-size: 1.25rem;
-  margin-bottom: .4rem;
-}
-
-.philo-comment-step p {
-  font-size: .97rem;
-  color: var(--philo-gray-700);
-  line-height: 1.7;
-}
-
-/* visuels */
-.philo-comment-visual {
-  display: grid;
-  gap: 1.4rem;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  margin-top: 3rem;
-}
-
-.philo-comment-img {
-  border-radius: 1.25rem;
-  overflow: hidden;
-  height: 11.5rem;
-  box-shadow: 0 4px 16px rgba(15,23,42,.18);
-}
-
-.philo-comment-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform .18s ease;
-}
-
-.philo-comment-img:hover img {
-  transform: scale(1.04);
-}
-
-/* =========================================================
-   VALEURS
-   ========================================================= */
-.philo-valeurs {
-  padding: 4.5rem 0;
-  background: var(--philo-gray-100);
-}
-
-.philo-valeurs-grid {
-  display: grid;
-  gap: 2rem;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  margin-top: 3rem;
-}
-
-.philo-valeur-card {
-  background: #ffffff;
-  border-radius: 1.3rem;
-  padding: 2.1rem 1.8rem;
-  text-align: center;
-  box-shadow: 0 4px 16px rgba(15,23,42,.08);
-  transition: transform .16s ease, box-shadow .16s ease;
-}
-
-.philo-valeur-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 14px 38px rgba(15,23,42,.14);
-}
-
-.philo-valeur-emoji {
-  font-size: 2.6rem;
-  margin-bottom: .9rem;
-}
-
-.philo-valeur-card h3 {
-  font-size: 1.2rem;
-  margin-bottom: .35rem;
-}
-
-.philo-valeur-card p {
-  font-size: .97rem;
-  color: var(--philo-gray-700);
-  line-height: 1.6;
-}
-
-/* =========================================================
-   CTA FINAL
-   ========================================================= */
-.philo-final {
-  padding: 5rem 0 4.8rem;
-  text-align: center;
-  color: #ffffff;
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(135deg, var(--philo-purple-600), var(--philo-pink-500));
-}
-
-.philo-final::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0);
-  background-size: 26px 26px;
-  opacity: .3;
-  pointer-events: none;
-}
-
-.philo-final-inner {
-  position: relative;
-  z-index: 1;
-}
-
-.philo-final-emoji {
-  font-size: 3rem;
-  margin-bottom: 1.2rem;
-}
-
-.philo-final-title {
-  font-size: 2.4rem;
-  font-weight: 800;
-  margin-bottom: .8rem;
-  letter-spacing: -0.02em;
-}
-
-.philo-final-text {
-  font-size: 1.1rem;
-  margin-bottom: 2rem;
-}
-
-.philo-final-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: .6rem;
-  padding: .95rem 2.6rem;
-  border-radius: 1rem;
-  background: #ffffff;
-  color: var(--philo-purple-600);
-  font-weight: 700;
-  font-size: 1rem;
-  text-decoration: none;
-  box-shadow: 0 14px 34px rgba(15,23,42,.3);
-  transition: transform .16s ease, box-shadow .16s ease;
-}
-
-.philo-final-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 18px 46px rgba(15,23,42,.4);
-}
-
-.philo-final-note {
-  margin-top: 1.4rem;
-  font-size: .85rem;
-  opacity: .9;
-}
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
-@media (max-width: 768px) {
-  .philo-hero {
-    padding-top: 2.6rem;
-    padding-bottom: 3rem;
-  }
-
-  .philo-hero-quote {
-    margin-bottom: 0.4rem;
-    padding: 0.35rem 1.1rem;
-  }
-
-  .philo-hero-quote-mark {
-    font-size: 1.1rem;
-  }
-
-  .philo-hero-quote-text {
-    font-size: 0.9rem;
-  }
-
-  .philo-hero-quote-author {
-    margin-bottom: 1.4rem;
-  }
-
-  .philo-hero-title {
-    font-size: 2.2rem;
-  }
-
-  .philo-hero-lead {
-    font-size: 1rem;
-  }
-
-  .philo-manifeste,
-  .philo-solution,
-  .philo-comment,
-  .philo-valeurs {
-    padding: 3.5rem 0;
-  }
-
-  .philo-final {
-    padding: 4rem 0 3.8rem;
-  }
-
-  .philo-section-title,
-  .philo-manifeste-title {
-    font-size: 2rem;
-  }
-}
-
-/* =========================================================
-   FONDATEUR
-   ========================================================= */
-.philo-fondateur {
-  padding: 4.5rem 0;
-  background: linear-gradient(135deg, #faf5ff, #fdf2f8);
-}
-.philo-fondateur-inner {
-  display: flex;
-  align-items: center;
-  gap: 3.5rem;
-  max-width: 860px;
-  margin: 0 auto;
-}
-.philo-fondateur-photo-wrap {
-  flex-shrink: 0;
-  width: 180px;
-  height: 180px;
-  border-radius: 999px;
-  overflow: hidden;
-  border: 4px solid #ffffff;
-  box-shadow: 0 12px 36px rgba(147, 51, 234, 0.22);
-}
-.philo-fondateur-photo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.philo-fondateur-label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--philo-purple-600);
-  margin-bottom: 0.3rem;
-}
-.philo-fondateur-name {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: var(--philo-gray-900);
-  margin-bottom: 1.2rem;
-  letter-spacing: -0.02em;
-}
-.philo-fondateur-text {
-  font-size: 1rem;
-  color: var(--philo-gray-700);
-  line-height: 1.8;
-  margin-bottom: 0.9rem;
-}
-.philo-fondateur-conviction {
-  font-weight: 600;
-  color: var(--philo-gray-900);
-  font-style: italic;
-}
-@media (max-width: 640px) {
-  .philo-fondateur-inner {
-    flex-direction: column;
-    text-align: center;
-    gap: 2rem;
-  }
-  .philo-fondateur-photo-wrap {
-    width: 140px;
-    height: 140px;
-    margin: 0 auto;
-  }
-}
-</style>
-
-<div class="philo-page">
-  <%# ===================== HERO ===================== %>
-  <section class="philo-hero">
-    <div class="philo-container philo-hero-inner">
-      <div class="philo-hero-quote">
-        <span class="philo-hero-quote-mark">«</span>
-        <span class="philo-hero-quote-text">Tout ce qui est humain m'intéresse</span>
-        <span class="philo-hero-quote-mark">»</span>
-      </div>
-      <div class="philo-hero-quote-author">Térence, dramaturge latin</div>
-
-      <h1 class="philo-hero-title">Pourquoi Déclic&nbsp;?</h1>
-
-      <p class="philo-hero-lead">
-        À portée de main, à portée de clic, nous pouvons changer notre vie.
-        Autour de nous, les initiatives foisonnent, des opportunités palpitent,
-        des histoires inspirantes de personnes qui ont franchi le pas aussi.
+<%# « Pourquoi Déclic ? » (cible : docs/maquettes/declic-maquette-pourquoi-v1.png), layout « fiche » :
+    palette, polices et barre de /labo/accueil. Styles : app/assets/stylesheets/pourquoi.css. %>
+<% photo_entete = "pourquoi/place-stanislas.webp" %>
+<% resume = "À portée de main, à portée de clic, nous pouvons changer notre vie. Déclic rassemble les opportunités et les belles histoires du Grand Nancy." %>
+<% content_for :title, "Pourquoi Déclic ? — Déclic" %>
+<% content_for :onglet_courant, "pourquoi" %>
+<% content_for :feuilles do %>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap">
+  <%= stylesheet_link_tag "pourquoi" %>
+<% end %>
+<% content_for :meta_partage do %>
+  <meta name="description" content="<%= resume %>">
+  <link rel="canonical" href="<%= philosophie_url %>">
+  <meta property="og:site_name" content="Déclic">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Pourquoi Déclic ?">
+  <meta property="og:description" content="<%= resume %>">
+  <meta property="og:url" content="<%= philosophie_url %>">
+  <meta property="og:image" content="<%= image_url(photo_entete) %>">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Pourquoi Déclic ?">
+  <meta name="twitter:description" content="<%= resume %>">
+  <meta name="twitter:image" content="<%= image_url(photo_entete) %>">
+<% end %>
+<% cat = ->(cle) { Categorie.trouver(cle) } %>
+<% icone = ->(cle, taille = 48) { image_tag("#{cat.(cle).icone}@2x.png", alt: "", width: taille, height: taille, class: "pq-icone") } %>
+
+<%= render "accueil/entete" %>
+
+<main class="pq">
+  <%# ─── En-tête ─── %>
+  <section class="pq-hero" aria-labelledby="pq-titre">
+    <div class="pq-hero-photo" style="background-image: url('<%= image_path(photo_entete) %>')" role="img"
+         aria-label="La statue de Stanislas et l'hôtel de ville, place Stanislas à Nancy"></div>
+    <div class="pq-contenu pq-hero-texte">
+      <p class="pq-etiquette pq-etiquette--pastille">Notre mission</p>
+      <h1 id="pq-titre">Pourquoi <span class="pq-degrade">Déclic</span>&nbsp;?</h1>
+      <p class="pq-chapo">
+        À portée de main, à portée de clic, nous pouvons changer notre vie. Autour de nous, les initiatives
+        foisonnent, des opportunités palpitent, des histoires inspirantes de personnes qui ont franchi le pas.
       </p>
-
-      <p class="philo-hero-highlight">
-        ✨ Déclic permet de les repérer et de passer à l'action.
-      </p>
-
-      <div class="philo-hero-cta">
-        <%= link_to opportunities_path, class: "philo-btn philo-btn-primary" do %>
-          <span>🔍</span>
-          <span>Explorer les opportunités</span>
+      <div class="pq-boutons">
+        <%= link_to labo_accueil_path, class: "pq-bouton pq-bouton--plein" do %>
+          <%= picto(:chercher, taille: 18) %> Explorer les opportunités
         <% end %>
-
-        <%= link_to stories_path, class: "philo-btn philo-btn-ghost" do %>
-          <span>✨</span>
-          <span>Lire les histoires</span>
+        <%= link_to stories_path, class: "pq-bouton pq-bouton--blanc" do %>
+          <%= picto(:etoile, taille: 18, class: "pq-etoile") %> Lire les histoires
         <% end %>
       </div>
-
-      <div class="philo-stats">
-        <div class="philo-stat">
-          <div class="philo-stat-number"><%= @opportunities_count %></div>
-          <div class="philo-stat-label">Opportunités</div>
-        </div>
-        <div class="philo-stat">
-          <div class="philo-stat-number">1</div>
-          <div class="philo-stat-label">Métropole</div>
-        </div>
-        <div class="philo-stat">
-          <div class="philo-stat-number"><%= @stories_count %></div>
-          <div class="philo-stat-label">Histoires</div>
-        </div>
-      </div>
     </div>
   </section>
 
-  <%# ===================== MANIFESTE ===================== %>
-  <section class="philo-manifeste">
-    <div class="philo-container">
-      <div class="philo-manifeste-inner">
-        <h2 class="philo-manifeste-title">Un déclic peut tout changer</h2>
-
-        <p class="philo-manifeste-text">
-          Parfois, il suffit d'une <strong>rencontre</strong>. D'une <strong>conversation</strong>
-          qui nous ouvre les yeux. D'une <strong>histoire</strong> qui résonne en nous.
-          D'un <strong>lieu</strong> où l'on se sent enfin à notre place.
-        </p>
-
-        <p class="philo-manifeste-text">
-          Ce moment où tout bascule — ce <strong>déclic</strong> — arrive rarement par hasard.
-          Il naît quand l'inspiration rencontre l'opportunité. Quand le désir d'agir
-          trouve un chemin concret pour s'exprimer.
-        </p>
-
-        <p class="philo-manifeste-text">
-          <strong>Déclic</strong> existe pour multiplier ces moments.
-          Pour que chacun, là où il est, puisse trouver <strong>son</strong> déclic :
-          l'histoire qui l'inspire, l'opportunité qui l'attend,
-          la communauté qui l'accueille.
-        </p>
-
-        <div class="philo-manifeste-highlight">
-          🌟 Parce qu'une vie peut changer en quelques clics.
-        </div>
+  <%# ─── Trois chiffres ─── %>
+  <section class="pq-contenu pq-chiffres" aria-label="Déclic en chiffres">
+    <% [
+         [ "ecologiser", @chiffres[:opportunites], "Opportunités", "pour s'engager, se former, entreprendre, rencontrer…" ],
+         [ "benevolat", 1, "Métropole", "le Grand Nancy, un territoire dynamique et solidaire." ],
+         [ "histoires", @chiffres[:histoires], "Histoires", "de personnes inspirantes près de chez vous." ]
+       ].each do |cle, nombre, libelle, detail| %>
+      <div class="pq-chiffre" style="--c: <%= cat.(cle).couleur %>">
+        <span class="pq-pastille"><%= icone.(cle, 44) %></span>
+        <p><strong><%= nombre %></strong><span class="pq-chiffre-libelle"><%= libelle %></span><span class="pq-chiffre-detail"><%= detail %></span></p>
       </div>
-
-      <div class="philo-manifeste-img">
-        <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&q=80&auto=format&fit=crop"
-             alt="Personnes qui discutent et échangent" loading="lazy">
-      </div>
-    </div>
+    <% end %>
   </section>
 
-
-  <%# ===================== FONDATEUR ===================== %>
-  <section class="philo-fondateur">
-    <div class="philo-container">
-      <div class="philo-fondateur-inner">
-        <div class="philo-fondateur-photo-wrap">
-          <%= image_tag "nicolas_goarant2.png",
-                alt: "Nicolas Goarant, fondateur de Déclic",
-                class: "philo-fondateur-photo",
-                loading: "lazy" %>
-        </div>
-        <div class="philo-fondateur-content">
-          <p class="philo-fondateur-label">Le fondateur</p>
-          <h2 class="philo-fondateur-name">Nicolas Goarant</h2>
-          <p class="philo-fondateur-text">
-            Collaborateur politique pendant quinze ans, à l'Assemblée nationale,
-            à la Ville de Paris, à la Métropole du Grand Nancy, j'ai vu de l'intérieur
-            comment les institutions fonctionnent, ce qu'elles font bien,
-            et ce qu'elles pourraient faire de mieux.
-          </p>
-          <p class="philo-fondateur-text">
-            Ce que je n'ai jamais cessé de voir, c'est l'énergie des gens.
-            Les associations qui bricolent, les projets qui naissent dans les cafés,
-            les personnes qui cherchent comment s'engager sans savoir par où commencer,
-            les projets de startups qui ne demandent qu'à grandir.
-          </p>
-          <p class="philo-fondateur-text philo-fondateur-conviction">
-            Déclic est né de cette conviction&nbsp;: l'engagement citoyen existe,
-            il foisonne&nbsp;: il lui faut juste un endroit pour le rendre visible&nbsp;!
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <%# ===================== SOLUTION ===================== %>
-  <section class="philo-solution">
-    <div class="philo-container">
-      <h2 class="philo-section-title">Comment ça marche</h2>
-      <p class="philo-section-subtitle">
-        Trois piliers qui connectent l'inspiration et l'action
+  <%# ─── Une conviction ─── %>
+  <section class="pq-contenu pq-deux pq-conviction" aria-labelledby="pq-conviction">
+    <div>
+      <p class="pq-etiquette">Une conviction</p>
+      <h2 id="pq-conviction">Un déclic peut tout <span class="pq-degrade">changer</span></h2>
+      <p>
+        Parfois, il suffit d'une <strong>rencontre</strong>. D'une <strong>conversation</strong> qui nous ouvre
+        les yeux. D'une <strong>histoire</strong> qui résonne en nous. D'un <strong>lieu</strong> où l'on se sent
+        enfin à notre place.
       </p>
-
-      <div class="philo-solution-grid">
-        <div class="philo-solution-card">
-          <span class="philo-solution-emoji">📚</span>
-          <h3>Des histoires qui inspirent</h3>
-          <p>
-            Portraits authentiques de personnes qui ont osé franchir le pas.
-            Leur parcours crée le déclic émotionnel qui donne envie d'agir.
-          </p>
-        </div>
-
-        <div class="philo-solution-card">
-          <span class="philo-solution-emoji">🎯</span>
-          <h3>Des opportunités concrètes</h3>
-          <p>
-            Événements, formations, projets à rejoindre. Tout est géolocalisé,
-            filtrable par centre d'intérêt, et actionnable en un clic.
-          </p>
-        </div>
-
-        <div class="philo-solution-card">
-          <span class="philo-solution-emoji">👥</span>
-          <h3>Une communauté qui partage</h3>
-          <p>
-            Chaque utilisateur peut proposer une histoire ou une opportunité.
-            Celui qui trouve son déclic devient contributeur à son tour.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <%# ===================== PARCOURS (3 étapes) ===================== %>
-  <section class="philo-comment">
-    <div class="philo-container">
-      <h2 class="philo-section-title">Ton parcours en 3 étapes</h2>
-
-      <div class="philo-comment-grid">
-        <div class="philo-comment-step">
-          <div class="philo-step-number">1</div>
-          <h3>Découvre & Inspire-toi</h3>
-          <p>
-            Parcours des histoires inspirantes de personnes qui ont changé leur vie.
-            Identifie ce qui résonne avec tes envies : entreprendre, écologiser,
-            te former, rencontrer.
-          </p>
-        </div>
-
-        <div class="philo-comment-step">
-          <div class="philo-step-number">2</div>
-          <h3>Explore & Agis</h3>
-          <p>
-            Découvre les opportunités près de chez toi : événements, formations,
-            projets. Inscris-toi en un clic. Tout est géolocalisé et actionnable
-            immédiatement.
-          </p>
-        </div>
-
-        <div class="philo-comment-step">
-          <div class="philo-step-number">3</div>
-          <h3>Vis & Partage</h3>
-          <p>
-            Une fois ton projet lancé, partage ton histoire pour inspirer d'autres
-            personnes. Propose de nouvelles opportunités. Deviens acteur du réseau.
-          </p>
-        </div>
-      </div>
-
-      <div class="philo-comment-visual">
-        <div class="philo-comment-img">
-          <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80&auto=format&fit=crop"
-               alt="Personnes qui collaborent" loading="lazy">
-        </div>
-        <div class="philo-comment-img">
-          <img src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800&q=80&auto=format&fit=crop"
-               alt="Jardin partagé" loading="lazy">
-        </div>
-        <div class="philo-comment-img">
-          <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800&q=80&auto=format&fit=crop"
-               alt="Atelier créatif" loading="lazy">
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <%# ===================== VALEURS ===================== %>
-  <section class="philo-valeurs">
-    <div class="philo-container">
-      <h2 class="philo-section-title">Nos valeurs</h2>
-      <p class="philo-section-subtitle">
-        Les principes qui guident chacune de nos décisions
+      <p>
+        <strong>Déclic</strong> existe pour multiplier ces moments. Pour que chacun, là où il est, puisse trouver
+        <strong>son déclic</strong> : l'histoire qui l'inspire, l'opportunité qui l'attend, la communauté qui l'accueille.
       </p>
-
-      <div class="philo-valeurs-grid">
-        <div class="philo-valeur-card">
-          <span class="philo-valeur-emoji">🤝</span>
-          <h3>Ouvert & Accessible</h3>
-          <p>
-            Gratuit, sans inscription obligatoire, pour tous.
-            Tout le monde peut contribuer et partager ses opportunités.
-          </p>
-        </div>
-
-        <div class="philo-valeur-card">
-          <span class="philo-valeur-emoji">💜</span>
-          <h3>Bienveillant & Authentique</h3>
-          <p>
-            Nous croyons en la force de l'encouragement et des histoires vraies.
-            Pas de filtre, pas de pose, juste des parcours inspirants.
-          </p>
-        </div>
-
-        <div class="philo-valeur-card">
-          <span class="philo-valeur-emoji">📍</span>
-          <h3>Local & Concret</h3>
-          <p>
-            Chaque action compte. Nous valorisons l'impact territorial
-            et facilitons l'engagement de proximité, dans la métropole du Grand Nancy.
-          </p>
-        </div>
-      </div>
+      <p class="pq-encadre"><%= picto(:ampoule, taille: 20) %> Parce qu'une vie peut changer en quelques clics.</p>
     </div>
-  </section>
-
-  <%# ===================== CTA FINAL ===================== %>
-  <section class="philo-final">
-    <div class="philo-container philo-final-inner">
-      <span class="philo-final-emoji">⚡</span>
-      <h2 class="philo-final-title">Prêt·e pour ton déclic&nbsp;?</h2>
-      <p class="philo-final-text">
-        Rejoins les habitants de la métropole du Grand Nancy qui passent à l'action près de chez toi.
-      </p>
-
-      <%= link_to root_path, class: "philo-final-btn" do %>
-        <span>🚀</span>
-        <span>Commencer maintenant</span>
+    <div class="pq-collage">
+      <% @collage.each_with_index do |case_, i| %>
+        <figure class="pq-collage-case pq-collage-case--<%= i + 1 %>">
+          <%= image_tag case_[:photo][:src], alt: case_[:photo][:alt], loading: "lazy" %>
+          <figcaption class="pq-collage-etiquette" style="--c: <%= case_[:categorie].couleur %>">
+            <%= icone.(case_[:categorie].cle, 22) %><%= case_[:categorie].libelle %>
+          </figcaption>
+        </figure>
       <% end %>
+    </div>
+  </section>
 
-      <p class="philo-final-note">
-        Gratuit • Sans inscription • 2 minutes pour trouver ton opportunité
+  <%# ─── Le territoire ─── %>
+  <section class="pq-bande pq-bande--lavande" aria-labelledby="pq-territoire">
+    <div class="pq-contenu pq-deux">
+      <div>
+        <p class="pq-etiquette">Le territoire</p>
+        <h2 id="pq-territoire">Un territoire <span class="pq-degrade">plein de possibles</span></h2>
+        <p>
+          Le <strong>Grand Nancy</strong> est une métropole vivante, riche d'<strong>initiatives locales</strong>,
+          d'<strong>associations</strong>, d'entreprises, de lieux culturels et de citoyens engagés.
+          <strong>Déclic</strong> met en lumière cette richesse et la rend accessible à tous.
+        </p>
+        <ul class="pq-points">
+          <li><span class="pq-point-icone" style="--c: #E85DAB"><%= picto(:lieu, taille: 22) %></span>
+            <span><strong>Des opportunités près de chez vous</strong>Événements, formations, projets, missions bénévoles…</span></li>
+          <li><span class="pq-point-icone" style="--c: #3FA46A"><%= picto(:groupe, taille: 22) %></span>
+            <span><strong>Des acteurs locaux mobilisés</strong>Associations, collectivités, entreprises, lieux de vie…</span></li>
+          <li><span class="pq-point-icone" style="--c: #8b3dff"><%= picto(:coeur, taille: 22) %></span>
+            <span><strong>Un impact concret</strong>Pour chacun, pour le territoire, pour une société plus solidaire et durable.</span></li>
+        </ul>
+      </div>
+      <%= link_to labo_accueil_path, class: "pq-carte", aria: { label: "Voir les initiatives sur la carte du Grand Nancy" } do %>
+        <p class="pq-manuscrit" aria-hidden="true">Des initiatives dans tout le Grand&nbsp;Nancy</p>
+        <svg viewBox="0 0 <%= PourquoiCarte::LARGEUR.to_i %> <%= PourquoiCarte.hauteur %>" role="img" aria-hidden="true" focusable="false">
+          <defs>
+            <clipPath id="pq-metropole"><path d="<%= PourquoiCarte.chemin %>"/></clipPath>
+            <filter id="pq-ombre" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#7c3aed" flood-opacity="0.18"/></filter>
+          </defs>
+          <path d="<%= PourquoiCarte.chemin %>" class="pq-carte-fond" filter="url(#pq-ombre)"/>
+          <g clip-path="url(#pq-metropole)" class="pq-carte-voirie">
+            <% PourquoiCarte.rayons.each do |d| %><path d="<%= d %>"/><% end %>
+            <% PourquoiCarte.boulevards.each do |d| %><path d="<%= d %>"/><% end %>
+          </g>
+          <path d="<%= PourquoiCarte.chemin %>" class="pq-carte-bord"/>
+          <% @pins_territoire.each do |pin| %>
+            <% x, y = PourquoiCarte.projeter(pin[:opportunite].longitude.to_f, pin[:opportunite].latitude.to_f) %>
+            <g class="pq-pin" transform="translate(<%= x %> <%= y %>)" style="--c: <%= pin[:categorie].couleur %>">
+              <path d="M0 0c-4-9-17-15-17-28a17 17 0 0 1 34 0c0 13-13 19-17 28z"/>
+              <circle cy="-28" r="13" fill="#fff"/>
+              <image href="<%= image_path("#{pin[:categorie].icone}@2x.png") %>" x="-11" y="-39" width="22" height="22"/>
+            </g>
+          <% end %>
+        </svg>
+      <% end %>
+    </div>
+  </section>
+
+  <%# ─── Comment ça marche ─── %>
+  <section class="pq-contenu pq-section" aria-labelledby="pq-comment">
+    <h2 id="pq-comment" class="pq-centre">Comment <span class="pq-degrade">ça marche</span>&nbsp;?</h2>
+    <p class="pq-sous-titre">Trois piliers qui connectent l'inspiration et l'action</p>
+    <div class="pq-grille pq-grille--3">
+      <% [
+           [ "histoires", "Des histoires qui inspirent", "Portraits authentiques de personnes qui ont osé franchir le pas. Leurs parcours donnent envie d'agir." ],
+           [ "entreprendre", "Des opportunités concrètes", "Événements, formations, projets à rejoindre. Tout est géolocalisé, fiable et actionnable en un clic." ],
+           [ "rencontres", "Une communauté qui partage", "Chaque utilisateur peut proposer une histoire ou une opportunité. Ceux qui trouvent leur déclic deviennent eux aussi acteurs du réseau." ]
+         ].each do |cle, titre, texte| %>
+        <article class="pq-carte-texte pq-carte-texte--ligne" style="--c: <%= cat.(cle).couleur %>">
+          <span class="pq-pastille"><%= icone.(cle, 40) %></span>
+          <div><h3><%= titre %></h3><p><%= texte %></p></div>
+        </article>
+      <% end %>
+    </div>
+  </section>
+
+  <%# ─── Le fondateur ─── %>
+  <section class="pq-contenu pq-fondateur" aria-labelledby="pq-fondateur">
+    <%= image_tag "nicolas_goarant.jpeg", alt: "Portrait de Nicolas Goarant, fondateur de Déclic",
+                  width: 120, height: 120, class: "pq-fondateur-photo", loading: "lazy" %>
+    <div>
+      <p class="pq-etiquette">Le fondateur</p>
+      <h2 id="pq-fondateur">Nicolas Goarant</h2>
+      <p>
+        Collaborateur politique pendant quinze ans, à l'Assemblée nationale, à la Ville de Paris, à la Métropole
+        du Grand Nancy, j'ai vu de l'intérieur comment les institutions fonctionnent, ce qu'elles font bien,
+        et ce qu'elles pourraient faire de mieux.
+      </p>
+      <p>
+        Ce que je n'ai jamais cessé de voir, c'est l'énergie des gens. Les associations qui bricolent, les projets
+        qui naissent dans les cafés, les personnes qui cherchent comment s'engager sans savoir par où commencer,
+        les projets de startups qui ne demandent qu'à grandir.
+      </p>
+      <p class="pq-conviction-fondateur">
+        Déclic est né de cette conviction&nbsp;: l'engagement citoyen existe, il foisonne&nbsp;: il lui faut juste
+        un endroit pour le rendre visible&nbsp;!
       </p>
     </div>
   </section>
-</div>
+
+  <%# ─── Nos valeurs ─── %>
+  <section class="pq-bande pq-bande--lavande" aria-labelledby="pq-valeurs">
+    <div class="pq-contenu pq-section">
+      <h2 id="pq-valeurs" class="pq-centre">Nos valeurs</h2>
+      <p class="pq-sous-titre">Les principes qui guident chacune de nos décisions</p>
+      <div class="pq-grille pq-grille--4">
+        <% [
+             [ "rencontres", "Ouvert & Accessible", "Gratuit, sans inscription obligatoire, pour tous. Tout le monde peut contribuer et partager ses opportunités." ],
+             [ "benevolat", "Bienveillant & Authentique", "Nous croyons en la force de l'encouragement et des histoires vraies. Pas de filtre, pas de pose, juste des parcours inspirants." ],
+             [ "ecologiser", "Local & Concret", "Chaque action compte. Nous valorisons l'impact territorial et facilitons l'engagement de proximité, dans la métropole du Grand Nancy." ],
+             [ "histoires", "Collaboratif", "Déclic est co-construit avec les habitants, les associations et les institutions locales." ]
+           ].each do |cle, titre, texte| %>
+          <article class="pq-carte-texte pq-carte-texte--centre">
+            <%= icone.(cle, 44) %>
+            <h3><%= titre %></h3>
+            <p><%= texte %></p>
+          </article>
+        <% end %>
+      </div>
+    </div>
+  </section>
+
+  <%# ─── Appel final ─── %>
+  <section class="pq-final" aria-labelledby="pq-final">
+    <div class="pq-final-photo" style="background-image: url('<%= image_path(photo_entete) %>')" aria-hidden="true"></div>
+    <div class="pq-contenu pq-final-texte">
+      <svg class="pq-eclair" viewBox="0 0 24 24" width="44" height="44" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+      <h2 id="pq-final">Prêt·e pour <span class="pq-jaune">ton déclic</span>&nbsp;?</h2>
+      <p>Rejoins les habitants de la métropole du Grand Nancy qui passent à l'action près de chez toi.</p>
+      <%= link_to labo_accueil_path, class: "pq-bouton pq-bouton--blanc pq-bouton--grand" do %>
+        <%= image_tag "#{cat.("entreprendre").icone}.png", alt: "", width: 22, height: 22 %> Commencer maintenant
+      <% end %>
+      <p class="pq-final-note">Gratuit · Sans inscription</p>
+    </div>
+  </section>
+</main>
