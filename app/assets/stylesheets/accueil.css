@@ -231,6 +231,37 @@ body.acc-corps {
 }
 .acc-calques-interrupteur input:checked { background: var(--violet); }
 .acc-calques-interrupteur input:checked::after { transform: translateX(16px); }
+/* Ambiance : « Automatique » en tête (il dit ce qu'il retient), puis moment, saison et météo en puces. */
+.acc-calques-auto { margin-top: 0; padding-inline: 2px; }
+.acc-calques-auto span { display: flex; flex-wrap: wrap; align-items: baseline; }
+.acc-calques-auto small { font-size: 12.5px; font-weight: 500; color: var(--gris); white-space: pre-wrap; }
+.acc-calques-auto small:empty { display: none; }
+.acc-calques-reglage { margin-top: 6px; }
+.acc-calques-sous-titre { display: block; margin: 0 0 4px 2px; font-size: 12px; font-weight: 700; color: var(--gris); }
+.acc-calques-puces { display: flex; flex-wrap: wrap; gap: 4px; }
+.acc-calques-puce { position: relative; }
+.acc-calques-puce input { position: absolute; opacity: 0; pointer-events: none; }
+.acc-calques-puce span {
+  display: block; padding: 6px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  background: rgba(29, 26, 43, 0.06); color: var(--encre); cursor: pointer; transition: background 120ms, color 120ms;
+}
+.acc-calques-puce span:hover { background: rgba(29, 26, 43, 0.1); }
+.acc-calques-puce input:checked + span { background: var(--violet); color: var(--blanc); font-weight: 700; }
+.acc-calques-puce input:focus-visible + span { outline: 3px solid color-mix(in srgb, var(--violet) 55%, transparent); outline-offset: 1px; }
+/* En automatique, les puces montrent ce qui est retenu, en plus discret : un choix à la main en sort. */
+.acc-calques-rubrique:has(.acc-calques-auto input:checked) .acc-calques-puce input:checked + span {
+  background: color-mix(in srgb, var(--violet) 22%, var(--blanc)); color: var(--violet);
+}
+
+/* Pluie et neige (diorama/precipitations) : au-dessus des dalles, sous les pins, jamais cliquables. */
+.acc-precipitations { position: absolute; left: 0; top: 0; pointer-events: none; }
+/* La nuit, les pins gardent un halo clair : ils restent pleinement lisibles sur la ville sombre. */
+[data-moment="nuit"] .pin-picto {
+  filter: drop-shadow(0 0 1.5px var(--blanc)) drop-shadow(0 0 5px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 12px rgba(255, 244, 220, 0.75));
+}
+[data-moment="nuit"] .pin-tige { background: rgba(255, 255, 255, 0.98); box-shadow: 0 0 4px rgba(255, 255, 255, 0.8); }
+[data-moment="nuit"] .pin-socle { box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 35%, transparent), 0 0 10px rgba(255, 255, 255, 0.85); }
+[data-moment="nuit"] .acc-bouquet { filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.85)); }
 
 /* Mobile : feuille basse compacte, par-dessus la tab bar, sur un voile qui assombrit la carte. */
 @media (max-width: 699.98px) {

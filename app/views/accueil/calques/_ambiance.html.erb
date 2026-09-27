@@ -1,25 +1,34 @@
-<%# Ambiance du diorama (masquée en mode Plan). Une option n'est rendue que si toutes ses couches
-    répondent sur le domaine des tuiles (DioramaTuiles#disponibles) ; sans aucune, pas de rubrique. %>
-<% ambiances = { "heure-bleue" => "Heure bleue", "automne" => "Automne", "hiver" => "Hiver" }.slice(*disponibles[:ambiances]) %>
-<% if disponibles[:blanche] || ambiances.any? %>
+<%# Ambiance du diorama (masquée en mode Plan) : trois réglages indépendants qui se cumulent (moment,
+    saison, météo), et un interrupteur « Automatique » qui les règle d'après le soleil, la date et la
+    météo réelle à Nancy. Aube, jour, heure dorée, nuit, pluie et neige ne demandent que le diorama ;
+    heure bleue, automne et hiver ne sont rendus que si leur étalonnage répond sur le domaine des
+    tuiles (DioramaTuiles#disponibles). Réglages des étalonnages : app/javascript/diorama/reglages.js. %>
+<% publiees = disponibles[:ambiances] %>
+<% reglages = [
+     [ "moment", "Moment", { "aube" => "Aube", "jour" => "Jour", "heure-doree" => "Heure dorée", "heure-bleue" => "Heure bleue", "nuit" => "Nuit" } ],
+     [ "saison", "Saison", { "printemps-ete" => "Printemps-été", "automne" => "Automne", "hiver" => "Hiver" } ],
+     [ "meteo", "Météo", { "clair" => "Clair", "pluie" => "Pluie", "neige" => "Neige" } ]
+   ] %>
+<% if disponibles[:vrai] %>
   <fieldset class="acc-calques-rubrique" data-rubrique="ambiance" data-diorama-target="rubriqueAmbiance">
     <legend>Ambiance</legend>
-    <% if ambiances.any? %>
-      <div class="acc-calques-liste">
-        <label class="acc-calques-ligne">
-          <input type="radio" name="calques-ambiance" value="auto" data-diorama-target="choixAmbiance" data-action="diorama#choisirAmbiance">
-          <span>Automatique<small data-diorama-target="ambianceAuto"></small></span>
-        </label>
-        <label class="acc-calques-ligne">
-          <input type="radio" name="calques-ambiance" value="origine" data-diorama-target="choixAmbiance" data-action="diorama#choisirAmbiance">
-          <span>Origine</span>
-        </label>
-        <% ambiances.each do |nom, libelle| %>
-          <label class="acc-calques-ligne">
-            <input type="radio" name="calques-ambiance" value="<%= nom %>" data-diorama-target="choixAmbiance" data-action="diorama#choisirAmbiance">
-            <span><%= libelle %></span>
-          </label>
-        <% end %>
+    <label class="acc-calques-interrupteur acc-calques-auto">
+      <span>Automatique<small data-diorama-target="ambianceAuto"></small></span>
+      <input type="checkbox" role="switch" data-diorama-target="choixAuto" data-action="diorama#choisirAuto">
+    </label>
+    <% reglages.each do |reglage, titre, options| %>
+      <div class="acc-calques-reglage" role="radiogroup" aria-label="<%= titre %>">
+        <span class="acc-calques-sous-titre" aria-hidden="true"><%= titre %></span>
+        <div class="acc-calques-puces">
+          <% options.each do |valeur, libelle| %>
+            <% next if %w[heure-bleue automne hiver].include?(valeur) && !publiees.include?(valeur) %>
+            <label class="acc-calques-puce">
+              <input type="radio" name="calques-<%= reglage %>" value="<%= valeur %>"
+                     data-diorama-target="choixReglage" data-reglage="<%= reglage %>" data-action="diorama#choisirReglage">
+              <span><%= libelle %></span>
+            </label>
+          <% end %>
+        </div>
       </div>
     <% end %>
     <% if disponibles[:blanche] %>

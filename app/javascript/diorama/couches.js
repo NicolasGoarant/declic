@@ -36,7 +36,7 @@ export function creerCache(max = 160) {
       if (!gardee) return false
       dalles.delete(chemin)
       dalles.set(chemin, gardee) // la plus récemment servie passe en dernier
-      toile.getContext("2d", { willReadFrequently: true }).drawImage(gardee, 0, 0)
+      toile.getContext("2d").drawImage(gardee, 0, 0)
       return true
     },
     garder(chemin, toile) {

@@ -1,12 +1,9 @@
-// Le mode automatique des ambiances : l'heure bleue passe devant la saison, et hors de ces
-// fenêtres c'est l'origine.
-//   heure bleue : du coucher du soleil (centre du disque à −0,833°) à 23 h, heure de Nancy ;
-//   hiver : décembre à février ; automne : octobre et novembre.
-// L'heure est lue sur le fuseau Europe/Paris, quel que soit celui de l'appareil.
-const MOIS_HIVER = [12, 1, 2], MOIS_AUTOMNE = [10, 11]
-const FIN_HEURE_BLEUE = 23
+// Le mode automatique des ambiances : le moment selon la hauteur du soleil à Nancy (calcul
+// astronomique local, sans service externe) et la saison selon la date. Seuils et mois : diorama/reglages.
+// La date est lue sur le fuseau Europe/Paris, quel que soit celui de l'appareil.
+import { AUTO } from "diorama/reglages"
+
 const NANCY_LAT = 48.6937, NANCY_LON = 6.1834
-const HAUTEUR_COUCHER_DEG = -0.833
 const FUSEAU = "Europe/Paris"
 
 // Hauteur du soleil à Nancy, formules de la NOAA (Meeus simplifié), sans service externe.
@@ -34,30 +31,33 @@ export function soleil(date) {
   return { hauteur: 90 - Math.acos(Math.max(-1, Math.min(1, cz))) / rad, angleHoraire: ah }
 }
 
-// Date, heure et minute à Nancy.
-function aNancy(date) {
-  const parties = Object.fromEntries(new Intl.DateTimeFormat("fr-FR", {
-    timeZone: FUSEAU, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", hourCycle: "h23"
-  }).formatToParts(date).map((p) => [p.type, Number(p.value)]))
-  return { annee: parties.year, mois: parties.month, jour: parties.day, heure: parties.hour, minute: parties.minute }
+// Mois (1-12) à Nancy.
+function moisANancy(date) {
+  return Number(new Intl.DateTimeFormat("fr-FR", { timeZone: FUSEAU, month: "numeric" }).format(date))
 }
 
-// Coucher du soleil du jour de Nancy donné, à la minute près, par balayage depuis 10 h UTC (midi en été).
-export function coucher({ annee, mois, jour }) {
-  const debut = Date.UTC(annee, mois - 1, jour, 10, 0, 0)
-  for (let m = 0; m < 720; m++) {
-    const t = new Date(debut + m * 60000), s = soleil(t)
-    if (s.angleHoraire > 0 && s.hauteur < HAUTEUR_COUCHER_DEG) return t
-  }
-  return null
+// Moment que le mode automatique retient pour `date` : jour, heure-doree, aube, heure-bleue ou nuit.
+export function momentAuto(date = new Date()) {
+  const { hauteur, angleHoraire } = soleil(date)
+  if (hauteur >= AUTO.jour_au_dessus) return "jour"
+  if (hauteur >= 0) return "heure-doree"
+  if (hauteur >= AUTO.crepuscule_au_dessus) return angleHoraire < 0 ? "aube" : "heure-bleue"
+  return "nuit"
 }
 
-// Nom de l'ambiance que le mode automatique retient pour `date`.
-export function resoudreAuto(date = new Date()) {
-  const ici = aNancy(date)
-  const c = coucher(ici)
-  if (c && date >= c && ici.heure < FIN_HEURE_BLEUE) return "heure-bleue"
-  if (MOIS_HIVER.includes(ici.mois)) return "hiver"
-  if (MOIS_AUTOMNE.includes(ici.mois)) return "automne"
-  return "origine"
+// Saison que le mode automatique retient pour `date` : printemps-ete, automne ou hiver.
+export function saisonAuto(date = new Date()) {
+  const mois = moisANancy(date)
+  if (AUTO.mois_hiver.includes(mois)) return "hiver"
+  if (AUTO.mois_automne.includes(mois)) return "automne"
+  return "printemps-ete"
+}
+
+// « nuit d'automne », « heure dorée d'été » : de mars à mai, le printemps-été se dit « de printemps ».
+const MOMENTS = { aube: "aube", jour: "jour", "heure-doree": "heure dorée", "heure-bleue": "heure bleue", nuit: "nuit" }
+const METEOS = { clair: "ciel clair", pluie: "pluie", neige: "neige" }
+export function libelleAuto({ moment, saison, meteo }, date = new Date()) {
+  const mois = moisANancy(date)
+  const de = saison === "hiver" ? "d'hiver" : saison === "automne" ? "d'automne" : (mois >= 3 && mois <= 5 ? "de printemps" : "d'été")
+  return `${MOMENTS[moment]} ${de}, ${METEOS[meteo]}`
 }
