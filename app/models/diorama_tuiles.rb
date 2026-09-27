@@ -16,7 +16,11 @@ require "net/http"
 class DioramaTuiles
   URL_DEFAUT = "https://tuiles-declic.mist-media.eu".freeze
 
-  LOT = "toits-v1".freeze                   # {z}/{x}/{y}.webp, niveaux 0 à 8
+  # Styles du « Vrai Nancy » : même grille, mêmes niveaux (0 à 8), même format ({z}/{x}/{y}.webp) ;
+  # seul le grade des dalles change. Par défaut : Jeu vidéo. Un style dont le manifeste manque sur
+  # R2 est retiré de la liste (masqué côté panneau Calques).
+  STYLES = { "jeu-video-v1" => "Jeu vidéo", "toits-v1" => "Réaliste" }.freeze
+  STYLE_DEFAUT = "jeu-video-v1".freeze
   MASQUE = "masque-bati".freeze             # {z}/{x}/{y}.png, niveaux 6 à 8, centre-ville
   PROPRIETE = "propriete-toits-v1".freeze   # 8/{x}/{y}.png (pas de dossier dalles/)
   AMBIANCES_DOSSIER = "ambiances".freeze    # {nom}-actuelle.json (format nancy-3d/ambiance)
@@ -42,22 +46,26 @@ class DioramaTuiles
   def url(chemin) = "#{base}/#{chemin}"
 
   # Ce que la page peut proposer. Une couche n'est disponible que si TOUT ce qu'elle lit l'est.
+  # Le masque du bâti, la carte de propriété, les arbres et les lampadaires décrivent la géométrie
+  # de la maquette (pas son rendu) : ils valent pour tous les styles, pas seulement celui choisi.
   def disponibles
     p = presents
-    vrai = p.fetch(url("#{LOT}/manifeste.json"))
+    styles = STYLES.keys.select { |lot| p.fetch(url("#{lot}/manifeste.json")) }
+    vrai = styles.any?
     blanche = vrai && p.fetch(url("#{MASQUE}/manifeste.json"))
     propriete = p.fetch(url("#{PROPRIETE}/manifeste.json"))
     ambiances = AMBIANCES.select { |nom| blanche && propriete && p.fetch(url(parametres_ambiance(nom))) }
     # Couches facultatives : sans elles, l'automne se replie sur les verts sombres et la nuit reste sans lumières.
     arbres = vrai && p.fetch(url("#{ARBRES}/manifeste.json"))
     lumieres = vrai && lampadaires(p).present?
-    { vrai: vrai, blanche: blanche, ambiances: ambiances, arbres: arbres, lumieres: lumieres }
+    { vrai: vrai, styles: styles, blanche: blanche, ambiances: ambiances, arbres: arbres, lumieres: lumieres }
   end
 
   # Ce que reçoit le contrôleur Stimulus.
   def pour_js
     {
-      base: base, lot: LOT, masque: MASQUE, propriete: PROPRIETE, arbres: ARBRES, lumieres: lampadaires(presents),
+      base: base, styles: STYLES.keys, style_defaut: STYLE_DEFAUT, masque: MASQUE, propriete: PROPRIETE,
+      arbres: ARBRES, lumieres: lampadaires(presents),
       ambiances: AMBIANCES.index_with { |nom| parametres_ambiance(nom) },
       disponibles: disponibles
     }
@@ -74,7 +82,7 @@ class DioramaTuiles
   end
 
   def urls_a_sonder
-    [ LOT, MASQUE, PROPRIETE, ARBRES, *LAMPADAIRES.map(&:first) ].map { |dossier| url("#{dossier}/manifeste.json") } +
+    [ *STYLES.keys, MASQUE, PROPRIETE, ARBRES, *LAMPADAIRES.map(&:first) ].map { |dossier| url("#{dossier}/manifeste.json") } +
       AMBIANCES.map { |nom| url(parametres_ambiance(nom)) }
   end
 

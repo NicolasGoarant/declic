@@ -12,11 +12,13 @@ class LaboControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-controller=diorama]"
     assert_select ".acc-cat", 6
     assert_select "nav.acc-onglets"
-    # Panneau « Calques » : Fond (Diorama, Plan) et Ambiance complète (Automatique, moment, saison,
-    # météo, maquette blanche) ; pas encore de Style.
+    # Panneau « Calques » : Fond (Diorama, Plan), Style (Jeu vidéo, Réaliste) et Ambiance complète
+    # (Automatique, moment, saison, météo, maquette blanche).
     assert_select ".acc-rond-calques[aria-controls=acc-calques]"
-    assert_select "#acc-calques[hidden] [data-rubrique]", 2
-    assert_select "#acc-calques [data-rubrique=style]", 0
+    assert_select "#acc-calques[hidden] [data-rubrique]", 3
+    assert_select "input[name=calques-style]" do |choix|
+      assert_equal %w[jeu-video-v1 toits-v1], choix.map { |c| c["value"] }
+    end
     assert_select "input[name=calques-fond]", 2
     assert_select "input[data-diorama-target=choixAuto][role=switch]"
     assert_select "input[name=calques-moment]" do |choix|
@@ -38,6 +40,8 @@ class LaboControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "input[name=calques-fond]", 2
+    assert_select "input[name=calques-style]", 1
+    assert_select "input[name=calques-style][value=toits-v1]", 1
     assert_select "input[name=calques-moment]" do |choix|
       assert_equal %w[aube jour heure-doree nuit], choix.map { |c| c["value"] }
     end
@@ -51,6 +55,7 @@ class LaboControllerTest < ActionDispatch::IntegrationTest
     DioramaTuiles.stub(:new, tuiles) { get labo_accueil_url }
 
     assert_select "input[name=calques-fond]", 2
+    assert_select "[data-rubrique=style]", 0
     assert_select "[data-rubrique=ambiance]", 0
   end
 

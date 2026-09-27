@@ -109,6 +109,41 @@ class CalquesTest < ApplicationSystemTestCase
     end
   end
 
+  test "le style du diorama (Jeu vidéo par défaut) se garde et ne recharge pas la carte" do
+    sur_la_carte do
+      assert_equal "jeu-video-v1", evaluate_script("#{CONTROLEUR}.style")
+      assert_selector ".leaflet-tile-pane img[src*='/jeu-video-v1/']", visible: :all
+      lat, lon, = vue
+
+      find(".acc-rond-calques").click
+      within("#acc-calques") { find("label.acc-calques-option", text: "Réaliste").click }
+
+      assert_equal "toits-v1", evaluate_script("#{CONTROLEUR}.style")
+      assert_selector ".leaflet-tile-pane img[src*='/toits-v1/']", visible: :all
+      assert_equal "toits-v1", evaluate_script("localStorage.getItem('declic:style')")
+      lat2, lon2, = vue
+      assert_in_delta lat, lat2, 0.0001 # même carte : la vue n'a pas bougé
+      assert_in_delta lon, lon2, 0.0001
+      find("body").send_keys(:escape)
+
+      visit labo_accueil_path
+
+      assert_selector "[data-fond=diorama]"
+      assert_equal "toits-v1", evaluate_script("#{CONTROLEUR}.style")
+      find(".acc-rond-calques").click
+      assert find("input[name=calques-style][value=toits-v1]", visible: :all).checked?
+    end
+  end
+
+  test "le style est masqué en mode Plan" do
+    sur_la_carte do
+      find(".acc-rond-calques").click
+      assert_selector "#acc-calques fieldset[data-rubrique=style]", visible: true
+      within("#acc-calques") { find("label.acc-calques-option", text: "Plan").click }
+      assert_selector "#acc-calques fieldset[data-rubrique=style]", visible: false
+    end
+  end
+
   test "l'économiseur de données démarre sur le plan, tant qu'aucun choix n'est gardé" do
     navigateur = page.driver.browser
     script = navigateur.execute_cdp("Page.addScriptToEvaluateOnNewDocument",

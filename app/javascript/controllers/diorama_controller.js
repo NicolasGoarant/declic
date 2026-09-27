@@ -19,7 +19,9 @@ import { chargerLampadaires, compterLampadaires } from "diorama/lampadaires"
 import { LAMPADAIRES } from "diorama/reglages"
 import { regrouper, eventail, FLEURS_MAX } from "diorama/bouquets"
 import { chargerContour, creerDecoupe, poserSocle } from "diorama/contour"
-import { CLE_FOND, CLE_AMBIANCE, CLE_AUTO, CLES_REGLAGES, CLE_BLANCHE, lire, ecrire, fondDeDepart } from "diorama/preferences"
+import {
+  CLE_FOND, CLE_AMBIANCE, CLE_AUTO, CLES_REGLAGES, CLE_BLANCHE, CLE_STYLE, lire, ecrire, fondDeDepart, styleDeDepart
+} from "diorama/preferences"
 import { lireDate, aujourdhui, estPasse, estAVenir, etiquette, periode, jourCourt } from "diorama/dates"
 
 const NIVEAU_MAX = 8
@@ -65,7 +67,7 @@ export default class extends Controller {
     "carte", "alerte", "voletTitre", "poigneeTitre", "compteur", "fiches", "vide", "stats",
     "modeleFiche", "modelePin", "modelePopup", "categorie", "ongletFavoris", "ongletCarte",
     "boutonCalques", "panneauCalques", "voileCalques", "choixFond", "rubriqueAmbiance", "choixAuto",
-    "choixReglage", "choixBlanche", "ambianceAuto"
+    "choixReglage", "choixBlanche", "ambianceAuto", "rubriqueStyle", "choixStyle"
   ]
 
   connect() {
@@ -108,6 +110,7 @@ export default class extends Controller {
     }
     let pixel = null
     if (this.tuilesValue.disponibles?.vrai && fondDeDepart() === "diorama") {
+      this.style = styleDeDepart(this.tuilesValue.disponibles.styles || [])
       try {
         const contour = this.chargerContour()
         await this.chargerManifeste()
@@ -125,7 +128,7 @@ export default class extends Controller {
 
   async chargerManifeste() {
     const t = this.tuilesValue
-    const reponse = await fetch(`${t.base}/${t.lot}/manifeste.json`)
+    const reponse = await fetch(`${t.base}/${this.style}/manifeste.json`)
     if (!reponse.ok) throw new Error(`manifeste HTTP ${reponse.status}`)
     this.manifeste = await reponse.json()
     this.projection = creerProjection(this.manifeste)
@@ -201,6 +204,7 @@ export default class extends Controller {
   async demarrer() {
     const t = this.tuilesValue
     this.dioramaDispo = Boolean(t.disponibles?.vrai)
+    this.style = this.dioramaDispo ? styleDeDepart(t.disponibles.styles || []) : null
     const contour = this.dioramaDispo ? this.chargerContour() : null
     try {
       const module = await import("leaflet")
@@ -391,6 +395,28 @@ export default class extends Controller {
     this.carte.setView(this.carte.unproject(this.L.point(px, py), NIVEAU_MAX), zoom, { animate: false })
   }
 
+  // ─── Bascule du style du diorama (Réaliste / Jeu vidéo) ──────────────────────────────
+  // Mêmes dalles, même grille : on garde la carte (centre, zoom, marqueurs, volet, ambiance en
+  // cours) et on ne recrée que la couche de fond. Les couches sont gardées par état (this.couches :
+  // « vrai », « blanche », un par combinaison d'ambiance) et leur canevas est calculé pour le style
+  // qui était actif ; on les jette toutes pour que la nouvelle couche de fond se recalcule dans le
+  // style choisi (« caches d'étalonnage par dalle » invalidés).
+  choisirStyle(event) {
+    this.changerStyle(event.target.value)
+  }
+
+  changerStyle(style) {
+    if (!this.carte || style === this.style || !this.tuilesValue.disponibles?.styles?.includes(style)) {
+      this.majCalques()
+      return
+    }
+    this.style = style
+    ecrire(CLE_STYLE, style)
+    this.couches = {}
+    if (this.fond === "diorama") this.poserCoucheFond(this.coucheCourante())
+    this.majCalques()
+  }
+
   // ─── Le panneau « Calques » ──────────────────────────────────────────────────────────
   basculerCalques() {
     if (this.panneauCalquesTarget.hidden) this.ouvrirCalques()
@@ -423,6 +449,8 @@ export default class extends Controller {
       c.closest("label").title = c.disabled ? "Diorama momentanément indisponible" : ""
     })
     if (this.hasRubriqueAmbianceTarget) this.rubriqueAmbianceTarget.hidden = this.fond !== "diorama"
+    if (this.hasRubriqueStyleTarget) this.rubriqueStyleTarget.hidden = this.fond !== "diorama"
+    this.choixStyleTargets.forEach((c) => { c.checked = c.value === this.style })
     // Les réglages affichés : ceux qu'« Automatique » retient, sinon ceux choisis.
     const etat = this.etatAffiche()
     if (this.hasChoixAutoTarget) this.choixAutoTarget.checked = this.auto
@@ -464,14 +492,14 @@ export default class extends Controller {
 
   coucheVraie() {
     this.couches.vrai ||= this.decouper(creerCoucheDalles(this.L, {
-      modele: this.url(this.tuilesValue.lot, "{z}/{x}/{y}.webp"), estListee: this.estListee, options: this.optionsCouche
+      modele: this.url(this.style, "{z}/{x}/{y}.webp"), estListee: this.estListee, options: this.optionsCouche
     }))
     return this.couches.vrai
   }
 
   coucheBlanche() {
     this.couches.blanche ||= this.decouper(creerCoucheBlanche(this.L, {
-      dalle: (chemin) => this.url(this.tuilesValue.lot, `${chemin}.webp`),
+      dalle: (chemin) => this.url(this.style, `${chemin}.webp`),
       masque: (chemin) => this.url(this.tuilesValue.masque, `${chemin}.png`),
       estListee: this.estListee, masqueListe: this.masqueListe, options: this.optionsCouche
     }))
@@ -489,7 +517,7 @@ export default class extends Controller {
       this.couches[cle] = this.decouper(creerCoucheAmbiance(this.L, {
         cle,
         uniformes: publies.then((p) => uniformesEtat(etat, p, { arbres: Boolean(this.dallesArbres), projection: this.projection })),
-        dalle: (chemin) => this.url(t.lot, `${chemin}.webp`),
+        dalle: (chemin) => this.url(this.style, `${chemin}.webp`),
         propriete: (chemin) => this.url(t.propriete, `${chemin}.png`),
         masque: (chemin) => this.url(t.masque, `${chemin}.png`),
         arbres: (chemin) => this.url(t.arbres, `${chemin}.png`),
