@@ -9,8 +9,8 @@ class TuilesFactices
 
   def call(env)
     case env["PATH_INFO"]
-    when "/toits-v1/manifeste.json" then [ 200, { "content-type" => "application/json" }, [ manifeste ] ]
-    when %r{\A/toits-v1/\d+/\d+/\d+\.webp\z}, %r{\A/(masque-bati|propriete-toits-v1)/\d+/\d+/\d+\.png\z}
+    when "/toits-v1/manifeste.json", "/jeu-video-v1/manifeste.json" then [ 200, { "content-type" => "application/json" }, [ manifeste ] ]
+    when %r{\A/(toits-v1|jeu-video-v1)/\d+/\d+/\d+\.webp\z}, %r{\A/(masque-bati|propriete-toits-v1)/\d+/\d+/\d+\.png\z}
       [ 200, { "content-type" => "image/png" }, [ pixel ] ]
     when "/masque-bati/manifeste.json", "/propriete-toits-v1/manifeste.json"
       [ 200, { "content-type" => "application/json" }, [ { dalles: {} }.to_json ] ]
@@ -20,8 +20,9 @@ class TuilesFactices
     end
   end
 
-  PUBLIES = %w[toits-v1/manifeste.json masque-bati/manifeste.json propriete-toits-v1/manifeste.json
-               ambiances/hiver-actuelle.json].freeze
+  # Les deux styles (jeu-video-v1 et toits-v1) sont publiés : le panneau Calques propose le choix.
+  PUBLIES = %w[toits-v1/manifeste.json jeu-video-v1/manifeste.json masque-bati/manifeste.json
+               propriete-toits-v1/manifeste.json ambiances/hiver-actuelle.json].freeze
 
   # Ce que sonde DioramaTuiles : ce qui est publié ici.
   def self.sonde = ->(url) { PUBLIES.any? { |p| url == "#{PREFIXE}/#{p}" } }

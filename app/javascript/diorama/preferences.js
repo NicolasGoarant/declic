@@ -6,6 +6,8 @@ export const CLE_BLANCHE = "declic:maquette-blanche" // "1" | "0"
 export const CLE_AUTO = "declic:ambiance-auto"      // "1" | "0"
 export const CLES_REGLAGES = { moment: "declic:moment", saison: "declic:saison", meteo: "declic:meteo" }
 export const CLE_AMBIANCE = "declic:ambiance"       // ancienne clé (une seule ambiance), lue une fois pour reprise
+export const CLE_STYLE = "declic:style"             // "jeu-video-v1" | "toits-v1"
+const STYLE_DEFAUT = "jeu-video-v1"
 
 export function lire(cle) {
   try { return localStorage.getItem(cle) } catch { return null }
@@ -21,4 +23,12 @@ export function fondDeDepart() {
   const memorise = lire(CLE_FOND)
   if (memorise === "diorama" || memorise === "plan") return memorise
   return navigator.connection?.saveData ? "plan" : "diorama"
+}
+
+// Le style du diorama au démarrage : le choix mémorisé s'il est encore publié, sinon le style par
+// défaut (Jeu vidéo) s'il l'est, sinon le premier style publié.
+export function styleDeDepart(disponibles) {
+  const memorise = lire(CLE_STYLE)
+  if (memorise && disponibles.includes(memorise)) return memorise
+  return disponibles.includes(STYLE_DEFAUT) ? STYLE_DEFAUT : disponibles[0]
 }

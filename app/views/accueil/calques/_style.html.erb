@@ -1,0 +1,18 @@
+<%# Style du rendu du diorama (masqué en mode Plan) : mêmes dalles, deux grades. Choix mémorisé sur
+    l'appareil (déclic:style), par défaut Jeu vidéo. Un style dont le manifeste manque sur R2 n'est
+    pas proposé (DioramaTuiles#disponibles). %>
+<% styles = { "jeu-video-v1" => "Jeu vidéo", "toits-v1" => "Réaliste" } %>
+<% if disponibles[:vrai] %>
+  <fieldset class="acc-calques-rubrique" data-rubrique="style" data-diorama-target="rubriqueStyle">
+    <legend>Style</legend>
+    <div class="acc-calques-choix">
+      <% styles.each do |valeur, libelle| %>
+        <% next unless disponibles[:styles]&.include?(valeur) %>
+        <label class="acc-calques-option">
+          <input type="radio" name="calques-style" value="<%= valeur %>" data-diorama-target="choixStyle" data-action="diorama#choisirStyle">
+          <span><%= libelle %></span>
+        </label>
+      <% end %>
+    </div>
+  </fieldset>
+<% end %>

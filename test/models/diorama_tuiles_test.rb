@@ -8,7 +8,15 @@ class DioramaTuilesTest < ActiveSupport::TestCase
   end
 
   test "seul le lot toits-v1 : pas de maquette blanche ni d'ambiance" do
-    assert_equal({ vrai: true, blanche: false, ambiances: [], arbres: false, lumieres: false }, tuiles([ "toits-v1/manifeste.json" ]).disponibles)
+    assert_equal({ vrai: true, styles: %w[toits-v1], blanche: false, ambiances: [], arbres: false, lumieres: false },
+                 tuiles([ "toits-v1/manifeste.json" ]).disponibles)
+  end
+
+  test "les deux styles publiés sont listés, jeu-video-v1 en tête" do
+    t = tuiles(%w[toits-v1/manifeste.json jeu-video-v1/manifeste.json])
+    assert_equal %w[jeu-video-v1 toits-v1], t.disponibles[:styles]
+    assert_equal %w[jeu-video-v1 toits-v1], t.pour_js[:styles]
+    assert_equal "jeu-video-v1", t.pour_js[:style_defaut]
   end
 
   test "la maquette blanche exige le lot et le masque" do
@@ -24,7 +32,7 @@ class DioramaTuilesTest < ActiveSupport::TestCase
   end
 
   test "sans le lot, rien n'est disponible" do
-    assert_equal({ vrai: false, blanche: false, ambiances: [], arbres: false, lumieres: false },
+    assert_equal({ vrai: false, styles: [], blanche: false, ambiances: [], arbres: false, lumieres: false },
                  tuiles(%w[masque-bati/manifeste.json masque-arbres/manifeste.json]).disponibles)
   end
 
