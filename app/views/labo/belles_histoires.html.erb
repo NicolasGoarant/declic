@@ -1,0 +1,118 @@
+<%# Page Belles Histoires (cible : docs/maquettes/declic-maquette-belles-histoires-v1.png), layout « fiche ».
+    Visuel d'en-tête : même repli que /labo/opportunites (maquette trop petite pour un recadré net).
+    Règle éditoriale (NOTES.md) : une Belle Histoire est un récit — aucun horaire, aucun bouton d'action
+    sur les cartes. Filtre par thématique : valeurs réelles de la colonne `thematique` (Story), pas
+    celles, fictives, de la maquette. %>
+<% histoires = @histoires.map { |s| histoire_pour_carte(s) } %>
+<% histoires_carte = histoires.select { |h| h[:latitude] && h[:longitude] } %>
+<% content_for :title, "Les Belles Histoires — Déclic" %>
+<% content_for :onglet_courant, "histoires" %>
+<% content_for :feuilles do %>
+  <%= stylesheet_link_tag "labo_pages" %>
+<% end %>
+
+<div class="lb lb-histoires"
+     data-controller="diorama explorateur"
+     data-diorama-points-value="<%= histoires_carte.to_json %>"
+     data-diorama-categories-value="<%= categories_pour_js.to_json %>"
+     data-diorama-tuiles-value="<%= @tuiles.pour_js.to_json %>"
+     data-diorama-developpement-value="<%= Rails.env.development? %>"
+     data-explorateur-points-value="<%= histoires.to_json %>"
+     data-action="diorama:localise->explorateur#surLocalisation diorama:localisation-echec->explorateur#surEchecLocalisation">
+
+  <section class="lb-hero">
+    <div class="lb-contenu lb-hero-grille">
+      <div>
+        <span class="lb-etiquette">Inspiration</span>
+        <h1>Les <span class="lb-degrade">Belles Histoires</span></h1>
+        <p class="lb-chapo">Des habitants du Grand Nancy racontent le déclic qui a changé leur quotidien :
+          une rencontre, une formation, un engagement.</p>
+        <div class="lb-boutons">
+          <%= link_to new_story_path, class: "lb-bouton" do %>
+            <%= picto(:coeur, taille: 18) %> Raconter mon histoire
+          <% end %>
+        </div>
+      </div>
+      <div class="lb-hero-repli" aria-hidden="true"><%= picto(:etoile, taille: 64) %></div>
+    </div>
+  </section>
+
+  <section class="lb-contenu" style="padding-top: 8px">
+    <h2>La carte des déclics</h2>
+  </section>
+
+  <%= render "labo/filtre_categories", titre: "Thématique" %>
+
+  <div class="lb-explorer">
+    <div class="lb-carte-bloc">
+      <%= render "accueil/carte", disponibles: @tuiles.disponibles, localiser: true %>
+    </div>
+
+    <details class="lb-panneau" open data-explorateur-target="panneau">
+      <summary>Recherche et filtres</summary>
+      <div class="lb-panneau-corps">
+        <label class="lb-recherche">
+          <%= picto(:chercher, taille: 18) %>
+          <input type="search" placeholder="Rechercher une histoire…" aria-label="Rechercher une histoire"
+                 data-action="input->explorateur#chercher">
+        </label>
+
+        <div class="lb-pilles">
+          <button type="button" class="lb-pille" aria-pressed="false" data-explorateur-target="proximitePille" data-action="explorateur#basculerProximite">À proximité</button>
+          <button type="button" class="lb-pille" aria-pressed="true" data-explorateur-target="triPille" data-valeur="recentes"
+                  data-action="explorateur#choisirTri" data-explorateur-valeur-param="recentes">Récentes</button>
+          <button type="button" class="lb-pille" aria-pressed="false" data-explorateur-target="triPille" data-valeur="thematique"
+                  data-action="explorateur#choisirTri" data-explorateur-valeur-param="thematique">Par thématique</button>
+        </div>
+
+        <div class="lb-rayon" data-explorateur-target="rayonBloc" hidden>
+          <label for="bh-rayon">Rayon autour de vous <span data-explorateur-target="rayonValeur">25 km</span></label>
+          <input type="range" id="bh-rayon" min="1" max="50" value="25" step="1" data-explorateur-target="rayon" data-action="input->explorateur#changerRayon">
+        </div>
+        <p class="lb-rayon-message" data-explorateur-target="proximiteMessage" hidden></p>
+      </div>
+    </details>
+  </div>
+
+  <section class="lb-resultats">
+    <div class="lb-resultats-tete">
+      <div class="lb-resultats-titres">
+        <span class="lb-resultats-label">Témoignages</span>
+        <h2>Derniers témoignages</h2>
+        <span class="lb-compteur" data-explorateur-target="compteur"><%= histoires.size %> résultats</span>
+      </div>
+    </div>
+
+    <div class="lb-grille" data-explorateur-target="grille"></div>
+    <p class="lb-vide" data-explorateur-target="vide" hidden>Aucune histoire ne correspond à ces filtres pour l'instant.</p>
+
+    <template data-explorateur-target="modele">
+      <article class="lb-carte">
+        <div class="fiche-bandeau">
+          <img class="fiche-photo" data-photo alt="" hidden>
+          <img class="fiche-picto-seul" data-picto alt="" hidden>
+          <span class="lb-carte-etiquette" data-categorie></span>
+        </div>
+        <div class="lb-carte-corps">
+          <h3><a data-titre class="lb-carte-titre"></a></h3>
+          <p class="lb-carte-citation" data-citation-bloc>« <span data-citation></span> »</p>
+          <p class="lb-carte-ligne"><%= picto(:lieu, taille: 14) %><span data-commune></span></p>
+          <p class="lb-carte-ligne"><%= picto(:calendrier, taille: 14) %><span data-quand></span></p>
+          <a class="lb-carte-lien" data-lien href="#">Lire l'histoire <%= picto(:fleche, taille: 14) %></a>
+        </div>
+      </article>
+    </template>
+  </section>
+
+  <div hidden><%= render "accueil/volet" %></div>
+
+  <section class="lb-final">
+    <div class="lb-contenu">
+      <h2>Et si c'était votre histoire ?</h2>
+      <p>Votre déclic peut inspirer quelqu'un d'autre dans le Grand Nancy. Racontez-le en quelques lignes.</p>
+      <%= link_to new_story_path, class: "lb-bouton" do %>
+        Partager mon témoignage <%= picto(:fleche, taille: 16) %>
+      <% end %>
+    </div>
+  </section>
+</div>

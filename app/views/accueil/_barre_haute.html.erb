@@ -13,8 +13,8 @@
     <% else %>
       <a href="#carte" aria-current="page">Carte</a>
     <% end %>
-    <%= link_to "Explorer", opportunities_path, aria: { current: ("page" if courant == "explorer") } %>
-    <%= link_to "Belles Histoires", stories_path, aria: { current: ("page" if courant == "histoires") } %>
+    <%= link_to "Opportunités", labo_opportunites_path, aria: { current: ("page" if courant == "explorer") } %>
+    <%= link_to "Belles Histoires", labo_belles_histoires_path, aria: { current: ("page" if courant == "histoires") } %>
     <%= link_to "Pourquoi Déclic ?", philosophie_path, aria: { current: ("page" if courant == "pourquoi") } %>
   </nav>
   <% if courant == "pourquoi" %>

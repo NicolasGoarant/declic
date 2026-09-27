@@ -15,6 +15,12 @@
         <button type="button" aria-label="Dézoomer" data-action="diorama#zoomer" data-diorama-sens-param="-1"><%= picto(:moins, taille: 20) %></button>
       </div>
     </div>
+
+    <% if local_assigns[:localiser] %>
+      <button type="button" class="acc-rond-calques" aria-label="Me localiser" data-action="diorama#localiser">
+        <%= picto(:viseur, taille: 22) %>
+      </button>
+    <% end %>
   </div>
 
   <%# La popup d'un pin, remplie par le JS (diorama#contenuPopup). %>

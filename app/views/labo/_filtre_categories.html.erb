@@ -1,0 +1,19 @@
+<%# Filtre par catégorie (Opportunités) ou thématique (Belles Histoires) : les 5 valeurs réelles
+    (Opportunity::CATEGORIES), plus « Toutes ». Chaque bouton pilote à la fois la carte (diorama)
+    et la grille de cartes (explorateur) : data-action liste les deux contrôleurs. %>
+<div class="lb-categories" role="group" aria-label="<%= local_assigns[:titre] || "Catégorie" %>">
+  <button type="button" class="lb-cat lb-cat--toutes" aria-pressed="true" data-diorama-target="toutes"
+          data-action="diorama#toutesCategories explorateur#toutesCategories">
+    Toutes
+  </button>
+  <% categories_reelles.each do |categorie| %>
+    <button type="button" class="lb-cat" aria-pressed="false" data-cle="<%= categorie.cle %>" style="--c: <%= categorie.couleur %>"
+            data-diorama-target="categorie"
+            data-action="diorama#basculerCategorie explorateur#basculerCategorie"
+            data-diorama-cle-param="<%= categorie.cle %>" data-explorateur-cle-param="<%= categorie.cle %>">
+      <%= icone_categorie(categorie, taille: 32) %>
+      <span><%= categorie.libelle %></span>
+      <small data-compte hidden></small>
+    </button>
+  <% end %>
+</div>
