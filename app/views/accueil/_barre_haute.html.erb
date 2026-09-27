@@ -1,6 +1,7 @@
 <%# Bureau seulement (≥ 1024 px) : logo, navigation, bouton « Proposer une initiative ».
-    Hors de /labo/accueil (fiches), « Carte » ramène à l'accueil et `courant` désigne l'entrée
-    active (« Explorer » ou « Belles Histoires »). %>
+    Hors de /labo/accueil (fiches, « Pourquoi Déclic ? »), « Carte » ramène à l'accueil et `courant`
+    désigne l'entrée active (« explorer », « histoires » ou « pourquoi »). Sur « Pourquoi Déclic ? »,
+    deux boutons : partager un témoignage, proposer une opportunité. %>
 <% courant = local_assigns[:courant].presence %>
 <header class="acc-barre">
   <%= link_to labo_accueil_path, class: "acc-logo", aria: { label: "Déclic, accueil" } do %>
@@ -14,9 +15,18 @@
     <% end %>
     <%= link_to "Explorer", opportunities_path, aria: { current: ("page" if courant == "explorer") } %>
     <%= link_to "Belles Histoires", stories_path, aria: { current: ("page" if courant == "histoires") } %>
-    <%= link_to "Pourquoi Déclic ?", philosophie_path %>
+    <%= link_to "Pourquoi Déclic ?", philosophie_path, aria: { current: ("page" if courant == "pourquoi") } %>
   </nav>
-  <%= link_to new_opportunity_path, class: "acc-bouton-proposer" do %>
-    <%= picto(:plus, taille: 18) %> Proposer une initiative
+  <% if courant == "pourquoi" %>
+    <%= link_to new_story_path, class: "acc-bouton-proposer acc-bouton-temoignage" do %>
+      <%= picto(:coeur, taille: 18) %> Partager un témoignage
+    <% end %>
+    <%= link_to new_opportunity_path, class: "acc-bouton-proposer" do %>
+      <%= picto(:plus, taille: 18) %> Proposer une opportunité
+    <% end %>
+  <% else %>
+    <%= link_to new_opportunity_path, class: "acc-bouton-proposer" do %>
+      <%= picto(:plus, taille: 18) %> Proposer une initiative
+    <% end %>
   <% end %>
 </header>
