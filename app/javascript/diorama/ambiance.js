@@ -99,6 +99,23 @@ const SOURCE_FS = [
   "  vec3 xyz = vec3(fi(fx), fi(fy), fi(fz)) * vec3(0.950456, 1.0, 1.088754);",
   "  vec3 l = mat3(3.240479, -0.969256, 0.055648, -1.537150, 1.875992, -0.204043, -0.498535, 0.041556, 1.057311) * xyz;",
   "  return gam(l); }",
+  // v7c (ombre) : rotation de teinte a*/b* qui CONSERVE LE CHROMA DU PIXEL D'ORIGINE — contrairement à un
+  // mix qui dérive vers le chroma de la cible (ici très faible : cibleOmbre est mesurée quasi noire), ce
+  // qui désature les ombres bien plus que la référence. On tourne donc l'angle seul, à l'arc le plus court
+  // SAUF quand celui-ci traverse le vert/cyan (~140°-215° en angle Lab — le point médian du trajet suffit
+  // à le détecter) : l'or et le crème des façades jour (~85°-95°) sont juste de l'autre côté de cette
+  // zone que le bleu-violet des ombres (~245°-260°), donc l'arc le plus court y passe presque toujours ;
+  // on force alors le grand tour, par le rouge/magenta, sans effet visible car aucune des deux couleurs
+  // n'est proche de cette zone. rO quasi nul (gris neutre) : retour à un mix brut, sûr (pas d'angle instable).
+  "vec2 giroYZ(vec2 origine, vec2 cible, float t){",
+  "  float rO = length(origine);",
+  "  if (rO < 0.0008) return mix(origine, cible, t);",
+  "  float aO = atan(origine.y, origine.x), aC = atan(cible.y, cible.x);",
+  "  float diff = mod(aC - aO + 3.14159265, 6.28318531) - 3.14159265;",
+  "  float mid = mod(aO + diff * 0.5 + 6.28318531, 6.28318531);",
+  "  if (mid > 2.44346 && mid < 3.75246) diff -= sign(diff) * 6.28318531;",
+  "  return rO * vec2(cos(aO + diff * t), sin(aO + diff * t));",
+  "}",
   "vec3 hsv(vec3 c){ float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b)), d = mx - mn, h = 0.0;",
   "  if (d > 0.0) { if (mx == c.r) h = 60.0 * (c.g - c.b) / d; else if (mx == c.g) h = 120.0 + 60.0 * (c.b - c.r) / d;",
   "    else h = 240.0 + 60.0 * (c.r - c.g) / d; if (h < 0.0) h += 360.0; }",
@@ -144,6 +161,15 @@ const SOURCE_FS = [
   "  else if (modeClasse == 1) { toit = texture2D(tClasse, uv).r; classe = toit > 0.5 ? 2.0 : 1.0; }",
   "  else { classe = 2.0; toit = -1.0; }",
   "  if (classe > 0.0 && feuillage(o)) classe = 3.0;",
+  // Poids de la lumière des rues/places au pied de CE pixel, calculé ICI (avant l'ombre) et réutilisé
+  // tel quel plus bas (étape 4) : sans cela, l'ombre teinte vers le bleu-violet un pixel qui va de toute
+  // façon recevoir la lumière chaude juste après, et les deux rotations de teinte opposées se composent
+  // en travers du cercle des teintes — visible comme une frange cyan/magenta aux bords des halos (v7b).
+  "  vec3 lLum = vec3(0.0); float wLum = 0.0;",
+  "  if (lumieres == 1) { lLum = lumiere(px);",
+  "    float solPre = toit < 0.0 || classe == 1.0 ? 1.0 : facade.w;",
+  "    float placePre = lLum.b * (classe == 3.0 ? 0.0 : 1.0);",
+  "    wLum = (1.0 - (1.0 - lLum.r) * (1.0 - placePre)) * solPre; }",
   "  vec3 lab = versLab(o);",
   // 1. Saison.
   "  if (saison == 1) lab = regles_s(lab, classe);",
@@ -180,16 +206,12 @@ const SOURCE_FS = [
   // (cibleOmbre). v7b : ce virage ne touche que a*/b* (Lab), jamais L* — donc aucun assombrissement
   // supplémentaire au-delà de celui déjà posé par `luminosite` ci-dessus.
   "    if (voileOmbres > 0.5) {",
-  "      float part = voile.a * (1.0 - smoothstep(0.05, 0.30, luma(rgb)));",
+  "      float part = voile.a * (1.0 - smoothstep(0.05, 0.30, luma(rgb))) * (1.0 - clamp(wLum, 0.0, 1.0));",
   "      vec3 labV = versLab(rgb), cibleV = versLab(cibleOmbre);",
-  // mixer les vecteurs a*/b* bruts dilue la saturation : leur norme dépend de L*, or cibleOmbre est
-  // mesurée sur un échantillon très sombre. On tourne donc seulement la teinte (direction de cibleV.yz),
-  // en conservant le chroma propre du pixel, pour éviter ce délavage.
-  "      float chroma = length(labV.yz);",
-  "      vec2 dirCible = length(cibleV.yz) > 1e-4 ? normalize(cibleV.yz) : labV.yz;",
-  "      vec2 dirPixel = chroma > 1e-4 ? labV.yz / chroma : dirCible;",
-  "      vec2 dir = normalize(mix(dirPixel, dirCible, part));",
-  "      labV.yz = dir * chroma;",
+  // giroYZ (voir sa définition) : rotation à chroma conservé, grand tour forcé par le rouge/magenta pour
+  // ne jamais traverser le vert/cyan — remplace le mix brut v7c, qui évitait bien la frange mais désaturait
+  // les ombres bien en dessous de la cible mesurée (cibleOmbre est mesurée quasi noire, donc peu chromatique).
+  "      labV.yz = giroYZ(labV.yz, cibleV.yz, part);",
   "      rgb = depuisLab(labV);",
   "    } else {",
   "      rgb = mix(rgb, voile.rgb, voile.a);",
@@ -206,22 +228,18 @@ const SOURCE_FS = [
   "    bool tuile = k.y > 0.3 && k.x <= 32.0, ardoise = k.x >= 175.0 && k.x <= 260.0 && k.y < 0.35;",
   "    float fac = d > 0.0 && !tuile && !ardoise ? 1.0 : 0.0; // tuiles orangées et ardoises bleues : toit, pas de fenêtres",
   "    float sol = toit < 0.0 || classe == 1.0 ? 1.0 : facade.w;",
-  "    vec3 l = lumiere(px);",
-  "    float place = l.b * (classe == 3.0 ? 0.0 : 1.0);",
-  "    float lr = 1.0 - (1.0 - l.r) * (1.0 - place);",
-  "    float w = lr * sol;",
-  // v7b : la surface éclairée se déplace en Lab vers la couleur cible mesurée (cibleRue). a*/b* :
-  // rotation de teinte + interpolation du chroma (comme les ombres) — pas un mix brut, qui délave.
+  // l, w : déjà calculés plus haut (lLum, wLum), avant l'ombre — voir le commentaire à leur déclaration.
+  "    vec3 l = lLum; float w = wLum;",
+  // v7b : la surface éclairée se déplace en Lab vers la couleur cible mesurée (cibleRue). a*/b* : mix
+  // direct des vecteurs (pas giroYZ ici — la cible est déjà bien chromatique, un mix brut ne désature
+  // pas de façon sensible, et ça évite une rotation inutile sur des pixels déjà proches de l'or).
   // L* : LIFT ADDITIF plafonné à la cible (jamais au-delà, donc jamais de blanc), pas un mix — un mix
   // écrase toute variation locale (pavés, ombres portées) dès que w approche 1 sur une large zone
   // (place, carrefour) ; l'addition plafonnée garde cette texture tant qu'elle ne dépasse pas le plafond.
   "    if (w > 0.0) {",
   "      vec3 labR = versLab(rgb), cibleR = versLab(cibleRue);",
   "      float wTeinte = clamp(w * doseRue, 0.0, 1.0);",
-  "      float chO = length(labR.yz), chC = length(cibleR.yz);",
-  "      vec2 dirC = chC > 1e-4 ? cibleR.yz / chC : labR.yz;",
-  "      vec2 dirO = chO > 1e-4 ? labR.yz / chO : dirC;",
-  "      labR.yz = normalize(mix(dirO, dirC, wTeinte)) * mix(chO, chC, wTeinte);",
+  "      labR.yz = mix(labR.yz, cibleR.yz, wTeinte);",
   "      labR.x = min(labR.x + gainRue * w, cibleR.x);",
   "      rgb = depuisLab(labR);",
   "    }",
@@ -233,10 +251,7 @@ const SOURCE_FS = [
   "      if (wf > 0.0) {",
   "        vec3 labF = versLab(rgb), cibleF = versLab(cibleFacade);",
   "        float wTeinteF = clamp(wf * doseFacade, 0.0, 1.0);",
-  "        float chOF = length(labF.yz), chCF = length(cibleF.yz);",
-  "        vec2 dirCF = chCF > 1e-4 ? cibleF.yz / chCF : labF.yz;",
-  "        vec2 dirOF = chOF > 1e-4 ? labF.yz / chOF : dirCF;",
-  "        labF.yz = normalize(mix(dirOF, dirCF, wTeinteF)) * mix(chOF, chCF, wTeinteF);",
+  "        labF.yz = mix(labF.yz, cibleF.yz, wTeinteF);",
   "        labF.x = min(labF.x + gainFacade * wf, cibleF.x);",
   "        rgb = depuisLab(labF);",
   "      }",

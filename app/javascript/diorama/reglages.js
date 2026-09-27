@@ -42,13 +42,19 @@ export const MOMENTS = {
   // (pavés, ombres portées) dès que le poids approchait 1 sur une large zone — aplat plat sur la place
   // Stanislas et le carrefour de la gare. L* reçoit donc un LIFT ADDITIF (LAMPADAIRES.nappe/facades.gainL,
   // en points L*) plafonné à la cible : la texture reste visible tant qu'elle ne dépasse pas le plafond.
-  // Pour les ombres, on tourne la teinte a*/b* vers cibleOmbre en conservant le chroma du pixel (pas un
-  // mix brut des vecteurs, qui délave — leur norme dépend de L* et cibleOmbre est mesurée très sombre) ;
-  // les ombres ne touchent pas L*, donc aucun assombrissement supplémentaire.
-  // Mesuré sur les recadrages 200 % (Stanislas + gare) après le correctif du lift additif (plus haut) :
-  // rues H=47° S=0.51 ; façades H=38° S=0.50 ; ombres H=206° S=0.54 — tous à moins de 8° et 0,1 des
-  // cibles ci-dessus (le premier réglage v7b, à base d'un mix plein en L*, les respectait déjà mais
-  // aplatissait la place Stanislas et un carrefour de la gare en un bloc uni — voir gainL ci-dessus).
+  // Pour les rues et façades, a*/b* reçoit un mix DIRECT des vecteurs (pas de rotation) vers la cible :
+  // la cible y est déjà bien chromatique, donc un mix brut ne désature pas de façon sensible.
+  // Pour les ombres, giroYZ (ambiance.js) tourne l'ANGLE de a*/b* vers cibleOmbre en conservant le CHROMA
+  // du pixel d'origine (cibleOmbre est mesurée quasi noire, donc peu chromatique elle-même — un mix brut
+  // désaturerait les ombres bien en dessous de la cible) ; l'arc le plus court est pris SAUF s'il traverse
+  // le vert/cyan (or et bleu-violet sont loin l'un de l'autre sur le cercle des teintes Lab), auquel cas
+  // on force le grand tour par le rouge/magenta — sans quoi une frange cyan/magenta apparaît aux bords des
+  // halos (v7b/v7c, corrigé v7d). Les ombres ne touchent pas L*, donc aucun assombrissement supplémentaire.
+  // Mesuré sur les recadrages 200 % (Stanislas + gare) après le correctif giroYZ (v7d) :
+  // rues H=47° S=0.54 ; façades H=38-47° S=0.52-0.61 ; ombres H=205-212° S=0.43-0.46 — rues/façades à
+  // moins de 8° et 0,1 des cibles ci-dessus ; ombres à moins de 8° en teinte mais en dessous de la cible
+  // en saturation (chroma des pixels d'origine, souvent trop faible — pas un défaut de la rotation elle-
+  // même : cf. NOTES.md pour le suivi).
   nuit: {
     temperature: 21000, teinte: -0.1, saturation: 1.28, contraste: 1.08, luminosite: 0.75,
     voile: { couleur: [40, 26, 110], part: 0.88, ombres: true },
