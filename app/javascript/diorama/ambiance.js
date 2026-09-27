@@ -25,7 +25,7 @@
 // calée sur les pixels du niveau 8, donc fixe au sol quel que soit le zoom ou le déplacement.
 import { COTE, creerCache, comblerInterstices } from "diorama/couches"
 import { carteDeLumiere, dessinerFeux, DEBORD } from "diorama/lampadaires"
-import { MOMENTS, PUBLIES, AUTOMNE, PLUIE, NEIGE, LAMPADAIRES } from "diorama/reglages"
+import { MOMENTS, PUBLIES, AUTOMNE, PLUIE, NEIGE, LAMPADAIRES, NUIT_CIBLES } from "diorama/reglages"
 
 const REGLES_MAX = 3 // par étalonnage publié (hiver : 2, heure bleue et automne : 1)
 const NIVEAU_MAX = 8
@@ -66,15 +66,19 @@ const SOURCE_FS = [
   "uniform int lumieres;     // 1 : carte de lumière (tLum, COTE × (COTE + debord)) à poser",
   "uniform int classeBas;    // 1 : classe de la dalle du dessous lue (tClasseBas)",
   "uniform float lumForce, debord;",
-  "uniform vec3 nappeCouleur, coeurCouleur, placeCouleur, gains;",
-  "uniform vec3 eclairage;   // gain de la lumière sur la couleur du jour, part du cœur, fenêtres au loin",
-  "uniform float fidelite;   // part de la teinte du jour gardée sous la lampe",
+  "uniform vec3 coeurCouleur, gains;",
+  "uniform vec3 eclairage;   // (inutilisé), part du cœur, fenêtres au loin",
   "uniform vec4 facade;      // hauteur (px du niveau 8), réchauffement, décroissance, part reçue par les toits",
-  "uniform vec3 facadeCouleur, fenetreCouleur;",
+  "uniform vec3 fenetreCouleur;",
   "uniform vec4 fenetres;    // part, taille de grappe (px du niveau 8), écart entre grappes, intensité",
   "uniform vec4 fenetreForme; // cellule (l, h), fenêtre (l, h), en px du niveau 8",
   "uniform vec4 zoneGare;    // segment (x0, y0, x1, y1) en px du niveau 8, sans fenêtres (quais)",
   "uniform float zoneGareRayon; // demi-largeur du couloir, en px du niveau 8 ; <= 0 : désactivé",
+  // v7b : couleurs cibles mesurées (médianes HSV) sur la référence, en RGB 0-1 ; converties en Lab dans
+  // ce shader (versLab) pour teinter en a*/b* les rues, façades et ombres SANS passer par un mélange RGB
+  // « max »/« écran » qui blanchissait les zones de recouvrement (voir NUIT_CIBLES, diorama/reglages).
+  "uniform vec3 cibleRue, cibleFacade, cibleOmbre;",
+  "uniform float doseRue, doseFacade; // dosage du déplacement vers la cible (1 = plein à w ou wf = 1)",
   "varying vec2 uv;",
   "vec3 lin(vec3 c){ return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }",
   "vec3 gam(vec3 c){ c = clamp(c, 0.0, 1.0); return mix(c * 12.92, 1.055 * pow(c, vec3(1.0/2.4)) - 0.055, step(0.0031308, c)); }",
@@ -167,14 +171,31 @@ const SOURCE_FS = [
   "    rgb = ((rgb - 0.5) * grade.y + 0.5) * grade.z;",
   "    rgb = clamp(rgb, 0.0, 1.0);",
   // Voile réservé aux ombres (nuit v7) : les surfaces déjà claires (rues, façades, toits) le traversent
-  // presque sans le voir ; seules les zones sombres/non éclairées virent au bleu-violet.
-  "    float part = voileOmbres > 0.5 ? voile.a * (1.0 - smoothstep(0.05, 0.22, luma(rgb))) : voile.a;",
-  "    rgb = mix(rgb, voile.rgb, part);",
+  // presque sans le voir ; seules les zones sombres/non éclairées virent vers la teinte mesurée
+  // (cibleOmbre). v7b : ce virage ne touche que a*/b* (Lab), jamais L* — donc aucun assombrissement
+  // supplémentaire au-delà de celui déjà posé par `luminosite` ci-dessus.
+  "    if (voileOmbres > 0.5) {",
+  "      float part = voile.a * (1.0 - smoothstep(0.05, 0.30, luma(rgb)));",
+  "      vec3 labV = versLab(rgb), cibleV = versLab(cibleOmbre);",
+  // mixer les vecteurs a*/b* bruts dilue la saturation : leur norme dépend de L*, or cibleOmbre est
+  // mesurée sur un échantillon très sombre. On tourne donc seulement la teinte (direction de cibleV.yz),
+  // en conservant le chroma propre du pixel, pour éviter ce délavage.
+  "      float chroma = length(labV.yz);",
+  "      vec2 dirCible = length(cibleV.yz) > 1e-4 ? normalize(cibleV.yz) : labV.yz;",
+  "      vec2 dirPixel = chroma > 1e-4 ? labV.yz / chroma : dirCible;",
+  "      vec2 dir = normalize(mix(dirPixel, dirCible, part));",
+  "      labV.yz = dir * chroma;",
+  "      rgb = depuisLab(labV);",
+  "    } else {",
+  "      rgb = mix(rgb, voile.rgb, voile.a);",
+  "    }",
   "    if (classe == 3.0) rgb = mix(rgb, parcs.rgb * (0.75 + 0.5 * luma(o)), parcs.a); }",
   // 4. Lumières.
   "  if (lumieres == 1) {",
   "    float d = 0.0, h = facade.x / echelle;",
-  "    if (toit >= 0.0 && classe == 2.0) for (int i = 1; i <= 48; i++) { float fi = float(i);",
+  // v7b : recherche du sol approfondie (72 pas, au lieu de 48) pour que `hauteur_px` puisse couvrir des
+  // immeubles plus hauts sans être plafonnée par la boucle elle-même.
+  "    if (toit >= 0.0 && classe == 2.0) for (int i = 1; i <= 72; i++) { float fi = float(i);",
   "      if (fi > h) break; if (bati(px + vec2(0.0, fi)) < 0.5) { d = fi; break; } }",
   "    vec3 k = hsv(o);",
   "    bool tuile = k.y > 0.3 && k.x <= 32.0, ardoise = k.x >= 175.0 && k.x <= 260.0 && k.y < 0.35;",
@@ -182,20 +203,24 @@ const SOURCE_FS = [
   "    float sol = toit < 0.0 || classe == 1.0 ? 1.0 : facade.w;",
   "    vec3 l = lumiere(px);",
   "    float place = l.b * (classe == 3.0 ? 0.0 : 1.0);",
-  // Une surface éclairée montre sa clarté du jour (o) sous la lumière chaude, dont la teinte domine :
-  // texture gardée, pas de blanc brûlé ; le cœur, lui, rayonne (mélange écran).
   "    float lr = 1.0 - (1.0 - l.r) * (1.0 - place);",
-  "    vec3 teinte = mix(nappeCouleur, placeCouleur, place / max(lr, 0.001));",
-  // La lumière chaude chasse le bleu là où elle tombe : sans cela, bleu + orangé passe par le rose.
   "    float w = lr * sol;",
-  "    vec3 albedo = mix(vec3(luma(o)), o, fidelite) * eclairage.x;",
-  "    rgb = mix(mix(rgb, vec3(luma(rgb)), min(1.0, w * 1.6)), max(rgb, albedo * teinte), w);",
+  // v7b : la surface éclairée se déplace en Lab vers la couleur cible mesurée (cibleRue), a*/b* et un
+  // plafond de clarté L* — jamais au-delà de la cible, donc jamais de blanc, même quand plusieurs
+  // nappes se recouvrent ; sa propre luminance locale (texture) reste hors de ce plafond.
+  "    if (w > 0.0) {",
+  "      vec3 labR = versLab(rgb), cibleR = versLab(cibleRue), poids = vec3(clamp(w * doseRue, 0.0, 1.0));",
+  "      rgb = depuisLab(mix(labR, cibleR, poids));",
+  "    }",
   "    rgb = ecran(rgb, coeurCouleur * l.g * eclairage.y * sol);",
   "    if (fac > 0.0) {",
   "      float t = d / h; vec3 p = lumiere(px + vec2(0.0, d));",
   "      float pied = 1.0 - (1.0 - p.r) * (1.0 - p.g) * (1.0 - p.b);",
   "      float wf = clamp(pied * facade.y * pow(1.0 - t, facade.z) * fac, 0.0, 1.0);",
-  "      rgb = mix(mix(rgb, vec3(luma(rgb)), min(1.0, wf * 1.6)), max(rgb, albedo * facadeCouleur), wf);",
+  "      if (wf > 0.0) {",
+  "        vec3 labF = versLab(rgb), cibleF = versLab(cibleFacade), poidsF = vec3(clamp(wf * doseFacade, 0.0, 1.0));",
+  "        rgb = depuisLab(mix(labF, cibleF, poidsF));",
+  "      }",
   // Fenêtres : cellules fixées au sol ; au niveau 8 une fenêtre dans sa cellule, plus loin un pixel d'écran.
   "      vec2 cel = echelle <= 1.0 ? fenetreForme.xy : vec2(echelle);",
   "      vec2 n = floor(monde / cel), dans = monde - n * cel;",
@@ -380,17 +405,18 @@ export function uniformesEtat(etat, publies, { arbres = false, projection = null
   const lp = LAMPADAIRES, fa = lp.facades, fe = lp.fenetres
   u.lumForce = ["1f", lp.intensite[etat.moment] ?? 0]
   u.debord = ["1f", DEBORD]
-  u.nappeCouleur = ["3fv", hex(lp.nappe.couleur)]
   u.coeurCouleur = ["3fv", hex(lp.coeur.couleur)]
-  u.placeCouleur = ["3fv", hex(lp.places.couleur)]
   u.gains = ["3f", lp.nappe.gain, lp.coeur.gain, lp.places.gain]
-  u.eclairage = ["3f", lp.albedo, lp.coeur.rayonnement, fe.intensite_au_loin]
-  u.fidelite = ["1f", lp.fidelite_couleur]
+  u.eclairage = ["3f", 0, lp.coeur.rayonnement, fe.intensite_au_loin]
   u.facade = ["4f", fa.hauteur_px, fa.rechauffement, fa.decroissance, lp.sur_toits]
-  u.facadeCouleur = ["3fv", hex(fa.couleur)]
   u.fenetres = ["4f", fe.part, fe.grappe_px, fe.ecart_grappes, fe.intensite]
   u.fenetreForme = ["4f", ...fe.cellule_px, ...fe.fenetre_px]
   u.fenetreCouleur = ["3fv", hex(fe.couleur)]
+  u.cibleRue = ["3fv", rgb(NUIT_CIBLES.rue)]
+  u.cibleFacade = ["3fv", rgb(NUIT_CIBLES.facade)]
+  u.cibleOmbre = ["3fv", rgb(NUIT_CIBLES.ombre)]
+  u.doseRue = ["1f", lp.nappe.doseTeinte ?? 1]
+  u.doseFacade = ["1f", fa.doseTeinte ?? 1]
   const zg = LAMPADAIRES.zone_sans_fenetres
   if (projection && zg) {
     const [x0, y0] = projection.pixel(zg.a.lat, zg.a.lon)
