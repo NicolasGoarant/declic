@@ -37,11 +37,18 @@ export const MOMENTS = {
   //   ombres            : H=204° S=0.63 V=0.09   (bleu profond, pas violet pur — voir NUIT_CIBLES)
   // Ces cibles pilotent en Lab (via NUIT_CIBLES ci-dessous) la teinte des surfaces éclairées et des
   // ombres dans ambiance.js, à la place de l'ancien mélange RGB « max »/« écran » qui blanchissait les
-  // zones où plusieurs nappes se recouvraient (rues et façades viraient au rose pâle). Pour les ombres,
-  // on tourne la teinte a*/b* vers cibleOmbre en conservant le chroma du pixel (pas un mix brut des
-  // vecteurs, qui délave — leur norme dépend de L* et cibleOmbre est mesurée très sombre).
-  // Mesuré sur les recadrages 200 % (Stanislas + gare) après réglage : rues H=46° S=0.54 ; façades
-  // H=37° S=0.51 ; ombres H=203° S=0.60 — tous à moins de 8° et 0,1 des cibles ci-dessus.
+  // zones où plusieurs nappes se recouvraient (rues et façades viraient au rose pâle). a*/b* (teinte et
+  // chroma) : interpolés vers la cible. L* (clarté) : un mix plein aplatissait toute variation locale
+  // (pavés, ombres portées) dès que le poids approchait 1 sur une large zone — aplat plat sur la place
+  // Stanislas et le carrefour de la gare. L* reçoit donc un LIFT ADDITIF (LAMPADAIRES.nappe/facades.gainL,
+  // en points L*) plafonné à la cible : la texture reste visible tant qu'elle ne dépasse pas le plafond.
+  // Pour les ombres, on tourne la teinte a*/b* vers cibleOmbre en conservant le chroma du pixel (pas un
+  // mix brut des vecteurs, qui délave — leur norme dépend de L* et cibleOmbre est mesurée très sombre) ;
+  // les ombres ne touchent pas L*, donc aucun assombrissement supplémentaire.
+  // Mesuré sur les recadrages 200 % (Stanislas + gare) après le correctif du lift additif (plus haut) :
+  // rues H=47° S=0.51 ; façades H=38° S=0.50 ; ombres H=206° S=0.54 — tous à moins de 8° et 0,1 des
+  // cibles ci-dessus (le premier réglage v7b, à base d'un mix plein en L*, les respectait déjà mais
+  // aplatissait la place Stanislas et un carrefour de la gare en un bloc uni — voir gainL ci-dessus).
   nuit: {
     temperature: 21000, teinte: -0.1, saturation: 1.28, contraste: 1.08, luminosite: 0.75,
     voile: { couleur: [40, 26, 110], part: 0.88, ombres: true },
@@ -172,7 +179,11 @@ export const LAMPADAIRES = {
     aplatissement: APLATI,
     poids: 0.5,               // apport d'une nappe à la carte de lumière (0-1, au centre)
     gain: 2.8,                // saturation douce de la somme
-    doseTeinte: 1.8            // v7b : dosage du virage vers NUIT_CIBLES.rue (>1 : sature avant poids = 1)
+    doseTeinte: 1.8,           // v7b : dosage du virage de teinte (a*/b*) vers NUIT_CIBLES.rue (>1 : sature tôt)
+    // Correctif place/gare (v7b) : lift ADDITIF de clarté (L*), en points L*, plafonné à la cible dans le
+    // shader — PAS un mélange vers la cible (qui écrasait toute variation locale dès que w approchait 1
+    // sur une large zone, d'où l'aplat plat sur la place Stanislas et le carrefour de la gare).
+    gainL: 40
   },
   coeur: {
     couleur: "#FFE08A",
@@ -216,7 +227,8 @@ export const LAMPADAIRES = {
     hauteur_px: 60,           // hauteur de la bande, au niveau 8 (≈ 26,5 m, ~8 étages)
     rechauffement: 1.8,       // part de la lumière du pied reçue en bas de façade
     decroissance: 0.4,        // exposant : plus grand, la lumière monte moins haut
-    doseTeinte: 1.6           // v7b : dosage du virage vers NUIT_CIBLES.facade (peut dépasser 1 : sature tôt)
+    doseTeinte: 1.6,          // v7b : dosage du virage de teinte (a*/b*) vers NUIT_CIBLES.facade
+    gainL: 32                 // v7b : lift additif de clarté (L*), plafonné à la cible (voir NAPPE.gainL)
   },
   // Les fenêtres allumées : ≈ `part` des pixels de façade, en grappes par bâtiment (cellules fixées
   // au sol : stables, sans clignotement). Au niveau 8, une fenêtre fait `fenetre_px` dans une
