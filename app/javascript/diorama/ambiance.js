@@ -78,7 +78,12 @@ const SOURCE_FS = [
   // ce shader (versLab) pour teinter en a*/b* les rues, façades et ombres SANS passer par un mélange RGB
   // « max »/« écran » qui blanchissait les zones de recouvrement (voir NUIT_CIBLES, diorama/reglages).
   "uniform vec3 cibleRue, cibleFacade, cibleOmbre;",
-  "uniform float doseRue, doseFacade; // dosage du déplacement vers la cible (1 = plein à w ou wf = 1)",
+  "uniform float doseRue, doseFacade; // dosage de la teinte (a*/b*) vers la cible (1 = plein à w ou wf = 1)",
+  // v7b (correctif place/gare) : la clarté (L*) ne se mélange plus vers la cible (ça écrasait toute
+  // variation locale — pavés, ombres portées — dès que w approchait 1, d'où l'aplat plat sur la place
+  // Stanislas et le coin saturé de la gare) ; elle reçoit un LIFT ADDITIF plafonné à la cible, en L*
+  // (voir plus bas) : la texture reste visible tant qu'elle ne dépasse pas le plafond.
+  "uniform float gainRue, gainFacade;",
   "varying vec2 uv;",
   "vec3 lin(vec3 c){ return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }",
   "vec3 gam(vec3 c){ c = clamp(c, 0.0, 1.0); return mix(c * 12.92, 1.055 * pow(c, vec3(1.0/2.4)) - 0.055, step(0.0031308, c)); }",
@@ -205,12 +210,20 @@ const SOURCE_FS = [
   "    float place = l.b * (classe == 3.0 ? 0.0 : 1.0);",
   "    float lr = 1.0 - (1.0 - l.r) * (1.0 - place);",
   "    float w = lr * sol;",
-  // v7b : la surface éclairée se déplace en Lab vers la couleur cible mesurée (cibleRue), a*/b* et un
-  // plafond de clarté L* — jamais au-delà de la cible, donc jamais de blanc, même quand plusieurs
-  // nappes se recouvrent ; sa propre luminance locale (texture) reste hors de ce plafond.
+  // v7b : la surface éclairée se déplace en Lab vers la couleur cible mesurée (cibleRue). a*/b* :
+  // rotation de teinte + interpolation du chroma (comme les ombres) — pas un mix brut, qui délave.
+  // L* : LIFT ADDITIF plafonné à la cible (jamais au-delà, donc jamais de blanc), pas un mix — un mix
+  // écrase toute variation locale (pavés, ombres portées) dès que w approche 1 sur une large zone
+  // (place, carrefour) ; l'addition plafonnée garde cette texture tant qu'elle ne dépasse pas le plafond.
   "    if (w > 0.0) {",
-  "      vec3 labR = versLab(rgb), cibleR = versLab(cibleRue), poids = vec3(clamp(w * doseRue, 0.0, 1.0));",
-  "      rgb = depuisLab(mix(labR, cibleR, poids));",
+  "      vec3 labR = versLab(rgb), cibleR = versLab(cibleRue);",
+  "      float wTeinte = clamp(w * doseRue, 0.0, 1.0);",
+  "      float chO = length(labR.yz), chC = length(cibleR.yz);",
+  "      vec2 dirC = chC > 1e-4 ? cibleR.yz / chC : labR.yz;",
+  "      vec2 dirO = chO > 1e-4 ? labR.yz / chO : dirC;",
+  "      labR.yz = normalize(mix(dirO, dirC, wTeinte)) * mix(chO, chC, wTeinte);",
+  "      labR.x = min(labR.x + gainRue * w, cibleR.x);",
+  "      rgb = depuisLab(labR);",
   "    }",
   "    rgb = ecran(rgb, coeurCouleur * l.g * eclairage.y * sol);",
   "    if (fac > 0.0) {",
@@ -218,8 +231,14 @@ const SOURCE_FS = [
   "      float pied = 1.0 - (1.0 - p.r) * (1.0 - p.g) * (1.0 - p.b);",
   "      float wf = clamp(pied * facade.y * pow(1.0 - t, facade.z) * fac, 0.0, 1.0);",
   "      if (wf > 0.0) {",
-  "        vec3 labF = versLab(rgb), cibleF = versLab(cibleFacade), poidsF = vec3(clamp(wf * doseFacade, 0.0, 1.0));",
-  "        rgb = depuisLab(mix(labF, cibleF, poidsF));",
+  "        vec3 labF = versLab(rgb), cibleF = versLab(cibleFacade);",
+  "        float wTeinteF = clamp(wf * doseFacade, 0.0, 1.0);",
+  "        float chOF = length(labF.yz), chCF = length(cibleF.yz);",
+  "        vec2 dirCF = chCF > 1e-4 ? cibleF.yz / chCF : labF.yz;",
+  "        vec2 dirOF = chOF > 1e-4 ? labF.yz / chOF : dirCF;",
+  "        labF.yz = normalize(mix(dirOF, dirCF, wTeinteF)) * mix(chOF, chCF, wTeinteF);",
+  "        labF.x = min(labF.x + gainFacade * wf, cibleF.x);",
+  "        rgb = depuisLab(labF);",
   "      }",
   // Fenêtres : cellules fixées au sol ; au niveau 8 une fenêtre dans sa cellule, plus loin un pixel d'écran.
   "      vec2 cel = echelle <= 1.0 ? fenetreForme.xy : vec2(echelle);",
@@ -417,6 +436,8 @@ export function uniformesEtat(etat, publies, { arbres = false, projection = null
   u.cibleOmbre = ["3fv", rgb(NUIT_CIBLES.ombre)]
   u.doseRue = ["1f", lp.nappe.doseTeinte ?? 1]
   u.doseFacade = ["1f", fa.doseTeinte ?? 1]
+  u.gainRue = ["1f", lp.nappe.gainL ?? 40]
+  u.gainFacade = ["1f", fa.gainL ?? 32]
   const zg = LAMPADAIRES.zone_sans_fenetres
   if (projection && zg) {
     const [x0, y0] = projection.pixel(zg.a.lat, zg.a.lon)
