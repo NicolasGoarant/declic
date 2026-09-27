@@ -507,7 +507,7 @@ export default class extends Controller {
   lampadaires() {
     const t = this.tuilesValue
     this.promesseLampadaires ||= t.lumieres && t.disponibles?.lumieres
-      ? chargerLampadaires(`${t.base}/${t.lumieres}`).catch((erreur) => {
+      ? chargerLampadaires(`${t.base}/${t.lumieres}`, this.projection).catch((erreur) => {
         console.error(`lampadaires : ${t.base}/${t.lumieres} illisible, la nuit reste sans lumières.`, erreur)
         return null
       })

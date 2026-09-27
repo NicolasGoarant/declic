@@ -4,8 +4,13 @@
 //   1. saison : hiver (étalonnage publié) ou automne (feuillages seulement, voir plus bas) ;
 //   2. météo : pluie (sol plus sombre et plus contrasté) ou neige (toits blanchis via masque-bati) ;
 //   3. moment : heure bleue (étalonnage publié), aube, heure dorée ou nuit (paramétriques) ; la nuit
-//      allume ensuite ses lampadaires (diorama/lampadaires, dessinés après l'étalonnage), à
-//      l'heure bleue aussi, à moitié.
+//      allume ensuite ses lumières, l'heure bleue aussi, à 40 % : la carte de lumière de la dalle
+//      (diorama/lampadaires : nappes, cœurs, places) posée en mélange « écran », les façades
+//      réchauffées depuis leur pied, les fenêtres ; puis les feux des mâts, dessinés en 2D.
+//
+// Façades : aucune donnée ne les distingue des toits. Le shader les déduit : un pixel bâti dont le sol
+// est juste en dessous à l'écran (moins d'une hauteur de façade) est une façade vue de face. Pour les
+// pixels du bas de la dalle, il lit aussi la classe de la dalle du dessous (tClasseBas).
 //
 // Les étalonnages publiés sont ceux que nancy-3d/scripts/caler_ambiance.py écrit en JSON (format
 // « nancy-3d/ambiance ») : une suite de règles, chacune un affine Lab par canal et une force,
@@ -19,7 +24,7 @@
 // ensuite sa propre teinte, du jaune au roux : une cellule de Voronoï de la taille d'un houppier,
 // calée sur les pixels du niveau 8, donc fixe au sol quel que soit le zoom ou le déplacement.
 import { COTE, creerCache, comblerInterstices } from "diorama/couches"
-import { dessinerLampadaires } from "diorama/lampadaires"
+import { carteDeLumiere, dessinerFeux, DEBORD } from "diorama/lampadaires"
 import { MOMENTS, PUBLIES, AUTOMNE, PLUIE, NEIGE, LAMPADAIRES } from "diorama/reglages"
 
 const REGLES_MAX = 3 // par étalonnage publié (hiver : 2, heure bleue et automne : 1)
@@ -40,7 +45,7 @@ const reglesGLSL = (x) =>
 
 const SOURCE_FS = [
   "precision highp float;",
-  "uniform sampler2D tBase, tClasse, tArbres;",
+  "uniform sampler2D tBase, tClasse, tArbres, tClasseBas, tLum;",
   "uniform int modeClasse;   // 0 propriété (niveau 8), 1 masque du bâti, 2 aucune",
   "uniform vec2 origine;     // coin haut-gauche de la dalle, en pixels du niveau 8",
   "uniform float echelle;    // pixels du niveau 8 par pixel de la dalle",
@@ -56,6 +61,17 @@ const SOURCE_FS = [
   "uniform vec3 neigeCouleur;",
   "uniform int moment;       // 0 aucun, 1 règles publiées (heure bleue), 2 paramétrique",
   "uniform vec3 balance, grade; uniform vec4 voile; // grade : saturation, contraste, luminosité",
+  "uniform vec4 parcs;       // couleur des parcs la nuit, et sa part",
+  "uniform int lumieres;     // 1 : carte de lumière (tLum, COTE × (COTE + debord)) à poser",
+  "uniform int classeBas;    // 1 : classe de la dalle du dessous lue (tClasseBas)",
+  "uniform float lumForce, debord;",
+  "uniform vec3 nappeCouleur, coeurCouleur, placeCouleur, gains;",
+  "uniform vec3 eclairage;   // gain de la lumière sur la couleur du jour, part du cœur, fenêtres au loin",
+  "uniform float fidelite;   // part de la teinte du jour gardée sous la lampe",
+  "uniform vec4 facade;      // hauteur (px du niveau 8), réchauffement, décroissance, part reçue par les toits",
+  "uniform vec3 facadeCouleur, fenetreCouleur;",
+  "uniform vec4 fenetres;    // part, taille de grappe (px du niveau 8), écart entre grappes, intensité",
+  "uniform vec4 fenetreForme; // cellule (l, h), fenêtre (l, h), en px du niveau 8",
   "varying vec2 uv;",
   "vec3 lin(vec3 c){ return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }",
   "vec3 gam(vec3 c){ c = clamp(c, 0.0, 1.0); return mix(c * 12.92, 1.055 * pow(c, vec3(1.0/2.4)) - 0.055, step(0.0031308, c)); }",
@@ -88,6 +104,17 @@ const SOURCE_FS = [
   "float verts_sombres(vec3 o){ vec3 k = hsv(o);",
   "  return smoothstep(repli.x - 10.0, repli.x, k.x) * (1.0 - smoothstep(repli.y, repli.y + 10.0, k.x))",
   "       * smoothstep(repli.z, repli.z + 0.06, k.y) * (1.0 - smoothstep(repli.w, repli.w + 0.08, k.z)); }",
+  // Pixel `p` de la dalle (y vers le bas), jusqu'à COTE px sous la dalle : bâti ou non.
+  "float bati(vec2 p){ bool bas = p.y >= 256.0; if (bas) { if (classeBas == 0) return 0.0; p.y -= 256.0; }",
+  "  vec2 q = vec2((floor(p.x) + 0.5) / 256.0, 1.0 - (floor(p.y) + 0.5) / 256.0);",
+  "  float r = bas ? texture2D(tClasseBas, q).r : texture2D(tClasse, q).r;",
+  "  if (modeClasse == 0) { float k = floor(r * 255.0 + 0.5); return (k == 2.0 || k == 4.0) ? 1.0 : 0.0; }",
+  "  return r > 0.5 ? 1.0 : 0.0; }",
+  // La lumière reçue en `p`, saturée en douceur ; `lumForce` (40 % à l'heure bleue) dose l'énergie, pas le
+  // mélange : moins de portée, mais une lumière toujours dorée là où elle tombe.
+  "vec3 lumiere(vec2 p){ vec3 l = texture2D(tLum, vec2(p.x / 256.0, 1.0 - p.y / (256.0 + debord))).rgb;",
+  "  return 1.0 - exp(-gains * l * lumForce); }",
+  "vec3 ecran(vec3 a, vec3 b){ return 1.0 - (1.0 - a) * (1.0 - clamp(b, 0.0, 1.0)); }",
   reglesGLSL("s"),
   reglesGLSL("m"),
   "void main(){",
@@ -133,7 +160,40 @@ const SOURCE_FS = [
   "  else if (moment == 2) {",
   "    rgb = mix(vec3(luma(rgb)), rgb, grade.x) * balance; // la lumière colore après la désaturation",
   "    rgb = ((rgb - 0.5) * grade.y + 0.5) * grade.z;",
-  "    rgb = mix(clamp(rgb, 0.0, 1.0), voile.rgb, voile.a); }",
+  "    rgb = mix(clamp(rgb, 0.0, 1.0), voile.rgb, voile.a);",
+  "    if (classe == 3.0) rgb = mix(rgb, parcs.rgb * (0.75 + 0.5 * luma(o)), parcs.a); }",
+  // 4. Lumières.
+  "  if (lumieres == 1) {",
+  "    float d = 0.0, h = facade.x / echelle;",
+  "    if (toit >= 0.0 && classe == 2.0) for (int i = 1; i <= 48; i++) { float fi = float(i);",
+  "      if (fi > h) break; if (bati(px + vec2(0.0, fi)) < 0.5) { d = fi; break; } }",
+  "    vec3 k = hsv(o);",
+  "    float fac = d > 0.0 ? 1.0 - smoothstep(0.3, 0.5, k.y) * step(k.x, 32.0) : 0.0; // tuiles orangées : toit",
+  "    float sol = toit < 0.0 || classe == 1.0 ? 1.0 : facade.w;",
+  "    vec3 l = lumiere(px);",
+  "    float place = l.b * (classe == 3.0 ? 0.0 : 1.0);",
+  // Une surface éclairée montre sa clarté du jour (o) sous la lumière chaude, dont la teinte domine :
+  // texture gardée, pas de blanc brûlé ; le cœur, lui, rayonne (mélange écran).
+  "    float lr = 1.0 - (1.0 - l.r) * (1.0 - place);",
+  "    vec3 teinte = mix(nappeCouleur, placeCouleur, place / max(lr, 0.001));",
+  // La lumière chaude chasse le bleu là où elle tombe : sans cela, bleu + orangé passe par le rose.
+  "    float w = lr * sol;",
+  "    vec3 albedo = mix(vec3(luma(o)), o, fidelite) * eclairage.x;",
+  "    rgb = mix(mix(rgb, vec3(luma(rgb)), min(1.0, w * 1.6)), max(rgb, albedo * teinte), w);",
+  "    rgb = ecran(rgb, coeurCouleur * l.g * eclairage.y * sol);",
+  "    if (fac > 0.0) {",
+  "      float t = d / h; vec3 p = lumiere(px + vec2(0.0, d));",
+  "      float pied = 1.0 - (1.0 - p.r) * (1.0 - p.g) * (1.0 - p.b);",
+  "      float wf = clamp(pied * facade.y * pow(1.0 - t, facade.z) * fac, 0.0, 1.0);",
+  "      rgb = mix(mix(rgb, vec3(luma(rgb)), min(1.0, wf * 1.6)), max(rgb, albedo * facadeCouleur), wf);",
+  // Fenêtres : cellules fixées au sol ; au niveau 8 une fenêtre dans sa cellule, plus loin un pixel d'écran.
+  "      vec2 cel = echelle <= 1.0 ? fenetreForme.xy : vec2(echelle);",
+  "      vec2 n = floor(monde / cel), dans = monde - n * cel;",
+  "      float remplie = echelle <= 1.0 ? fenetreForme.z * fenetreForme.w / (cel.x * cel.y) : 1.0;",
+  "      bool vitre = echelle > 1.0 || (abs(dans.x - cel.x * 0.5) < fenetreForme.z * 0.5 && abs(dans.y - cel.y * 0.5) < fenetreForme.w * 0.5);",
+  "      float humeur = 1.0 + (hache(floor(monde / fenetres.y) + 71.3) * 2.0 - 1.0) * fenetres.z;",
+  "      if (vitre && t > 0.08 && t < 0.95 && hache(n * 1.37 + 11.1) < fenetres.x * humeur / remplie)",
+  "        rgb = mix(rgb, fenetreCouleur, fenetres.w * fac * lumForce * (echelle > 1.0 ? eclairage.z : 1.0)); } }",
   "  gl_FragColor = vec4(clamp(rgb, 0.0, 1.0), c.a); }"
 ].join("\n")
 
@@ -155,7 +215,7 @@ function texture(gl) {
   return t
 }
 
-const TEXTURES = ["tBase", "tClasse", "tArbres"]
+const TEXTURES = ["tBase", "tClasse", "tArbres", "tClasseBas", "tLum"]
 
 // UN SEUL contexte WebGL pour toutes les couches d'ambiance ; chaque dalle est calculée ici puis
 // recopiée dans son propre canevas 2D.
@@ -188,7 +248,7 @@ class Moteur {
 
   u(nom) { return (this.lieux[nom] ??= this.gl.getUniformLocation(this.p, nom)) }
 
-  // images : [base, classe, arbres, lumières] (null = absente) ; uniformes : { nom: [type, ...valeurs] }.
+  // images : [base, classe, arbres, classe du dessous, lumière] (null = absente) ; uniformes : { nom: [type, ...valeurs] }.
   traiter(images, uniformes) {
     const gl = this.gl
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
@@ -265,6 +325,7 @@ function uniformesRegles(x, json, dosage = 1) {
 }
 
 const rgb = (c) => c.map((v) => v / 255)
+const hex = (h) => rgb([1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)))
 
 // Les uniformes communes à toutes les dalles d'un état { moment, saison, meteo }. `publies` : les
 // étalonnages publiés lus ({ "heure-bleue", hiver, automne } → JSON ou null). null : rien à faire.
@@ -302,6 +363,22 @@ export function uniformesEtat(etat, publies, { arbres = false } = {}) {
   u.balance = ["3fv", m ? balance(m) : [1, 1, 1]]
   u.grade = ["3f", m?.saturation ?? 1, m?.contraste ?? 1, m?.luminosite ?? 1]
   u.voile = ["4f", ...rgb(m?.voile?.couleur ?? [0, 0, 0]), m?.voile?.part ?? 0]
+  u.parcs = ["4f", ...rgb(m?.parcs?.couleur ?? [0, 0, 0]), m?.parcs?.part ?? 0]
+  // Lumières.
+  const lp = LAMPADAIRES, fa = lp.facades, fe = lp.fenetres
+  u.lumForce = ["1f", lp.intensite[etat.moment] ?? 0]
+  u.debord = ["1f", DEBORD]
+  u.nappeCouleur = ["3fv", hex(lp.nappe.couleur)]
+  u.coeurCouleur = ["3fv", hex(lp.coeur.couleur)]
+  u.placeCouleur = ["3fv", hex(lp.places.couleur)]
+  u.gains = ["3f", lp.nappe.gain, lp.coeur.gain, lp.places.gain]
+  u.eclairage = ["3f", lp.albedo, lp.coeur.rayonnement, fe.intensite_au_loin]
+  u.fidelite = ["1f", lp.fidelite_couleur]
+  u.facade = ["4f", fa.hauteur_px, fa.rechauffement, fa.decroissance, lp.sur_toits]
+  u.facadeCouleur = ["3fv", hex(fa.couleur)]
+  u.fenetres = ["4f", fe.part, fe.grappe_px, fe.ecart_grappes, fe.intensite]
+  u.fenetreForme = ["4f", ...fe.cellule_px, ...fe.fenetre_px]
+  u.fenetreCouleur = ["3fv", hex(fe.couleur)]
   if (saison === 0 && moment === 0 && u.meteo[1] === 0) return null
   return u
 }
@@ -324,32 +401,42 @@ export function creerCoucheAmbiance(L, opts) {
       const cle = `${opts.cle}|${chemin}`
       if (cache.lire(cle, toile)) { setTimeout(() => fini(null, toile), 0); return toile }
       opts.uniformes.then((commun) => {
-        let urlClasse = null, mode = 2
-        if (coords.z === NIVEAU_MAX) { urlClasse = opts.propriete(chemin); mode = 0 }
-        else if (coords.z >= 6 && opts.masqueListe(coords)) { urlClasse = opts.masque(chemin); mode = 1 }
+        let urlClasse = null, urlBas = null, mode = 2
+        const dessous = { ...coords, y: coords.y + 1 }, cheminBas = `${coords.z}/${coords.x}/${coords.y + 1}`
+        if (coords.z === NIVEAU_MAX) {
+          urlClasse = opts.propriete(chemin); mode = 0
+          if (opts.estListee(dessous)) urlBas = opts.propriete(cheminBas)
+        } else if (coords.z >= 6 && opts.masqueListe(coords)) {
+          urlClasse = opts.masque(chemin); mode = 1
+          if (opts.masqueListe(dessous)) urlBas = opts.masque(cheminBas)
+        }
         // Masque des arbres : aux niveaux qu'il couvre (6 à 8), une dalle non listée n'a pas d'arbre.
         const arbres = commun?.saison[1] === 2 && commun.arbresPublies && coords.z >= 6
         return Promise.all([
           commun, charger(opts.dalle(chemin)), charger(urlClasse),
           arbres && opts.arbresListe(coords) ? charger(opts.arbres(chemin)) : null,
-          force > 0 ? opts.lampadaires : null
-        ]).then(([commun, base, classe, imageArbres, lampadaires]) => {
+          force > 0 ? opts.lampadaires : null,
+          force > 0 ? charger(urlBas) : null
+        ]).then(([commun, base, classe, imageArbres, lampadaires, classeBas]) => {
           if (!base) { fini(new Error("dalle absente"), toile); return }
           // Pas de willReadFrequently : on ne relit jamais ces pixels, et un canevas 2D gardé sur le GPU
           // reçoit la copie du canevas WebGL sans la faire passer par le processeur.
           const ctx = toile.getContext("2d")
           if (!commun) { ctx.drawImage(base, 0, 0); fini(null, toile); return }
           const echelle = 2 ** (NIVEAU_MAX - coords.z)
+          const lumiere = force > 0 ? carteDeLumiere(coords, lampadaires) : null
           const uniformes = { ...commun,
             modeClasse: ["1i", classe ? mode : 2],
+            lumieres: ["1i", lumiere ? 1 : 0],
+            classeBas: ["1i", classe && classeBas ? 1 : 0],
             origine: ["2f", coords.x * COTE * echelle, coords.y * COTE * echelle],
             echelle: ["1f", echelle],
             modeArbres: ["1i", arbres ? 1 : 0]
           }
           delete uniformes.arbresPublies
           moteur ||= new Moteur()
-          ctx.drawImage(moteur.traiter([base, classe, imageArbres], uniformes), 0, 0)
-          dessinerLampadaires(ctx, coords, lampadaires, force)
+          ctx.drawImage(moteur.traiter([base, classe, imageArbres, classeBas, lumiere], uniformes), 0, 0)
+          dessinerFeux(ctx, coords, lampadaires, force)
           cache.garder(cle, toile)
           fini(null, toile)
         })

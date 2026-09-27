@@ -4,8 +4,8 @@
 //   1. la SAISON (hiver, automne) teinte le paysage ;
 //   2. la MÉTÉO (pluie, neige) mouille le sol ou blanchit les toits, et fait tomber des particules ;
 //   3. le MOMENT (aube, heure dorée, heure bleue, nuit) éclaire le tout, puis la nuit allume ses lumières.
-// Heure bleue et hiver reprennent les étalonnages publiés sur R2 (ambiances/{nom}-actuelle.json) ;
-// aube, heure dorée et nuit sont des étalonnages paramétriques, définis ci-dessous.
+// L'hiver reprend l'étalonnage publié sur R2 (ambiances/hiver-actuelle.json) ; aube, heure dorée,
+// heure bleue et nuit sont des étalonnages paramétriques, définis ci-dessous.
 
 // Étalonnage paramétrique d'un moment, appliqué dans cet ordre :
 //   temperature : température de couleur de la lumière, en kelvins (6500 = neutre, moins = plus chaud) ;
@@ -23,15 +23,27 @@ export const MOMENTS = {
     temperature: 4300, teinte: 0.04, saturation: 1.1, contraste: 1.06, luminosite: 1.02,
     voile: { couleur: [255, 196, 120], part: 0.06 }
   },
-  // Nuit éclairée : ≈ 45 % de la luminance moyenne du jour, bleu nuit ; toits et rues restent lisibles,
-  // les couleurs des toits atténuées mais présentes.
+  // Nuit illuminée (« Terrasse du café le soir ») : fond bleu outremer saturé, ≈ 60 % de la clarté
+  // moyenne du jour une fois les lumières allumées (voir LAMPADAIRES) ; toits et façades refroidis
+  // mais reconnaissables.
   nuit: {
-    temperature: 14000, teinte: -0.03, saturation: 0.72, contraste: 0.94, luminosite: 0.39,
-    voile: { couleur: [16, 36, 104], part: 0.22 }
+    temperature: 22000, teinte: -0.12, saturation: 1.18, contraste: 1.04, luminosite: 0.5,
+    voile: { couleur: [14, 36, 178], part: 0.36 },
+    // Parcs et pelouses (pixels de feuillage) : bleu-vert profond, jamais noirs.
+    parcs: { couleur: [20, 78, 92], part: 0.45 }
+  },
+  // Heure bleue : la même nuit, fond plus clair, lumières à 40 % (LAMPADAIRES.intensite). Elle prime
+  // sur l'étalonnage publié ambiances/heure-bleue-actuelle.json (orangé, pas bleu) ; la retirer d'ici
+  // pour y revenir.
+  "heure-bleue": {
+    temperature: 17000, teinte: -0.12, saturation: 1.1, contraste: 0.98, luminosite: 0.68,
+    voile: { couleur: [30, 70, 180], part: 0.24 },
+    parcs: { couleur: [34, 100, 110], part: 0.35 }
   }
 }
 
-// Heure bleue et hiver : étalonnages publiés, dosés par `force` (1 = tel quel).
+// Heure bleue et hiver : étalonnages publiés, dosés par `force` (1 = tel quel). Celui de l'heure bleue
+// ne sert que si MOMENTS["heure-bleue"] est absent.
 export const PUBLIES = { "heure-bleue": { force: 1 }, hiver: { force: 1 } }
 
 // L'automne ne teinte QUE les feuillages.
@@ -100,21 +112,40 @@ export const NEIGE = {
   ]
 }
 
-// Les lampadaires (nuit et heure bleue) : lumieres-nuit/lanternes.json s'il est publié, sinon
-// lampadaires-bdtopo (positions procédurales le long des routes, IGN BD TOPO®). Chaque point VISIBLE
-// (sol dégagé autour du pied) pose une flaque de lumière chaude au sol et un point brillant en haut
-// du mât. Tailles en pixels du niveau natif 8, proportionnelles au zoom ensuite.
+// Les lumières de la ville (nuit, et heure bleue à 40 %). Lampadaires : lumieres-nuit/lanternes.json
+// s'il est publié, sinon lampadaires-bdtopo (positions procédurales le long des routes, IGN BD TOPO®).
+// Chaque point VISIBLE (sol dégagé autour du pied) pose au sol une NAPPE large et douce et un CŒUR
+// plus vif, et un point brillant en haut du mât. Les nappes s'additionnent (les voisines forment des
+// rubans le long des rues) dans une carte de lumière, saturée en douceur (1 − e^(−gain × somme)).
+// Là où elle tombe, la surface reprend sa couleur du jour teintée par la lampe (× `albedo`) : la
+// texture reste, les blancs ne brûlent pas ; le cœur s'y ajoute en mélange « écran ».
+// Tailles en pixels du niveau natif 8, proportionnelles au zoom ensuite.
 const VUE_DEPUIS_LA_VERTICALE = 50 * Math.PI / 180 // inclinaison de la caméra des dalles (nancy-3d)
+const APLATI = Math.cos(VUE_DEPUIS_LA_VERTICALE) // le sol vu en oblique : ellipse plus basse que large
 export const LAMPADAIRES = {
-  intensite: { nuit: 1, "heure-bleue": 0.5 }, // les autres moments : aucune lumière
+  intensite: { nuit: 1, "heure-bleue": 0.4 }, // les autres moments : aucune lumière
   metre_px: Math.sin(VUE_DEPUIS_LA_VERTICALE) * 2.2626, // hauteur à l'écran d'un mètre de mât (niveau 8)
-  niveau_min: 4,              // en dessous, flaques et feux ne font plus qu'un voile : rien
-  flaque: {
-    couleur: "#FFC46B",
-    rayon_px: 12,             // au niveau 8, proportionnel au zoom…
-    rayon_min_ecran_px: 6,    // …sans descendre sous 6 px à l'écran (vue d'ensemble : les rues restent tracées)
-    aplatissement: Math.cos(VUE_DEPUIS_LA_VERTICALE), // le sol vu en oblique : ellipse plus basse que large
-    opacite: 0.5
+  sol_m_px: 2.2626,           // largeur à l'écran d'un mètre au sol (niveau 8)
+  niveau_min: 4,              // en dessous, rien
+  sur_toits: 0.35,            // part de la lumière du sol reçue par les toits
+  albedo: 1.4,                // surface éclairée = couleur du jour × couleur de la lampe × albedo…
+  fidelite_couleur: 0.3,      // …dont on ne garde que 30 % de la teinte (sinon toits et pavés tirent au rouge)
+  nappe: {
+    couleur: "#FFB347",
+    rayon_px: 44,             // au niveau 8, proportionnel au zoom…
+    rayon_min_ecran_px: 12,   // …sans descendre sous 12 px à l'écran ; en dessous, la nappe s'éclaircit d'autant
+    aplatissement: APLATI,
+    poids: 0.45,              // apport d'une nappe à la carte de lumière (0-1, au centre)
+    gain: 2.6                 // saturation douce de la somme
+  },
+  coeur: {
+    couleur: "#FFE08A",
+    rayon_px: 11,
+    rayon_min_ecran_px: 3,
+    aplatissement: APLATI,
+    poids: 0.4,
+    gain: 2.6,
+    rayonnement: 0.55         // part du cœur ajoutée en mélange « écran »
   },
   feu: {
     couleur: "#FFF4DC",       // cœur presque blanc, halo chaud autour
@@ -122,6 +153,41 @@ export const LAMPADAIRES = {
     halo_couleur: "#FFC46B",
     halo_rayon_px: 4,
     opacite: 0.95
+  },
+  // Les grandes places, foyers de la ville : un halo chaud, posé sur leur sol minéral seulement
+  // (ni bâti ni feuillage), rayon en mètres au sol ; altitude du sol en mètres (sans elle, la
+  // projection pose le point à 231 m, donc trop haut à l'écran).
+  places: {
+    couleur: "#FFBE4D",
+    poids: 0.65,
+    gain: 2,
+    liste: [
+      { nom: "place Stanislas", lat: 48.69355, lon: 6.18325, rayon_m: 75, altitude_m: 206 },
+      { nom: "place de la Carrière", lat: 48.69565, lon: 6.18225, rayon_m: 95, altitude_m: 206 },
+      { nom: "place Carnot", lat: 48.69373, lon: 6.17738, rayon_m: 90, altitude_m: 207 }
+    ]
+  },
+  // Les façades : pixels bâtis (masque-bati, ou volumes de la carte de propriété au niveau 8) dont le
+  // sol se trouve JUSTE EN DESSOUS à l'écran, dans une bande de la hauteur d'une façade ; les toits
+  // sont au-dessus. La lumière reçue au pied de la façade la réchauffe, de moins en moins vers le haut.
+  facades: {
+    hauteur_px: 24,           // hauteur de la bande, au niveau 8 (≈ 14 m)
+    rechauffement: 1.2,       // part de la lumière du pied reçue en bas de façade
+    decroissance: 1.1,        // exposant : plus grand, la lumière monte moins haut
+    couleur: "#FFB85C"
+  },
+  // Les fenêtres allumées : ≈ `part` des pixels de façade, en grappes par bâtiment (cellules fixées
+  // au sol : stables, sans clignotement). Au niveau 8, une fenêtre fait `fenetre_px` dans une
+  // cellule de `cellule_px` ; plus loin, un point d'un pixel d'écran.
+  fenetres: {
+    part: 0.12,
+    cellule_px: [3, 4],
+    fenetre_px: [2, 2],
+    grappe_px: 22,            // taille d'un « bâtiment » : même humeur (beaucoup ou peu de fenêtres allumées)
+    ecart_grappes: 0.8,       // 0 : toutes pareilles ; 1 : de presque éteintes à presque toutes allumées
+    couleur: "#FFD27A",
+    intensite: 0.85,
+    intensite_au_loin: 0.55   // sous le niveau 8 (un point par pixel d'écran), moins vives : sinon, du grain
   }
 }
 
