@@ -25,10 +25,14 @@ import {
 import { lireDate, aujourdhui, estPasse, estAVenir, dansLaFenetre, etiquette, periode, jourCourt } from "diorama/dates"
 
 const NIVEAU_MAX = 8
-// Au-delà de ce nombre d'échecs consécutifs sur des dalles pourtant listées, une trace (dev
-// seulement) : un pan de la pyramide publiée sur R2 pour ce style, à repérer avant qu'un dézoom
-// ne tombe dedans (voir DioramaTuiles, « même grille, mêmes niveaux »).
+// Au-delà de ce nombre d'échecs consécutifs sur des dalles pourtant couvertes, une trace (dev
+// seulement) : un pan de la pyramide publiée sur R2, à repérer avant qu'un futur style n'en
+// publie un plus grand que ce que STYLE_REPLI peut compenser.
 const ECHECS_CONSECUTIFS_TRACE = 6
+// Le style toujours publié en entier (0 à 8) : sert de doublure à tout style dont le manifeste
+// annonce un niveau_min plus haut (« même grille, mêmes niveaux » ne tient pas encore pour tous,
+// voir DioramaTuiles). Générique : aucun style n'est jamais nommé ailleurs dans ce fichier.
+const STYLE_REPLI = "toits-v1"
 // Vue initiale, à retoucher ici : place Stanislas (WGS84) et niveau de zoom Leaflet du diorama (0-8,
 // 8 = pleine résolution) ; le plan prend le zoom d'échelle équivalente. Ajouter ?debug_vue=1 à l'URL
 // affiche en direct le centre et le zoom courants.
@@ -141,7 +145,7 @@ export default class extends Controller {
       this.style = styleDeDepart(this.tuilesValue.disponibles.styles || [])
       try {
         const contour = this.chargerContour()
-        await this.chargerManifeste()
+        await this.chargerManifeste({ repli: false }) // figée à NIVEAU_MAX (§ pixelDansLeDiorama) : jamais dans un trou
         this.preparerDecoupe(await contour)
         pixel = this.pixelDansLeDiorama(p)
       } catch (erreur) {
@@ -154,20 +158,33 @@ export default class extends Controller {
     this.suivreTaille()
   }
 
-  // Gardé par style : chaque style a son propre plancher de niveaux publiés (voir majZoomMin),
-  // pas seulement son propre grade de dalles ("même grille, mêmes niveaux" ne tient plus tant que
-  // jeu-video-v1 n'a pas sa pyramide complète, cf. rapport dézoom).
-  async chargerManifeste() {
+  // Gardé par style (pas seulement son grade de dalles) : chaque style a sa propre liste de dalles
+  // publiées, et « même grille, mêmes niveaux » ne tient pas tant qu'un style n'a pas sa pyramide
+  // complète. Charge aussi STYLE_REPLI (sauf s'il est déjà le style actif, ou pour la mini-carte,
+  // toujours figée à NIVEAU_MAX donc jamais dans un trou) : coucheVraie/Blanche/Ambiance s'en
+  // servent pour combler les niveaux que le style actif n'a pas encore.
+  async chargerManifeste({ repli = true } = {}) {
     const t = this.tuilesValue
     this.manifestes ??= {}
-    if (!this.manifestes[this.style]) {
-      const reponse = await fetch(`${t.base}/${this.style}/manifeste.json`)
-      if (!reponse.ok) throw new Error(`manifeste HTTP ${reponse.status}`)
-      this.manifestes[this.style] = await reponse.json()
-    }
+    await this.chargerManifesteStyle(this.style)
     this.manifeste = this.manifestes[this.style]
     this.projection = creerProjection(this.manifeste)
     this.dallesListees = this.indexerDalles(this.manifeste)
+    this.dallesListeesRepli = null
+    if (!repli || this.style === STYLE_REPLI || !t.disponibles?.styles?.includes(STYLE_REPLI)) return
+    try {
+      await this.chargerManifesteStyle(STYLE_REPLI)
+      this.dallesListeesRepli = this.indexerDalles(this.manifestes[STYLE_REPLI])
+    } catch (erreur) {
+      console.warn("diorama : style de repli indisponible, les niveaux manquants resteront vides :", erreur)
+    }
+  }
+
+  async chargerManifesteStyle(style) {
+    if (this.manifestes[style]) return
+    const reponse = await fetch(`${this.tuilesValue.base}/${style}/manifeste.json`)
+    if (!reponse.ok) throw new Error(`manifeste HTTP ${reponse.status}`)
+    this.manifestes[style] = await reponse.json()
   }
 
   // Pixel du point dans la mosaïque (niveau 8), ou null hors couverture : hors de la mosaïque, sur
@@ -323,12 +340,13 @@ export default class extends Controller {
 
   creerDiorama() {
     const L = this.L
-    const plafond = window.matchMedia(ETROIT).matches ? NIVEAU_MAX : NIVEAU_MAX + 1
+    // Niveau 8 = pleine résolution native (maxNativeZoom, preparerCouchesDiorama) : au-delà, Leaflet
+    // agrandirait sa dernière dalle et l'image deviendrait floue, sans rien montrer de plus.
     this.carte = L.map(this.carteTarget, {
-      crs: L.CRS.Simple, minZoom: 0, maxZoom: plafond, zoomSnap: 1,
+      crs: L.CRS.Simple, minZoom: 0, maxZoom: NIVEAU_MAX, zoomSnap: 1,
       zoomControl: false, attributionControl: false
     })
-    this.preparerCouchesDiorama(NIVEAU_MAX + 1)
+    this.preparerCouchesDiorama(NIVEAU_MAX)
     // On ne sort pas de la table : la Métropole et une marge autour, sans élasticité au bord.
     this.carte.setMaxBounds(this.bornesContour().pad(0.25))
     this.carte.options.maxBoundsViscosity = 0.95
@@ -381,14 +399,13 @@ export default class extends Controller {
   }
 
   // Au dézoom maximal, la Métropole entière tient dans la partie visible de la carte (hors logo et
-  // volet) — sans dépasser le plancher réellement publié pour le style courant (niveau_min du
-  // manifeste) : en dessous, ses dalles ne sont pas listées et le diorama se viderait sans erreur.
+  // volet), quel que soit le style : les niveaux qu'il n'a pas encore publiés se comblent avec
+  // STYLE_REPLI (styleDalle), donc rien à plafonner ici.
   majZoomMin() {
     if (!this.carte || this.fond !== "diorama") return
     const { haut, bas } = this.marges()
     const zoom = this.carte.getBoundsZoom(this.bornesContour(), false, this.L.point(2 * 16, haut + bas))
-    const plancherStyle = this.manifeste?.niveau_min ?? 0
-    this.carte.setMinZoom(Math.max(0, plancherStyle, Math.min(zoom, NIVEAU_MAX - 1)))
+    this.carte.setMinZoom(Math.max(0, Math.min(zoom, NIVEAU_MAX - 1)))
   }
 
   // L'attribution est obligatoire (licences IGN, Géonancy, OSM) : repliée en « ⓘ », elle
@@ -468,12 +485,11 @@ export default class extends Controller {
     }
     const precedent = this.style
     this.style = style
-    // Chaque style a son propre manifeste (dalles listées, plancher de niveaux) : on le recharge
-    // avant de reposer la couche, sinon estListee filtrerait le nouveau style avec l'ancien.
+    // Chaque style a son propre manifeste (dalles listées) : on le recharge avant de reposer la
+    // couche, sinon styleDalle filtrerait le nouveau style avec la liste de l'ancien.
     this.chargerManifeste().then(() => {
       ecrire(CLE_STYLE, style)
       this.couches = {}
-      this.majZoomMin()
       if (this.fond === "diorama") this.poserCoucheFond(this.coucheCourante())
       this.majCalques()
     }).catch((erreur) => {
@@ -528,19 +544,32 @@ export default class extends Controller {
   // ─── Les couches de fond du diorama ──────────────────────────────────────────────────
   url(dossier, chemin) { return `${this.tuilesValue.base}/${dossier}/${chemin}` }
 
-  // Une dalle publiée, et pas entièrement hors du contour de la Métropole.
-  estListee = (coords) =>
-    (this.dallesListees[coords.z]?.has(`${coords.x}/${coords.y}`) ?? false) && this.decoupe?.etat(coords) !== "dehors"
+  // Le style dont la dalle couvre cette position : le style actif si sa pyramide y va, sinon
+  // STYLE_REPLI (toujours complet) s'il l'a, sinon null (position hors pyramide ou hors contour).
+  // Générique par construction : ne nomme aucun style en particulier.
+  styleDalle = (coords) => {
+    if (this.decoupe?.etat(coords) === "dehors") return null
+    if (this.dallesListees[coords.z]?.has(`${coords.x}/${coords.y}`)) return this.style
+    if (this.dallesListeesRepli?.[coords.z]?.has(`${coords.x}/${coords.y}`)) return STYLE_REPLI
+    return null
+  }
+
+  // Une dalle affichable, du style actif ou de son repli.
+  estCouverte = (coords) => Boolean(this.styleDalle(coords))
 
   masqueListe = (coords) => {
     if (coords.z < 6 || coords.z > NIVEAU_MAX) return false
     return this.dallesMasque ? (this.dallesMasque[coords.z]?.has(`${coords.x}/${coords.y}`) ?? false) : true
   }
 
-  // Repère un pan de pyramide sans le publier lui-même : après ECHECS_CONSECUTIFS_TRACE échecs de
-  // suite sur des dalles listées (donc réellement demandées, pas simplement absentes du manifeste),
-  // une trace unique en développement. Les dalles non listées ne comptent pas : elles ne partent
-  // jamais en requête (couches.js, tuileVide).
+  // L'URL de la dalle « vraie » (webp) à une position, dans le style qui la couvre. Sans style
+  // couvrant (estCouverte a déjà renvoyé false), on retombe sur le style actif pour ne pas passer
+  // une URL invalide à Leaflet ; la dalle vide ainsi obtenue n'est de toute façon jamais demandée.
+  urlDalle = (coords) => this.url(this.styleDalle(coords) ?? this.style, `${coords.z}/${coords.x}/${coords.y}.webp`)
+
+  // Repère un pan de pyramide qu'aucun style (actif ou repli) ne comble : après
+  // ECHECS_CONSECUTIFS_TRACE échecs de suite sur des dalles pourtant couvertes (donc réellement
+  // demandées, pas simplement hors pyramide), une trace unique en développement.
   surveillerEchecs(couche) {
     if (!this.developpementValue) return couche
     let suite = 0
@@ -550,8 +579,9 @@ export default class extends Controller {
       suite++
       if (averti || suite < ECHECS_CONSECUTIFS_TRACE) return
       averti = true
+      const style = this.styleDalle(coords) ?? this.style
       console.warn(
-        `diorama : ${suite} dalles consécutives en échec (style « ${this.style} », niveau ${coords.z}) — `
+        `diorama : ${suite} dalles consécutives en échec (style « ${style} », niveau ${coords.z}) — `
         + "pyramide de tuiles probablement trouée sur R2 pour ce niveau."
       )
     })
@@ -579,16 +609,16 @@ export default class extends Controller {
 
   coucheVraie() {
     this.couches.vrai ||= this.surveillerEchecs(this.decouper(creerCoucheDalles(this.L, {
-      modele: this.url(this.style, "{z}/{x}/{y}.webp"), estListee: this.estListee, options: this.optionsCouche
+      dalle: this.urlDalle, estCouverte: this.estCouverte, options: this.optionsCouche
     })))
     return this.couches.vrai
   }
 
   coucheBlanche() {
     this.couches.blanche ||= this.surveillerEchecs(this.decouper(creerCoucheBlanche(this.L, {
-      dalle: (chemin) => this.url(this.style, `${chemin}.webp`),
+      dalle: this.urlDalle,
       masque: (chemin) => this.url(this.tuilesValue.masque, `${chemin}.png`),
-      estListee: this.estListee, masqueListe: this.masqueListe, options: this.optionsCouche
+      estCouverte: this.estCouverte, masqueListe: this.masqueListe, options: this.optionsCouche
     })))
     return this.couches.blanche
   }
@@ -604,11 +634,11 @@ export default class extends Controller {
       this.couches[cle] = this.surveillerEchecs(this.decouper(creerCoucheAmbiance(this.L, {
         cle,
         uniformes: publies.then((p) => uniformesEtat(etat, p, { arbres: Boolean(this.dallesArbres), projection: this.projection })),
-        dalle: (chemin) => this.url(this.style, `${chemin}.webp`),
+        dalle: this.urlDalle,
         propriete: (chemin) => this.url(t.propriete, `${chemin}.png`),
         masque: (chemin) => this.url(t.masque, `${chemin}.png`),
         arbres: (chemin) => this.url(t.arbres, `${chemin}.png`),
-        estListee: this.estListee, masqueListe: this.masqueListe,
+        estCouverte: this.estCouverte, masqueListe: this.masqueListe,
         arbresListe: (coords) => this.listee(this.dallesArbres, coords),
         moment: etat.moment,
         lampadaires: LAMPADAIRES.intensite[etat.moment] ? this.lampadaires() : null,

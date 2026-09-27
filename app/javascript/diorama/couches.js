@@ -27,15 +27,17 @@ function tuileVide(fini) {
   return vide
 }
 
-// Le « Vrai Nancy » : les dalles WebP du lot, telles quelles.
-export function creerCoucheDalles(L, { modele, estListee, options }) {
+// Le « Vrai Nancy » : les dalles WebP du lot, telles quelles. `dalle(coords)` choisit son URL (le
+// style actif, ou son repli s'il ne couvre pas encore ce niveau) : pas de gabarit fixe.
+export function creerCoucheDalles(L, { dalle, estCouverte, options }) {
   const Couche = L.TileLayer.extend({
+    getTileUrl(coords) { return dalle(coords) },
     createTile(coords, fini) {
-      if (!estListee(coords)) return tuileVide(fini)
+      if (!estCouverte(coords)) return tuileVide(fini)
       return L.TileLayer.prototype.createTile.call(this, coords, fini)
     }
   })
-  return new Couche(modele, { ...options, crossOrigin: "anonymous" })
+  return new Couche("", { ...options, crossOrigin: "anonymous" })
 }
 
 // Les dalles recalculées (maquette blanche, ambiance) : calculées une fois, puis recopiées depuis ce
@@ -77,18 +79,18 @@ function charger(url) {
 const DESAT = 0.85 // vers le gris, part du chemin
 const CLAIR = 0.55 // puis vers le blanc
 
-export function creerCoucheBlanche(L, { dalle, masque, estListee, masqueListe, options }) {
+export function creerCoucheBlanche(L, { dalle, masque, estCouverte, masqueListe, options }) {
   const cache = creerCache()
   const Couche = L.GridLayer.extend({
     createTile(coords, fini) {
-      if (!estListee(coords)) return tuileVide(fini)
+      if (!estCouverte(coords)) return tuileVide(fini)
       const toile = document.createElement("canvas")
       toile.width = COTE
       toile.height = COTE
       const chemin = `${coords.z}/${coords.x}/${coords.y}`
       if (cache.lire(chemin, toile)) { setTimeout(() => fini(null, toile), 0); return toile }
       const urlMasque = masqueListe(coords) ? masque(chemin) : null
-      Promise.all([charger(dalle(chemin)), urlMasque ? charger(urlMasque) : null]).then(([fond, couverture]) => {
+      Promise.all([charger(dalle(coords)), urlMasque ? charger(urlMasque) : null]).then(([fond, couverture]) => {
         if (!fond) { fini(new Error("dalle absente"), toile); return }
         const ctx = toile.getContext("2d", { willReadFrequently: true })
         ctx.drawImage(fond, 0, 0, COTE, COTE)
