@@ -159,7 +159,7 @@ export function dessinerFeux(ctx, coords, index, force) {
   ctx.globalCompositeOperation = "lighter"
   for (const [x, y, feu] of points) {
     const px = (x - ox) * s, py = (y - feu - oy) * s
-    ctx.globalAlpha = f.opacite * force * 0.6
+    ctx.globalAlpha = f.opacite * force * f.halo_opacite
     ctx.drawImage(motifs.halo, px - halo, py - halo, halo * 2, halo * 2)
     ctx.globalAlpha = f.opacite * force
     ctx.drawImage(motifs.feu, px - coeur / 2, py - coeur / 2, coeur, coeur)

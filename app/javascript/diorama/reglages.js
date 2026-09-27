@@ -23,13 +23,22 @@ export const MOMENTS = {
     temperature: 4300, teinte: 0.04, saturation: 1.1, contraste: 1.06, luminosite: 1.02,
     voile: { couleur: [255, 196, 120], part: 0.06 }
   },
-  // Nuit illuminée (« Terrasse du café le soir ») : fond bleu outremer saturé, ≈ 60 % de la clarté
-  // moyenne du jour une fois les lumières allumées (voir LAMPADAIRES) ; toits et façades refroidis
-  // mais reconnaissables.
+  // Nuit v7 (« la ville qui brille ») : assombrissement léger (≈ 75 % de la clarté du jour), couleurs
+  // locales conservées voire renforcées (toits, ardoises, feuillages restent lisibles) ; le bleu-violet
+  // ne vient plus d'un voile plat mais du champ `voile.ombres` (voir ambiance.js) qui ne le pose que
+  // dans les zones sombres/non éclairées — les surfaces éclairées (rues, façades, toits) le traversent.
   nuit: {
+    temperature: 21000, teinte: -0.1, saturation: 1.28, contraste: 1.08, luminosite: 0.75,
+    voile: { couleur: [40, 26, 110], part: 0.62, ombres: true },
+    // Parcs et pelouses (pixels de feuillage) : bleu-vert profond, jamais noirs.
+    parcs: { couleur: [20, 78, 92], part: 0.4 }
+  },
+  // Nuit profonde : l'ancien étalonnage v6 (« Terrasse du café le soir »), fond bleu outremer saturé et
+  // voile plat, ≈ 60 % de la clarté du jour. Conservé pour compatibilité mais retiré du panneau (absent
+  // de la liste des moments dans accueil/calques/_ambiance.html.erb).
+  "nuit-profonde": {
     temperature: 22000, teinte: -0.12, saturation: 1.18, contraste: 1.04, luminosite: 0.5,
     voile: { couleur: [14, 36, 178], part: 0.36 },
-    // Parcs et pelouses (pixels de feuillage) : bleu-vert profond, jamais noirs.
     parcs: { couleur: [20, 78, 92], part: 0.45 }
   },
   // Heure bleue : la même nuit, fond plus clair, lumières à 40 % (LAMPADAIRES.intensite). Elle prime
@@ -127,16 +136,19 @@ export const LAMPADAIRES = {
   metre_px: Math.sin(VUE_DEPUIS_LA_VERTICALE) * 2.2626, // hauteur à l'écran d'un mètre de mât (niveau 8)
   sol_m_px: 2.2626,           // largeur à l'écran d'un mètre au sol (niveau 8)
   niveau_min: 4,              // en dessous, rien
-  sur_toits: 0.35,            // part de la lumière du sol reçue par les toits
+  sur_toits: 0.12,            // part de la lumière du sol reçue par les toits : modeste, pour garder leur couleur (tuiles, ardoises)
   albedo: 1.4,                // surface éclairée = couleur du jour × couleur de la lampe × albedo…
   fidelite_couleur: 0.3,      // …dont on ne garde que 30 % de la teinte (sinon toits et pavés tirent au rouge)
   nappe: {
     couleur: "#FFB347",
-    rayon_px: 44,             // au niveau 8, proportionnel au zoom…
+    // v7 : rayon et poids agrandis (repli, en l'absence de masque-routes sur R2) pour que les nappes
+    // des lampadaires voisins se rejoignent en un ruban continu le long de la rue, jamais éteint entre
+    // deux mâts, plutôt que des flaques rondes isolées.
+    rayon_px: 56,             // au niveau 8, proportionnel au zoom…
     rayon_min_ecran_px: 12,   // …sans descendre sous 12 px à l'écran ; en dessous, la nappe s'éclaircit d'autant
     aplatissement: APLATI,
-    poids: 0.45,              // apport d'une nappe à la carte de lumière (0-1, au centre)
-    gain: 2.6                 // saturation douce de la somme
+    poids: 0.5,               // apport d'une nappe à la carte de lumière (0-1, au centre)
+    gain: 2.8                 // saturation douce de la somme
   },
   coeur: {
     couleur: "#FFE08A",
@@ -151,7 +163,10 @@ export const LAMPADAIRES = {
     couleur: "#FFF4DC",       // cœur presque blanc, halo chaud autour
     diametre_px: [2, 3],      // à l'écran : ne descend pas sous 2 px, ne dépasse pas 3 px (hors halo)
     halo_couleur: "#FFC46B",
-    halo_rayon_px: 4,
+    // v7 : halo réduit (la lumière de la rue vient maintenant de la nappe, voir NAPPE) ; seul le point
+    // du mât reste très brillant.
+    halo_rayon_px: 2,
+    halo_opacite: 0.35,       // part de `opacite` gardée pour le halo (dessinerFeux) ; le point du mât garde `opacite`
     opacite: 0.95
   },
   // Les grandes places, foyers de la ville : un halo chaud, posé sur leur sol minéral seulement
@@ -170,24 +185,38 @@ export const LAMPADAIRES = {
   // Les façades : pixels bâtis (masque-bati, ou volumes de la carte de propriété au niveau 8) dont le
   // sol se trouve JUSTE EN DESSOUS à l'écran, dans une bande de la hauteur d'une façade ; les toits
   // sont au-dessus. La lumière reçue au pied de la façade la réchauffe, de moins en moins vers le haut.
+  // v7 : bande plus haute et décroissance plus douce (repli, en l'absence de masque-facades sur R2)
+  // pour que la lumière crème monte sur toute la façade visible, pas seulement son pied.
   facades: {
-    hauteur_px: 24,           // hauteur de la bande, au niveau 8 (≈ 14 m)
-    rechauffement: 1.2,       // part de la lumière du pied reçue en bas de façade
-    decroissance: 1.1,        // exposant : plus grand, la lumière monte moins haut
-    couleur: "#FFB85C"
+    hauteur_px: 28,           // hauteur de la bande, au niveau 8 (≈ 16 m)
+    rechauffement: 1.5,       // part de la lumière du pied reçue en bas de façade
+    decroissance: 0.55,       // exposant : plus grand, la lumière monte moins haut
+    couleur: "#FFC98A"
   },
   // Les fenêtres allumées : ≈ `part` des pixels de façade, en grappes par bâtiment (cellules fixées
   // au sol : stables, sans clignotement). Au niveau 8, une fenêtre fait `fenetre_px` dans une
   // cellule de `cellule_px` ; plus loin, un point d'un pixel d'écran.
+  // v7 : grille plus dense et plus intense pour que la façade se lise « avec ses fenêtres », comme la
+  // référence.
   fenetres: {
-    part: 0.12,
+    part: 0.15,
     cellule_px: [3, 4],
     fenetre_px: [2, 2],
     grappe_px: 22,            // taille d'un « bâtiment » : même humeur (beaucoup ou peu de fenêtres allumées)
     ecart_grappes: 0.8,       // 0 : toutes pareilles ; 1 : de presque éteintes à presque toutes allumées
-    couleur: "#FFD27A",
-    intensite: 0.85,
-    intensite_au_loin: 0.55   // sous le niveau 8 (un point par pixel d'écran), moins vives : sinon, du grain
+    couleur: "#FFD98C",
+    intensite: 0.88,
+    intensite_au_loin: 0.58   // sous le niveau 8 (un point par pixel d'écran), moins vives : sinon, du grain
+  },
+  // Correctif gare : les quais et murs de soutènement des voies sont classés bâti avec du sol dégagé
+  // juste en dessous (le ballast, le quai) et reçoivent donc à tort des fenêtres. Faute de masque
+  // dédié, un couloir (segment + demi-largeur, en mètres au sol) le long des voies de la gare de Nancy
+  // coupe seulement le tirage des fenêtres (la chaleur de façade reste) dans cette zone.
+  zone_sans_fenetres: {
+    nom: "gare de Nancy",
+    a: { lat: 48.6917, lon: 6.1656 },
+    b: { lat: 48.6889, lon: 6.1780 },
+    demi_largeur_m: 130
   }
 }
 
