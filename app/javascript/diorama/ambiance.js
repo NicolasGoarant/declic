@@ -468,16 +468,17 @@ export function uniformesEtat(etat, publies, { arbres = false, projection = null
 }
 
 // opts : cle (l'état, pour le cache) ; uniformes (Promise, voir uniformesEtat) ;
-// dalle / propriete / masque / arbres (chemin → URL) ; estListee, masqueListe, arbresListe
-// (coords → booléen) ; moment (nom du moment, pour l'intensité des lampadaires) ; lampadaires
-// (Promise de l'index de diorama/lampadaires, ou null) ; options (options de couche Leaflet).
+// dalle (coords → URL, le style actif ou son repli) ; propriete / masque / arbres (chemin → URL) ;
+// estCouverte, masqueListe, arbresListe (coords → booléen) ; moment (nom du moment, pour
+// l'intensité des lampadaires) ; lampadaires (Promise de l'index de diorama/lampadaires, ou null) ;
+// options (options de couche Leaflet).
 export function creerCoucheAmbiance(L, opts) {
   const force = LAMPADAIRES.intensite[opts.moment] ?? 0
   const Couche = L.GridLayer.extend({
     createTile(coords, fini) {
       const toile = document.createElement("canvas")
       toile.width = toile.height = COTE
-      if (!opts.estListee(coords)) {
+      if (!opts.estCouverte(coords)) {
         setTimeout(() => fini(null, toile), 0)
         return toile
       }
@@ -489,15 +490,15 @@ export function creerCoucheAmbiance(L, opts) {
         const dessous = { ...coords, y: coords.y + 1 }, cheminBas = `${coords.z}/${coords.x}/${coords.y + 1}`
         if (coords.z === NIVEAU_MAX) {
           urlClasse = opts.propriete(chemin); mode = 0
-          if (opts.estListee(dessous)) urlBas = opts.propriete(cheminBas)
+          if (opts.estCouverte(dessous)) urlBas = opts.propriete(cheminBas)
         } else if (coords.z >= 6 && opts.masqueListe(coords)) {
           urlClasse = opts.masque(chemin); mode = 1
           if (opts.masqueListe(dessous)) urlBas = opts.masque(cheminBas)
         }
-        // Masque des arbres : aux niveaux qu'il couvre (6 à 8), une dalle non listée n'a pas d'arbre.
+        // Masque des arbres : aux niveaux qu'il couvre (6 à 8), une dalle non couverte n'a pas d'arbre.
         const arbres = commun?.saison[1] === 2 && commun.arbresPublies && coords.z >= 6
         return Promise.all([
-          commun, charger(opts.dalle(chemin)), charger(urlClasse),
+          commun, charger(opts.dalle(coords)), charger(urlClasse),
           arbres && opts.arbresListe(coords) ? charger(opts.arbres(chemin)) : null,
           force > 0 ? opts.lampadaires : null,
           force > 0 ? charger(urlBas) : null
