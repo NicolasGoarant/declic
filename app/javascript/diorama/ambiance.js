@@ -17,7 +17,7 @@
 // (masque-arbres, niveaux 6 à 8) ; sans ce masque, aux verts sombres (repli). Chaque arbre prend
 // ensuite sa propre teinte, du jaune au roux : une cellule de Voronoï de la taille d'un houppier,
 // calée sur les pixels du niveau 8, donc fixe au sol quel que soit le zoom ou le déplacement.
-import { COTE, creerCache } from "diorama/couches"
+import { COTE, creerCache, comblerInterstices } from "diorama/couches"
 import { MOMENTS, PUBLIES, AUTOMNE, PLUIE, NEIGE, LUMIERES } from "diorama/reglages"
 
 const REGLES_MAX = 3 // par étalonnage publié (hiver : 2, heure bleue et automne : 1)
@@ -50,6 +50,7 @@ const SOURCE_FS = [
   "uniform float repliForce; // part de l'intensité en repli (moitié)",
   "uniform int meteo;        // 0 clair, 1 pluie, 2 neige",
   "uniform vec4 pluie;       // luminosité et contraste du sol, saturation, luminosité des volumes",
+  "uniform float pluieVoile; // assombrissement léger de toute la carte pendant la pluie",
   "uniform vec4 neige;       // toits, sol",
   "uniform vec3 neigeCouleur;",
   "uniform int moment;       // 0 aucun, 1 règles publiées (heure bleue), 2 paramétrique",
@@ -120,7 +121,7 @@ const SOURCE_FS = [
   "    float sol = classe == 2.0 ? (toit < 0.0 ? 0.5 : 0.0) : 1.0;",
   "    vec3 mouille = ((rgb - 0.5) * pluie.y + 0.5) * pluie.x;",
   "    mouille = mix(vec3(luma(mouille)), mouille, pluie.z);",
-  "    rgb = mix(rgb * pluie.w, clamp(mouille, 0.0, 1.0), sol); }",
+  "    rgb = mix(rgb * pluie.w, clamp(mouille, 0.0, 1.0), sol) * (1.0 - pluieVoile); }",
   "  else if (meteo == 2) {",
   "    float l = luma(rgb), bruit = 0.75 + 0.25 * hache(floor(monde / 3.0));",
   // Hors du masque du bâti (toit < 0) : tout ce qui n'est pas feuillage, dosé par la clarté, pour ne pas
@@ -296,6 +297,7 @@ export function uniformesEtat(etat, publies, { arbres = false, lumieres = false 
   // Météo.
   u.meteo = ["1i", { clair: 0, pluie: 1, neige: 2 }[etat.meteo] ?? 0]
   u.pluie = ["4f", PLUIE.sol_luminosite, PLUIE.sol_contraste, PLUIE.saturation, PLUIE.volumes_luminosite]
+  u.pluieVoile = ["1f", PLUIE.assombrissement]
   u.neige = ["4f", NEIGE.toits, NEIGE.sol, 0, 0]
   u.neigeCouleur = ["3fv", rgb(NEIGE.couleur)]
   // Moment.
@@ -373,5 +375,5 @@ export function creerCoucheAmbiance(L, opts) {
       return toile
     }
   })
-  return new Couche(opts.options)
+  return comblerInterstices(new Couche(opts.options))
 }
