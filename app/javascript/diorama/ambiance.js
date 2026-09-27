@@ -61,6 +61,7 @@ const SOURCE_FS = [
   "uniform vec3 neigeCouleur;",
   "uniform int moment;       // 0 aucun, 1 règles publiées (heure bleue), 2 paramétrique",
   "uniform vec3 balance, grade; uniform vec4 voile; // grade : saturation, contraste, luminosité",
+  "uniform float voileOmbres; // 1 : voile réservé aux zones sombres (nuit v7), 0 : mélange plat (autres moments)",
   "uniform vec4 parcs;       // couleur des parcs la nuit, et sa part",
   "uniform int lumieres;     // 1 : carte de lumière (tLum, COTE × (COTE + debord)) à poser",
   "uniform int classeBas;    // 1 : classe de la dalle du dessous lue (tClasseBas)",
@@ -72,6 +73,8 @@ const SOURCE_FS = [
   "uniform vec3 facadeCouleur, fenetreCouleur;",
   "uniform vec4 fenetres;    // part, taille de grappe (px du niveau 8), écart entre grappes, intensité",
   "uniform vec4 fenetreForme; // cellule (l, h), fenêtre (l, h), en px du niveau 8",
+  "uniform vec4 zoneGare;    // segment (x0, y0, x1, y1) en px du niveau 8, sans fenêtres (quais)",
+  "uniform float zoneGareRayon; // demi-largeur du couloir, en px du niveau 8 ; <= 0 : désactivé",
   "varying vec2 uv;",
   "vec3 lin(vec3 c){ return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }",
   "vec3 gam(vec3 c){ c = clamp(c, 0.0, 1.0); return mix(c * 12.92, 1.055 * pow(c, vec3(1.0/2.4)) - 0.055, step(0.0031308, c)); }",
@@ -115,6 +118,8 @@ const SOURCE_FS = [
   "vec3 lumiere(vec2 p){ vec3 l = texture2D(tLum, vec2(p.x / 256.0, 1.0 - p.y / (256.0 + debord))).rgb;",
   "  return 1.0 - exp(-gains * l * lumForce); }",
   "vec3 ecran(vec3 a, vec3 b){ return 1.0 - (1.0 - a) * (1.0 - clamp(b, 0.0, 1.0)); }",
+  "float distSeg(vec2 p, vec2 a, vec2 b){ vec2 pa = p - a, ba = b - a;",
+  "  float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }",
   reglesGLSL("s"),
   reglesGLSL("m"),
   "void main(){",
@@ -160,7 +165,11 @@ const SOURCE_FS = [
   "  else if (moment == 2) {",
   "    rgb = mix(vec3(luma(rgb)), rgb, grade.x) * balance; // la lumière colore après la désaturation",
   "    rgb = ((rgb - 0.5) * grade.y + 0.5) * grade.z;",
-  "    rgb = mix(clamp(rgb, 0.0, 1.0), voile.rgb, voile.a);",
+  "    rgb = clamp(rgb, 0.0, 1.0);",
+  // Voile réservé aux ombres (nuit v7) : les surfaces déjà claires (rues, façades, toits) le traversent
+  // presque sans le voir ; seules les zones sombres/non éclairées virent au bleu-violet.
+  "    float part = voileOmbres > 0.5 ? voile.a * (1.0 - smoothstep(0.05, 0.22, luma(rgb))) : voile.a;",
+  "    rgb = mix(rgb, voile.rgb, part);",
   "    if (classe == 3.0) rgb = mix(rgb, parcs.rgb * (0.75 + 0.5 * luma(o)), parcs.a); }",
   // 4. Lumières.
   "  if (lumieres == 1) {",
@@ -168,7 +177,8 @@ const SOURCE_FS = [
   "    if (toit >= 0.0 && classe == 2.0) for (int i = 1; i <= 48; i++) { float fi = float(i);",
   "      if (fi > h) break; if (bati(px + vec2(0.0, fi)) < 0.5) { d = fi; break; } }",
   "    vec3 k = hsv(o);",
-  "    float fac = d > 0.0 ? 1.0 - smoothstep(0.3, 0.5, k.y) * step(k.x, 32.0) : 0.0; // tuiles orangées : toit",
+  "    bool tuile = k.y > 0.3 && k.x <= 32.0, ardoise = k.x >= 175.0 && k.x <= 260.0 && k.y < 0.35;",
+  "    float fac = d > 0.0 && !tuile && !ardoise ? 1.0 : 0.0; // tuiles orangées et ardoises bleues : toit, pas de fenêtres",
   "    float sol = toit < 0.0 || classe == 1.0 ? 1.0 : facade.w;",
   "    vec3 l = lumiere(px);",
   "    float place = l.b * (classe == 3.0 ? 0.0 : 1.0);",
@@ -192,7 +202,8 @@ const SOURCE_FS = [
   "      float remplie = echelle <= 1.0 ? fenetreForme.z * fenetreForme.w / (cel.x * cel.y) : 1.0;",
   "      bool vitre = echelle > 1.0 || (abs(dans.x - cel.x * 0.5) < fenetreForme.z * 0.5 && abs(dans.y - cel.y * 0.5) < fenetreForme.w * 0.5);",
   "      float humeur = 1.0 + (hache(floor(monde / fenetres.y) + 71.3) * 2.0 - 1.0) * fenetres.z;",
-  "      if (vitre && t > 0.08 && t < 0.95 && hache(n * 1.37 + 11.1) < fenetres.x * humeur / remplie)",
+  "      bool horsGare = zoneGareRayon <= 0.0 || distSeg(monde, zoneGare.xy, zoneGare.zw) > zoneGareRayon;",
+  "      if (vitre && horsGare && t > 0.08 && t < 0.95 && hache(n * 1.37 + 11.1) < fenetres.x * humeur / remplie)",
   "        rgb = mix(rgb, fenetreCouleur, fenetres.w * fac * lumForce * (echelle > 1.0 ? eclairage.z : 1.0)); } }",
   "  gl_FragColor = vec4(clamp(rgb, 0.0, 1.0), c.a); }"
 ].join("\n")
@@ -329,7 +340,7 @@ const hex = (h) => rgb([1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)))
 
 // Les uniformes communes à toutes les dalles d'un état { moment, saison, meteo }. `publies` : les
 // étalonnages publiés lus ({ "heure-bleue", hiver, automne } → JSON ou null). null : rien à faire.
-export function uniformesEtat(etat, publies, { arbres = false } = {}) {
+export function uniformesEtat(etat, publies, { arbres = false, projection = null } = {}) {
   const u = {}
   // Saison.
   let saison = 0
@@ -363,6 +374,7 @@ export function uniformesEtat(etat, publies, { arbres = false } = {}) {
   u.balance = ["3fv", m ? balance(m) : [1, 1, 1]]
   u.grade = ["3f", m?.saturation ?? 1, m?.contraste ?? 1, m?.luminosite ?? 1]
   u.voile = ["4f", ...rgb(m?.voile?.couleur ?? [0, 0, 0]), m?.voile?.part ?? 0]
+  u.voileOmbres = ["1f", m?.voile?.ombres ? 1 : 0]
   u.parcs = ["4f", ...rgb(m?.parcs?.couleur ?? [0, 0, 0]), m?.parcs?.part ?? 0]
   // Lumières.
   const lp = LAMPADAIRES, fa = lp.facades, fe = lp.fenetres
@@ -379,6 +391,16 @@ export function uniformesEtat(etat, publies, { arbres = false } = {}) {
   u.fenetres = ["4f", fe.part, fe.grappe_px, fe.ecart_grappes, fe.intensite]
   u.fenetreForme = ["4f", ...fe.cellule_px, ...fe.fenetre_px]
   u.fenetreCouleur = ["3fv", hex(fe.couleur)]
+  const zg = LAMPADAIRES.zone_sans_fenetres
+  if (projection && zg) {
+    const [x0, y0] = projection.pixel(zg.a.lat, zg.a.lon)
+    const [x1, y1] = projection.pixel(zg.b.lat, zg.b.lon)
+    u.zoneGare = ["4f", x0, y0, x1, y1]
+    u.zoneGareRayon = ["1f", zg.demi_largeur_m * lp.sol_m_px]
+  } else {
+    u.zoneGare = ["4f", 0, 0, 0, 0]
+    u.zoneGareRayon = ["1f", 0]
+  }
   if (saison === 0 && moment === 0 && u.meteo[1] === 0) return null
   return u
 }
