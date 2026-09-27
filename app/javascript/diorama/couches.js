@@ -6,6 +6,21 @@
 
 export const COTE = 256
 
+// Un canevas est toujours son propre calque GPU ; sur un écran au rapport de pixels non entier
+// (125 %, 150 %…, très courant sur les portables), Chrome arrondit indépendamment la position de
+// chaque calque au pixel physique le plus proche, ce qui laisse parfois un interstice sous-pixel
+// entre deux dalles voisines (le fond clair de la table s'y voit). Les dalles image simples
+// (creerCoucheDalles, sans canevas) n'ont pas ce défaut : Chrome les compose ensemble sans arrondi
+// indépendant. Correctif : un recouvrement d'un pixel CSS sur le bord bas et droit de chaque dalle
+// recalculée, imperceptible, qui comble l'interstice quel que soit le sens de l'arrondi.
+export function comblerInterstices(couche) {
+  couche.on("tileloadstart", ({ tile }) => {
+    tile.style.width = `${COTE + 1}px`
+    tile.style.height = `${COTE + 1}px`
+  })
+  return couche
+}
+
 function tuileVide(fini) {
   const vide = document.createElement("div")
   setTimeout(() => fini(null, vide), 0)
@@ -84,7 +99,7 @@ export function creerCoucheBlanche(L, { dalle, masque, estListee, masqueListe, o
       return toile
     }
   })
-  return new Couche(options)
+  return comblerInterstices(new Couche(options))
 }
 
 function blanchir(ctx, couverture) {

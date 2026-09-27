@@ -54,25 +54,49 @@ export const AUTOMNE = {
 }
 
 // Météo : l'effet sur les dalles, puis les particules (canevas au-dessus de la carte).
+//
+// Particules : tailles en pixels CSS, pour un écran d'ordinateur ; sur écran étroit (mobile, voir
+// ETROIT dans diorama/precipitations), les TAILLES (rayon, longueur, épaisseur, dérive) sont
+// réduites à `PARTICULES.echelle_etroit` — pas leur nombre. Le nombre est celui à 1920 × 1080
+// (`particules_1920`), mis à l'échelle de la surface réelle de la carte (`PARTICULES.surface_1920`),
+// avec un plancher (`PARTICULES.plancher`) pour rester visible sur un tout petit écran.
+// Chaque type se répartit en trois plans de profondeur (`plans`, parts qui totalisent 1) : le plan
+// le plus proche est le plus gros, le plus flou (canvas `filter: blur(...)`) et le plus rapide.
+export const PARTICULES = {
+  surface_1920: 1920 * 1080,
+  plancher: 10,
+  echelle_etroit: 0.7
+}
+
 export const PLUIE = {
   sol_luminosite: 0.86, sol_contraste: 1.14, saturation: 0.9, // le sol mouillé, plus sombre et plus contrasté
   volumes_luminosite: 0.95,
-  particules: 170,            // plafond (moitié sur mobile)
-  vitesse_px_s: [700, 1000],  // chute, en pixels d'écran par seconde
-  inclinaison: 0.28,          // décalage horizontal par pixel de chute (vent)
-  longueur_px: [10, 18],
-  couleur: "rgba(205, 220, 240, 0.42)"
+  assombrissement: 0.08,       // toute la carte (pixels non exclus), en plus de l'effet ci-dessus
+  particules_1920: 180,        // à 1920 × 1080 ; proportionnel à la surface réelle ensuite
+  inclinaison: Math.tan(15 * Math.PI / 180), // décalage horizontal par pixel de chute, ≈ 15°
+  couleur: "rgba(90, 110, 140, 0.55)",
+  lisere_couleur: "rgba(225, 235, 248, 0.55)", // filet clair d'un côté du trait
+  lisere_decalage_px: 1,
+  plans: [
+    { part: 0.45, vitesse_px_s: [700, 780], longueur_px: [28, 34], epaisseur_px: 2, flou_px: 0 },
+    { part: 0.35, vitesse_px_s: [780, 900], longueur_px: [34, 41], epaisseur_px: 2.5, flou_px: 0.5 },
+    { part: 0.20, vitesse_px_s: [900, 1050], longueur_px: [41, 48], epaisseur_px: 3, flou_px: 1 }
+  ]
 }
 
 export const NEIGE = {
   toits: 0.82,                // blanchiment maximal des toits (masque-bati), progressif selon la pente et le bruit
   sol: 0.14,                  // voile de neige sur le reste
   couleur: [238, 243, 250],
-  particules: 150,            // plafond (moitié sur mobile)
-  vitesse_px_s: [26, 60],
-  rayon_px: [1, 2.8],
-  derive_px: 18,              // amplitude du balancement horizontal
-  couleur_flocon: "rgba(255, 255, 255, 0.9)"
+  particules_1920: 120,       // à 1920 × 1080 ; proportionnel à la surface réelle ensuite
+  couleur_flocon: "rgba(255, 255, 255, 0.9)",
+  contour_couleur: "rgba(60, 70, 90, 0.35)", // contour doux, pour rester visible sur la maquette claire
+  derive_px: 15,               // amplitude du balancement horizontal (variation ×0,7 à ×1,3 par flocon)
+  plans: [
+    { part: 0.40, vitesse_px_s: [26, 34], rayon_px: [3.5, 4.5], contour_largeur_px: 1, flou_px: 0 },
+    { part: 0.35, vitesse_px_s: [34, 46], rayon_px: [4.5, 6], contour_largeur_px: 1.5, flou_px: 1 },
+    { part: 0.25, vitesse_px_s: [46, 60], rayon_px: [6, 8], contour_largeur_px: 2, flou_px: 2 }
+  ]
 }
 
 // La nuit, si la couche lumieres-nuit est publiée (R, lanternes ; V, fenêtres possibles) :
