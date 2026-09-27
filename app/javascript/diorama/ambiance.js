@@ -4,7 +4,8 @@
 //   1. saison : hiver (étalonnage publié) ou automne (feuillages seulement, voir plus bas) ;
 //   2. météo : pluie (sol plus sombre et plus contrasté) ou neige (toits blanchis via masque-bati) ;
 //   3. moment : heure bleue (étalonnage publié), aube, heure dorée ou nuit (paramétriques) ; la nuit
-//      allume ensuite ses lumières si la couche lumieres-nuit est publiée.
+//      allume ensuite ses lampadaires (diorama/lampadaires, dessinés après l'étalonnage), à
+//      l'heure bleue aussi, à moitié.
 //
 // Les étalonnages publiés sont ceux que nancy-3d/scripts/caler_ambiance.py écrit en JSON (format
 // « nancy-3d/ambiance ») : une suite de règles, chacune un affine Lab par canal et une force,
@@ -18,7 +19,8 @@
 // ensuite sa propre teinte, du jaune au roux : une cellule de Voronoï de la taille d'un houppier,
 // calée sur les pixels du niveau 8, donc fixe au sol quel que soit le zoom ou le déplacement.
 import { COTE, creerCache, comblerInterstices } from "diorama/couches"
-import { MOMENTS, PUBLIES, AUTOMNE, PLUIE, NEIGE, LUMIERES } from "diorama/reglages"
+import { dessinerLampadaires } from "diorama/lampadaires"
+import { MOMENTS, PUBLIES, AUTOMNE, PLUIE, NEIGE, LAMPADAIRES } from "diorama/reglages"
 
 const REGLES_MAX = 3 // par étalonnage publié (hiver : 2, heure bleue et automne : 1)
 const NIVEAU_MAX = 8
@@ -38,11 +40,10 @@ const reglesGLSL = (x) =>
 
 const SOURCE_FS = [
   "precision highp float;",
-  "uniform sampler2D tBase, tClasse, tArbres, tLumieres;",
+  "uniform sampler2D tBase, tClasse, tArbres;",
   "uniform int modeClasse;   // 0 propriété (niveau 8), 1 masque du bâti, 2 aucune",
   "uniform vec2 origine;     // coin haut-gauche de la dalle, en pixels du niveau 8",
   "uniform float echelle;    // pixels du niveau 8 par pixel de la dalle",
-  "uniform float graine;     // graine fixe de la dalle",
   "uniform int saison;       // 0 aucune, 1 règles publiées (hiver), 2 automne",
   "uniform int modeArbres;   // 1 masque des arbres, 0 repli sur les verts sombres",
   "uniform vec4 automne;     // intensité, variation de teinte (rad), variation de clarté, taille d'arbre",
@@ -55,8 +56,6 @@ const SOURCE_FS = [
   "uniform vec3 neigeCouleur;",
   "uniform int moment;       // 0 aucun, 1 règles publiées (heure bleue), 2 paramétrique",
   "uniform vec3 balance, grade; uniform vec4 voile; // grade : saturation, contraste, luminosité",
-  "uniform int lumieres;     // 1 si la couche lumieres-nuit est là",
-  "uniform vec3 haloCouleur, fenetreCouleur, lum; // lum : rayon (px de la dalle), force, part de fenêtres",
   "varying vec2 uv;",
   "vec3 lin(vec3 c){ return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }",
   "vec3 gam(vec3 c){ c = clamp(c, 0.0, 1.0); return mix(c * 12.92, 1.055 * pow(c, vec3(1.0/2.4)) - 0.055, step(0.0031308, c)); }",
@@ -135,15 +134,6 @@ const SOURCE_FS = [
   "    rgb = mix(vec3(luma(rgb)), rgb, grade.x) * balance; // la lumière colore après la désaturation",
   "    rgb = ((rgb - 0.5) * grade.y + 0.5) * grade.z;",
   "    rgb = mix(clamp(rgb, 0.0, 1.0), voile.rgb, voile.a); }",
-  // Lumières de la nuit : halos autour des lanternes (R), fenêtres allumées au hasard (V).
-  "  if (lumieres == 1) {",
-  "    float halo = 0.0;",
-  "    for (int k = 0; k < 12; k++) { float a = float(k) * 0.5236;",
-  "      vec2 d = vec2(cos(a), sin(a)) * lum.x / 256.0;",
-  "      halo += texture2D(tLumieres, uv + d).r * 0.5 + texture2D(tLumieres, uv + d * 0.45).r; }",
-  "    halo = min(1.0, halo / 9.0 + texture2D(tLumieres, uv).r);",
-  "    rgb += haloCouleur * halo * lum.y;",
-  "    if (texture2D(tLumieres, uv).g > 0.5 && hache(floor(monde / 3.0) + graine) < lum.z) rgb = mix(rgb, fenetreCouleur, 0.85); }",
   "  gl_FragColor = vec4(clamp(rgb, 0.0, 1.0), c.a); }"
 ].join("\n")
 
@@ -165,7 +155,7 @@ function texture(gl) {
   return t
 }
 
-const TEXTURES = ["tBase", "tClasse", "tArbres", "tLumieres"]
+const TEXTURES = ["tBase", "tClasse", "tArbres"]
 
 // UN SEUL contexte WebGL pour toutes les couches d'ambiance ; chaque dalle est calculée ici puis
 // recopiée dans son propre canevas 2D.
@@ -278,7 +268,7 @@ const rgb = (c) => c.map((v) => v / 255)
 
 // Les uniformes communes à toutes les dalles d'un état { moment, saison, meteo }. `publies` : les
 // étalonnages publiés lus ({ "heure-bleue", hiver, automne } → JSON ou null). null : rien à faire.
-export function uniformesEtat(etat, publies, { arbres = false, lumieres = false } = {}) {
+export function uniformesEtat(etat, publies, { arbres = false } = {}) {
   const u = {}
   // Saison.
   let saison = 0
@@ -312,21 +302,16 @@ export function uniformesEtat(etat, publies, { arbres = false, lumieres = false 
   u.balance = ["3fv", m ? balance(m) : [1, 1, 1]]
   u.grade = ["3f", m?.saturation ?? 1, m?.contraste ?? 1, m?.luminosite ?? 1]
   u.voile = ["4f", ...rgb(m?.voile?.couleur ?? [0, 0, 0]), m?.voile?.part ?? 0]
-  // Lumières de la nuit.
-  u.lumieresPubliees = lumieres && etat.moment === "nuit"
-  u.haloCouleur = ["3fv", rgb(LUMIERES.halo_couleur)]
-  u.fenetreCouleur = ["3fv", rgb(LUMIERES.fenetre_couleur)]
   if (saison === 0 && moment === 0 && u.meteo[1] === 0) return null
   return u
 }
 
-// Graine fixe d'une dalle (rien ne clignote quand Leaflet la redemande).
-const graine = ({ x, y, z }) => ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) % 1000
-
 // opts : cle (l'état, pour le cache) ; uniformes (Promise, voir uniformesEtat) ;
-// dalle / propriete / masque / arbres / lumieres (chemin → URL) ; estListee, masqueListe,
-// arbresListe, lumieresListe (coords → booléen) ; options (options de couche Leaflet).
+// dalle / propriete / masque / arbres (chemin → URL) ; estListee, masqueListe, arbresListe
+// (coords → booléen) ; moment (nom du moment, pour l'intensité des lampadaires) ; lampadaires
+// (Promise de l'index de diorama/lampadaires, ou null) ; options (options de couche Leaflet).
 export function creerCoucheAmbiance(L, opts) {
+  const force = LAMPADAIRES.intensite[opts.moment] ?? 0
   const Couche = L.GridLayer.extend({
     createTile(coords, fini) {
       const toile = document.createElement("canvas")
@@ -344,12 +329,11 @@ export function creerCoucheAmbiance(L, opts) {
         else if (coords.z >= 6 && opts.masqueListe(coords)) { urlClasse = opts.masque(chemin); mode = 1 }
         // Masque des arbres : aux niveaux qu'il couvre (6 à 8), une dalle non listée n'a pas d'arbre.
         const arbres = commun?.saison[1] === 2 && commun.arbresPublies && coords.z >= 6
-        const lumieres = commun?.lumieresPubliees && coords.z >= 6 && opts.lumieresListe(coords)
         return Promise.all([
           commun, charger(opts.dalle(chemin)), charger(urlClasse),
           arbres && opts.arbresListe(coords) ? charger(opts.arbres(chemin)) : null,
-          lumieres ? charger(opts.lumieres(chemin)) : null
-        ]).then(([commun, base, classe, imageArbres, imageLumieres]) => {
+          force > 0 ? opts.lampadaires : null
+        ]).then(([commun, base, classe, imageArbres, lampadaires]) => {
           if (!base) { fini(new Error("dalle absente"), toile); return }
           // Pas de willReadFrequently : on ne relit jamais ces pixels, et un canevas 2D gardé sur le GPU
           // reçoit la copie du canevas WebGL sans la faire passer par le processeur.
@@ -359,15 +343,13 @@ export function creerCoucheAmbiance(L, opts) {
           const uniformes = { ...commun,
             modeClasse: ["1i", classe ? mode : 2],
             origine: ["2f", coords.x * COTE * echelle, coords.y * COTE * echelle],
-            echelle: ["1f", echelle], graine: ["1f", graine(coords)],
-            modeArbres: ["1i", arbres ? 1 : 0],
-            lumieres: ["1i", imageLumieres ? 1 : 0],
-            lum: ["3f", LUMIERES.halo_rayon_px / echelle, LUMIERES.halo_force, LUMIERES.fenetres_allumees]
+            echelle: ["1f", echelle],
+            modeArbres: ["1i", arbres ? 1 : 0]
           }
           delete uniformes.arbresPublies
-          delete uniformes.lumieresPubliees
           moteur ||= new Moteur()
-          ctx.drawImage(moteur.traiter([base, classe, imageArbres, imageLumieres], uniformes), 0, 0)
+          ctx.drawImage(moteur.traiter([base, classe, imageArbres], uniformes), 0, 0)
+          dessinerLampadaires(ctx, coords, lampadaires, force)
           cache.garder(cle, toile)
           fini(null, toile)
         })

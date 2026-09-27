@@ -22,7 +22,9 @@ class DioramaTuiles
   AMBIANCES_DOSSIER = "ambiances".freeze    # {nom}-actuelle.json (format nancy-3d/ambiance)
   AMBIANCES = %w[heure-bleue automne hiver].freeze
   ARBRES = "masque-arbres".freeze           # {z}/{x}/{y}.png, niveaux 6 à 8, blanc = feuillage (automne)
-  LUMIERES = "lumieres-nuit".freeze         # {z}/{x}/{y}.png, niveaux 6 à 8 : R lanternes, V fenêtres (nuit)
+  # Lampadaires de la nuit (format nancy-3d/lumieres-nuit, points au niveau 8) : les lanternes
+  # relevées si elles sont publiées un jour, sinon les positions procédurales IGN BD TOPO®.
+  LAMPADAIRES = [ %w[lumieres-nuit lanternes.json], %w[lampadaires-bdtopo lampadaires-bdtopo.json] ].freeze
 
   DUREE_CACHE = 10.minutes
   DELAI_SONDE_S = 2
@@ -48,14 +50,14 @@ class DioramaTuiles
     ambiances = AMBIANCES.select { |nom| blanche && propriete && p.fetch(url(parametres_ambiance(nom))) }
     # Couches facultatives : sans elles, l'automne se replie sur les verts sombres et la nuit reste sans lumières.
     arbres = vrai && p.fetch(url("#{ARBRES}/manifeste.json"))
-    lumieres = vrai && p.fetch(url("#{LUMIERES}/manifeste.json"))
+    lumieres = vrai && lampadaires(p).present?
     { vrai: vrai, blanche: blanche, ambiances: ambiances, arbres: arbres, lumieres: lumieres }
   end
 
   # Ce que reçoit le contrôleur Stimulus.
   def pour_js
     {
-      base: base, lot: LOT, masque: MASQUE, propriete: PROPRIETE, arbres: ARBRES, lumieres: LUMIERES,
+      base: base, lot: LOT, masque: MASQUE, propriete: PROPRIETE, arbres: ARBRES, lumieres: lampadaires(presents),
       ambiances: AMBIANCES.index_with { |nom| parametres_ambiance(nom) },
       disponibles: disponibles
     }
@@ -65,8 +67,14 @@ class DioramaTuiles
 
   def parametres_ambiance(nom) = "#{AMBIANCES_DOSSIER}/#{nom}-actuelle.json"
 
+  # Chemin du fichier de lampadaires publié (le premier de LAMPADAIRES), ou nil.
+  def lampadaires(p)
+    dossier, fichier = LAMPADAIRES.find { |d, _| p.fetch(url("#{d}/manifeste.json")) }
+    dossier && "#{dossier}/#{fichier}"
+  end
+
   def urls_a_sonder
-    [ LOT, MASQUE, PROPRIETE, ARBRES, LUMIERES ].map { |dossier| url("#{dossier}/manifeste.json") } +
+    [ LOT, MASQUE, PROPRIETE, ARBRES, *LAMPADAIRES.map(&:first) ].map { |dossier| url("#{dossier}/manifeste.json") } +
       AMBIANCES.map { |nom| url(parametres_ambiance(nom)) }
   end
 

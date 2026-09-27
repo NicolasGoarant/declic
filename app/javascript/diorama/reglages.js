@@ -23,10 +23,11 @@ export const MOMENTS = {
     temperature: 4300, teinte: 0.04, saturation: 1.1, contraste: 1.06, luminosite: 1.02,
     voile: { couleur: [255, 196, 120], part: 0.06 }
   },
-  // La ville reste lisible : on assombrit franchement, mais on relève un peu les noirs (voile bleu nuit).
+  // Nuit éclairée : ≈ 45 % de la luminance moyenne du jour, bleu nuit ; toits et rues restent lisibles,
+  // les couleurs des toits atténuées mais présentes.
   nuit: {
-    temperature: 12500, teinte: -0.04, saturation: 0.5, contraste: 0.92, luminosite: 0.5,
-    voile: { couleur: [22, 34, 72], part: 0.16 }
+    temperature: 14000, teinte: -0.03, saturation: 0.72, contraste: 0.94, luminosite: 0.39,
+    voile: { couleur: [16, 36, 104], part: 0.22 }
   }
 }
 
@@ -74,13 +75,13 @@ export const PLUIE = {
   assombrissement: 0.08,       // toute la carte (pixels non exclus), en plus de l'effet ci-dessus
   particules_1920: 180,        // à 1920 × 1080 ; proportionnel à la surface réelle ensuite
   inclinaison: Math.tan(15 * Math.PI / 180), // décalage horizontal par pixel de chute, ≈ 15°
-  couleur: "rgba(90, 110, 140, 0.55)",
+  couleur: "rgba(80, 130, 200, 0.65)",
   lisere_couleur: "rgba(225, 235, 248, 0.55)", // filet clair d'un côté du trait
   lisere_decalage_px: 1,
   plans: [
-    { part: 0.45, vitesse_px_s: [700, 780], longueur_px: [28, 34], epaisseur_px: 2, flou_px: 0 },
-    { part: 0.35, vitesse_px_s: [780, 900], longueur_px: [34, 41], epaisseur_px: 2.5, flou_px: 0.5 },
-    { part: 0.20, vitesse_px_s: [900, 1050], longueur_px: [41, 48], epaisseur_px: 3, flou_px: 1 }
+    { part: 0.45, vitesse_px_s: [455, 505], longueur_px: [28, 34], epaisseur_px: 2, flou_px: 0 },
+    { part: 0.35, vitesse_px_s: [505, 585], longueur_px: [34, 41], epaisseur_px: 2.5, flou_px: 0.5 },
+    { part: 0.20, vitesse_px_s: [585, 680], longueur_px: [41, 48], epaisseur_px: 3, flou_px: 1 }
   ]
 }
 
@@ -88,7 +89,7 @@ export const NEIGE = {
   toits: 0.82,                // blanchiment maximal des toits (masque-bati), progressif selon la pente et le bruit
   sol: 0.14,                  // voile de neige sur le reste
   couleur: [238, 243, 250],
-  particules_1920: 120,       // à 1920 × 1080 ; proportionnel à la surface réelle ensuite
+  particules_1920: 300,       // à 1920 × 1080 ; proportionnel à la surface réelle ensuite
   couleur_flocon: "rgba(255, 255, 255, 0.9)",
   contour_couleur: "rgba(60, 70, 90, 0.35)", // contour doux, pour rester visible sur la maquette claire
   derive_px: 15,               // amplitude du balancement horizontal (variation ×0,7 à ×1,3 par flocon)
@@ -99,11 +100,29 @@ export const NEIGE = {
   ]
 }
 
-// La nuit, si la couche lumieres-nuit est publiée (R, lanternes ; V, fenêtres possibles) :
-// halos chauds autour des lanternes, et une part des fenêtres allumées au hasard (graine fixe par dalle).
-export const LUMIERES = {
-  halo_couleur: [255, 186, 104], halo_rayon_px: 9, halo_force: 0.9,
-  fenetre_couleur: [255, 214, 140], fenetres_allumees: 0.22
+// Les lampadaires (nuit et heure bleue) : lumieres-nuit/lanternes.json s'il est publié, sinon
+// lampadaires-bdtopo (positions procédurales le long des routes, IGN BD TOPO®). Chaque point VISIBLE
+// (sol dégagé autour du pied) pose une flaque de lumière chaude au sol et un point brillant en haut
+// du mât. Tailles en pixels du niveau natif 8, proportionnelles au zoom ensuite.
+const VUE_DEPUIS_LA_VERTICALE = 50 * Math.PI / 180 // inclinaison de la caméra des dalles (nancy-3d)
+export const LAMPADAIRES = {
+  intensite: { nuit: 1, "heure-bleue": 0.5 }, // les autres moments : aucune lumière
+  metre_px: Math.sin(VUE_DEPUIS_LA_VERTICALE) * 2.2626, // hauteur à l'écran d'un mètre de mât (niveau 8)
+  niveau_min: 4,              // en dessous, flaques et feux ne font plus qu'un voile : rien
+  flaque: {
+    couleur: "#FFC46B",
+    rayon_px: 12,             // au niveau 8, proportionnel au zoom…
+    rayon_min_ecran_px: 6,    // …sans descendre sous 6 px à l'écran (vue d'ensemble : les rues restent tracées)
+    aplatissement: Math.cos(VUE_DEPUIS_LA_VERTICALE), // le sol vu en oblique : ellipse plus basse que large
+    opacite: 0.5
+  },
+  feu: {
+    couleur: "#FFF4DC",       // cœur presque blanc, halo chaud autour
+    diametre_px: [2, 3],      // à l'écran : ne descend pas sous 2 px, ne dépasse pas 3 px (hors halo)
+    halo_couleur: "#FFC46B",
+    halo_rayon_px: 4,
+    opacite: 0.95
+  }
 }
 
 // Mode automatique.
