@@ -11,11 +11,13 @@
 import { Controller } from "@hotwired/stimulus"
 import { creerProjection } from "diorama_projection"
 import { creerCoucheDalles, creerCoucheBlanche } from "diorama/couches"
-import { creerCoucheAmbiance, lireAmbiance } from "diorama/ambiance"
-import { resoudreAuto } from "diorama/soleil"
+import { creerCoucheAmbiance, lireAmbiance, uniformesEtat } from "diorama/ambiance"
+import { momentAuto, saisonAuto, libelleAuto } from "diorama/soleil"
+import { meteoAuto, meteoGardee } from "diorama/meteo"
+import { Precipitations } from "diorama/precipitations"
 import { regrouper, eventail, FLEURS_MAX } from "diorama/bouquets"
 import { chargerContour, creerDecoupe, poserSocle } from "diorama/contour"
-import { CLE_FOND, CLE_AMBIANCE, CLE_BLANCHE, lire, ecrire, fondDeDepart } from "diorama/preferences"
+import { CLE_FOND, CLE_AMBIANCE, CLE_AUTO, CLES_REGLAGES, CLE_BLANCHE, lire, ecrire, fondDeDepart } from "diorama/preferences"
 import { lireDate, aujourdhui, estPasse, estAVenir, etiquette, periode, jourCourt } from "diorama/dates"
 
 const NIVEAU_MAX = 8
@@ -33,7 +35,15 @@ const PLAN = {
   attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">les contributeurs OpenStreetMap</a>',
   minZoom: 10, maxZoom: 19
 }
-const AMBIANCES = { origine: "origine", "heure-bleue": "heure bleue", automne: "automne", hiver: "hiver" }
+// Les valeurs de chaque réglage d'ambiance ; la première est l'image d'origine. Les étalonnages
+// publiés (PUBLIEES) ne sont proposés que s'ils répondent sur le domaine des tuiles.
+const REGLAGES = {
+  moment: ["jour", "aube", "heure-doree", "heure-bleue", "nuit"],
+  saison: ["printemps-ete", "automne", "hiver"],
+  meteo: ["clair", "pluie", "neige"]
+}
+const PUBLIEES = ["heure-bleue", "automne", "hiver"]
+const NEUTRE = { moment: "jour", saison: "printemps-ete", meteo: "clair" }
 const FICHES_MAX = 24
 const HISTOIRES = "histoires" // Categorie::HISTOIRES : les Belles Histoires
 const CLE_FAVORIS = "declic:favoris"
@@ -52,8 +62,8 @@ export default class extends Controller {
   static targets = [
     "carte", "alerte", "voletTitre", "poigneeTitre", "compteur", "fiches", "vide", "stats",
     "modeleFiche", "modelePin", "modelePopup", "categorie", "ongletFavoris", "ongletCarte",
-    "boutonCalques", "panneauCalques", "voileCalques", "choixFond", "rubriqueAmbiance", "choixAmbiance",
-    "choixBlanche", "ambianceAuto"
+    "boutonCalques", "panneauCalques", "voileCalques", "choixFond", "rubriqueAmbiance", "choixAuto",
+    "choixReglage", "choixBlanche", "ambianceAuto"
   ]
 
   connect() {
@@ -74,6 +84,7 @@ export default class extends Controller {
 
   disconnect() {
     clearInterval(this.minuterieAuto)
+    this.precipitations?.detruire()
     this.observateur?.disconnect()
     window.removeEventListener("orientationchange", this.surOrientation)
     this.carte?.remove()
@@ -199,8 +210,12 @@ export default class extends Controller {
     }
     if (this.dioramaDispo) {
       try {
-        // Le masque se lit avant la carte : sans sa liste de dalles, on demanderait des dalles absentes (404).
-        await Promise.all([this.chargerManifeste(), t.disponibles.blanche ? this.chargerMasque() : null])
+        // Les masques se lisent avant la carte : sans leur liste de dalles, on demanderait des dalles absentes (404).
+        const [, masque, arbres, lumieres] = await Promise.all([
+          this.chargerManifeste(), t.disponibles.blanche ? this.chargerListe(t.masque) : null,
+          t.disponibles.arbres ? this.chargerListe(t.arbres) : null, t.disponibles.lumieres ? this.chargerListe(t.lumieres) : null
+        ])
+        Object.assign(this, { dallesMasque: masque, dallesArbres: arbres, dallesLumieres: lumieres })
         this.preparerDecoupe(await contour)
       } catch (erreur) {
         console.error("diorama :", erreur)
@@ -210,12 +225,14 @@ export default class extends Controller {
     }
     if (!this.carteTarget.isConnected) return
     this.fond = this.dioramaDispo ? fondDeDepart() : "plan"
-    this.lireAmbianceMemorisee()
+    this.lireReglages()
     this.construireCarte()
     this.vueInitiale()
     this.majCalques()
-    if (this.dioramaDispo && t.disponibles.ambiances?.length) {
-      this.minuterieAuto = setInterval(() => { if (this.ambianceChoisie === "auto") this.appliquerAmbiance("auto") }, 60000)
+    if (this.dioramaDispo) {
+      // Automatique : le soleil bouge, la météo se renouvelle (appel gardé 30 minutes).
+      this.minuterieAuto = setInterval(() => { if (this.auto) this.rafraichirAuto() }, 60000)
+      if (this.auto) this.rafraichirAuto()
     }
   }
 
@@ -242,6 +259,7 @@ export default class extends Controller {
     this.poserPoints()
     this.appliquerFiltres()
     this.suivreTaille()
+    this.majMeteo()
   }
 
   creerDiorama() {
@@ -341,6 +359,8 @@ export default class extends Controller {
     if (!this.carte || fond === this.fond || (fond === "diorama" && !this.dioramaDispo)) { this.majCalques(); return }
     const vue = this.vueGeo()
     this.fermerPopup()
+    this.precipitations?.detruire()
+    this.precipitations = null
     this.carte.remove()
     this.popup = null
     this.fond = fond
@@ -401,10 +421,12 @@ export default class extends Controller {
       c.closest("label").title = c.disabled ? "Diorama momentanément indisponible" : ""
     })
     if (this.hasRubriqueAmbianceTarget) this.rubriqueAmbianceTarget.hidden = this.fond !== "diorama"
-    this.choixAmbianceTargets.forEach((c) => { c.checked = c.value === this.ambianceChoisie })
+    // Les réglages affichés : ceux qu'« Automatique » retient, sinon ceux choisis.
+    const etat = this.etatAffiche()
+    if (this.hasChoixAutoTarget) this.choixAutoTarget.checked = this.auto
+    this.choixReglageTargets.forEach((c) => { c.checked = c.value === etat[c.dataset.reglage] })
     if (this.hasChoixBlancheTarget) this.choixBlancheTarget.checked = this.rendu === "blanche"
-    // Ce que « Automatique » donnerait maintenant, qu'il soit coché ou non.
-    if (this.hasAmbianceAutoTarget) this.ambianceAutoTarget.textContent = ` : ${AMBIANCES[this.resoudre("auto")]}`
+    if (this.hasAmbianceAutoTarget) this.ambianceAutoTarget.textContent = this.auto ? ` : ${libelleAuto(etat)}` : ""
   }
 
   // ─── Les couches de fond du diorama ──────────────────────────────────────────────────
@@ -419,16 +441,23 @@ export default class extends Controller {
     return this.dallesMasque ? (this.dallesMasque[coords.z]?.has(`${coords.x}/${coords.y}`) ?? false) : true
   }
 
-  async chargerMasque() {
+  // Dalles publiées d'une couche annexe (masque du bâti, des arbres, lumières), d'après son manifeste ;
+  // null si illisible.
+  async chargerListe(dossier) {
     try {
-      const reponse = await fetch(this.url(this.tuilesValue.masque, "manifeste.json"))
+      const reponse = await fetch(this.url(dossier, "manifeste.json"))
       if (reponse.ok) {
         const manifeste = await reponse.json()
-        if (manifeste.dalles) this.dallesMasque = this.indexerDalles(manifeste)
+        if (manifeste.dalles) return this.indexerDalles(manifeste)
       }
     } catch (erreur) {
-      console.warn("diorama : manifeste du masque illisible", erreur)
+      console.warn(`diorama : manifeste ${dossier} illisible`, erreur)
     }
+    return null
+  }
+
+  listee(dalles, coords) {
+    return dalles?.[coords.z]?.has(`${coords.x}/${coords.y}`) ?? false
   }
 
   coucheVraie() {
@@ -447,26 +476,42 @@ export default class extends Controller {
     return this.couches.blanche
   }
 
-  coucheAmbiance(nom) {
-    if (nom === "origine") return this.coucheVraie()
+  // La couche d'un état { moment, saison, meteo } ; l'état neutre est le diorama d'origine.
+  coucheAmbiance(etat) {
+    const cle = `${etat.moment}|${etat.saison}|${etat.meteo}`
+    if (cle === `${NEUTRE.moment}|${NEUTRE.saison}|${NEUTRE.meteo}`) return this.coucheVraie()
     const t = this.tuilesValue
-    if (!this.couches[nom]) {
-      const parametres = lireAmbiance(`${t.base}/${t.ambiances[nom]}`)
-      parametres.catch((erreur) => console.error("ambiance :", erreur))
-      this.couches[nom] = this.decouper(creerCoucheAmbiance(this.L, {
+    if (!this.couches[cle]) {
+      const publies = Promise.all(PUBLIEES.map((nom) => Object.values(etat).includes(nom) ? this.etalonnage(nom) : null))
+        .then((jsons) => Object.fromEntries(PUBLIEES.map((nom, i) => [nom, jsons[i]])))
+      this.couches[cle] = this.decouper(creerCoucheAmbiance(this.L, {
+        cle,
+        uniformes: publies.then((p) => uniformesEtat(etat, p, { arbres: Boolean(this.dallesArbres), lumieres: Boolean(this.dallesLumieres) })),
         dalle: (chemin) => this.url(t.lot, `${chemin}.webp`),
         propriete: (chemin) => this.url(t.propriete, `${chemin}.png`),
         masque: (chemin) => this.url(t.masque, `${chemin}.png`),
+        arbres: (chemin) => this.url(t.arbres, `${chemin}.png`),
+        lumieres: (chemin) => this.url(t.lumieres, `${chemin}.png`),
         estListee: this.estListee, masqueListe: this.masqueListe,
-        parametres: parametres.catch(() => null), options: this.optionsCouche
+        arbresListe: (coords) => this.listee(this.dallesArbres, coords),
+        lumieresListe: (coords) => this.listee(this.dallesLumieres, coords),
+        options: this.optionsCouche
       }))
     }
-    return this.couches[nom]
+    return this.couches[cle]
+  }
+
+  // L'étalonnage publié `nom` (JSON), lu une fois ; null s'il est illisible.
+  etalonnage(nom) {
+    this.etalonnages ||= {}
+    this.etalonnages[nom] ||= lireAmbiance(`${this.tuilesValue.base}/${this.tuilesValue.ambiances[nom]}`)
+      .catch((erreur) => { console.error("ambiance :", erreur); return null })
+    return this.etalonnages[nom]
   }
 
   // Maquette blanche et ambiance sont exclusives : la blanche l'emporte tant qu'elle est cochée.
   coucheCourante() {
-    return this.rendu === "blanche" ? this.coucheBlanche() : this.coucheAmbiance(this.ambianceEffective)
+    return this.rendu === "blanche" ? this.coucheBlanche() : this.coucheAmbiance(this.etat)
   }
 
   // On ajoute avant de retirer : l'attribution ne doit pas s'effacer le temps d'une bascule.
@@ -476,42 +521,110 @@ export default class extends Controller {
     this.coucheFond = nouvelle
   }
 
-  // ─── Ambiance et maquette blanche (diorama seulement), gardées sur l'appareil ─────────
-  lireAmbianceMemorisee() {
+  // ─── Ambiance (moment, saison, météo) et maquette blanche, gardées sur l'appareil ─────
+  valide(reglage, valeur) {
+    if (!REGLAGES[reglage].includes(valeur)) return false
+    return !PUBLIEES.includes(valeur) || Boolean(this.tuilesValue.disponibles?.ambiances?.includes(valeur))
+  }
+
+  lireReglages() {
     const d = this.tuilesValue.disponibles || {}
-    const nom = lire(CLE_AMBIANCE)
-    const valide = nom === "origine" || (d.ambiances?.length && (nom === "auto" || d.ambiances.includes(nom)))
     this.rendu = d.blanche && lire(CLE_BLANCHE) === "1" ? "blanche" : "vrai"
-    this.ambianceChoisie = valide ? nom : "origine"
-    this.ambianceEffective = this.resoudre(this.ambianceChoisie)
+    // Reprise de l'ancienne clé (une seule ambiance) tant qu'aucun réglage n'est gardé.
+    const ancienne = lire(CLE_AMBIANCE)
+    const reprise = { "heure-bleue": { moment: "heure-bleue" }, automne: { saison: "automne" }, hiver: { saison: "hiver" } }[ancienne] || {}
+    const auto = lire(CLE_AUTO)
+    this.auto = auto === null ? ancienne === "auto" : auto === "1"
+    this.choisis = Object.fromEntries(Object.keys(REGLAGES).map((r) => {
+      const valeur = lire(CLES_REGLAGES[r]) ?? reprise[r]
+      return [r, this.valide(r, valeur) ? valeur : NEUTRE[r]]
+    }))
+    this.meteoReelle = meteoGardee() || "clair"
+    this.etat = this.etatEffectif()
   }
 
-  // L'ambiance réellement posée : « auto » résolu (diorama/soleil), repli sur l'origine si absente.
-  resoudre(nom) {
-    const effective = nom === "auto" ? resoudreAuto() : nom
-    return effective === "origine" || this.tuilesValue.disponibles?.ambiances?.includes(effective) ? effective : "origine"
+  // Ce qu'« Automatique » retient maintenant (sans filtre de disponibilité).
+  etatAuto() {
+    return { moment: momentAuto(), saison: saisonAuto(), meteo: this.meteoReelle }
   }
 
-  choisirAmbiance(event) {
-    ecrire(CLE_AMBIANCE, event.target.value)
-    if (this.rendu === "blanche") { this.rendu = "vrai"; ecrire(CLE_BLANCHE, "0") } // l'ambiance choisie l'emporte
-    this.appliquerAmbiance(event.target.value, { forcer: true })
+  etatAffiche() {
+    return this.auto ? this.etatAuto() : this.choisis
+  }
+
+  // L'état réellement posé : un étalonnage publié absent revient à l'origine de son réglage.
+  etatEffectif() {
+    const etat = this.etatAffiche()
+    return Object.fromEntries(Object.keys(REGLAGES).map((r) => [r, this.valide(r, etat[r]) ? etat[r] : NEUTRE[r]]))
+  }
+
+  rafraichirAuto() {
+    this.appliquerAmbiance()
+    meteoAuto().then((meteo) => {
+      if (meteo === this.meteoReelle) return
+      this.meteoReelle = meteo
+      if (this.auto) this.appliquerAmbiance()
+    })
+  }
+
+  choisirAuto(event) {
+    this.auto = event.target.checked
+    ecrire(CLE_AUTO, this.auto ? "1" : "0")
+    this.quitterBlanche()
+    if (this.auto) this.rafraichirAuto()
+    else this.appliquerAmbiance()
+  }
+
+  // Un choix à la main quitte le mode automatique, en gardant les deux autres réglages tels qu'affichés.
+  choisirReglage(event) {
+    const { reglage } = event.target.dataset
+    if (this.auto) {
+      this.choisis = this.etatEffectif()
+      this.auto = false
+      ecrire(CLE_AUTO, "0")
+    }
+    this.choisis = { ...this.choisis, [reglage]: event.target.value }
+    Object.entries(this.choisis).forEach(([r, v]) => ecrire(CLES_REGLAGES[r], v))
+    this.quitterBlanche()
+    this.appliquerAmbiance()
+  }
+
+  // L'ambiance choisie l'emporte sur la maquette blanche.
+  quitterBlanche() {
+    if (this.rendu !== "blanche") return
+    this.rendu = "vrai"
+    ecrire(CLE_BLANCHE, "0")
+    if (this.carte && this.fond === "diorama") this.poserCoucheFond(this.coucheCourante())
   }
 
   choisirBlanche(event) {
     this.rendu = event.target.checked ? "blanche" : "vrai"
     ecrire(CLE_BLANCHE, this.rendu === "blanche" ? "1" : "0")
     if (this.carte && this.fond === "diorama") this.poserCoucheFond(this.coucheCourante())
+    this.majMeteo()
     this.majCalques()
   }
 
-  appliquerAmbiance(nom, { forcer = false } = {}) {
-    const effective = this.resoudre(nom)
-    const change = forcer || effective !== this.ambianceEffective
-    this.ambianceChoisie = nom
-    this.ambianceEffective = effective
+  appliquerAmbiance() {
+    const avant = this.etat
+    this.etat = this.etatEffectif()
+    const change = Object.keys(REGLAGES).some((r) => avant?.[r] !== this.etat[r])
     if (change && this.carte && this.fond === "diorama") this.poserCoucheFond(this.coucheCourante())
+    this.majMeteo()
     this.majCalques()
+  }
+
+  // Particules de pluie ou de neige (diorama/precipitations), et halo des pins la nuit (data-moment).
+  majMeteo() {
+    const ambiance = this.carte && this.fond === "diorama" && this.rendu !== "blanche"
+    const type = ambiance && this.etat.meteo !== "clair" ? this.etat.meteo : null
+    if (this.precipitations && (this.precipitations.type !== type || this.precipitations.carte !== this.carte)) {
+      this.precipitations.detruire()
+      this.precipitations = null
+    }
+    if (type && !this.precipitations) this.precipitations = new Precipitations(this.L, this.carte, type)
+    if (ambiance) this.element.dataset.moment = this.etat.moment
+    else delete this.element.dataset.moment
   }
 
   // ─── Les points et leurs marqueurs ───────────────────────────────────────────────────

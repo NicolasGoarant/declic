@@ -1,0 +1,115 @@
+{
+ "format": "nancy-3d/ambiance",
+ "nom": "hiver",
+ "espace": "Lab D65 (OpenCV)",
+ "formule": "lab + force * ((lab - ms) / es * er + mr - lab), première règle dont la classe contient le pixel",
+ "classes_base": {
+  "0": "exclu",
+  "1": "sol",
+  "2": "volume",
+  "3": "feuillage"
+ },
+ "base": "rapports/ambiance-pate-v1/captures-a01/source-niveau-8.png",
+ "reference": "rapports/ambiance-pate-v1/references/ref-15-hiver.jpg",
+ "masque_reference": "rapports/ambiance-pate-v1/masques/masque-15-hiver.png",
+ "exclusion_base": "rapports/ambiance-pate-v1/masques/masque-capture-attribution.png",
+ "classes_base_fichier": "rapports/ambiance-pate-v1/classes/classes-capture-niveau8.png",
+ "classes_reference_fichier": null,
+ "regles": [
+  {
+   "regle": "sol=neige",
+   "classe": "sol",
+   "valeurs_classe": [
+    1
+   ],
+   "selection": "neige",
+   "force": 1.0,
+   "ms": [
+    61.16299819946289,
+    -1.8194999694824219,
+    2.8064000606536865
+   ],
+   "es": [
+    25.26959991455078,
+    3.1821000576019287,
+    4.801499843597412
+   ],
+   "mr": [
+    91.3416976928711,
+    1.4918999671936035,
+    -3.101099967956543
+   ],
+   "er": [
+    4.906700134277344,
+    2.134999990463257,
+    6.542500019073486
+   ],
+   "pixels_base": 273183,
+   "pixels_reference": 571210,
+   "delta_e_avant": [
+    16.03,
+    44.07
+   ],
+   "delta_e_apres": [
+    1.14,
+    2.65
+   ]
+  },
+  {
+   "regle": "hors_sol=tout:0.5",
+   "classe": "hors_sol",
+   "valeurs_classe": [
+    2,
+    3
+   ],
+   "selection": "tout",
+   "force": 0.5,
+   "ms": [
+    52.8401985168457,
+    0.5569999814033508,
+    8.240799903869629
+   ],
+   "es": [
+    13.189599990844727,
+    8.248499870300293,
+    7.742400169372559
+   ],
+   "mr": [
+    70.00550079345703,
+    2.2950000762939453,
+    -5.5960001945495605
+   ],
+   "er": [
+    20.724599838256836,
+    3.9291999340057373,
+    9.895099639892578
+   ],
+   "pixels_base": 1292473,
+   "pixels_reference": 1548668,
+   "delta_e_avant": [
+    11.88,
+    24.88
+   ],
+   "delta_e_apres": [
+    6.27,
+    14.31
+   ]
+  }
+ ],
+ "delta_e_global": {
+  "avant": [
+   10.71,
+   22.59
+  ],
+  "apres": [
+   4.08,
+   9.45
+  ],
+  "plancher_reference": [
+   1.18,
+   2.54
+  ]
+ },
+ "part_base_touchee": 1.0,
+ "duree_s": 28.0
+}
