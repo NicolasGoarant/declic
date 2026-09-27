@@ -1,5 +1,7 @@
 <%# Page Belles Histoires (cible : docs/maquettes/declic-maquette-belles-histoires-v1.png), layout « fiche ».
-    Visuel d'en-tête : même repli que /labo/opportunites (maquette trop petite pour un recadré net).
+    Visuel d'en-tête : photo (jeune femme face à la place Stanislas), zone claire à GAUCHE → texte posé
+    dessus en desktop ; sur mobile, recadrée sur la jeune femme puis texte en dessous. Sources haute
+    définition dans docs/maquettes/entetes-sources/ (hors build, >1 Mo).
     Règle éditoriale (NOTES.md) : une Belle Histoire est un récit — aucun horaire, aucun bouton d'action
     sur les cartes. Filtre par thématique : valeurs réelles de la colonne `thematique` (Story), pas
     celles, fictives, de la maquette. %>
@@ -21,19 +23,23 @@
      data-action="diorama:localise->explorateur#surLocalisation diorama:localisation-echec->explorateur#surEchecLocalisation">
 
   <section class="lb-hero">
+    <picture class="lb-hero-image">
+      <source media="(min-width: 700px)"
+              srcset="<%= image_path('entetes/entete-belles-histoires-v1-1000.webp') %> 1000w, <%= image_path('entetes/entete-belles-histoires-v1-2000.webp') %> 2000w"
+              sizes="100vw">
+      <img src="<%= image_path('entetes/entete-belles-histoires-v1-mobile.webp') %>" alt=""
+           width="750" height="500" fetchpriority="high" decoding="async">
+    </picture>
     <div class="lb-contenu lb-hero-grille">
-      <div>
-        <span class="lb-etiquette">Inspiration</span>
-        <h1>Les <span class="lb-degrade">Belles Histoires</span></h1>
-        <p class="lb-chapo">Des habitants du Grand Nancy racontent le déclic qui a changé leur quotidien :
-          une rencontre, une formation, un engagement.</p>
-        <div class="lb-boutons">
-          <%= link_to new_story_path, class: "lb-bouton" do %>
-            <%= picto(:coeur, taille: 18) %> Raconter mon histoire
-          <% end %>
-        </div>
+      <span class="lb-etiquette">Inspiration</span>
+      <h1>Les <span class="lb-degrade">Belles Histoires</span></h1>
+      <p class="lb-chapo">Des habitants du Grand Nancy racontent le déclic qui a changé leur quotidien :
+        une rencontre, une formation, un engagement.</p>
+      <div class="lb-boutons">
+        <%= link_to new_story_path, class: "lb-bouton" do %>
+          <%= picto(:coeur, taille: 18) %> Raconter mon histoire
+        <% end %>
       </div>
-      <div class="lb-hero-repli" aria-hidden="true"><%= picto(:etoile, taille: 64) %></div>
     </div>
   </section>
 

@@ -1,7 +1,7 @@
 <%# Page Opportunités (cible : docs/maquettes/declic-maquette-opportunites-v1.png), layout « fiche ».
-    Visuel d'en-tête : la maquette (864 px de large en tout) ne laisse aucun recadré assez grand pour
-    ne pas flouter en hero (~560 px) ni en collage (~190 px/case) ; aplat dégradé à la place — voir le
-    rapport pour la liste des visuels à regénérer en haute définition.
+    Visuel d'en-tête : photo (façade + collage), zone claire au CENTRE → texte centré dessus en
+    desktop (.lb-hero-centre) ; sur mobile, recadré sur le collage puis texte en dessous. Sources
+    haute définition dans docs/maquettes/entetes-sources/ (hors build, >1 Mo).
     Règle éditoriale : uniquement des Opportunités ici (pas de Belles Histoires). %>
 <% opportunites = @opportunites.map { |o| opportunite_pour_carte(o) } %>
 <% content_for :title, "Les Opportunités — Déclic" %>
@@ -20,19 +20,23 @@
      data-action="diorama:localise->explorateur#surLocalisation diorama:localisation-echec->explorateur#surEchecLocalisation">
 
   <section class="lb-hero">
-    <div class="lb-contenu lb-hero-grille">
-      <div>
-        <span class="lb-etiquette">Agir maintenant</span>
-        <h1>Les <span class="lb-degrade">Opportunités</span></h1>
-        <p class="lb-chapo">Bénévolat, formation, entrepreneuriat, écologie, rencontres : les initiatives
-          concrètes du Grand Nancy, réunies sur une carte, près de chez vous.</p>
-        <div class="lb-boutons">
-          <%= link_to new_opportunity_path, class: "lb-bouton" do %>
-            <%= picto(:plus, taille: 18) %> Proposer une opportunité
-          <% end %>
-        </div>
+    <picture class="lb-hero-image">
+      <source media="(min-width: 700px)"
+              srcset="<%= image_path('entetes/entete-opportunites-v1-1000.webp') %> 1000w, <%= image_path('entetes/entete-opportunites-v1-2000.webp') %> 2000w"
+              sizes="100vw">
+      <img src="<%= image_path('entetes/entete-opportunites-v1-mobile.webp') %>" alt=""
+           width="750" height="500" fetchpriority="high" decoding="async">
+    </picture>
+    <div class="lb-contenu lb-hero-grille lb-hero-centre">
+      <span class="lb-etiquette">Agir maintenant</span>
+      <h1>Les <span class="lb-degrade">Opportunités</span></h1>
+      <p class="lb-chapo">Bénévolat, formation, entrepreneuriat, écologie, rencontres : les initiatives
+        concrètes du Grand Nancy, réunies sur une carte, près de chez vous.</p>
+      <div class="lb-boutons">
+        <%= link_to new_opportunity_path, class: "lb-bouton" do %>
+          <%= picto(:plus, taille: 18) %> Proposer une opportunité
+        <% end %>
       </div>
-      <div class="lb-hero-repli" aria-hidden="true"><%= picto(:ampoule, taille: 64) %></div>
     </div>
   </section>
 
