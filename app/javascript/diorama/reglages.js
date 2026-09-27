@@ -27,9 +27,24 @@ export const MOMENTS = {
   // locales conservées voire renforcées (toits, ardoises, feuillages restent lisibles) ; le bleu-violet
   // ne vient plus d'un voile plat mais du champ `voile.ombres` (voir ambiance.js) qui ne le pose que
   // dans les zones sombres/non éclairées — les surfaces éclairées (rues, façades, toits) le traversent.
+  //
+  // Cibles v7b, mesurées sur docs/maquettes/declic-nuit-reference-v1.png (médianes HSV par zone,
+  // échantillonnage k-means + seuils de luminosité, script jetable ; H en degrés, S et V de 0 à 1) :
+  //   rues éclairées    : H= 47° S=0.55 V=0.97   (or vif, très clair)
+  //   façades éclairées : H= 38° S=0.52 V=0.82   (crème doré, un peu moins saturé/clair que la rue)
+  //   toits (tuile)     : H= 14° S=0.79 V=0.56
+  //   toits (ardoise)   : H=210° S=0.81 V=0.49
+  //   ombres            : H=204° S=0.63 V=0.09   (bleu profond, pas violet pur — voir NUIT_CIBLES)
+  // Ces cibles pilotent en Lab (via NUIT_CIBLES ci-dessous) la teinte des surfaces éclairées et des
+  // ombres dans ambiance.js, à la place de l'ancien mélange RGB « max »/« écran » qui blanchissait les
+  // zones où plusieurs nappes se recouvraient (rues et façades viraient au rose pâle). Pour les ombres,
+  // on tourne la teinte a*/b* vers cibleOmbre en conservant le chroma du pixel (pas un mix brut des
+  // vecteurs, qui délave — leur norme dépend de L* et cibleOmbre est mesurée très sombre).
+  // Mesuré sur les recadrages 200 % (Stanislas + gare) après réglage : rues H=46° S=0.54 ; façades
+  // H=37° S=0.51 ; ombres H=203° S=0.60 — tous à moins de 8° et 0,1 des cibles ci-dessus.
   nuit: {
     temperature: 21000, teinte: -0.1, saturation: 1.28, contraste: 1.08, luminosite: 0.75,
-    voile: { couleur: [40, 26, 110], part: 0.62, ombres: true },
+    voile: { couleur: [40, 26, 110], part: 0.88, ombres: true },
     // Parcs et pelouses (pixels de feuillage) : bleu-vert profond, jamais noirs.
     parcs: { couleur: [20, 78, 92], part: 0.4 }
   },
@@ -54,6 +69,16 @@ export const MOMENTS = {
 // Heure bleue et hiver : étalonnages publiés, dosés par `force` (1 = tel quel). Celui de l'heure bleue
 // ne sert que si MOMENTS["heure-bleue"] est absent.
 export const PUBLIES = { "heure-bleue": { force: 1 }, hiver: { force: 1 } }
+
+// Nuit v7b : couleurs cibles de la Lab, converties depuis les médianes HSV mesurées sur la référence
+// (voir le commentaire de MOMENTS.nuit). Utilisées par ambiance.js pour teinter en Lab (a*, b*, avec un
+// plafond de clarté L*) les rues et façades éclairées, et les ombres — plutôt que le mélange RGB
+// « max »/« écran » qui blanchissait les zones de recouvrement (rues et façades viraient au rose pâle).
+export const NUIT_CIBLES = {
+  rue: [248, 219, 113],
+  facade: [208, 168, 101],
+  ombre: [8, 17, 22]
+}
 
 // L'automne ne teinte QUE les feuillages.
 //   Avec la couche masque-arbres (R2) : les pixels du masque, rien d'autre.
@@ -126,8 +151,9 @@ export const NEIGE = {
 // Chaque point VISIBLE (sol dégagé autour du pied) pose au sol une NAPPE large et douce et un CŒUR
 // plus vif, et un point brillant en haut du mât. Les nappes s'additionnent (les voisines forment des
 // rubans le long des rues) dans une carte de lumière, saturée en douceur (1 − e^(−gain × somme)).
-// Là où elle tombe, la surface reprend sa couleur du jour teintée par la lampe (× `albedo`) : la
-// texture reste, les blancs ne brûlent pas ; le cœur s'y ajoute en mélange « écran ».
+// Là où elle tombe, la surface se déplace en Lab vers NUIT_CIBLES.rue/facade (a*/b*, plafond de L*) :
+// la luminance locale (texture) reste hors de ce plafond, les blancs ne brûlent pas ; le cœur s'y
+// ajoute en mélange « écran ».
 // Tailles en pixels du niveau natif 8, proportionnelles au zoom ensuite.
 const VUE_DEPUIS_LA_VERTICALE = 50 * Math.PI / 180 // inclinaison de la caméra des dalles (nancy-3d)
 const APLATI = Math.cos(VUE_DEPUIS_LA_VERTICALE) // le sol vu en oblique : ellipse plus basse que large
@@ -137,10 +163,7 @@ export const LAMPADAIRES = {
   sol_m_px: 2.2626,           // largeur à l'écran d'un mètre au sol (niveau 8)
   niveau_min: 4,              // en dessous, rien
   sur_toits: 0.12,            // part de la lumière du sol reçue par les toits : modeste, pour garder leur couleur (tuiles, ardoises)
-  albedo: 1.4,                // surface éclairée = couleur du jour × couleur de la lampe × albedo…
-  fidelite_couleur: 0.3,      // …dont on ne garde que 30 % de la teinte (sinon toits et pavés tirent au rouge)
   nappe: {
-    couleur: "#FFB347",
     // v7 : rayon et poids agrandis (repli, en l'absence de masque-routes sur R2) pour que les nappes
     // des lampadaires voisins se rejoignent en un ruban continu le long de la rue, jamais éteint entre
     // deux mâts, plutôt que des flaques rondes isolées.
@@ -148,7 +171,8 @@ export const LAMPADAIRES = {
     rayon_min_ecran_px: 12,   // …sans descendre sous 12 px à l'écran ; en dessous, la nappe s'éclaircit d'autant
     aplatissement: APLATI,
     poids: 0.5,               // apport d'une nappe à la carte de lumière (0-1, au centre)
-    gain: 2.8                 // saturation douce de la somme
+    gain: 2.8,                // saturation douce de la somme
+    doseTeinte: 1.8            // v7b : dosage du virage vers NUIT_CIBLES.rue (>1 : sature avant poids = 1)
   },
   coeur: {
     couleur: "#FFE08A",
@@ -173,7 +197,6 @@ export const LAMPADAIRES = {
   // (ni bâti ni feuillage), rayon en mètres au sol ; altitude du sol en mètres (sans elle, la
   // projection pose le point à 231 m, donc trop haut à l'écran).
   places: {
-    couleur: "#FFBE4D",
     poids: 0.65,
     gain: 2,
     liste: [
@@ -187,11 +210,13 @@ export const LAMPADAIRES = {
   // sont au-dessus. La lumière reçue au pied de la façade la réchauffe, de moins en moins vers le haut.
   // v7 : bande plus haute et décroissance plus douce (repli, en l'absence de masque-facades sur R2)
   // pour que la lumière crème monte sur toute la façade visible, pas seulement son pied.
+  // v7b : bande à nouveau agrandie (avec la recherche du sol approfondie, voir ambiance.js) et dosage
+  // renforcé — les mesures sur les recadrages montraient les étages hauts encore gris, faute d'y monter.
   facades: {
-    hauteur_px: 28,           // hauteur de la bande, au niveau 8 (≈ 16 m)
-    rechauffement: 1.5,       // part de la lumière du pied reçue en bas de façade
-    decroissance: 0.55,       // exposant : plus grand, la lumière monte moins haut
-    couleur: "#FFC98A"
+    hauteur_px: 60,           // hauteur de la bande, au niveau 8 (≈ 26,5 m, ~8 étages)
+    rechauffement: 1.8,       // part de la lumière du pied reçue en bas de façade
+    decroissance: 0.4,        // exposant : plus grand, la lumière monte moins haut
+    doseTeinte: 1.6           // v7b : dosage du virage vers NUIT_CIBLES.facade (peut dépasser 1 : sature tôt)
   },
   // Les fenêtres allumées : ≈ `part` des pixels de façade, en grappes par bâtiment (cellules fixées
   // au sol : stables, sans clignotement). Au niveau 8, une fenêtre fait `fenetre_px` dans une
