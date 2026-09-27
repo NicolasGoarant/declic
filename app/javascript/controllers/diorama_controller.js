@@ -16,13 +16,13 @@ import { momentAuto, saisonAuto, libelleAuto } from "diorama/soleil"
 import { meteoAuto, meteoGardee } from "diorama/meteo"
 import { Precipitations } from "diorama/precipitations"
 import { chargerLampadaires, compterLampadaires } from "diorama/lampadaires"
-import { LAMPADAIRES } from "diorama/reglages"
-import { regrouper, eventail, FLEURS_MAX } from "diorama/bouquets"
+import { LAMPADAIRES, PINS } from "diorama/reglages"
+import { regrouper, eventail, FLEURS_MAX, respiration, echelleIcone, dispositionPin } from "diorama/bouquets"
 import { chargerContour, creerDecoupe, poserSocle } from "diorama/contour"
 import {
   CLE_FOND, CLE_AMBIANCE, CLE_AUTO, CLES_REGLAGES, CLE_BLANCHE, CLE_STYLE, lire, ecrire, fondDeDepart, styleDeDepart
 } from "diorama/preferences"
-import { lireDate, aujourdhui, estPasse, estAVenir, etiquette, periode, jourCourt } from "diorama/dates"
+import { lireDate, aujourdhui, estPasse, estAVenir, dansLaFenetre, etiquette, periode, jourCourt } from "diorama/dates"
 
 const NIVEAU_MAX = 8
 // Vue initiale, à retoucher ici : place Stanislas (WGS84) et niveau de zoom Leaflet du diorama (0-8,
@@ -72,6 +72,7 @@ export default class extends Controller {
 
   connect() {
     this.categoriesParCle = Object.fromEntries(this.categoriesValue.map((c) => [c.cle, c]))
+    this.appliquerReglagesPins()
     if (this.miniValue) { this.demarrerMini(); return }
     this.filtre = { categories: new Set(), favoris: false }
     this.favoris = this.lireFavoris()
@@ -91,9 +92,32 @@ export default class extends Controller {
     this.precipitations?.detruire()
     this.observateur?.disconnect()
     window.removeEventListener("orientationchange", this.surOrientation)
+    this.ecranEtroit?.removeEventListener("change", this.surEcranEtroit)
     this.carte?.remove()
     this.carte = null
   }
+
+  // ─── Pins et bouquets : tailles et temps (diorama/reglages.js#PINS), une seule fois ─────
+  // Écrits en variables CSS pour que reglages.js reste l'unique source (accueil.css ne fait que
+  // les consommer). --icone-echelle (par catégorie) et les temps de respiration (par pin) restent
+  // posés au cas par cas, sur chaque marqueur (iconePin, bouquet).
+  appliquerReglagesPins() {
+    const s = this.element.style
+    s.setProperty("--taille-icone-bureau", `${PINS.hauteur_px.large}px`)
+    s.setProperty("--taille-icone-mobile", `${PINS.hauteur_px.etroit}px`)
+    s.setProperty("--tige-longueur", `${PINS.tige_longueur_px}px`)
+    s.setProperty("--pin-recouvrement", `${PINS.recouvrement_px}px`)
+    s.setProperty("--pin-respire-amplitude", `${PINS.respiration.amplitude_px}px`)
+    s.setProperty("--pin-survol-echelle", PINS.survol.echelle)
+    s.setProperty("--pin-survol-elevation", `${PINS.survol.elevation_px}px`)
+    s.setProperty("--pin-selection-echelle", PINS.selection.echelle)
+    s.setProperty("--pin-selection-duree", `${PINS.selection.duree_ms}ms`)
+    s.setProperty("--pin-onde-duree", `${PINS.selection.onde_duree_ms}ms`)
+    s.setProperty("--pin-apparition-duree", `${PINS.apparition.duree_ms}ms`)
+    s.setProperty("--pin-rdv-periode", `${PINS.rendezVousJour.periode_s}s`)
+  }
+
+  etroitEcran() { return window.matchMedia(ETROIT).matches }
 
   // ─── Petite carte d'une fiche ────────────────────────────────────────────────────────
   // Elle suit le fond choisi sur la carte. Diorama, et point dans son emprise (sur une dalle
@@ -192,11 +216,12 @@ export default class extends Controller {
     this.poserPinMini(p, L.latLng(p.latitude, p.longitude), 15)
   }
 
-  // Le pin (40 × 88, ancré au pied) : on descend la vue pour que le pictogramme soit au centre.
+  // Le pin, ancré au pied : on descend la vue pour que le pictogramme soit au centre.
   poserPinMini(p, latlng, zoom) {
     this.L.marker(latlng, { icon: this.iconePin(p), title: p.titre, interactive: false, keyboard: false }).addTo(this.carte)
     this.carte.setView(latlng, zoom, { animate: false })
-    this.carte.panBy([0, -40], { animate: false })
+    const { icone } = dispositionPin(this.etroitEcran())
+    this.carte.panBy([0, -icone], { animate: false })
   }
 
   // ─── Démarrage : bibliothèques, manifeste, projection, carte ─────────────────────────
@@ -261,11 +286,28 @@ export default class extends Controller {
       this.selectionner(null)
       this.dispatch("carte-cliquee") // la bottom sheet se replie
     })
+    // Respiration et lueurs suspendues pendant le déplacement/zoom (data-mouvement, accueil.css).
+    this.carte.on("movestart zoomstart", () => { this.element.dataset.mouvement = "1" })
+    this.carte.on("moveend zoomend", () => { delete this.element.dataset.mouvement })
     this.brancherDebugVue()
+    this.brancherEcranEtroit()
     this.poserPoints()
     this.appliquerFiltres()
     this.suivreTaille()
     this.majMeteo()
+  }
+
+  // La taille visible d'un pin dépend du seuil ETROIT (largeur d'écran), pas du zoom : si on le
+  // franchit en direct (rotation, redimensionnement), les marqueurs déjà posés sont refaits pour
+  // que la géométrie Leaflet (iconSize, iconAnchor) suive la nouvelle taille CSS.
+  brancherEcranEtroit() {
+    if (this.ecranEtroit) return
+    this.ecranEtroit = window.matchMedia(ETROIT)
+    this.surEcranEtroit = () => {
+      this.points.forEach((p) => { p.marqueur = null })
+      this.dessinerPins()
+    }
+    this.ecranEtroit.addEventListener("change", this.surEcranEtroit)
   }
 
   creerDiorama() {
@@ -701,12 +743,28 @@ export default class extends Controller {
     const cat = this.categorie(p.categorie)
     const pin = this.modelePinTarget.content.firstElementChild.cloneNode(true)
     pin.style.setProperty("--c", cat.couleur)
+    pin.dataset.id = p.id
+    pin.classList.toggle("acc-aujourdhui", dansLaFenetre(p, "aujourdhui"))
     const picto = pin.querySelector(".pin-picto")
     picto.src = cat.icone
     picto.srcset = `${cat.icone2x} 2x`
-    pin.dataset.id = p.id
-    // Boîte : pictogramme 40, tige 40, socle aplati (cos 50°) ; l'ancre est le centre du socle.
-    return this.L.divIcon({ html: pin, className: "acc-pin", iconSize: [40, 88], iconAnchor: [20, 80] })
+    // Compense la boîte utile du PNG (PINS.fraction_utile) : même hauteur visible pour toutes les
+    // catégories, quelle que soit leur marge transparente d'origine.
+    picto.style.setProperty("--icone-echelle", echelleIcone(cat.cle))
+    // Respiration : phase propre à ce pin (son identifiant), pour ne pas toutes pulser ensemble.
+    const { periode, retard } = respiration(p.id)
+    const vol = pin.querySelector(".pin-vol")
+    vol.style.animationDuration = `${periode.toFixed(2)}s`
+    vol.style.animationDelay = `${retard.toFixed(2)}s`
+    // Apparition décalée pin par pin, plafonnée : seulement au premier dessin de CE marqueur (mis en
+    // cache par p.marqueur ||= dans dessinerPins), jamais rejouée aux zooms/filtres suivants.
+    this.indexApparition = (this.indexApparition ?? -1) + 1
+    const retardApparition = Math.min(this.indexApparition * PINS.apparition.decalage_ms, PINS.apparition.decalage_max_ms)
+    picto.style.setProperty("--pin-retard-apparition", `${retardApparition}ms`)
+    // Boîte : icône (52 bureau / 44 mobile) + tige (44) − recouvrement (4) jusqu'au pied, ancre au
+    // centre du socle (dispositionPin, diorama/bouquets.js).
+    const { icone, pied, hauteur } = dispositionPin(this.etroitEcran())
+    return this.L.divIcon({ html: pin, className: "acc-pin", iconSize: [icone, hauteur], iconAnchor: [icone / 2, pied] })
   }
 
   // ─── Pins isolés et bouquets ─────────────────────────────────────────────────────────
@@ -725,19 +783,33 @@ export default class extends Controller {
     if (!this.calquePins) return
     this.calquePins.clearLayers()
     this.ancres = new Map()
+    const { icone } = dispositionPin(this.etroitEcran())
     for (const groupe of this.groupes(this.carte.getZoom())) {
       if (groupe.length === 1) {
         const p = groupe[0]
         p.marqueur ||= this.L.marker(p.latlng, { icon: this.iconePin(p), title: p.titre, riseOnHover: true })
           .on("click", () => this.ouvrirPopup(p.id))
         this.calquePins.addLayer(p.marqueur)
-        this.ancres.set(p.id, { latlng: p.latlng, decalage: [0, -84] })
+        this.ancres.set(p.id, { latlng: p.latlng, decalage: [0, -(icone + PINS.tige_longueur_px)] })
       } else {
         this.calquePins.addLayer(this.bouquet(groupe))
       }
     }
     this.marquerSurvol()
     this.suivrePopup()
+  }
+
+  // Écarte les plus grandes catégories (échelle de compensation la plus forte, ex. « formation ») les
+  // unes des autres dans l'éventail : la plus grande à une extrémité, la 2e à l'autre, la 3e au
+  // centre, etc. Une tige commune (PINS.tige_longueur_px) ne peut pas garantir un éventail sans le
+  // moindre recouvrement pour de très grandes icônes voisines ; les séparer autant que possible
+  // limite ce risque au cas où deux catégories parmi les plus grandes se retrouveraient côte à côte.
+  ecarterGrandes(fleurs) {
+    const tri = [...fleurs].sort((a, b) => echelleIcone(b.categorie) - echelleIcone(a.categorie))
+    const place = new Array(fleurs.length)
+    let lo = 0, hi = fleurs.length - 1
+    tri.forEach((p, i) => { if (i % 2 === 0) place[lo++] = p; else place[hi--] = p })
+    return place
   }
 
   // Un pied commun (pastille blanche cerclée de violet) au barycentre du groupe, une tige par fleur
@@ -749,7 +821,8 @@ export default class extends Controller {
     const centre = this.carte.unproject(L.point(
       pixels.reduce((s, q) => s + q.x, 0) / pixels.length, pixels.reduce((s, q) => s + q.y, 0) / pixels.length
     ), zMax)
-    const fleurs = groupe.slice(0, FLEURS_MAX).sort((a, b) => a.latlng.lng - b.latlng.lng) // d'ouest en est
+    const fleurs = this.ecarterGrandes(groupe.slice(0, FLEURS_MAX).sort((a, b) => a.latlng.lng - b.latlng.lng))
+    const { icone: tailleIcone } = dispositionPin(this.etroitEcran())
     const el = document.createElement("div")
     el.className = "bouquet"
     eventail(fleurs.length).forEach((t, i) => {
@@ -759,6 +832,18 @@ export default class extends Controller {
       tige.dataset.id = p.id
       tige.style.cssText = `height:${t.longueur}px;transform:rotate(${t.angle}deg)`
       tige.style.setProperty("--c", cat.couleur)
+      // L'enveloppe porte la respiration et la lueur du jour (transform/opacity indépendants de
+      // l'échelle et du rebond de la fleur, posés plus bas sur l'<img> elle-même) : voir accueil.css.
+      const enveloppe = document.createElement("span")
+      enveloppe.className = "bouquet-fleur-vol"
+      enveloppe.dataset.id = p.id
+      enveloppe.style.setProperty("--c", cat.couleur)
+      enveloppe.style.left = `${t.x - tailleIcone / 2}px`
+      enveloppe.style.top = `${t.y - tailleIcone + PINS.recouvrement_px}px`
+      enveloppe.classList.toggle("acc-aujourdhui", dansLaFenetre(p, "aujourdhui"))
+      const { periode, retard } = respiration(p.id)
+      enveloppe.style.animationDuration = `${periode.toFixed(2)}s`
+      enveloppe.style.animationDelay = `${retard.toFixed(2)}s`
       const fleur = document.createElement("img")
       fleur.className = "bouquet-fleur"
       fleur.dataset.id = p.id
@@ -766,9 +851,10 @@ export default class extends Controller {
       fleur.srcset = `${cat.icone2x} 2x`
       fleur.alt = p.titre
       fleur.title = p.titre
-      fleur.style.cssText = `left:${t.x - 20}px;top:${t.y - 36}px`
-      el.append(tige, fleur)
-      this.ancres.set(p.id, { latlng: centre, decalage: [t.x, t.y - 40] })
+      fleur.style.setProperty("--icone-echelle", echelleIcone(cat.cle))
+      enveloppe.append(fleur)
+      el.append(tige, enveloppe)
+      this.ancres.set(p.id, { latlng: centre, decalage: [t.x, t.y - tailleIcone] })
     })
     const pied = document.createElement("span")
     pied.className = "bouquet-pied"
@@ -832,6 +918,20 @@ export default class extends Controller {
     this.selectionner(id, { depuisCarte: true })
     this.popup.setLatLng(ancre.latlng).setContent(this.contenuPopup(p)).openOn(this.carte)
     this.popupId = id
+    this.animerSelection(id)
+  }
+
+  // Rebond + onde au pied (accueil.css), à l'ouverture d'une popup. Relance l'animation même si le
+  // même pin est recliqué pendant qu'elle joue encore (retrait puis pose de la classe, à la frame
+  // suivante : offsetWidth force le navigateur à « oublier » l'animation en cours).
+  animerSelection(id) {
+    const cible = this.carteTarget.querySelector(`.pin[data-id="${id}"], .bouquet-fleur[data-id="${id}"]`)
+    if (!cible) return
+    cible.classList.remove("acc-rebond")
+    void cible.offsetWidth
+    cible.classList.add("acc-rebond")
+    clearTimeout(cible._finRebond)
+    cible._finRebond = setTimeout(() => cible.classList.remove("acc-rebond"), PINS.selection.onde_duree_ms + 50)
   }
 
   // Après un nouveau regroupement, la popup suit sa fleur ; elle se ferme si le point est filtré.
