@@ -73,7 +73,7 @@ export default class extends Controller {
   static values = { points: Array, categories: Array, tuiles: Object, developpement: Boolean, mini: Boolean }
   static targets = [
     "carte", "alerte", "voletTitre", "poigneeTitre", "compteur", "fiches", "vide", "stats",
-    "modeleFiche", "modelePin", "modelePopup", "categorie", "ongletFavoris", "ongletCarte",
+    "modeleFiche", "modelePin", "modelePopup", "categorie", "toutes", "ongletFavoris", "ongletCarte",
     "boutonCalques", "panneauCalques", "voileCalques", "choixFond", "rubriqueAmbiance", "choixAuto",
     "choixReglage", "choixBlanche", "ambianceAuto", "rubriqueStyle", "choixStyle"
   ]
@@ -87,6 +87,7 @@ export default class extends Controller {
     this.selection = null
     this.points = this.pointsValue.map((p) => ({ ...p, debut: lireDate(p.debut), fin: lireDate(p.fin) }))
     this.categorieTargets.forEach((b) => b.style.setProperty("--c", this.categoriesParCle[b.dataset.cle]?.couleur))
+    if (this.hasToutesTarget) this.toutesTarget.setAttribute("aria-pressed", "true")
     this.majCompteurs()
     this.majVolet()
     this.demarrer()
@@ -814,8 +815,18 @@ export default class extends Controller {
     this.majCompteurs()
   }
 
+  // WGS84 (ex. position du visiteur) → latlng Leaflet du fond courant. Même calcul que poserPoints.
+  versLatLng(lat, lon) {
+    if (this.fond === "plan") return this.L.latLng(lat, lon)
+    const px = this.projection.pixel(lat, lon)
+    if (!this.projection.dansLaMosaique(px)) return null
+    return this.carte.unproject(this.L.point(px[0], px[1]), NIVEAU_MAX)
+  }
+
   iconePin(p) {
-    const cat = this.categorie(p.categorie)
+    // p.icone_categorie : dessine l'icône d'une autre catégorie que celle qui filtre (ex. Belles
+    // Histoires filtrées par thématique mais toujours affichées avec l'étincelle « histoires »).
+    const cat = this.categorie(p.icone_categorie || p.categorie)
     const pin = this.modelePinTarget.content.firstElementChild.cloneNode(true)
     pin.style.setProperty("--c", cat.couleur)
     pin.dataset.id = p.id
@@ -1074,7 +1085,39 @@ export default class extends Controller {
     const c = this.filtre.categories
     c.has(cle) ? c.delete(cle) : c.add(cle)
     this.categorieTargets.forEach((b) => b.setAttribute("aria-pressed", String(c.has(b.dataset.cle))))
+    if (this.hasToutesTarget) this.toutesTarget.setAttribute("aria-pressed", String(c.size === 0))
     this.appliquerFiltres()
+  }
+
+  // Pastille « Toutes » (pages Opportunités / Belles Histoires) : efface la sélection.
+  toutesCategories() {
+    this.filtre.categories.clear()
+    this.categorieTargets.forEach((b) => b.setAttribute("aria-pressed", "false"))
+    if (this.hasToutesTarget) this.toutesTarget.setAttribute("aria-pressed", "true")
+    this.appliquerFiltres()
+  }
+
+  // ─── Me localiser (pages Opportunités / Belles Histoires) ───────────────────────────────
+  // Bouton optionnel : n'existe que sur les pages qui le posent. Pose un marqueur « vous êtes ici »
+  // et prévient (événement CustomEvent) qui veut filtrer par distance, ex. explorateur_controller.
+  localiser() {
+    if (!navigator.geolocation) { this.dispatch("localisation-echec"); return }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords
+        const latlng = this.versLatLng(latitude, longitude)
+        this.marqueurMoi?.remove()
+        if (latlng) {
+          this.marqueurMoi = this.L.circleMarker(latlng, {
+            radius: 8, weight: 3, color: "#ffffff", fillColor: "#6a3df5", fillOpacity: 1, className: "diorama-moi"
+          }).addTo(this.carte)
+          this.carte.setView(latlng, this.carte.getZoom())
+        }
+        this.dispatch("localise", { detail: { lat: latitude, lon: longitude } })
+      },
+      () => this.dispatch("localisation-echec"),
+      { enableHighAccuracy: false, timeout: 8000 }
+    )
   }
 
   majCompteurs() {

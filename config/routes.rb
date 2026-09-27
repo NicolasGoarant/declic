@@ -37,6 +37,10 @@ Rails.application.routes.draw do
   get "labo/diorama", to: "labo#diorama", as: :labo_diorama
   # Future page d'accueil sur le diorama (non liée depuis la navigation)
   get "labo/accueil", to: "labo#accueil", as: :labo_accueil
+  # Refonte des pages Opportunités et Belles Histoires (navbar du labo) : remplacent, sur les pages
+  # du labo, les liens vers /opportunities et /stories. Ceux-ci restent en service côté public.
+  get "labo/opportunites", to: "labo#opportunites", as: :labo_opportunites
+  get "labo/belles-histoires", to: "labo#belles_histoires", as: :labo_belles_histoires
   # --- API PUBLIQUE ---
 
   namespace :api do

@@ -21,4 +21,19 @@ class LaboController < ApplicationController
     @tuiles = DioramaTuiles.new
     render layout: "accueil"
   end
+
+  # Page Opportunités (maquette declic-maquette-opportunites-v1) : uniquement des opportunités,
+  # jamais de Belles Histoires (règle éditoriale, voir NOTES.md).
+  def opportunites
+    @opportunites = Opportunity.active.with_coords.with_attached_image.order(created_at: :desc)
+    @tuiles = DioramaTuiles.new
+    render layout: "fiche"
+  end
+
+  # Page Belles Histoires (maquette declic-maquette-belles-histoires-v1).
+  def belles_histoires
+    @histoires = Story.active.with_attached_image.order(happened_on: :desc, created_at: :desc)
+    @tuiles = DioramaTuiles.new
+    render layout: "fiche"
+  end
 end
