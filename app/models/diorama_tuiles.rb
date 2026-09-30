@@ -19,8 +19,8 @@ class DioramaTuiles
   # Styles du « Vrai Nancy » : même grille, mêmes niveaux (0 à 8), même format ({z}/{x}/{y}.webp) ;
   # seul le grade des dalles change. Par défaut : Jeu vidéo. Un style dont le manifeste manque sur
   # R2 est retiré de la liste (masqué côté panneau Calques).
-  STYLES = { "jeu-video-v1" => "Jeu vidéo", "toits-v1" => "Réaliste" }.freeze
-  STYLE_DEFAUT = "jeu-video-v1".freeze
+  STYLES = { "jeu-video-v2" => "Jeu vidéo", "toits-v1" => "Réaliste" }.freeze
+  STYLE_DEFAUT = "jeu-video-v2".freeze
   MASQUE = "masque-bati".freeze             # {z}/{x}/{y}.png, niveaux 6 à 8, centre-ville
   PROPRIETE = "propriete-toits-v1".freeze   # 8/{x}/{y}.png (pas de dossier dalles/)
   AMBIANCES_DOSSIER = "ambiances".freeze    # {nom}-actuelle.json (format nancy-3d/ambiance)

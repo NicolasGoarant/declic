@@ -704,8 +704,11 @@ export default class extends Controller {
     // Reprise de l'ancienne clé (une seule ambiance) tant qu'aucun réglage n'est gardé.
     const ancienne = lire(CLE_AMBIANCE)
     const reprise = { "heure-bleue": { moment: "heure-bleue" }, automne: { saison: "automne" }, hiver: { saison: "hiver" } }[ancienne] || {}
+    // Automatique par défaut : sans choix gardé sur l'appareil, l'ambiance suit le soleil, la date et
+    // la météo réelle. Un réglage déjà choisi à la main (avant ce défaut, la clé pouvait manquer) prime.
     const auto = lire(CLE_AUTO)
-    this.auto = auto === null ? ancienne === "auto" : auto === "1"
+    const dejaRegle = (ancienne && ancienne !== "auto") || Object.values(CLES_REGLAGES).some((cle) => lire(cle) !== null)
+    this.auto = auto === null ? !dejaRegle : auto === "1"
     this.choisis = Object.fromEntries(Object.keys(REGLAGES).map((r) => {
       const valeur = lire(CLES_REGLAGES[r]) ?? reprise[r]
       return [r, this.valide(r, valeur) ? valeur : NEUTRE[r]]

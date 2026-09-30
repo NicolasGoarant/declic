@@ -83,6 +83,7 @@ class AmbiancesTest < ApplicationSystemTestCase
   test "la maquette blanche coupe les particules, un réglage d'ambiance la quitte" do
     sur_la_carte do
       ouvrir_calques
+      choisir "Printemps-été", "saison" # l'automatique de départ dépend de la date du jour
       choisir "Pluie", "meteo"
       assert_operator particules, :>, 0
       find("label.acc-calques-interrupteur", text: "Maquette blanche").click
@@ -97,11 +98,11 @@ class AmbiancesTest < ApplicationSystemTestCase
   test "Automatique : météo réelle d'Open-Meteo, dite en clair, et gardée 30 minutes" do
     open_meteo(63) # pluie modérée
     sur_la_carte do
-      ouvrir_calques
-      find("label.acc-calques-auto").click
+      ouvrir_calques # automatique par défaut : rien à cocher, rien de gardé sur l'appareil
+      assert find("input[data-diorama-target=choixAuto]", visible: :all).checked?
       assert_selector "[data-diorama-target=ambianceAuto]", text: /: .+ d(e |')\S+, pluie\z/
       assert_equal "pluie", etat["meteo"]
-      assert_equal "1", evaluate_script("localStorage.getItem('declic:ambiance-auto')")
+      assert_nil evaluate_script("localStorage.getItem('declic:ambiance-auto')")
 
       visit labo_accueil_path
 
@@ -115,7 +116,6 @@ class AmbiancesTest < ApplicationSystemTestCase
     open_meteo # panne réseau
     sur_la_carte do
       ouvrir_calques
-      find("label.acc-calques-auto").click
       assert_selector "[data-diorama-target=ambianceAuto]", text: /, ciel clair\z/
       assert_equal "clair", etat["meteo"]
       assert_equal 1, evaluate_script("window.appelsOpenMeteo")
@@ -124,6 +124,7 @@ class AmbiancesTest < ApplicationSystemTestCase
       choisir "Neige", "meteo" # un choix à la main quitte l'automatique
       refute find("input[data-diorama-target=choixAuto]", visible: :all).checked?
       assert_equal "neige", etat["meteo"]
+      assert_equal "0", evaluate_script("localStorage.getItem('declic:ambiance-auto')")
     end
   end
 

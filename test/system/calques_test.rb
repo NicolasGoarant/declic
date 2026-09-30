@@ -111,8 +111,8 @@ class CalquesTest < ApplicationSystemTestCase
 
   test "le style du diorama (Jeu vidéo par défaut) se garde et ne recharge pas la carte" do
     sur_la_carte do
-      assert_equal "jeu-video-v1", evaluate_script("#{CONTROLEUR}.style")
-      assert_selector ".leaflet-tile-pane img[src*='/jeu-video-v1/']", visible: :all
+      assert_equal "jeu-video-v2", evaluate_script("#{CONTROLEUR}.style")
+      assert_selector ".leaflet-tile-pane img[src*='/jeu-video-v2/']", visible: :all
       lat, lon, = vue
 
       find(".acc-rond-calques").click
