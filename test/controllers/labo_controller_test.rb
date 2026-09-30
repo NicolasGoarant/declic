@@ -17,7 +17,7 @@ class LaboControllerTest < ActionDispatch::IntegrationTest
     assert_select ".acc-rond-calques[aria-controls=acc-calques]"
     assert_select "#acc-calques[hidden] [data-rubrique]", 3
     assert_select "input[name=calques-style]" do |choix|
-      assert_equal %w[jeu-video-v1 toits-v1], choix.map { |c| c["value"] }
+      assert_equal %w[jeu-video-v2 toits-v1], choix.map { |c| c["value"] }
     end
     assert_select "input[name=calques-fond]", 2
     assert_select "input[data-diorama-target=choixAuto][role=switch]"

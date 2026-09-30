@@ -12,11 +12,11 @@ class DioramaTuilesTest < ActiveSupport::TestCase
                  tuiles([ "toits-v1/manifeste.json" ]).disponibles)
   end
 
-  test "les deux styles publiés sont listés, jeu-video-v1 en tête" do
-    t = tuiles(%w[toits-v1/manifeste.json jeu-video-v1/manifeste.json])
-    assert_equal %w[jeu-video-v1 toits-v1], t.disponibles[:styles]
-    assert_equal %w[jeu-video-v1 toits-v1], t.pour_js[:styles]
-    assert_equal "jeu-video-v1", t.pour_js[:style_defaut]
+  test "les deux styles publiés sont listés, jeu-video-v2 en tête" do
+    t = tuiles(%w[toits-v1/manifeste.json jeu-video-v2/manifeste.json])
+    assert_equal %w[jeu-video-v2 toits-v1], t.disponibles[:styles]
+    assert_equal %w[jeu-video-v2 toits-v1], t.pour_js[:styles]
+    assert_equal "jeu-video-v2", t.pour_js[:style_defaut]
   end
 
   test "la maquette blanche exige le lot et le masque" do
