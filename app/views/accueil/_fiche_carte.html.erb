@@ -1,0 +1,22 @@
+<%# Carte photo des blocs de l'accueil (opportunité vedette, petites Belles Histoires) : photo et
+    étiquette, titre, lieu (et date), accroche, bouton rond. Toute la carte est le lien.
+    Locaux : lien, photo, etiquette ({ libelle:, style: } ou classe), titre, commune, date, extrait, classe. %>
+<%= link_to lien, class: [ "opp-carte", local_assigns[:classe] ] do %>
+  <span class="opp-photo">
+    <%= image_tag photo, alt: "", loading: "lazy", decoding: "async" %>
+    <span class="opp-etiquette <%= etiquette[:classe] %>" <%= %(style="#{etiquette[:style]}").html_safe if etiquette[:style] %>><%= etiquette[:libelle] %></span>
+  </span>
+  <span class="opp-corps">
+    <span class="opp-titre"><%= titre %></span>
+    <% if local_assigns[:commune] || local_assigns[:date] %>
+      <span class="opp-meta">
+        <% if local_assigns[:commune] %><span><%= picto(:lieu, taille: 15) %><%= commune %></span><% end %>
+        <% if local_assigns[:date] %><span><%= picto(:calendrier, taille: 15) %><%= date %></span><% end %>
+      </span>
+    <% end %>
+    <span class="opp-pied">
+      <span class="opp-extrait"><%= extrait %></span>
+      <span class="bloc-rond bloc-rond--petit" aria-hidden="true"><%= picto(:fleche, taille: 16) %></span>
+    </span>
+  </span>
+<% end %>

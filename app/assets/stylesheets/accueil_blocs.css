@@ -1,0 +1,355 @@
+/* Blocs sous la carte de la page d'accueil : Témoignages (centré), Opportunités (agenda), Belles
+   Histoires (bento), L'impact local (bande de chiffres), Dans les médias (onglets de logos).
+   Même méthode qu'accueil.css (dont viennent les variables) : feuille autonome, mobile d'abord,
+   puis ≥ 640, ≥ 768 et ≥ 1024 px. */
+
+.acc-suite {
+  --orange: #f08a12;
+  --orange-fonce: #c96d05;
+  --jaune: #ffc93c;
+  --lavande: #f5f1ff;
+  --creme: #fff5e4;
+  --nuit: #17132e;
+  --espace: 36px;   /* demi-espace vertical entre deux blocs : 72 px d'un contenu à l'autre (la vague y tient) */
+  --vague-h: 40px;  /* hauteur de la courbe qui joint deux fonds différents */
+}
+.acc-suite [hidden] { display: none !important; }
+
+/* ─── Socle commun ─────────────────────────────────────────────────────────────── */
+.bloc { position: relative; overflow: clip; }
+.bloc-cadre {
+  position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px;
+  max-width: 1240px; margin: 0 auto; padding: var(--espace) var(--gouttiere);
+}
+.bloc-cadre--centre { justify-items: center; text-align: center; }
+.bloc-texte { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; min-width: 0; }
+.bloc-texte--centre { align-items: center; }
+.bloc-texte h2 { margin: 0; font-size: 28px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em; text-wrap: balance; }
+.bloc-texte h2 em { font-style: normal; color: var(--violet); }
+.bloc-texte p { margin: 0; max-width: 52ch; font-size: 15px; line-height: 1.6; color: var(--gris); }
+.bloc-vide { margin: 0; font-size: 14px; color: var(--gris); }
+
+/* En-tête sur une ligne : texte à gauche, bouton à droite (repli sous le texte si la place manque). */
+.bloc-tete { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 18px 32px; }
+.bloc-tete .bloc-texte { flex: 1 1 22rem; }
+
+.bloc-pastille {
+  display: inline-block; padding: 4px 10px; border-radius: 999px;
+  font-size: 11px; line-height: 1.4; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.bloc-pastille--violet { background: color-mix(in srgb, var(--violet) 14%, var(--blanc)); color: var(--violet); }
+.bloc-pastille--orange { background: color-mix(in srgb, var(--orange) 18%, var(--blanc)); color: var(--orange-fonce); }
+.bloc-pastille--une { border: 1px solid rgba(255, 255, 255, 0.55); color: var(--blanc); background: rgba(255, 255, 255, 0.12); }
+
+.bloc-bouton {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 22px; border-radius: 999px;
+  border: 2px solid transparent; font-size: 14.5px; font-weight: 800; text-decoration: none; white-space: nowrap;
+  transition: background 150ms, color 150ms, transform 150ms;
+}
+.bloc-bouton:active { transform: scale(0.98); }
+.bloc-bouton--jaune { background: var(--jaune); color: var(--encre) !important; box-shadow: 0 6px 16px rgba(240, 138, 18, 0.25); }
+.bloc-bouton--jaune:hover { background: #ffbb1a; }
+.bloc-bouton--violet { background: var(--violet); color: var(--blanc) !important; box-shadow: 0 6px 16px rgba(91, 61, 245, 0.35); }
+.bloc-bouton--violet:hover { background: var(--violet-fonce); }
+.bloc-bouton--contour-violet { border-color: var(--violet); color: var(--violet) !important; background: var(--blanc); }
+.bloc-bouton--contour-violet:hover { background: var(--violet-pale); }
+.bloc-bouton--contour-orange { border-color: var(--orange); color: var(--orange-fonce) !important; background: var(--blanc); }
+.bloc-bouton--contour-orange:hover { background: color-mix(in srgb, var(--orange) 10%, var(--blanc)); }
+
+.bloc-rond {
+  display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%;
+  background: var(--blanc); color: var(--encre); box-shadow: var(--ombre-legere); cursor: pointer;
+  transition: background 150ms, color 150ms;
+}
+button.bloc-rond:hover { background: var(--violet-pale); color: var(--violet); }
+.bloc-rond--petit { width: 36px; height: 36px; border: 1px solid var(--gris-clair); box-shadow: none; }
+
+.bloc-traits { position: absolute; top: 18px; right: var(--gouttiere); }
+
+/* Entrée de démonstration (placeholder: true), hors production. */
+.bloc-exemple {
+  display: inline-block; padding: 3px 8px; border-radius: 6px; background: var(--encre); color: var(--blanc);
+  font-size: 10px; line-height: 1.4; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+}
+
+/* Pastilles de filtre (bloc Opportunités) : défilent au doigt sur mobile. */
+.bloc-filtres {
+  display: flex; gap: 8px; margin-inline: calc(-1 * var(--gouttiere)); padding: 2px var(--gouttiere);
+  overflow-x: auto; scrollbar-width: none;
+}
+.bloc-filtres::-webkit-scrollbar { display: none; }
+.bloc-filtre {
+  display: inline-flex; align-items: center; gap: 8px; flex: none; min-height: 44px; padding: 0 16px;
+  border: 1px solid var(--gris-clair); border-radius: 999px; background: var(--blanc); color: var(--encre);
+  font: inherit; font-size: 14px; font-weight: 700; white-space: nowrap; cursor: pointer;
+  transition: background 150ms, color 150ms, border-color 150ms;
+}
+.bloc-filtre:hover { border-color: color-mix(in srgb, var(--violet) 40%, var(--gris-clair)); }
+.bloc-filtre[aria-pressed="true"] { background: var(--violet); border-color: var(--violet); color: var(--blanc); }
+.bloc-filtre-point { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 2px var(--blanc); }
+
+/* Focus clavier visible sur tout ce qui se commande dans les blocs. */
+.acc-suite a:focus-visible, .acc-suite button:focus-visible, .tem-piste:focus-visible {
+  outline: 3px solid var(--violet); outline-offset: 3px;
+}
+
+/* ─── Transitions entre blocs ──────────────────────────────────────────────────── */
+/* Un bloc dont le fond change remonte de --vague-h sous le précédent ; son bord haut est découpé
+   en vague douce (masque), si bien que le fond du bloc précédent apparaît au-dessus de la courbe.
+   L'espace entre les deux contenus reste 2 × --espace. */
+.bloc--vague {
+  --vague: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 56' preserveAspectRatio='none'%3E%3Cpath d='M0 36C320 8 560 6 780 22s400 28 660-4V56H0z'/%3E%3C/svg%3E");
+  margin-top: calc(-1 * var(--vague-h)); padding-top: var(--vague-h);
+  -webkit-mask: var(--vague) top / 100% var(--vague-h) no-repeat, linear-gradient(#000 0 0) 0 var(--vague-h) / 100% 100% no-repeat;
+  mask: var(--vague) top / 100% var(--vague-h) no-repeat, linear-gradient(#000 0 0) 0 var(--vague-h) / 100% 100% no-repeat;
+}
+
+/* Apparition au défilement (contrôleur `apparition`, jamais posé si l'on a demandé moins d'animations). */
+.apparition--active > .bloc { transition: opacity 600ms ease-out, translate 600ms cubic-bezier(0.22, 1, 0.36, 1); }
+.apparition--active > .bloc:not(.bloc--vu) { opacity: 0; translate: 0 12px; }
+
+/* ─── Témoignages : texte à gauche, cartes photo en éventail ───────────────────── */
+.bloc-temoignages { background: var(--lavande); }
+.bloc-fleches { display: flex; gap: 10px; }
+
+/* Sans JS : une rangée de cartes à faire défiler. */
+.tem-piste { display: flex; gap: 14px; padding: 12px 4px 20px; overflow-x: auto; border-radius: 12px; }
+.tem-carte {
+  flex: none; width: var(--tem-largeur, 230px); margin: 0; padding: 9px 9px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  border-radius: 14px; background: var(--blanc); box-shadow: 0 10px 28px rgba(29, 26, 43, 0.14);
+}
+.tem-photo { position: relative; aspect-ratio: 5 / 4; border-radius: 8px; overflow: hidden; background: var(--violet-pale); }
+.tem-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; }
+.tem-photo .bloc-exemple { position: absolute; left: 6px; top: 6px; }
+.tem-carte blockquote { margin: 0; padding: 0 5px; font-size: 14px; line-height: 1.45; font-weight: 600; }
+.tem-carte figcaption { display: flex; flex-direction: column; gap: 1px; margin-top: auto; padding: 0 5px; font-size: 12.5px; color: var(--gris); }
+.tem-carte figcaption strong { font-size: 14px; font-weight: 800; color: var(--encre); }
+
+/* Avec le contrôleur `carrousel` : les cartes s'empilent dans la même cellule et s'écartent du
+   centre selon --pos (−2 … 2). La centrale est droite ; les voisines sont inclinées, réduites et
+   atténuées ; au-delà, la carte sort du champ. */
+.carrousel--actif .tem-piste {
+  display: grid; place-items: center; overflow: visible; padding: 22px 0 30px;
+  touch-action: pan-y; user-select: none; -webkit-user-select: none;
+}
+.carrousel--actif .tem-carte {
+  grid-area: 1 / 1; cursor: pointer;
+  transform: translateX(calc(var(--pos, 0) * var(--tem-pas, 172px))) rotate(calc(var(--pos, 0) * 4deg)) scale(calc(1.08 - var(--ecart, 0) * 0.2));
+  opacity: calc(1 - var(--ecart, 0) * 0.18);
+  z-index: calc(10 - var(--ecart, 0));
+  transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1), opacity 380ms ease-out;
+}
+.carrousel--actif .tem-carte[aria-current="true"] { cursor: default; box-shadow: 0 18px 44px rgba(29, 26, 43, 0.2); }
+.carrousel--actif .tem-carte:not([data-pos="0"], [data-pos="1"], [data-pos="-1"]) { opacity: 0; pointer-events: none; }
+
+/* ─── Opportunités : agenda à deux colonnes ────────────────────────────────────── */
+.bloc-opportunites { background: linear-gradient(100deg, var(--creme) 0%, #fffaf0 60%, #fff1dc 100%); }
+.bloc-opportunites .bloc-texte h2 em { color: var(--orange); }
+
+.agenda { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.agenda-liste {
+  display: flex; flex-direction: column; gap: 1px; margin: 0; padding: 0; list-style: none;
+  border-radius: var(--rayon); overflow: hidden; background: var(--gris-clair); box-shadow: var(--ombre-legere);
+}
+.agenda-liste:not(:has(li:not([hidden]))) { display: none; }
+.agenda-liste li { background: var(--blanc); }
+.agenda-ligne {
+  display: grid; grid-template-columns: 54px minmax(0, 1fr) 60px; align-items: center; gap: 14px;
+  padding: 12px 14px; color: var(--encre); text-decoration: none; transition: background 150ms;
+}
+.agenda-ligne:hover { background: #fffaf0; }
+.agenda-ligne:focus-visible { outline-offset: -3px; }
+.agenda-date {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; height: 58px;
+  border-radius: 14px; background: var(--creme); color: var(--orange-fonce); line-height: 1;
+}
+.agenda-date strong { font-size: 22px; font-weight: 800; }
+.agenda-date span { margin-top: 3px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }
+.agenda-texte { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.agenda-titre {
+  font-size: 15px; line-height: 1.3; font-weight: 800;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.agenda-lieu { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--gris); }
+.agenda-mini { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; background: var(--gris-clair); }
+
+/* ─── Cartes photo (accueil/fiche_carte) : vedette de l'agenda, petites Belles Histoires ── */
+.opp-carte {
+  display: flex; flex-direction: column; min-width: 0; border-radius: var(--rayon); overflow: hidden;
+  background: var(--blanc); box-shadow: var(--ombre-legere); color: var(--encre); text-decoration: none;
+  transition: box-shadow 150ms, transform 150ms;
+}
+.opp-carte:hover { box-shadow: var(--ombre); transform: translateY(-2px); }
+.opp-carte:hover .bloc-rond { background: var(--violet); border-color: var(--violet); color: var(--blanc); }
+.opp-photo { position: relative; display: block; aspect-ratio: 2 / 1; overflow: hidden; background: var(--gris-clair); }
+.opp-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.opp-etiquette {
+  position: absolute; left: 10px; top: 10px; padding: 3px 9px; border-radius: 999px;
+  font-size: 10.5px; line-height: 1.5; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.85);
+}
+.opp-etiquette--histoire { background: var(--violet); color: var(--blanc); }
+.opp-corps { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 14px 16px 16px; }
+.opp-titre { font-size: 16px; line-height: 1.3; font-weight: 800; letter-spacing: -0.01em; }
+.opp-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--gris); }
+.opp-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.opp-pied { flex: 1; display: flex; align-items: flex-end; gap: 12px; }
+.opp-pied .opp-extrait { align-self: flex-start; }
+.opp-extrait {
+  flex: 1; min-width: 0; font-size: 13.5px; line-height: 1.45; color: var(--gris);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.opp-carte--vedette .opp-photo { aspect-ratio: 2 / 1; }
+.opp-carte--vedette .opp-corps { gap: 10px; padding: 18px 20px 20px; }
+.opp-carte--vedette .opp-titre { font-size: 20px; }
+.opp-carte--vedette .opp-extrait { font-size: 14.5px; }
+
+/* ─── Belles Histoires : bento éditorial ───────────────────────────────────────── */
+.bloc-histoires { background: linear-gradient(160deg, #f4f0ff 0%, #f7f1fc 55%, #fdf0f6 100%); }
+.bloc-histoires .bloc-texte h2 em { color: var(--violet); }
+
+.bento { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+/* La une : photo plein cadre, dégradé sombre, texte blanc. */
+.une {
+  position: relative; display: flex; align-items: flex-end; min-width: 0; min-height: 380px;
+  border-radius: 22px; overflow: hidden; background: var(--nuit); color: var(--blanc);
+  box-shadow: 0 16px 40px rgba(23, 19, 46, 0.28);
+}
+.une .une-photo { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; }
+.une::before {
+  content: ""; position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(0deg, rgba(23, 19, 46, 0.94) 0%, rgba(23, 19, 46, 0.72) 42%, rgba(23, 19, 46, 0.12) 80%),
+              linear-gradient(90deg, rgba(23, 19, 46, 0.45), transparent 60%);
+}
+.une-texte {
+  position: relative; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 12px;
+  width: min(100%, 34rem); padding: 24px 22px;
+}
+.une-texte h3 { margin: 6px 0 0; font-size: 22px; line-height: 1.22; font-weight: 800; letter-spacing: -0.015em; text-wrap: balance; }
+.une-texte p { margin: 0; font-size: 14.5px; line-height: 1.55; color: rgba(255, 255, 255, 0.88); }
+.une-texte .bloc-bouton { margin-top: 4px; }
+
+/* ─── L'impact local : bande de chiffres ───────────────────────────────────────── */
+.bloc-impact {
+  background:
+    radial-gradient(ellipse 60% 70% at 50% 45%, color-mix(in srgb, var(--violet) 9%, transparent), transparent 72%),
+    var(--blanc);
+}
+
+.imp-chiffres {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 0; width: 100%; max-width: 1080px;
+  margin: 8px 0 0; padding: 0; list-style: none;
+}
+.imp-chiffre { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; padding: 0 12px; }
+.imp-chiffre:nth-child(even) { border-left: 1px solid var(--gris-clair); }
+.imp-chiffre img { width: 44px; height: 44px; margin-bottom: 6px; filter: drop-shadow(0 3px 4px rgba(29, 26, 43, 0.16)); }
+.imp-chiffre strong {
+  font-size: 40px; line-height: 1; font-weight: 800; letter-spacing: -0.03em; color: var(--violet); font-variant-numeric: tabular-nums;
+}
+.imp-libelle { font-size: 15px; line-height: 1.3; font-weight: 800; }
+.imp-sous { max-width: 22ch; font-size: 13px; line-height: 1.4; color: var(--gris); }
+
+/* Silhouette de la ville, juste au-dessus du footer : pleine largeur, sa ligne de sol (y = 66) est le dernier pixel
+   visible, donc elle se confond avec le bord haut du footer. Mobile : réduite à 70 % (hauteur 47 px). */
+.acc-ville {
+  --pied-fond: #f1eefc; /* lavande du footer (accueil.css, .acc-ville + .acc-pied) */
+  /* Fond blanc du bloc médias, sauf le dernier pixel : lavande du footer, pour qu'aucun filet blanc ne reste sous la ligne de sol.
+     padding-top : avec le bas du bloc médias (--espace), 64 px (mobile : 40 px) entre le bloc et la bande. */
+  box-sizing: content-box; overflow: hidden; height: 47px; padding-top: 4px; line-height: 0;
+  background: linear-gradient(to bottom, var(--blanc) calc(100% - 1px), var(--pied-fond) 0);
+}
+.acc-ville-svg {
+  display: block; width: calc(100% / 0.7); height: 67px; transform: scale(0.7); transform-origin: left bottom;
+  margin-top: -20px; /* 67 × 0.7 = 47 px : le bas du trait de sol touche le footer */
+  color: color-mix(in srgb, var(--violet) 48%, var(--blanc));
+}
+@media (min-width: 768px) {
+  .acc-ville { height: 67px; padding-top: 28px; } /* --espace vaut 36 px ici : 64 px au total */
+  .acc-ville-svg { width: 100%; transform: none; margin-top: 0; }
+}
+
+/* ─── Dans les médias : logos-onglets et citation ──────────────────────────────── */
+.bloc-presse { background: var(--blanc); }
+
+.med-logos {
+  display: flex; gap: 12px; margin-inline: calc(-1 * var(--gouttiere)); padding: 4px var(--gouttiere);
+  overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gouttiere); scrollbar-width: none;
+}
+.med-logos::-webkit-scrollbar { display: none; }
+.med-logo {
+  display: grid; place-items: center; flex: none; width: 150px; height: 76px; padding: 0 16px;
+  border: 1.5px solid var(--gris-clair); border-radius: 16px; background: var(--blanc); cursor: pointer;
+  scroll-snap-align: start; transition: border-color 150ms, box-shadow 150ms;
+}
+.med-logo img { max-width: 100%; height: 46px; width: auto; object-fit: contain; filter: grayscale(1); opacity: 0.6; transition: filter 200ms, opacity 200ms; }
+.med-logo span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.med-logo:hover img, .med-logo[aria-selected="true"] img { filter: none; opacity: 1; }
+.med-logo[aria-selected="true"] { border-color: var(--violet); box-shadow: 0 8px 22px rgba(91, 61, 245, 0.14); }
+
+.med-panneaux { display: grid; gap: 16px; }
+.med-panneau {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 14px; margin: 0; padding: 24px 22px;
+  border-radius: 22px; background: linear-gradient(120deg, var(--lavande), #fbfaff 70%);
+}
+.med-source { font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gris); }
+.med-source small { font-size: inherit; font-weight: 700; }
+.med-panneau blockquote { margin: 0; max-width: 40ch; font-size: 21px; line-height: 1.35; font-weight: 800; letter-spacing: -0.015em; text-wrap: balance; }
+.med-lien { font-size: 15px; white-space: normal; }
+.med-onglet { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .carrousel--actif .tem-carte, .opp-carte, .bloc-bouton, .med-logo img { transition: none; }
+}
+
+/* ─── ≥ 640 px ─────────────────────────────────────────────────────────────────── */
+@media (min-width: 640px) {
+  .bloc-texte h2 { font-size: 32px; }
+  .carrousel--actif .tem-carte { --tem-largeur: 250px; --tem-pas: 215px; }
+  .carrousel--actif .tem-carte[data-pos="2"] { opacity: 0.5; pointer-events: auto; }
+  .une-texte { padding: 30px; }
+  .une-texte h3 { font-size: 25px; }
+}
+
+/* ─── ≥ 768 px : colonnes ──────────────────────────────────────────────────────── */
+@media (min-width: 768px) {
+  .bloc-filtres { flex-wrap: wrap; margin-inline: 0; padding-inline: 0; overflow: visible; }
+  .bento { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .bento .une { grid-column: span 2; grid-row: span 2; min-height: 460px; }
+
+  .imp-chiffres { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .imp-chiffre + .imp-chiffre { border-left: 1px solid var(--gris-clair); }
+
+  .med-logos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-inline: 0; padding-inline: 0; overflow: visible; }
+  .med-logo { width: auto; }
+  .med-panneau { align-items: center; padding: 40px; text-align: center; }
+  .med-panneau blockquote { font-size: 26px; }
+}
+
+/* ─── ≥ 1024 px : bureau ───────────────────────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .acc-ville { padding-top: 16px; } /* --espace vaut 48 px : 64 px au total */
+  .acc-suite { --espace: 48px; --vague-h: 56px; } /* 96 px d'un contenu à l'autre */
+  .bloc-cadre { gap: 32px; padding-inline: 40px; }
+  .bloc-texte h2 { font-size: 36px; }
+  .bloc-traits { top: 26px; right: 40px; }
+
+  .agenda { grid-template-columns: minmax(0, 55fr) minmax(0, 45fr); gap: 24px; }
+  .agenda-ligne { padding: 14px 18px; }
+  .opp-carte--vedette .opp-photo { aspect-ratio: 16 / 9; }
+
+  .une-texte { padding: 36px; }
+  .une-texte h3 { font-size: 30px; }
+
+  .imp-chiffre strong { font-size: 56px; }
+  .med-panneau blockquote { font-size: 30px; }
+}
+
+/* ─── ≥ 1180 px : Témoignages, texte à gauche et éventail à droite ─────────────── */
+@media (min-width: 1180px) {
+  .bloc-cadre--colonnes { grid-template-columns: 290px minmax(0, 1fr); gap: 44px; align-items: center; }
+  .bloc-temoignages .bloc-traits { right: 36%; }
+  .carrousel--actif .tem-carte { --tem-pas: 235px; }
+  /* La carte centrale est décalée vers la gauche : une voisine à gauche, deux à droite. */
+  .carrousel--actif .tem-piste { padding-right: 190px; }
+}

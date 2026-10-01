@@ -1,32 +1,30 @@
-<%# Bureau seulement (≥ 1024 px) : logo, navigation, bouton « Proposer une initiative ».
-    Hors de /labo/accueil (fiches, « Pourquoi Déclic ? »), « Carte » ramène à l'accueil et `courant`
-    désigne l'entrée active (« explorer », « histoires » ou « pourquoi »). Sur « Pourquoi Déclic ? »,
-    deux boutons : partager un témoignage, proposer une opportunité. %>
+<%# Tablette et bureau (≥ 768 px) : barre flottante blanche — logo, quatre entrées, séparateur, puis deux
+    boutons (partager un témoignage, proposer une opportunité). En dessous, le header et la barre
+    d'onglets mobiles prennent le relais. `flottante: true` (accueil) la pose par-dessus la carte ;
+    ailleurs elle reste collée en haut (sticky). Hors de l'accueil, « Carte » ramène à la racine et `courant`
+    désigne l'entrée active (« explorer » = Opportunités, « histoires » ou « pourquoi »).
+    La page « Explorer » (/opportunities) n'a plus d'entrée ici : on y va par la recherche et les liens internes. %>
 <% courant = local_assigns[:courant].presence %>
-<header class="acc-barre">
-  <%= link_to labo_accueil_path, class: "acc-logo", aria: { label: "Déclic, accueil" } do %>
+<% entree = ->(cle) { { current: ("page" if courant == cle) } } %>
+<header class="acc-barre<%= " acc-barre--flottante" if local_assigns[:flottante] %>">
+  <%= link_to root_path, class: "acc-logo", aria: { label: "Déclic, accueil" } do %>
     <span class="acc-logo-carre" aria-hidden="true">D</span><span>Déclic</span>
   <% end %>
   <nav class="acc-barre-nav" aria-label="Navigation principale">
     <% if courant %>
-      <%= link_to "Carte", labo_accueil_path %>
+      <%= link_to root_path do %><%= picto(:lieu, taille: 22) %><span>Carte</span><% end %>
     <% else %>
-      <a href="#carte" aria-current="page">Carte</a>
+      <a href="#carte" aria-current="page"><%= picto(:lieu, taille: 22) %><span>Carte</span></a>
     <% end %>
-    <%= link_to "Opportunités", labo_opportunites_path, aria: { current: ("page" if courant == "explorer") } %>
-    <%= link_to "Belles Histoires", labo_belles_histoires_path, aria: { current: ("page" if courant == "histoires") } %>
-    <%= link_to "Pourquoi Déclic ?", philosophie_path, aria: { current: ("page" if courant == "pourquoi") } %>
+    <%= link_to labo_opportunites_path, aria: entree.("explorer") do %><%= picto(:personnes, taille: 22) %><span>Opportunités</span><% end %>
+    <%= link_to labo_belles_histoires_path, aria: entree.("histoires") do %><%= picto(:etoile, taille: 22) %><span>Belles Histoires</span><% end %>
+    <%= link_to philosophie_path, aria: entree.("pourquoi") do %><%= picto(:info, taille: 22) %><span>Pourquoi Déclic ?</span><% end %>
   </nav>
-  <% if courant == "pourquoi" %>
-    <%= link_to new_story_path, class: "acc-bouton-proposer acc-bouton-temoignage" do %>
-      <%= picto(:coeur, taille: 18) %> Partager un témoignage
-    <% end %>
-    <%= link_to new_opportunity_path, class: "acc-bouton-proposer" do %>
-      <%= picto(:plus, taille: 18) %> Proposer une opportunité
-    <% end %>
-  <% else %>
-    <%= link_to new_opportunity_path, class: "acc-bouton-proposer" do %>
-      <%= picto(:plus, taille: 18) %> Proposer une initiative
-    <% end %>
+  <span class="acc-barre-sep" aria-hidden="true"></span>
+  <%= link_to new_story_path, class: "acc-bouton-proposer acc-bouton-temoignage", title: "Partager un témoignage", aria: { label: "Partager un témoignage" } do %>
+    <%= picto(:coeur, taille: 20) %><span class="acc-bouton-libelle">Partager un témoignage</span>
+  <% end %>
+  <%= link_to new_opportunity_path, class: "acc-bouton-proposer" do %>
+    <%= picto(:plus, taille: 20) %><span>Proposer<span class="acc-bouton-suite"> une opportunité</span></span>
   <% end %>
 </header>

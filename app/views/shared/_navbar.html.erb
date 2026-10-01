@@ -27,17 +27,13 @@
 
     <!-- Liens desktop -->
     <nav class="hidden md:flex items-center gap-6" aria-label="Navigation principale">
-      <%= link_to "Explorer",
-          root_path(anchor: "explorer"),
-          class: nav_link_classes(root_path, extra_classes: "") %>
-
       <%= link_to "Parcours",
-          root_path(anchor: "parcours"),
-          class: nav_link_classes(root_path, extra_classes: "") %>
+          pourquoi_declic_path(anchor: "parcours"),
+          class: nav_link_classes(pourquoi_declic_path, extra_classes: "") %>
 
       <%= link_to "Témoignages",
-          root_path(anchor: "temoignages"),
-          class: nav_link_classes(root_path, extra_classes: "") %>
+          pourquoi_declic_path(anchor: "temoignages"),
+          class: nav_link_classes(pourquoi_declic_path, extra_classes: "") %>
 
       <%= link_to "Pourquoi Déclic ?",
           philosophie_path,
@@ -104,17 +100,12 @@
             aria-label="Fermer le menu">✕</button>
 
     <nav class="space-y-2 text-[15px] pt-6" aria-label="Navigation mobile">
-      <%= link_to root_path(anchor: "explorer"),
-          class: "flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 ring-1 ring-black/5" do %>
-        <span>🗺️</span><span>Explorer</span>
-      <% end %>
-
-      <%= link_to root_path(anchor: "parcours"),
+      <%= link_to pourquoi_declic_path(anchor: "parcours"),
           class: "flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 ring-1 ring-black/5" do %>
         <span>🧭</span><span>Parcours</span>
       <% end %>
 
-      <%= link_to root_path(anchor: "temoignages"),
+      <%= link_to pourquoi_declic_path(anchor: "temoignages"),
           class: "flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 ring-1 ring-black/5" do %>
         <span>💬</span><span>Témoignages</span>
       <% end %>

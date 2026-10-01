@@ -1,33 +1,42 @@
-<%# Les passages médias réels (mêmes liens que la home actuelle). France Bleu Lorraine
-    s'appelle ICI Lorraine depuis 2025 : c'est le même podcast, une seule carte. %>
-<% passages = [
-  { media: "ICI Lorraine (France Bleu)", logo: "Radio_France.jpeg", cta: "Écouter le podcast",
-    titre: "Déclic, la plateforme qui veut créer du lien dans la métropole du Grand Nancy",
-    url: "https://www.radiofrance.fr/francebleu/podcasts/ici-ca-marche-ici-lorraine-meurthe-et-moselle-et-vosges/declic-la-plateforme-qui-veut-creer-du-lien-dans-la-metropole-du-grand-nancy-7222300" },
-  { media: "RCF Radio", logo: "RCF.jpeg", cta: "Écouter l'émission",
-    titre: "Le grand témoin régional — Déclic, l'initiative citoyenne qui cartographie les opportunités",
-    url: "https://www.rcf.fr/actualite/le-grand-temoin-regional/embed?episodeId=676550" },
-  { media: "L'Est Républicain", logo: "L'Est Républicain.png", cta: "Lire l'article",
-    titre: "Déclic, la plateforme qui recense les opportunités citoyennes près de chez vous",
-    url: "https://c.estrepublicain.fr/environnement/2026/04/10/declic-la-plateforme-qui-recense-les-opportunites-citoyennes-pres-de-chez-vous" },
-  { media: "Radio Fajet", logo: "radiofajet.png", cta: "Écouter l'interview",
-    titre: "Un écran tourné vers l'autre",
-    url: "https://radiofajet.net/2026/04/29/declic/" }
-] %>
-<section class="acc-section acc-presse" aria-labelledby="acc-presse-titre">
-  <div class="acc-section-tete">
-    <h2 id="acc-presse-titre">Ils parlent de nous</h2>
-  </div>
-  <div class="acc-presse-grille">
-    <% passages.each do |p| %>
-      <%= link_to p[:url], class: "passage", target: "_blank", rel: "noopener" do %>
-        <%= image_tag p[:logo], alt: "", class: "passage-logo", width: 48, height: 48, loading: "lazy" %>
-        <span class="passage-texte">
-          <span class="passage-media"><%= p[:media] %></span>
-          <span class="passage-titre">« <%= p[:titre] %> »</span>
-          <span class="acc-lien-violet"><%= p[:cta] %> <%= picto(:fleche, taille: 14) %></span>
-        </span>
+<%# Bloc « Dans les médias » : une rangée de logos (onglets) et, dessous, la citation du média choisi
+    avec son lien vers la source (contrôleur `onglets` : clic, focus, flèches du clavier). Sans JS,
+    toutes les citations restent affichées les unes sous les autres. %>
+<% if passages.any? %>
+<section class="bloc bloc-presse" aria-labelledby="bloc-presse-titre">
+  <div class="bloc-cadre bloc-cadre--pile" data-controller="onglets">
+    <div class="bloc-tete">
+      <div class="bloc-texte">
+        <span class="bloc-pastille bloc-pastille--orange">On parle de nous</span>
+        <h2 id="bloc-presse-titre">Déclic dans les médias</h2>
+        <p>Ils parlent de notre démarche et de celles et ceux qui font vivre le territoire.</p>
+      </div>
+      <%= link_to presse_path, class: "bloc-bouton bloc-bouton--contour-orange" do %>
+        Voir toutes les retombées <%= picto(:fleche, taille: 18) %>
       <% end %>
-    <% end %>
+    </div>
+
+    <div class="med-logos" role="tablist" aria-label="Médias" data-onglets-target="liste" hidden>
+      <% passages.each_with_index do |p, i| %>
+        <button type="button" class="med-logo" role="tab" id="med-onglet-<%= i %>" aria-controls="med-panneau-<%= i %>"
+                aria-selected="<%= i.zero? %>" tabindex="<%= i.zero? ? 0 : -1 %>" data-onglets-target="onglet"
+                data-action="click->onglets#choisir focus->onglets#choisir keydown->onglets#clavier">
+          <%= image_tag p.logo, alt: "", loading: "lazy" %><span><%= p.media %></span>
+        </button>
+      <% end %>
+    </div>
+
+    <div class="med-panneaux">
+      <% passages.each_with_index do |p, i| %>
+        <figure class="med-panneau" role="tabpanel" id="med-panneau-<%= i %>" aria-labelledby="med-onglet-<%= i %>" data-onglets-target="panneau">
+          <figcaption class="med-source"><%= p.media %><% if p.precision %> <small><%= p.precision %></small><% end %></figcaption>
+          <%= render "accueil/exemple" if p.placeholder %>
+          <blockquote>« <%= p.citation %> »</blockquote>
+          <%= link_to p.url, class: "acc-lien-violet med-lien", target: "_blank", rel: "noopener" do %>
+            <%= p.action %> <%= picto(:externe, taille: 16) %><span class="med-onglet"> (nouvel onglet)</span>
+          <% end %>
+        </figure>
+      <% end %>
+    </div>
   </div>
 </section>
+<% end %>

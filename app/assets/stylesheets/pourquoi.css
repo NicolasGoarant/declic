@@ -155,9 +155,6 @@
 .pq-final-note { margin-top: 16px !important; font-size: 13px; }
 .pq-eclair { display: block; margin: 0 auto 10px; fill: var(--jaune); }
 
-/* Barre haute : deux boutons rapprochés (la barre espace ses enfants de 36 px). */
-.acc-bouton-temoignage { margin-right: -24px; background: var(--rose, #e8409a) !important; box-shadow: 0 6px 16px rgba(232, 64, 154, 0.3) !important; }
-
 @media (min-width: 640px) {
   .pq-chiffres { grid-template-columns: repeat(3, 1fr); }
   .pq-chiffre { flex-direction: column; align-items: flex-start; }

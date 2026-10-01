@@ -19,7 +19,7 @@ class CalquesTest < ApplicationSystemTestCase
 
   def sur_la_carte(&bloc)
     DioramaTuiles.stub(:new, @tuiles) do
-      visit labo_accueil_path
+      visit root_path
       assert_selector "[data-controller~=diorama][data-fond]"
       bloc.call
     end
@@ -101,7 +101,7 @@ class CalquesTest < ApplicationSystemTestCase
       choisir_fond "Plan"
       assert_equal "plan", evaluate_script("localStorage.getItem('declic:fond')")
 
-      visit labo_accueil_path
+      visit root_path
 
       assert_selector "[data-fond=plan]"
       find(".acc-rond-calques").click
@@ -112,21 +112,22 @@ class CalquesTest < ApplicationSystemTestCase
   test "le style du diorama (Jeu vidéo par défaut) se garde et ne recharge pas la carte" do
     sur_la_carte do
       assert_equal "jeu-video-v2", evaluate_script("#{CONTROLEUR}.style")
-      assert_selector ".leaflet-tile-pane img[src*='/jeu-video-v2/']", visible: :all
+      # Le style Jeu vidéo v2 est dessiné en canvas (plus d'<img> dans la couche de tuiles).
+      assert_selector ".leaflet-tile-pane canvas.leaflet-tile-loaded", visible: :all
       lat, lon, = vue
 
       find(".acc-rond-calques").click
       within("#acc-calques") { find("label.acc-calques-option", text: "Réaliste").click }
 
       assert_equal "toits-v1", evaluate_script("#{CONTROLEUR}.style")
-      assert_selector ".leaflet-tile-pane img[src*='/toits-v1/']", visible: :all
+      assert_selector ".leaflet-tile-pane canvas.leaflet-tile-loaded", visible: :all
       assert_equal "toits-v1", evaluate_script("localStorage.getItem('declic:style')")
       lat2, lon2, = vue
       assert_in_delta lat, lat2, 0.0001 # même carte : la vue n'a pas bougé
       assert_in_delta lon, lon2, 0.0001
       find("body").send_keys(:escape)
 
-      visit labo_accueil_path
+      visit root_path
 
       assert_selector "[data-fond=diorama]"
       assert_equal "toits-v1", evaluate_script("#{CONTROLEUR}.style")
@@ -151,7 +152,7 @@ class CalquesTest < ApplicationSystemTestCase
     sur_la_carte do
       assert_selector "[data-fond=plan]"
       choisir_fond "Diorama"
-      visit labo_accueil_path
+      visit root_path
       assert_selector "[data-fond=diorama]"
     end
   ensure

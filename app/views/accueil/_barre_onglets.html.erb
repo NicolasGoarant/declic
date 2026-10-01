@@ -1,20 +1,17 @@
-<%# Mobile et tablette : barre d'onglets fixe. Cinq emplacements égaux : Carte · Explorer · [ + ] ·
-    Favoris · Profil. Le « + » central (circulaire, surélevé) est le lien « Proposer » : même route
-    que l'ancien onglet. Carte est l'onglet courant tant que le filtre Favoris n'est pas actif
-    (diorama#majOnglets tient les deux à jour). %>
+<%# Mobile et tablette (< 1024 px) : barre d'onglets fixe, mêmes entrées que la navbar du bureau.
+    Cinq emplacements : Carte · Opportunités · [ + ] Proposer · Belles Histoires · Déclic ? (Pourquoi Déclic ?)
+    Le « + » central (circulaire, surélevé) est le lien « Proposer ».
+    `courant` : « carte » (accueil), « explorer » (Opportunités), « histoires » ou « pourquoi » ; même
+    convention que accueil/_barre_haute (content_for :onglet_courant). %>
+<% courant = local_assigns[:courant].presence %>
+<% actif = ->(cle) { { current: ("page" if courant == cle) } } %>
 <nav class="acc-onglets" aria-label="Navigation">
-  <a href="#carte" aria-current="page" data-diorama-target="ongletCarte" data-action="diorama#voirCarte">
-    <%= picto(:carte, taille: 24) %><span>Carte</span>
-  </a>
-  <%= link_to opportunities_path do %><%= picto(:chercher, taille: 24) %><span>Explorer</span><% end %>
+  <%= link_to (courant == "carte" ? "#carte" : root_path), aria: actif.("carte") do %><%= picto(:carte, taille: 24) %><span>Carte</span><% end %>
+  <%= link_to labo_opportunites_path, aria: actif.("explorer") do %><%= picto(:calendrier, taille: 24) %><span>Opportunités</span><% end %>
   <%= link_to new_opportunity_path, class: "acc-onglet-plus", aria: { label: "Proposer" } do %>
     <span class="acc-plus-bouton"><%= picto(:plus, taille: 28, "stroke-width" => 2.5) %></span>
     <span class="acc-plus-libelle">Proposer</span>
   <% end %>
-  <button type="button" aria-pressed="false" data-diorama-target="ongletFavoris" data-action="diorama#basculerFavoris">
-    <%= picto(:coeur, taille: 24) %><span>Favoris</span>
-  </button>
-  <span class="acc-onglet-inactif" aria-disabled="true" title="Consultation sans compte">
-    <%= picto(:profil, taille: 24) %><span>Profil</span>
-  </span>
+  <%= link_to labo_belles_histoires_path, aria: actif.("histoires") do %><%= picto(:etoile, taille: 24) %><span>Belles Histoires</span><% end %>
+  <%= link_to philosophie_path, aria: actif.("pourquoi") do %><%= picto(:ampoule, taille: 24) %><span>Déclic ?</span><% end %>
 </nav>

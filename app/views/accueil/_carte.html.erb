@@ -16,12 +16,16 @@
       </div>
     </div>
 
-    <% if local_assigns[:localiser] %>
+    <% if local_assigns[:localiser] == true %>
       <button type="button" class="acc-rond-calques" aria-label="Me localiser" data-action="diorama#localiser">
         <%= picto(:viseur, taille: 22) %>
       </button>
     <% end %>
   </div>
+
+  <% if local_assigns[:localiser] == :pastille %>
+    <button type="button" class="acc-localiser" aria-label="Me localiser" title="Me localiser" data-action="diorama#localiser"><%= picto(:lieu, taille: 18) %> <span class="acc-localiser-libelle">Me localiser</span></button>
+  <% end %>
 
   <%# La popup d'un pin, remplie par le JS (diorama#contenuPopup). %>
   <template data-diorama-target="modelePopup">

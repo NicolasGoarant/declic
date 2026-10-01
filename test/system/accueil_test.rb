@@ -11,7 +11,7 @@ class AccueilTest < ApplicationSystemTestCase
 
   def sur_l_ecran_carte(&bloc)
     DioramaTuiles.stub(:new, @tuiles) do
-      visit labo_accueil_path
+      visit root_path
       bloc.call
     end
   end
@@ -36,7 +36,7 @@ class AccueilTest < ApplicationSystemTestCase
     sur_l_ecran_carte do
       onglets = all(".acc-onglets > *")
       assert_equal 5, onglets.size
-      assert_equal %w[Carte Explorer Proposer Favoris Profil], onglets.map { |o| o.text.strip }
+      assert_equal [ "Carte", "Opportunités", "Proposer", "Belles Histoires", "Déclic ?" ], onglets.map { |o| o.text.strip }
 
       plus = onglets[2]
       assert_includes plus[:class], "acc-onglet-plus"
@@ -46,10 +46,22 @@ class AccueilTest < ApplicationSystemTestCase
     end
   end
 
+  test "la recherche du header filtre la liste « Au centre de la vue » sans tenir compte des accents" do
+    sur_l_ecran_carte do
+      find(".acc-recherche input").click
+      assert_selector ".acc-poignee[aria-expanded='true']"
+      find(".acc-recherche input").set("zzzzzz")
+      assert_selector "[data-diorama-target='vide']", text: "Aucun résultat pour « zzzzzz »"
+      assert_selector "[data-diorama-target='poigneeTitre']", visible: :all, text: "Résultats"
+      find(".acc-recherche input").set("")
+      assert_no_selector "[data-diorama-target='poigneeTitre']", visible: :all, text: "Résultats"
+    end
+  end
+
   test "l'écran Carte ne garde que le logo, la légende des six catégories en bas et le zoom" do
     sur_l_ecran_carte do
-      %w[.acc-puces .acc-territoire .acc-filtres .acc-rond .acc-entete-actions .acc-recherche].each { |css| assert_no_selector css }
-      assert_no_selector "input[type=search]"
+      %w[.acc-puces .acc-territoire .acc-filtres .acc-rond .acc-entete-actions].each { |css| assert_no_selector css }
+      assert_selector ".acc-entete .acc-recherche input[type=search]"
       assert_no_selector "[aria-label='Recentrer la carte']"
       assert_selector "[aria-label='Zoomer']"
       assert_selector "[aria-label='Dézoomer']"
@@ -60,7 +72,7 @@ class AccueilTest < ApplicationSystemTestCase
       legende = find(".acc-categories").rect
       assert_operator legende.y + legende.height, :<=, find(".acc-poignee").rect.y
 
-      categories = all(".acc-cat").map { |c| c.find("span").text }
+      categories = all(".acc-cat").map { |c| c.find(".acc-cat-libelle").text }
       assert_equal 6, categories.size
       assert_equal "Belles Histoires", categories.last
 

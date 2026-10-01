@@ -1,0 +1,5 @@
+<%# Petits traits décoratifs (coin haut droit d'un bloc). %>
+<svg class="bloc-traits" width="44" height="40" viewBox="0 0 44 40" fill="none" stroke="<%= local_assigns[:couleur] || "#ffc93c" %>"
+     stroke-width="7" stroke-linecap="round" aria-hidden="true" focusable="false">
+  <path d="M6 8l5 9"/><path d="M24 5l-3 12"/><path d="M39 17l-10 8"<%= %( stroke="#{local_assigns[:couleur2]}").html_safe if local_assigns[:couleur2] %>/>
+</svg>

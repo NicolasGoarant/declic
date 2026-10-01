@@ -1,0 +1,34 @@
+<%# Silhouette de la ville au trait (bande posée juste au-dessus du pied de page, ligne de sol = bord haut du footer) : maisons, arbres, porte,
+    grilles, clochers, grande roue. Le motif de 720 px se répète sur toute la largeur. %>
+<div class="acc-ville"><svg class="acc-ville-svg" height="70" aria-hidden="true" focusable="false">
+  <defs>
+    <pattern id="imp-ville" width="720" height="70" patternUnits="userSpaceOnUse">
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M0 66h720"/>
+        <%# arbres %>
+        <% [ 22, 148, 306, 470, 612, 700 ].each do |x| %>
+          <circle cx="<%= x %>" cy="47" r="9"/><path d="M<%= x %> 56v10M<%= x %> 60l4-4"/>
+        <% end %>
+        <%# maisons %>
+        <% [ [ 44, 26 ], [ 74, 20 ], [ 330, 24 ], [ 636, 26 ] ].each do |x, l| %>
+          <path d="M<%= x %> 66V46l<%= l / 2 %>-11 <%= l / 2 %> 11v20M<%= x + l / 2 - 3 %> 66v-9h6v9"/>
+        <% end %>
+        <%# grande roue %>
+        <circle cx="122" cy="36" r="17"/><circle cx="122" cy="36" r="3"/>
+        <path d="M122 19v34M105 36h34M110 24l24 24M134 24l-24 24M122 36l-9 30M122 36l9 30"/>
+        <%# porte et grilles %>
+        <path d="M176 66V34h84v32M168 34h100M176 27h84M190 66V50a10 10 0 0 1 20 0v16M226 66V50a10 10 0 0 1 20 0v16M218 27v-9M212 18h12"/>
+        <path d="M268 66V48h30v18M274 48v18M280 48v18M286 48v18M292 48v18M268 48q15-12 30 0"/>
+        <%# clochers %>
+        <path d="M366 66V34l8-24 8 24v32M382 66V42h34v24M416 66V34l8-24 8 24v32M391 66V54a8 8 0 0 1 16 0v12M374 40v6M424 40v6"/>
+        <%# immeubles %>
+        <path d="M494 66V30h30v36M502 38h4M512 38h4M502 46h4M512 46h4M502 54h4M512 54h4M532 66V40h24v26M538 47h4M546 47h4M538 55h4M546 55h4"/>
+        <%# kiosque %>
+        <path d="M568 66V50h32v16M562 50l22-12 22 12zM576 50v16M592 50v16M584 38v-6"/>
+        <%# oiseaux %>
+        <path d="M444 20q4-4 7 0q3-4 7 0M664 14q3-3 6 0q3-3 6 0"/>
+      </g>
+    </pattern>
+  </defs>
+  <rect width="100%" height="70" fill="url(#imp-ville)"/>
+</svg></div>

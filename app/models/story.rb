@@ -95,6 +95,18 @@ class Story < ApplicationRecord
   # Scope pour ne récupérer que les stories actives
   scope :active, -> { where(is_active: true) }
 
+  # « Une belle histoire à la une » (page d'accueil) : les histoires actives dont les étiquettes
+  # contiennent « À la une » (saisie admin, sans colonne dédiée), sinon les plus récentes.
+  ETIQUETTE_A_LA_UNE = "a-la-une".freeze
+
+  def a_la_une? = tags.to_s.split(/[;,]/).any? { |t| t.strip.parameterize == ETIQUETTE_A_LA_UNE }
+
+  def self.pour_la_une(limite = 3)
+    recentes = active.order(happened_on: :desc, created_at: :desc)
+    choisies = recentes.where("LOWER(tags) LIKE ?", "%la une%").select(&:a_la_une?).first(limite)
+    choisies.presence || recentes.limit(limite).to_a
+  end
+
   # Choix d'image pour le front (upload > URL > fallback)
   def hero_image_url(view_context)
     if image.attached?
