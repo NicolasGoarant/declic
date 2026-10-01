@@ -21,8 +21,8 @@
 ## Reste à faire
 - Champs à surveiller en prod (100 % remplis sur les seeds actuels, volumétrie faible) : `Story#thematique`/`quote`/`source_published_on`, photos.
 - Photos sources minuscules à remplacer ; `source_name` sans URL ; sections « Et moi... » dans les corps (contraires à la règle éditoriale).
-- Story 64 (Gérardmer) de la base de dev est hors Métropole : publiée mais jamais sur la carte ni dans les comptages.
-- Prod : console `agenda_controller` « Missing target filtres » (bloc Opportunités, non bloquant) à corriger. Base de dev : ne pas régénérer schema.rb via db:migrate. `origin/main` et `main` local ont divergé de heroku/main : PR à régler. Hors périmètre : Saison/Maquette blanche, recettes pluie/neige/nuit.
+- **Géoloc auto (01/10, non déployée)** : `app/javascript/geoloc_auto.js` (importé par `application.js`) demande la position une fois par navigateur (clé localStorage `declic:geoloc-auto` posée avant l'appel ; relue sans invite si permission déjà accordée ; HTTPS requis ; échecs silencieux, bouton « Me localiser » en repli). Publie `window.declicPosition` + événement `declic:position`, que `diorama_controller` applique (`surPositionAuto`/`appliquerPosition`). Ancienne carte `shared/_map` (pourquoi-declic) demande déjà la sienne. Test : `test/system/geoloc_auto_test.rb`.
+- Prod : console `agenda_controller` « Missing target filtres » (bloc Opportunités, non bloquant) à corriger. Base de dev : ne pas régénérer schema.rb via db:migrate. `origin/main` et `main` local ont divergé de heroku/main : PR à régler. Hors périmètre : Saison/Maquette blanche, recettes pluie/neige/nuit. /labo/opportunites mobile 414 px (01/10) : PAS un bug de mise en page (hero à x=0, pleine largeur, pas de débordement) ; le vide à gauche = marge claire du visuel mobile recadré (collage à droite). Vérifier en vrai viewport (Playwright) : le cadre du mode responsive de Firefox est centré dans une fenêtre plus large.
 
 ## Fichiers clés
 - Accueil : `app/views/labo/accueil.html.erb`, `app/views/accueil/_{temoignages,opportunites,impact,presse}.html.erb`
