@@ -82,6 +82,8 @@ export default class extends Controller {
     this.categoriesParCle = Object.fromEntries(this.categoriesValue.map((c) => [c.cle, c]))
     this.appliquerReglagesPins()
     if (this.miniValue) { this.demarrerMini(); return }
+    window.addEventListener("declic:position", this.surPositionAuto)
+    if (window.declicPosition) this.surPositionAuto()
     this.filtre = { categories: new Set(), favoris: false, texte: "" }
     this.favoris = this.lireFavoris()
     this.selection = null
@@ -102,6 +104,7 @@ export default class extends Controller {
     this.aideZoom?.remove()
     this.precipitations?.detruire()
     this.observateur?.disconnect()
+    window.removeEventListener("declic:position", this.surPositionAuto)
     window.removeEventListener("orientationchange", this.surOrientation)
     this.ecranEtroit?.removeEventListener("change", this.surEcranEtroit)
     this.carte?.remove()
@@ -1170,21 +1173,39 @@ export default class extends Controller {
   localiser() {
     if (!navigator.geolocation) { this.dispatch("localisation-echec"); return }
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords
-        const latlng = this.versLatLng(latitude, longitude)
-        this.marqueurMoi?.remove()
-        if (latlng) {
-          this.marqueurMoi = this.L.circleMarker(latlng, {
-            radius: 8, weight: 3, color: "#ffffff", fillColor: "#6a3df5", fillOpacity: 1, className: "diorama-moi"
-          }).addTo(this.carte)
-          this.carte.setView(latlng, this.carte.getZoom())
-        }
-        this.dispatch("localise", { detail: { lat: latitude, lon: longitude } })
-      },
+      (position) => this.appliquerPosition(position.coords.latitude, position.coords.longitude),
       () => this.dispatch("localisation-echec"),
       { enableHighAccuracy: false, timeout: 8000 }
     )
+  }
+
+  appliquerPosition(latitude, longitude) {
+    const latlng = this.versLatLng(latitude, longitude)
+    this.marqueurMoi?.remove()
+    if (latlng) {
+      this.marqueurMoi = this.L.circleMarker(latlng, {
+        radius: 8, weight: 3, color: "#ffffff", fillColor: "#6a3df5", fillOpacity: 1, className: "diorama-moi"
+      }).addTo(this.carte)
+      this.carte.setView(latlng, this.carte.getZoom())
+    }
+    this.dispatch("localise", { detail: { lat: latitude, lon: longitude } })
+  }
+
+  // Position obtenue d'office à l'arrivée (geoloc_auto.js) : mêmes effets que « Me localiser », sans jamais
+  // signaler d'échec. La carte se monte de façon asynchrone : on patiente un peu, puis on abandonne.
+  surPositionAuto = (evenement) => {
+    const { lat, lon } = evenement?.detail || window.declicPosition || {}
+    if (lat === undefined) return
+    let essais = 0
+    const poser = () => {
+      if (!this.element.isConnected || !this.hasCarteTarget) return
+      if (this.carte && this.L && (this.projection || this.fond === "plan")) {
+        try { this.appliquerPosition(lat, lon) } catch { /* sans effet : le bouton reste là */ }
+      } else if (++essais < 40) {
+        setTimeout(poser, 250)
+      }
+    }
+    poser()
   }
 
   // Accueil : personne d'autre n'écoute l'échec, la carte le dit elle-même.
