@@ -1,6 +1,21 @@
-<%# Mobile et tablette : le logo flotte sur la carte, sans fond (halo blanc pour la lisibilité). %>
+<%# Mobile et tablette (< 1024 px) : header compact posé sur la carte, en verre dépoli clair. À gauche, le
+    logo et sa baseline dessous ; à droite (`recherche: true`, accueil seulement : il faut le contrôleur
+    `diorama`), la recherche, qui filtre les pins et la liste « Au centre de la vue ». La navigation est
+    dans la barre d'onglets du bas (accueil/_barre_onglets). %>
 <div class="acc-entete">
-  <%= link_to labo_accueil_path, class: "acc-logo", aria: { label: "Déclic, accueil" } do %>
-    <span class="acc-logo-carre" aria-hidden="true">D</span><span>Déclic</span>
+  <div class="acc-marque">
+    <%= link_to root_path, class: "acc-logo", aria: { label: "Déclic, accueil" } do %>
+      <span class="acc-logo-carre" aria-hidden="true">D</span><span>Déclic</span>
+    <% end %>
+    <p class="acc-baseline">Changer sa vie, en quelques clics</p>
+  </div>
+  <% if local_assigns[:recherche] %>
+    <form class="acc-recherche" role="search" data-action="submit->diorama#validerRecherche">
+      <%= picto(:chercher, taille: 20) %>
+      <input type="search" name="q" autocomplete="off" enterkeyhint="search"
+             placeholder="Rechercher une activité, un lieu, un événement…"
+             aria-label="Rechercher une activité, un lieu, un événement"
+             data-diorama-target="recherche" data-action="input->diorama#rechercher focus->diorama#ouvrirRecherche">
+    </form>
   <% end %>
 </div>

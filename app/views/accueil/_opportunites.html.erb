@@ -1,0 +1,63 @@
+<%# Bloc « Opportunités » : agenda à deux colonnes. À gauche la prochaine opportunité en vedette, à
+    droite les quatre suivantes ; les pastilles de catégorie filtrent les deux colonnes sans
+    rechargement (contrôleur `agenda`). Sans JS : pastilles masquées, vue « Toutes ».
+    `opportunites` = les prochaines datées, par date (Opportunity.prochaines). %>
+<% vedettes = ([ opportunites.first ] + Categorie::TOUTES.filter_map { |c| opportunites.find { |o| o.category == c.cle } }).compact.uniq %>
+<section class="bloc bloc-opportunites bloc--vague" aria-labelledby="bloc-opportunites-titre">
+  <div class="bloc-cadre bloc-cadre--pile" data-controller="agenda">
+    <%= render "accueil/traits" %>
+    <div class="bloc-tete">
+      <div class="bloc-texte">
+        <span class="bloc-pastille bloc-pastille--orange">Opportunités</span>
+        <h2 id="bloc-opportunites-titre">Passez de l'idée <em>à l'action</em></h2>
+        <p>Événements, formations, missions bénévoles… Des opportunités concrètes près de chez vous.</p>
+      </div>
+      <%= link_to labo_opportunites_path, class: "bloc-bouton bloc-bouton--jaune" do %>
+        Explorer toutes les opportunités <%= picto(:fleche, taille: 18) %>
+      <% end %>
+    </div>
+
+    <% if opportunites.any? %>
+      <div class="bloc-filtres" role="group" aria-label="Filtrer par catégorie" data-agenda-target="filtres" hidden>
+        <button type="button" class="bloc-filtre" aria-pressed="true" data-agenda-target="filtre" data-action="agenda#filtrer" data-agenda-cle-param="">Toutes</button>
+        <% Categorie::TOUTES.reject { |c| c.cle == Categorie::HISTOIRES }.each do |c| %>
+          <button type="button" class="bloc-filtre" aria-pressed="false" data-agenda-target="filtre" data-action="agenda#filtrer" data-agenda-cle-param="<%= c.cle %>">
+            <span class="bloc-filtre-point" style="background: <%= c.couleur %>"></span><%= c.libelle %>
+          </button>
+        <% end %>
+      </div>
+
+      <div class="agenda">
+        <div class="agenda-vedette">
+          <% vedettes.each_with_index do |o, i| %>
+            <% categorie = categorie_de(o) %>
+            <div data-agenda-target="vedette" data-id="<%= o.id %>" data-categorie="<%= o.category %>"<%= " hidden" unless i.zero? %>>
+              <%= render "accueil/fiche_carte", lien: opportunity_path(o), photo: photo_opportunite(o), classe: "opp-carte--vedette",
+                         etiquette: { libelle: categorie.libelle, style: "background: #{categorie.couleur}; color: #{encre_sur(categorie.couleur)}" },
+                         titre: o.title, commune: commune_de(o.city, o.location), date: date_courte(o),
+                         extrait: excerpt_texte(o.description, longueur: 160) %>
+            </div>
+          <% end %>
+        </div>
+        <ul class="agenda-liste" aria-label="Les opportunités suivantes">
+          <% opportunites.drop(1).each_with_index do |o, i| %>
+            <% jour, mois = date_pastille(o) %>
+            <li data-agenda-target="ligne" data-id="<%= o.id %>" data-categorie="<%= o.category %>"<%= " hidden" if i >= 4 %>>
+              <%= link_to opportunity_path(o), class: "agenda-ligne" do %>
+                <span class="agenda-date"><strong><%= jour %></strong><span><%= mois %></span></span>
+                <span class="agenda-texte">
+                  <span class="agenda-titre"><%= o.title %></span>
+                  <% if (commune = commune_de(o.city, o.location)) %><span class="agenda-lieu"><%= picto(:lieu, taille: 14) %><%= commune %></span><% end %>
+                </span>
+                <%= image_tag photo_opportunite(o), alt: "", class: "agenda-mini", width: 64, height: 64, loading: "lazy", decoding: "async" %>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+        <p class="bloc-vide" data-agenda-target="vide" hidden>Aucune opportunité datée à venir dans cette catégorie pour le moment.</p>
+      </div>
+    <% else %>
+      <p class="bloc-vide">Aucune opportunité datée à venir pour le moment : les opportunités ouvertes toute l'année restent sur la carte.</p>
+    <% end %>
+  </div>
+</section>

@@ -73,7 +73,7 @@ export default class extends Controller {
   static values = { points: Array, categories: Array, tuiles: Object, developpement: Boolean, mini: Boolean }
   static targets = [
     "carte", "alerte", "voletTitre", "poigneeTitre", "compteur", "fiches", "vide", "stats",
-    "modeleFiche", "modelePin", "modelePopup", "categorie", "toutes", "ongletFavoris", "ongletCarte",
+    "modeleFiche", "modelePin", "modelePopup", "categorie", "toutes", "recherche",
     "boutonCalques", "panneauCalques", "voileCalques", "choixFond", "rubriqueAmbiance", "choixAuto",
     "choixReglage", "choixBlanche", "ambianceAuto", "rubriqueStyle", "choixStyle"
   ]
@@ -82,7 +82,7 @@ export default class extends Controller {
     this.categoriesParCle = Object.fromEntries(this.categoriesValue.map((c) => [c.cle, c]))
     this.appliquerReglagesPins()
     if (this.miniValue) { this.demarrerMini(); return }
-    this.filtre = { categories: new Set(), favoris: false }
+    this.filtre = { categories: new Set(), favoris: false, texte: "" }
     this.favoris = this.lireFavoris()
     this.selection = null
     this.points = this.pointsValue.map((p) => ({ ...p, debut: lireDate(p.debut), fin: lireDate(p.fin) }))
@@ -91,13 +91,15 @@ export default class extends Controller {
     this.majCompteurs()
     this.majVolet()
     this.demarrer()
-    // Onglet Favoris des fiches (/labo/accueil?favoris=1). Après la connexion du volet, qui écoute
-    // l'événement d'ouverture.
+    // Filtre Favoris par l'URL (/labo/accueil?favoris=1) : plus d'onglet pour l'ouvrir. Après la connexion
+    // du volet, qui écoute l'événement d'ouverture.
     if (new URLSearchParams(window.location.search).get("favoris") === "1") setTimeout(() => this.basculerFavoris())
   }
 
   disconnect() {
     clearInterval(this.minuterieAuto)
+    clearTimeout(this.minuterieAide)
+    this.aideZoom?.remove()
     this.precipitations?.detruire()
     this.observateur?.disconnect()
     window.removeEventListener("orientationchange", this.surOrientation)
@@ -356,6 +358,7 @@ export default class extends Controller {
     this.poserAttribution()
     this.poserSocle()
     this.poserCoucheFond(this.coucheCourante())
+    this.moletteCooperative()
   }
 
   creerPlan() {
@@ -365,6 +368,40 @@ export default class extends Controller {
     this.carte.setView([CENTRE_INITIAL.lat, CENTRE_INITIAL.lon], ZOOM_PLAN_INITIAL) // une vue d'abord, comme au diorama
     this.poserAttribution()
     this.couchePlan().addTo(this.carte)
+    this.moletteCooperative()
+  }
+
+  // Geste « coopératif » (Leaflet n'a pas d'option dédiée) : sur ordinateur (≥ 768 px), la molette seule fait
+  // défiler la page ; Ctrl/Cmd + molette (et le pincement du pavé tactile, qui envoie ctrlKey) zoome la carte.
+  // Cause du zoom involontaire : scrollWheelZoom est actif par défaut dans Leaflet et capte toute molette.
+  // Ici, en capture, on coupe l'événement avant le gestionnaire de Leaflet, sans preventDefault : le navigateur
+  // fait défiler la page. Boutons ±, pincement tactile et glisser-déposer ne sont pas touchés.
+  moletteCooperative() {
+    const conteneur = this.carte.getContainer()
+    this.auditeurMolette = (e) => {
+      if (!matchMedia("(min-width: 768px)").matches || e.ctrlKey || e.metaKey) return
+      e.stopPropagation()
+      this.aideMolette()
+    }
+    conteneur.addEventListener("wheel", this.auditeurMolette, { capture: true, passive: true })
+  }
+
+  // Message temporaire au centre de la carte, 1,5 s puis fondu ; au plus une fois par seconde.
+  aideMolette() {
+    const maintenant = Date.now()
+    if (maintenant - (this.derniereAide || 0) < 1000) return
+    this.derniereAide = maintenant
+    if (!this.aideZoom) {
+      this.aideZoom = document.createElement("p")
+      this.aideZoom.className = "acc-aide-zoom"
+      this.aideZoom.setAttribute("role", "status")
+      this.carteTarget.parentElement.appendChild(this.aideZoom)
+    }
+    const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
+    this.aideZoom.textContent = `${mac ? "⌘" : "Ctrl"} + molette pour zoomer la carte`
+    this.aideZoom.classList.add("acc-aide-zoom--visible")
+    clearTimeout(this.minuterieAide)
+    this.minuterieAide = setTimeout(() => this.aideZoom.classList.remove("acc-aide-zoom--visible"), 1500)
   }
 
   couchePlan() {
@@ -1076,7 +1113,34 @@ export default class extends Controller {
     const f = this.filtre
     if (f.categories.size && !f.categories.has(p.categorie)) return false
     if (f.favoris && !this.favoris.has(p.id)) return false
+    if (f.texte && !this.correspond(p, f.texte)) return false
     return true
+  }
+
+  // ─── Recherche (champ du header mobile) ──────────────────────────────────────────────
+  // Filtre en direct les pins et la liste sur le titre, la commune et la catégorie : tous les mots saisis
+  // doivent s'y trouver, sans tenir compte des accents ni de la casse.
+  correspond(p, texte) {
+    p.texteRecherche ||= this.normaliser(`${p.titre} ${p.commune || ""} ${this.categorie(p.categorie).libelle}`)
+    return texte.split(" ").every((mot) => p.texteRecherche.includes(mot))
+  }
+
+  normaliser(texte) {
+    return String(texte).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/\s+/g, " ")
+  }
+
+  rechercher() {
+    this.filtre.texte = this.normaliser(this.rechercheTarget.value)
+    this.appliquerFiltres()
+  }
+
+  // Toucher le champ déplie la liste : les résultats sont visibles pendant la frappe.
+  ouvrirRecherche() { this.dispatch("ouvrir-volet") }
+
+  // « Rechercher » du clavier : referme le clavier, les résultats restent affichés.
+  validerRecherche(event) {
+    event.preventDefault()
+    this.rechercheTarget.blur()
   }
 
   appliquerFiltres() {
@@ -1123,6 +1187,11 @@ export default class extends Controller {
     )
   }
 
+  // Accueil : personne d'autre n'écoute l'échec, la carte le dit elle-même.
+  localisationRefusee() {
+    this.alerter("Position indisponible : autorisez la localisation dans votre navigateur pour centrer la carte sur vous.")
+  }
+
   majCompteurs() {
     const liste = this.poses || this.points
     const comptes = {}
@@ -1145,27 +1214,8 @@ export default class extends Controller {
 
   basculerFavoris() {
     this.filtre.favoris = !this.filtre.favoris
-    this.majOnglets()
     this.appliquerFiltres()
     if (this.filtre.favoris) this.dispatch("ouvrir-volet") // la bottom sheet montre les favoris
-  }
-
-  // Toucher « Carte » quand les favoris sont affichés revient à la carte complète.
-  voirCarte() {
-    if (!this.filtre.favoris) return
-    this.filtre.favoris = false
-    this.majOnglets()
-    this.appliquerFiltres()
-  }
-
-  // L'onglet courant : Carte, sauf pendant que le filtre Favoris est actif.
-  majOnglets() {
-    const favoris = this.filtre.favoris
-    if (this.hasOngletFavorisTarget) this.ongletFavorisTarget.setAttribute("aria-pressed", String(favoris))
-    if (this.hasOngletCarteTarget) {
-      if (favoris) this.ongletCarteTarget.removeAttribute("aria-current")
-      else this.ongletCarteTarget.setAttribute("aria-current", "page")
-    }
   }
 
   // ─── Le volet (majVolet de la v3) ────────────────────────────────────────────────────
@@ -1185,7 +1235,7 @@ export default class extends Controller {
 
     let titre = "Au centre de la vue"
     if (!aVenir.length) titre = "Toujours d'actualité"
-    const titreVolet = this.filtre.favoris ? "Vos favoris" : titre
+    const titreVolet = this.filtre.favoris ? "Vos favoris" : this.filtre.texte ? "Résultats" : titre
     this.voletTitreTarget.textContent = titreVolet
     this.poigneeTitreTarget.textContent = titreVolet
 
@@ -1198,14 +1248,17 @@ export default class extends Controller {
     this.videTarget.hidden = liste.length > 0
     this.videTarget.textContent = this.filtre.favoris
       ? "Aucun favori pour l'instant : touchez le signet d'une fiche pour la garder ici."
-      : "Aucune initiative ne correspond à ces filtres."
+      : this.filtre.texte
+        ? `Aucun résultat pour « ${this.rechercheTarget.value.trim()} ».`
+        : "Aucune initiative ne correspond à ces filtres."
     if (this.developpementValue && this.hasStatsTarget) this.statsTarget.innerHTML = this.statistiques(liste.length, jour)
     this.majCompteur()
   }
 
   // Nombre de lieux (filtres compris) dans le cadrage actuel de la carte ; sans carte, le total filtré.
   majCompteur() {
-    const bornes = this.carte?.getBounds()
+    // En recherche, la liste couvre toute la carte : le compteur aussi.
+    const bornes = this.filtre.texte ? null : this.carte?.getBounds()
     const n = (this.poses || this.points).filter((p) => this.passe(p) && (!bornes || (p.latlng && bornes.contains(p.latlng)))).length
     this.compteurTarget.textContent = `${n} ${n > 1 ? "lieux" : "lieu"}`
   }

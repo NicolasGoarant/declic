@@ -11,6 +11,7 @@
   --gris-clair: #e8e6f0;
   --fond: #f7f6fb;
   --blanc: #ffffff;
+  --rose: #e8409a;
   --ombre: 0 6px 24px rgba(29, 26, 43, 0.10);
   --ombre-legere: 0 2px 10px rgba(29, 26, 43, 0.08);
   --rayon: 18px;
@@ -19,7 +20,7 @@
   --poignee-h: 56px; /* poignée de la bottom sheet repliée */
   --sheet-h: 55dvh; /* bottom sheet dépliée */
   --legende-h: 62px; /* légende des catégories, posée au-dessus de la poignée */
-  --barre-h: 68px;
+  --barre-h: 64px; /* barre collée en haut, sans marge */
   --gouttiere: 16px;
   /* La table sur laquelle la maquette est posée (diorama/contour.js), son socle et son ombre. */
   --table: #f1ebe1;
@@ -99,11 +100,49 @@ body.acc-corps {
 }
 .acc-tete > * { pointer-events: auto; }
 
-.acc-entete { display: flex; align-items: center; min-height: 48px; }
-/* Logo : sans fond, le diorama apparaît derrière ; un léger halo blanc garde « Déclic » lisible. */
-.acc-entete .acc-logo {
-  padding: 4px 0;
-  text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 1px 10px rgba(255, 255, 255, 0.9);
+/* Header compact, sur la carte : aucun fond. Logo et baseline sont blancs avec une ombre douce, soutenus par
+   un dégradé sombre en haut de la carte ; la pilule de recherche porte seule le contraste. Deux colonnes :
+   marque (logo, baseline dessous) à gauche, recherche à droite. */
+.acc-entete {
+  position: relative; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 0;
+  background: none; pointer-events: none; /* les gestes passent à la carte dans les zones vides */
+}
+.acc-entete .acc-logo, .acc-entete .acc-recherche { pointer-events: auto; }
+.acc-marque { flex: none; display: flex; flex-direction: column; gap: 2px; width: 132px; }
+.acc-entete .acc-logo { align-self: flex-start; font-size: 20px; color: #fff; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5); }
+.acc-entete .acc-logo-carre { width: 30px; height: 30px; font-size: 15px; }
+.acc-baseline {
+  margin: 0; font-size: 12px; line-height: 1.25; font-weight: 600; text-wrap: balance;
+  color: #fff; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+/* Recherche : pilule de verre, loupe à gauche, cible tactile de 44 px au moins. */
+.acc-recherche {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; margin: 0;
+  border-radius: 999px; background: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1px rgba(91, 61, 245, 0.18); color: var(--gris); cursor: text;
+}
+.acc-recherche:focus-within { background: var(--blanc); box-shadow: inset 0 0 0 2px var(--violet); }
+.acc-recherche svg { color: var(--violet); }
+.acc-recherche input {
+  flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; background: transparent; outline: 0;
+  font-size: 16px; /* 16 px : iOS ne zoome pas la page au focus */ color: var(--encre); text-overflow: ellipsis;
+}
+.acc-recherche input:focus-visible { outline: 0; } /* l'anneau est sur la pilule (:focus-within) */
+.acc-recherche input::placeholder { font-size: 13px; color: var(--gris); opacity: 1; }
+.acc-recherche input::-webkit-search-cancel-button { cursor: pointer; }
+/* Hors de la carte (« Pourquoi Déclic ? ») : le header reste dans le flux, aux gouttières de la page. */
+.acc > .acc-entete { margin: calc(10px + env(safe-area-inset-top)) var(--gouttiere) 0; pointer-events: auto; }
+/* Sur fond de page clair (hors carte), retour aux couleurs sombres. */
+.acc > .acc-entete .acc-logo { color: var(--encre); text-shadow: none; }
+.acc > .acc-entete .acc-baseline { color: var(--violet-fonce); text-shadow: none; }
+
+/* Dégradé sombre en haut de la carte (mobile) : soutient le contraste du logo, sans bande visible. */
+@media (max-width: 767.98px) {
+  .acc-tete::before {
+    content: ""; position: absolute; z-index: -1; top: 0; left: 0; right: 0; height: 120px;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0)); pointer-events: none;
+  }
 }
 
 /* Hors bureau, l'accroche ne prend pas de hauteur au-dessus du diorama : elle reste dans la page
@@ -137,9 +176,48 @@ body.acc-corps {
   font-size: 10px; line-height: 16px; text-shadow: none;
 }
 .acc-cat small:empty { display: none; }
+.acc-cat-icone { display: contents; } /* bureau et tablette : le badge se repère sur la cellule */
 .acc-cat:hover img { transform: translateY(-2px); }
 .acc-cat[aria-pressed="true"] { background: color-mix(in srgb, var(--c, var(--violet)) 20%, var(--blanc)); box-shadow: inset 0 0 0 2px var(--c, var(--violet)); }
 .acc-cat--vide { opacity: 0.55; }
+
+/* Mobile et tablette : la légende flotte sur la carte en verre dépoli clair (le diorama reste deviné).
+   Sans `backdrop-filter`, un fond plus opaque garde les libellés lisibles. Les gestes passent à la carte
+   entre les catégories. Le bureau range la légende dans son panneau blanc : rien ne change là-bas. */
+@media (max-width: 1023.98px) {
+  .acc-categories {
+    background: rgba(255, 255, 255, 0.55);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+  }
+  .acc-cat { pointer-events: auto; min-height: 44px; color: var(--encre); font-size: 11px; font-weight: 600; }
+  .acc-cat img { filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.25)); }
+  /* Active ou filtrée : pastille blanche plus opaque, libellé plus gras. */
+  .acc-cat[aria-pressed="true"] { background: rgba(255, 255, 255, 0.85); box-shadow: none; font-weight: 800; }
+}
+/* Téléphones étroits : à 11 px, « Entreprendre » (≈ 68 px) déborde de sa cellule de 52 px et touche ses voisines.
+   Barre élargie à 8 px du bord et libellés à 10 px, resserrés. */
+/* Téléphone : six cellules de même hauteur, alignées sur le haut. Le libellé réserve deux lignes (Belles Histoires
+   passe sur deux lignes, les autres sur une, centrée dans la zone) : toutes les icônes partagent la même ligne,
+   et le badge se repère sur l'enveloppe de l'icône, donc au même endroit pour les six. Avant, les cellules étaient
+   centrées verticalement dans la barre : la plus haute (deux lignes) remontait et son badge avec elle. */
+@media (max-width: 767.98px) {
+  :root { --legende-h: 76px; }
+  .acc-categories { align-items: stretch; }
+  .acc-cat { align-self: stretch; justify-content: flex-start; padding: 4px 0 2px; gap: 2px; }
+  .acc-cat-icone { display: block; position: relative; flex: none; width: 34px; height: 34px; }
+  .acc-cat-icone img { display: block; }
+  .acc-cat small { top: -4px; right: -8px; }
+  .acc-cat-libelle { display: flex; align-items: center; justify-content: center; min-height: 24px; line-height: 12px; text-wrap: balance; }
+}
+@media (max-width: 419.98px) {
+  .acc-categories { left: 8px; right: 8px; }
+  .acc-cat { font-size: 10px; letter-spacing: -0.04em; }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  @media (max-width: 1023.98px) { .acc-categories { background: rgba(255, 255, 255, 0.8); } }
+}
 
 /* ─── La carte ─────────────────────────────────────────────────────────────────── */
 .acc-carte {
@@ -158,6 +236,10 @@ body.acc-corps {
 /* z-index : Leaflet numérote ses volets jusqu'à 1000, ils restent enfermés ici, sous la sheet. */
 .acc-carte-fond { position: absolute; inset: 0; z-index: 0; background: var(--table-fond); }
 .acc-carte-fond.leaflet-container { font: inherit; background: var(--table-fond); }
+/* Jointure entre deux dalles : sur un écran à échelle fractionnaire (mobile, dpr 2-3), Chrome laisse parfois un
+   filet de fond clair entre deux rangées de dalles (défaut connu de Leaflet). Le contour transparent fait
+   recouvrir les dalles d'un sous-pixel. */
+.acc-carte .leaflet-tile { outline: 1px solid transparent; }
 /* Sous le bord bas du plateau : une tranche de terre, et l'ombre portée sur la table. */
 .leaflet-container .diorama-socle { fill: var(--socle); transform: translateY(var(--socle-h)); }
 .leaflet-container .diorama-ombre { fill: rgba(92, 70, 40, 0.28); transform: translateY(calc(var(--socle-h) + 6px)); filter: url(#diorama-flou-ombre); }
@@ -173,6 +255,23 @@ body.acc-corps {
   background: var(--blanc); box-shadow: var(--ombre); cursor: pointer;
 }
 .acc-rond-calques:hover, .acc-rond-calques[aria-expanded="true"] { background: var(--violet-pale); color: var(--violet); }
+/* « Me localiser » : pastille en bas à gauche de la carte, à droite de l'attribution « ⓘ ». */
+.acc-localiser {
+  position: absolute; left: calc(var(--gouttiere) + 36px); bottom: calc(var(--poignee-h) + var(--legende-h) + 12px); z-index: 600;
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px 0 12px; border: 0; border-radius: 999px;
+  background: var(--blanc); box-shadow: var(--ombre); font-size: 14px; font-weight: 800; cursor: pointer;
+  transition: opacity 250ms ease-out, visibility 250ms;
+}
+.acc-localiser svg { color: var(--violet); }
+.acc-localiser:hover { background: var(--violet-pale); color: var(--violet); }
+.acc-ecran:has(.acc-volet--ouvert) .acc-localiser { opacity: 0; visibility: hidden; }
+/* Mobile et tablette : icône seule, rond de 44 px comme les boutons calques et zoom (le libellé reste
+   lisible par les lecteurs d'écran via aria-label). */
+@media (max-width: 1023.98px) {
+  .acc-localiser { width: 44px; height: 44px; padding: 0; justify-content: center; gap: 0; }
+  .acc-localiser svg { width: 20px; height: 20px; }
+  .acc-localiser-libelle { display: none; }
+}
 
 /* ─── Le panneau « Calques » : verre dépoli, à gauche du bouton (feuille basse sur mobile) ── */
 .acc-calques-voile { position: absolute; inset: 0; z-index: 590; }
@@ -314,6 +413,48 @@ body.acc-corps {
   transform: translateY(calc(var(--poignee-h) - var(--sheet-h)));
 }
 .acc-ecran:has(.acc-volet--ouvert) .acc-commandes { opacity: 0; visibility: hidden; }
+
+/* Mobile et tablette, accueil seulement (.acc-ecran) : les contrôles forment une colonne à droite, sur un même axe,
+   de haut en bas calques · zoom · localisation · information (ⓘ), 8 px entre les blocs, au-dessus de la légende.
+   Les boutons sont petits et discrets, mais gardent une zone tactile de 44 px (pseudo-élément transparent).
+   --b0 : haut de la légende, à partir du bas de l'écran. Le bureau garde ses règles plus bas. */
+@media (max-width: 1023.98px) {
+  .acc-ecran {
+    --b0: calc(var(--poignee-h) + var(--legende-h) + 8px);
+    --anneau: 0 0 0 2px var(--violet);
+  }
+  /* Colonne : calques (36) + 8 + zoom (72) au-dessus de la localisation (32) + 8 et de l'info (28) + 8. */
+  .acc-ecran .acc-commandes { --commandes-bas: calc(var(--b0) + 84px); width: 36px; align-items: center; gap: 8px; }
+  .acc-ecran .acc-rond-calques { position: relative; width: 36px; height: 36px; }
+  .acc-ecran .acc-rond-calques svg { width: 18px; height: 18px; }
+  .acc-ecran .acc-zoom-pile { border-radius: 18px; overflow: visible; }
+  .acc-ecran .acc-zoom-pile button { position: relative; width: 36px; height: 36px; }
+  .acc-ecran .acc-zoom-pile button:first-child { border-radius: 18px 18px 0 0; }
+  .acc-ecran .acc-zoom-pile button:last-child { border-radius: 0 0 18px 18px; }
+  .acc-ecran .acc-zoom-pile svg { width: 16px; height: 16px; }
+  .acc-ecran .acc-rond-calques::after, .acc-ecran .acc-zoom-pile button::after,
+  .acc-ecran .acc-localiser::after, .acc-ecran .acc-attribution:not(.acc-attribution--ouverte)::after {
+    content: ""; position: absolute; inset: var(--zone, -4px); /* zone tactile de 44 px autour du bouton visible */
+  }
+  .acc-ecran .acc-localiser {
+    left: auto; right: calc(var(--gouttiere) + 2px); bottom: calc(var(--b0) + 44px);
+    width: 32px; height: 32px; background: rgba(255, 255, 255, 0.85); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); --zone: -6px;
+  }
+  .acc-ecran .acc-localiser svg { width: 16px; height: 16px; }
+  /* Attribution (obligatoire) : le « ⓘ » clôt la colonne ; dépliée, le texte s'étend vers la gauche. */
+  .acc-ecran .acc-carte .leaflet-bottom.leaflet-left { left: auto; right: calc(var(--gouttiere) + 4px); bottom: calc(var(--b0) + 8px); }
+  .acc-ecran .leaflet-control-attribution.acc-attribution { margin: 0 !important; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); --zone: -8px; }
+  .acc-ecran .acc-attribution:not(.acc-attribution--ouverte) {
+    position: relative; width: 28px; height: 28px; background: rgba(255, 255, 255, 0.7);
+  }
+  .acc-ecran .acc-attribution:not(.acc-attribution--ouverte)::before { font-size: 14px; }
+  /* Focus et état actif : anneau violet fin. */
+  .acc-ecran .acc-commandes button:focus-visible, .acc-ecran .acc-localiser:focus-visible,
+  .acc-ecran .acc-attribution:focus-visible { outline: 2px solid var(--violet); outline-offset: -2px; }
+  .acc-ecran .acc-rond-calques[aria-expanded="true"], .acc-ecran .acc-rond-calques:active, .acc-ecran .acc-localiser:active {
+    box-shadow: var(--anneau), var(--ombre);
+  }
+}
 
 /* Les marqueurs : pictogramme sur une tige fine, petit socle coloré au pied. Toutes les tailles et
    tous les temps viennent de diorama/reglages.js#PINS (injectés en variables par le contrôleur,
@@ -565,54 +706,9 @@ body.acc-corps {
 .fiche-signet[aria-pressed="true"] { color: var(--violet); }
 .fiche-signet[aria-pressed="true"] svg { fill: currentColor; }
 
-/* ─── Sections sous la carte ───────────────────────────────────────────────────── */
-.acc-suite { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; padding: 26px 0 30px; }
-.acc-section { min-width: 0; }
-.acc-section-tete {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 0 var(--gouttiere) 12px;
-}
-.acc-section-tete h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
-.acc-section > .acc-note { padding: 0 var(--gouttiere); }
+/* ─── Sections sous la carte : accueil_blocs.css (chargée par le seul layout « accueil ») ── */
 
-.acc-histoires-rangee, .acc-temoignages-rangee {
-  display: flex; gap: 12px; padding: 2px var(--gouttiere) 8px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
-}
-.acc-histoires-rangee::-webkit-scrollbar, .acc-temoignages-rangee::-webkit-scrollbar { display: none; }
-
-.histoire {
-  flex: none; width: 270px; scroll-snap-align: start; display: grid; grid-template-columns: 88px 1fr; gap: 12px;
-  padding: 8px; border-radius: 16px; background: var(--blanc); box-shadow: var(--ombre-legere);
-  text-decoration: none; border-left: 4px solid #9472f6;
-}
-.histoire:hover { box-shadow: var(--ombre); }
-.histoire-photo { width: 88px; height: 100px; border-radius: 12px; object-fit: cover; }
-.histoire-photo-vide { display: grid; place-items: center; background: #efe9fe; }
-.histoire-texte { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 4px 4px 4px 0; }
-.histoire-titre { font-size: 14px; font-weight: 800; line-height: 1.3; }
-.histoire-extrait { font-size: 12.5px; line-height: 1.4; color: var(--encre); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.histoire-lieu { margin-top: auto; font-size: 12px; color: var(--gris); }
-
-.temoignage {
-  flex: none; width: 280px; scroll-snap-align: start; margin: 0; padding: 18px;
-  border-radius: 18px; background: var(--blanc); box-shadow: var(--ombre-legere);
-  display: flex; flex-direction: column; gap: 12px;
-}
-.temoignage-photo { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
-.temoignage blockquote { margin: 0; font-size: 14px; line-height: 1.5; }
-.temoignage figcaption { margin-top: auto; font-size: 13px; color: var(--gris); }
-.temoignage figcaption strong { color: var(--encre); }
-
-.acc-presse-grille { display: grid; gap: 10px; padding: 0 var(--gouttiere); }
-.passage {
-  display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 16px;
-  background: var(--blanc); box-shadow: var(--ombre-legere); text-decoration: none;
-}
-.passage:hover { box-shadow: var(--ombre); }
-.passage-logo { flex: none; width: 48px; height: 48px; border-radius: 12px; object-fit: contain; background: var(--blanc); border: 1px solid var(--gris-clair); }
-.passage-texte { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.passage-media { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--gris); }
-.passage-titre { font-size: 14px; font-weight: 700; line-height: 1.35; }
-
+.acc-ville + .acc-pied { border-top: 0; background: #f1eefc; } /* lavande : prolonge la ligne de sol de la silhouette, qui fait office de limite */
 .acc-pied {
   padding: 18px var(--gouttiere) 24px; border-top: 1px solid var(--gris-clair); font-size: 12px; color: var(--gris);
 }
@@ -625,7 +721,8 @@ body.acc-corps {
 /* Pas d'overflow hidden : le « + » dépasse de 16 px au-dessus de la barre, ombre comprise. */
 .acc-onglets {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 1100;
-  display: grid; grid-template-columns: repeat(5, 1fr);
+  /* Colonnes inégales : celle du « + » ne porte que « Proposer », « Belles Histoires » a la plus large. */
+  display: grid; grid-template-columns: 1.1fr 1.15fr 0.85fr 1.3fr 0.9fr;
   height: var(--tabbar-h); padding-bottom: env(safe-area-inset-bottom);
   border-radius: 22px 22px 0 0; background: var(--blanc);
   box-shadow: 0 -6px 24px rgba(29, 26, 43, 0.10);
@@ -633,12 +730,11 @@ body.acc-corps {
 .acc-onglets > * {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   min-width: 44px; min-height: 44px; border: 0; background: transparent; color: var(--encre);
-  text-decoration: none; font-size: 11.5px; font-weight: 600; cursor: pointer;
+  text-decoration: none; font-size: 11px; line-height: 1.15; font-weight: 600; letter-spacing: -0.02em; text-align: center; cursor: pointer;
 }
-.acc-onglets [aria-current="page"], .acc-onglets [aria-pressed="true"] { color: var(--violet); font-weight: 800; }
+.acc-onglets > * span { max-width: 100%; white-space: nowrap; }
+.acc-onglets [aria-current="page"] { color: var(--violet); font-weight: 800; }
 .acc-onglets [aria-current="page"] svg { fill: color-mix(in srgb, var(--violet) 25%, transparent); }
-.acc-onglets [aria-pressed="true"] svg { fill: currentColor; }
-.acc-onglet-inactif { opacity: 0.45; cursor: default !important; }
 
 /* Le « + » central : rond de 56 px, surélevé, couleur d'accent, lien « Proposer ». */
 .acc-onglet-plus { position: relative; justify-content: flex-end; padding-bottom: 6px; color: var(--violet) !important; font-weight: 700 !important; }
@@ -659,42 +755,109 @@ body.acc-corps {
   .acc-cat img { width: 52px; height: 52px; }
   .fiche { width: 210px; }
   .fiche-bandeau { height: 118px; }
-  .acc-presse-grille { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ─── Tablette et bureau (≥ 768 px) : barre de navigation flottante ─────────────────── */
+/* Elle remplace le header et la barre d'onglets mobiles. La mise en page de la carte reste celle du mobile
+   (volet en bas) jusqu'à 1023 px ; le volet bascule en panneau gauche à partir de 1024 px. */
+@media (min-width: 768px) {
+  :root { --tabbar-h: 0px; }
+  body.acc-corps { padding-bottom: 0; }
+  .acc-onglets, .acc-entete { display: none; }
+
+  /* Indice de défilement : la carte s'arrête 72 px avant le bas de l'écran, le début des blocs dépasse.
+     La barre flotte par-dessus la carte (elle ne retire aucune hauteur) : seuls les 72 px sont retranchés. */
+  .acc-ecran { --indice-h: 72px; height: calc(100svh - var(--indice-h)); }
+
+  .acc-barre {
+    position: sticky; top: 0; z-index: 1200;
+    display: flex; align-items: center; gap: 4px; height: 64px; margin: 0; padding: 0 16px;
+    border-radius: 0 0 20px 20px; background: var(--blanc); box-shadow: 0 10px 30px rgba(76, 29, 149, 0.10);
+  }
+  /* Accueil : par-dessus la carte, qui occupe toute la hauteur derrière. */
+  .acc-barre--flottante { position: absolute; top: 0; left: 0; right: 0; }
+
+  .acc-barre .acc-logo { gap: 6px; margin-right: 2px; font-size: 19px; color: var(--encre); }
+  .acc-barre .acc-logo-carre {
+    width: 34px; height: 34px; border-radius: 10px; font-size: 17px;
+    box-shadow: 0 4px 14px rgba(91, 61, 245, 0.45);
+  }
+  .acc-barre-nav { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; }
+  .acc-barre-nav a {
+    display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 7px; border-radius: 999px;
+    text-decoration: none; white-space: nowrap; font-weight: 600; font-size: 13.5px; color: #6b6f85;
+    transition: background-color 150ms, color 150ms;
+  }
+  .acc-barre-nav a svg { display: none; } /* libellés seuls sur les largeurs étroites */
+  .acc-barre-nav a:hover { background: rgba(238, 234, 254, 0.55); color: var(--encre); }
+  .acc-barre-nav a[aria-current="page"] { background: #eeeafe; color: var(--violet); }
+  .acc-barre-nav a[aria-current="page"] svg { fill: color-mix(in srgb, var(--violet) 22%, transparent); }
+  .acc-barre-sep { flex: none; width: 1px; height: 32px; margin: 0 2px; background: #ecebf3; }
+  .acc-barre a:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
+
+  .acc-bouton-proposer {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex: none; height: 44px; padding: 0 14px;
+    border-radius: 999px; background: var(--violet); color: var(--blanc) !important; white-space: nowrap;
+    font-weight: 600; font-size: 14px; text-decoration: none; box-shadow: 0 6px 16px rgba(91, 61, 245, 0.3);
+    transition: background-color 150ms;
+  }
+  .acc-bouton-proposer:hover { background: var(--violet-fonce); }
+  .acc-bouton-suite { display: none; }
+  .acc-bouton-temoignage {
+    background: var(--blanc); color: var(--rose) !important; box-shadow: inset 0 0 0 1.5px var(--rose);
+    width: 44px; padding: 0; /* cœur seul sur les largeurs étroites */
+  }
+  .acc-bouton-temoignage svg { color: var(--rose); }
+  .acc-bouton-temoignage:hover { background: color-mix(in srgb, var(--rose) 8%, var(--blanc)); }
+  .acc-bouton-libelle { display: none; }
+  .acc-barre-sep + .acc-bouton-temoignage { margin-right: 4px; }
+
+  /* Les libellés ne tiennent pas tous sur une ligne en dessous de 1400 px : on gagne de la place par paliers.
+     768-999 px : libellés seuls, cœur seul, « Proposer ». */
+  @media (min-width: 1000px) { /* + icônes des entrées */
+    .acc-barre-nav a { font-size: 14px; padding: 0 10px; }
+    .acc-barre-nav a svg { display: block; width: 20px; height: 20px; }
+  }
+  @media (min-width: 1180px) { /* + « Proposer une opportunité » en toutes lettres */
+    .acc-bouton-suite { display: inline; }
+  }
+  @media (min-width: 1280px) { /* + libellé « Partager un témoignage » */
+    .acc-barre { padding: 0 14px; }
+    .acc-barre .acc-logo { font-size: 24px; }
+    .acc-barre .acc-logo-carre { width: 36px; height: 36px; font-size: 18px; }
+    .acc-barre-nav a { font-size: 15px; padding: 0 12px; }
+    .acc-bouton-proposer { font-size: 14px; }
+    .acc-bouton-temoignage { width: auto; padding: 0 16px; }
+    .acc-bouton-libelle { display: inline; }
+  }
+  @media (min-width: 1400px) { /* tailles de la maquette : 16 px, icônes de 22 px, logo de 28 px */
+    .acc-barre { gap: 8px; padding: 0 16px; }
+    .acc-barre .acc-logo { font-size: 28px; margin-right: 16px; gap: 8px; }
+    .acc-barre .acc-logo-carre { width: 40px; height: 40px; font-size: 20px; }
+    .acc-barre-nav, .acc-barre-nav a { gap: 8px; }
+    .acc-barre-nav a { font-size: 16px; padding: 0 14px; }
+    .acc-barre-nav a svg { width: 22px; height: 22px; }
+    .acc-bouton-proposer { font-size: 15px; padding: 0 20px; }
+    .acc-bouton-temoignage { padding: 0 18px; }
+  }
 }
 
 /* ─── Bureau : barre du haut, panneau gauche de 380 px, carte à droite ─────────── */
 @media (min-width: 1024px) {
   :root { --gouttiere: 24px; }
   body.acc-corps { padding-bottom: 0; }
-  .acc-onglets, .acc-entete, .acc-poignee { display: none; }
-
-  .acc-barre {
-    position: sticky; top: 0; z-index: 1200;
-    display: flex; align-items: center; gap: 36px; height: var(--barre-h); padding: 0 28px;
-    background: var(--blanc); border-bottom: 1px solid var(--gris-clair);
-  }
-  .acc-barre-nav { display: flex; gap: 28px; flex: 1; }
-  .acc-barre-nav a { text-decoration: none; font-weight: 700; font-size: 15px; color: var(--gris); padding: 6px 0; border-bottom: 2px solid transparent; }
-  .acc-barre-nav a:hover { color: var(--encre); }
-  .acc-barre-nav a[aria-current="page"] { color: var(--violet); border-bottom-color: var(--violet); }
-  .acc-bouton-proposer {
-    display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 20px; border-radius: 999px;
-    background: var(--violet); color: var(--blanc) !important; font-weight: 800; font-size: 14px; text-decoration: none;
-    box-shadow: 0 6px 16px rgba(91, 61, 245, 0.3);
-  }
-  .acc-bouton-proposer:hover { background: var(--violet-fonce); }
+  .acc-poignee { display: none; }
 
   .acc-ecran {
     grid-template-columns: 380px minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas: "tete carte" "volet carte";
-    height: calc(100svh - var(--barre-h));
-    scroll-margin-top: var(--barre-h);
+    height: calc(100svh - var(--indice-h)); /* la barre flotte par-dessus la carte : elle ne retire aucune hauteur */
   }
   /* Panneau gauche : fond plein, accroche visible. */
   .acc-tete {
     grid-area: tete; position: static; z-index: auto; display: block;
-    background: var(--blanc); padding: 22px var(--gouttiere) 8px;
+    background: var(--blanc); padding: calc(var(--barre-h) + 10px) var(--gouttiere) 8px; /* sous la barre flottante */
   }
   .acc-accroche {
     position: static; width: auto; height: auto; margin: 0 0 12px; overflow: visible;
@@ -710,6 +873,7 @@ body.acc-corps {
   .acc-cat:hover { background: var(--fond); }
   .acc-carte { grid-area: carte; height: auto; border-left: 1px solid var(--gris-clair); }
   .acc-commandes { bottom: 28px; right: 24px; }
+  .acc-localiser { bottom: 22px; height: 44px; }
   .acc-calques { right: calc(24px + 46px + 12px); bottom: calc(28px + 92px + 10px); }
   .acc-carte .leaflet-bottom.leaflet-left { bottom: 16px; }
 
@@ -719,12 +883,13 @@ body.acc-corps {
     margin: 0; padding: 12px 0 0; border-radius: 0; box-shadow: none;
     min-height: 0; border-top: 1px solid var(--gris-clair);
   }
-  .acc-volet-panneau { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
+  .acc-volet-panneau { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; overscroll-behavior: auto; }
   .acc-volet-tete { justify-content: space-between; }
   .acc-volet-tete h2 { display: block; font-size: 17px; }
   .acc-fiches {
     flex: 1; min-height: 0; flex-direction: column; overflow-x: hidden; overflow-y: auto;
     scroll-snap-type: none; padding-bottom: 16px; scrollbar-width: thin;
+    overscroll-behavior: auto; /* en bout de liste, la page prend le relais */
   }
   .fiche { width: auto; display: grid; grid-template-columns: 112px 1fr; }
   .fiche-bandeau { height: 100%; min-height: 108px; }
@@ -732,14 +897,52 @@ body.acc-corps {
   .fiche-corps { padding: 12px; }
   .acc-stats { padding-bottom: 10px; }
 
-  .acc-suite { max-width: 1240px; margin: 0 auto; gap: 44px; padding: 44px 0 56px; }
-  .acc-section-tete h2 { font-size: 26px; }
-  .acc-histoires-rangee, .acc-temoignages-rangee { flex-wrap: wrap; overflow: visible; }
-  .histoire { width: calc((100% - 24px) / 3); }
-  .temoignage { width: calc((100% - 36px) / 4); }
-  .acc-presse-grille { grid-template-columns: repeat(4, 1fr); }
-  .acc-pied { max-width: 1240px; margin: 0 auto; }
+  .acc-pied { padding-inline: max(var(--gouttiere), calc((100% - 1240px) / 2)); } /* contenu centré, fond pleine largeur */
 }
+
+/* ─── Indice de défilement et message « Ctrl + molette » (≥ 768 px) ───────────────── */
+.acc-invite { display: none; }
+@media (min-width: 768px) {
+  /* Sur la carte, au-dessus du volet (650) et des commandes (600), centré sur la colonne de la carte. */
+  .acc-invite {
+    grid-area: carte; align-self: end; justify-self: center; z-index: 700;
+    display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; padding: 10px 18px;
+    border: 0; border-radius: 999px; background: rgba(255, 255, 255, 0.85); color: var(--encre);
+    box-shadow: 0 6px 20px rgba(29, 26, 43, 0.18); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    transition: opacity 250ms ease-out, visibility 250ms, background-color 150ms;
+  }
+  .acc-invite:hover { background: var(--blanc); }
+  .acc-invite:focus-visible { outline: 3px solid var(--violet); outline-offset: 2px; }
+  .acc-invite svg { flex: none; color: var(--violet); animation: acc-invite-rebond 1.6s ease-in-out infinite; }
+  .acc-invite--masque { opacity: 0; visibility: hidden; pointer-events: none; }
+  /* Tablette (< 1024 px) : le volet est une feuille repliée en bas ; l'invite se pose au-dessus de la légende. */
+  .acc-invite { margin-bottom: calc(var(--poignee-h) + var(--legende-h) + 14px); }
+  /* Léger dégradé blanc → transparent tout en bas de la carte, sous les commandes, sans interaction. */
+  .acc-carte::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 60px; z-index: 550; pointer-events: none;
+    background: linear-gradient(to top, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+  }
+  .acc-ecran:has(.acc-volet--ouvert) .acc-invite { opacity: 0; visibility: hidden; }
+}
+@media (min-width: 1024px) {
+  .acc-invite { margin-bottom: 20px; }
+}
+@keyframes acc-invite-rebond { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
+@media (prefers-reduced-motion: reduce) {
+  .acc-invite svg { animation: none; }
+  .acc-invite { transition: none; }
+}
+
+/* Aide au zoom : bulle centrée sur la carte (diorama#aideMolette), 1,5 s puis fondu. */
+.acc-aide-zoom {
+  position: absolute; left: 50%; top: 50%; z-index: 820; translate: -50% -50%; max-width: 80%;
+  padding: 10px 18px; border-radius: 12px; background: rgba(29, 26, 43, 0.82); color: #fff;
+  font-size: 15px; font-weight: 700; text-align: center; pointer-events: none;
+  opacity: 0; transition: opacity 300ms ease-out;
+}
+.acc-aide-zoom--visible { opacity: 1; transition-duration: 120ms; }
+@media (prefers-reduced-motion: reduce) { .acc-aide-zoom { transition: none; } }
 
 /* Réglage de la vue initiale (?debug_vue=1) : centre et zoom courants. */
 .acc-debug-vue {

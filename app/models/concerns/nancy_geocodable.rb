@@ -28,6 +28,14 @@ module NancyGeocodable
   # dépôt, pas deux qui pourraient diverger.
   VIEWBOX = { min_lon: 6.05, min_lat: 48.60, max_lon: 6.32, max_lat: 48.76 }.freeze
 
+  included do
+    # Fiches placées dans l'emprise de la Métropole : celles que la carte (diorama) peut afficher.
+    # Définition commune du badge de la carte et des comptages de « L'impact local ».
+    scope :dans_la_zone, -> {
+      where(latitude: VIEWBOX[:min_lat]..VIEWBOX[:max_lat], longitude: VIEWBOX[:min_lon]..VIEWBOX[:max_lon])
+    }
+  end
+
   # Position de référence du garde-fou de distance : place Stanislas.
   REFERENCE_POINT = [48.6937, 6.1834].freeze # [lat, lon]
 

@@ -1,0 +1,29 @@
+<%# Bloc « L'impact local » : bande de quatre comptages réels (labo#chiffres_impact), centrée. Les nombres montent de 0 à leur valeur à l'entrée dans la fenêtre
+    (contrôleur `compteur`) ; le serveur écrit la valeur finale (sans JS, moins d'animations). %>
+<% chiffres_affiches = [
+  [ "ecologiser", chiffres[:initiatives], "initiative publiée", "initiatives publiées", "Projets, événements, missions locales" ],
+  [ "rencontres", chiffres[:personnes], "personne engagée", "personnes engagées", "Structures et habitant·es qui portent ces initiatives" ],
+  [ "benevolat", chiffres[:rencontres], "rencontre", "rencontres", "Moments qui créent du lien" ],
+  [ Categorie::HISTOIRES, chiffres[:histoires], "belle histoire", "belles histoires", "Parcours inspirants de chez nous" ]
+] %>
+<section class="bloc bloc-impact bloc--vague" aria-labelledby="bloc-impact-titre">
+  <div class="bloc-cadre bloc-cadre--centre">
+    <div class="bloc-texte bloc-texte--centre">
+      <span class="bloc-pastille bloc-pastille--violet">L'impact local</span>
+      <h2 id="bloc-impact-titre">Ensemble, ça fait du changement</h2>
+      <%= link_to philosophie_path, class: "bloc-bouton bloc-bouton--contour-violet" do %>
+        Voir comment ça marche <%= picto(:fleche, taille: 18) %>
+      <% end %>
+    </div>
+    <ul class="imp-chiffres" data-controller="compteur">
+      <% chiffres_affiches.each do |cle, nombre, singulier, pluriel, sous_libelle| %>
+        <li class="imp-chiffre">
+          <%= icone_categorie(Categorie.trouver(cle), taille: 44) %>
+          <strong data-compteur-target="nombre" data-valeur="<%= nombre %>"><%= nombre_fr(nombre) %></strong>
+          <span class="imp-libelle"><%= nombre > 1 ? pluriel : singulier %></span>
+          <span class="imp-sous"><%= sous_libelle %></span>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+</section>

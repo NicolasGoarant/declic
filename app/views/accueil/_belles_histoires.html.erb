@@ -1,0 +1,44 @@
+<%# Bloc « Belles Histoires » : bento éditorial. La belle histoire à la une (Story.pour_la_une) en
+    grande carte sombre sur deux colonnes et deux rangées, puis les deux plus récentes publiées en
+    petites cartes (accueil/fiche_carte). Rien n'est rendu sans histoire publiée. %>
+<% if une || histoires.any? %>
+  <section class="bloc bloc-histoires bloc--vague" aria-labelledby="bloc-histoires-titre">
+    <div class="bloc-cadre bloc-cadre--pile">
+      <%= render "accueil/traits", couleur: "#5b3df5", couleur2: "#ec4899" %>
+      <div class="bloc-tete">
+        <div class="bloc-texte">
+          <span class="bloc-pastille bloc-pastille--violet">Belles Histoires</span>
+          <h2 id="bloc-histoires-titre">Des histoires qui <em>donnent envie d'agir</em></h2>
+          <p>Des parcours d'habitantes et d'habitants du Grand Nancy, racontés pour inspirer la suite.</p>
+        </div>
+        <%= link_to labo_belles_histoires_path, class: "bloc-bouton bloc-bouton--violet" do %>
+          Découvrir toutes les belles histoires <%= picto(:fleche, taille: 18) %>
+        <% end %>
+      </div>
+
+      <div class="bento">
+        <% if une %>
+          <article class="une">
+            <%= image_tag photo_couverture(une) || "fallback-story.jpg", alt: "", class: "une-photo", loading: "lazy", decoding: "async" %>
+            <div class="une-texte">
+              <span class="bloc-pastille bloc-pastille--une">Une belle histoire à la une</span>
+              <h3><%= une.title %></h3>
+              <% if (extrait = une.chapo.presence || une.quote.presence) %>
+                <p><%= truncate(strip_tags(extrait), length: 160, separator: " ") %></p>
+              <% end %>
+              <%= link_to story_path(une), class: "bloc-bouton bloc-bouton--violet" do %>
+                Lire l'histoire complète <%= picto(:fleche, taille: 18) %>
+              <% end %>
+            </div>
+          </article>
+        <% end %>
+        <% histoires.each do |h| %>
+          <%= render "accueil/fiche_carte", lien: story_path(h), photo: photo_couverture(h) || image_path("fallback-story.jpg"),
+                     etiquette: { libelle: "Belle histoire", classe: "opp-etiquette--histoire" },
+                     titre: h.title, commune: commune_de(h.city, h.location),
+                     extrait: excerpt_texte(strip_tags(h.chapo.presence || h.quote.to_s), longueur: 90) %>
+        <% end %>
+      </div>
+    </div>
+  </section>
+<% end %>

@@ -1,0 +1,36 @@
+# Bloc « Des parcours qui inspirent » de la page d'accueil : simple contenu éditorial, sans modèle ni
+# base de données ni page dédiée (les récits complets sont les Belles Histoires, qui ont leur modèle).
+#
+# `placeholder: true` marque une entrée de démonstration (personne fictive) : elle porte le bandeau
+# « Exemple de maquette » et n'est jamais montrée en production. Un vrai témoignage (accord de la
+# personne) s'ajoute ici avec `placeholder: false`. Photos : app/assets/images/avatars/.
+- prenom: Karim
+  profession: Développeur junior
+  ville: Vandœuvre-lès-Nancy
+  photo: avatars/karim.jpeg
+  placeholder: true
+  citation: Déclic m'a permis de rencontrer des passionnés et de lancer mon projet.
+- prenom: Lucile
+  profession: Chargée de communication
+  ville: Nancy
+  photo: avatars/lucile.png
+  placeholder: true
+  citation: J'ai découvert une mission de bénévolat près de chez moi. Ça m'a redonné confiance et l'envie d'agir.
+- prenom: Nathalie
+  profession: En reconversion
+  ville: Laxou
+  photo: avatars/nathalie.jpeg
+  placeholder: true
+  citation: J'y ai trouvé des ateliers et une communauté bienveillante qui m'a aidée à me reconvertir.
+- prenom: Matthieu
+  profession: Étudiant
+  ville: Nancy
+  photo: avatars/matthieu.jpeg
+  placeholder: true
+  citation: Grâce à Déclic, j'ai pu m'engager dans un projet local et rencontrer des personnes inspirantes.
+- prenom: Emma
+  profession: Jeune diplômée
+  ville: Villers-lès-Nancy
+  photo: avatars/emma.jpeg
+  placeholder: true
+  citation: Après mes études, je me sentais un peu perdue. Un atelier pour jeunes actifs m'a redonné de l'élan.

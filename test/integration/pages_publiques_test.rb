@@ -12,14 +12,36 @@ class PagesPubliquesTest < ActionDispatch::IntegrationTest
     @tuiles = DioramaTuiles.new(base: "https://tuiles.test/#{SecureRandom.hex(4)}", sonde: ->(_) { true })
   end
 
-  test "GET /labo/accueil avec une opportunité datée et une permanente" do
-    DioramaTuiles.stub(:new, @tuiles) { get labo_accueil_url }
+  test "GET / (nouvelle accueil) avec une opportunité datée et une permanente" do
+    DioramaTuiles.stub(:new, @tuiles) { get root_url }
     assert_response :success
+    assert_select ".acc-ecran#carte"
+    assert_nil response.headers["X-Robots-Tag"], "la racine doit rester indexable"
   end
 
-  test "GET / avec une opportunité datée et une permanente" do
-    get root_url
-    assert_response :success
+  test "GET /labo/accueil : redirection permanente vers la racine, query string conservée" do
+    get "/labo/accueil"
+    assert_response :moved_permanently
+    assert_redirected_to "http://www.example.com/"
+
+    get "/labo/accueil?favoris=1"
+    assert_response :moved_permanently
+    assert_redirected_to "http://www.example.com/?favoris=1"
+  end
+
+  test "la racine et /pourquoi-declic sont deux pages distinctes" do
+    DioramaTuiles.stub(:new, @tuiles) { get root_url }
+    assert_select ".acc-ecran"
+    get pourquoi_declic_url
+    assert_select ".acc-ecran", 0
+  end
+
+  test "la navbar de l'ancienne accueil renvoie ses ancres vers /pourquoi-declic, le logo vers la racine" do
+    get pourquoi_declic_url
+    assert_select "header a[href=?]", "/"
+    assert_select "header nav a[href=?]", "/pourquoi-declic#parcours"
+    assert_select "header nav a", text: "Explorer", count: 0
+    assert_select "header nav a[href=?]", philosophie_path, text: "Pourquoi Déclic ?"
   end
 
   test "GET /labo/diorama" do
@@ -33,7 +55,7 @@ class PagesPubliquesTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", /Pourquoi/
     assert_select ".pq-chiffres strong", text: Opportunity.active.count.to_s
-    assert_select "a.pq-carte[href=?]", labo_accueil_path
+    assert_select "a.pq-carte[href=?]", root_path
     assert_select "img[alt=?]", "Portrait de Nicolas Goarant, fondateur de Déclic"
     assert_select "meta[property='og:image'][content*='place-stanislas']"
     assert_no_match(/Térence|Ton parcours en 3 étapes/, response.body)

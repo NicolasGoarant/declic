@@ -41,7 +41,7 @@
         foisonnent, des opportunités palpitent, des histoires inspirantes de personnes qui ont franchi le pas.
       </p>
       <div class="pq-boutons">
-        <%= link_to labo_accueil_path, class: "pq-bouton pq-bouton--plein" do %>
+        <%= link_to root_path, class: "pq-bouton pq-bouton--plein" do %>
           <%= picto(:chercher, taille: 18) %> Explorer les opportunités
         <% end %>
         <%= link_to stories_path, class: "pq-bouton pq-bouton--blanc" do %>
@@ -113,7 +113,7 @@
             <span><strong>Un impact concret</strong>Pour chacun, pour le territoire, pour une société plus solidaire et durable.</span></li>
         </ul>
       </div>
-      <%= link_to labo_accueil_path, class: "pq-carte", aria: { label: "Voir les initiatives sur la carte du Grand Nancy" } do %>
+      <%= link_to root_path, class: "pq-carte", aria: { label: "Voir les initiatives sur la carte du Grand Nancy" } do %>
         <p class="pq-manuscrit" aria-hidden="true">Des initiatives dans tout le Grand&nbsp;Nancy</p>
         <svg viewBox="0 0 <%= PourquoiCarte::LARGEUR.to_i %> <%= PourquoiCarte.hauteur %>" role="img" aria-hidden="true" focusable="false">
           <defs>
@@ -210,7 +210,7 @@
       <svg class="pq-eclair" viewBox="0 0 24 24" width="44" height="44" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
       <h2 id="pq-final">Prêt·e pour <span class="pq-jaune">ton déclic</span>&nbsp;?</h2>
       <p>Rejoins les habitants de la métropole du Grand Nancy qui passent à l'action près de chez toi.</p>
-      <%= link_to labo_accueil_path, class: "pq-bouton pq-bouton--blanc pq-bouton--grand" do %>
+      <%= link_to root_path, class: "pq-bouton pq-bouton--blanc pq-bouton--grand" do %>
         <%= image_tag "#{cat.("entreprendre").icone}.png", alt: "", width: 22, height: 22 %> Commencer maintenant
       <% end %>
       <p class="pq-final-note">Gratuit · Sans inscription</p>

@@ -41,6 +41,9 @@ class Opportunity < ApplicationRecord
                       "COALESCE(opportunities.starts_on, opportunities.ends_on), opportunities.id"))
   }
 
+  # Les prochaines opportunités datées (à venir ou en cours), par date : jamais les permanentes.
+  scope :prochaines, -> { actuelles.where("COALESCE(opportunities.starts_on, opportunities.ends_on) IS NOT NULL") }
+
   # « Opportunités similaires » de la fiche : même catégorie, actives, pas terminées.
   def similaires(limite = 3)
     self.class.active.actuelles.where(category: category).where.not(id: id).limit(limite)

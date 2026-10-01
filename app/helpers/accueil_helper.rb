@@ -51,6 +51,8 @@ module AccueilHelper
     programme: [ { rect: { x: 8, y: 2, width: 8, height: 4, rx: 1 } }, "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2", "M12 11h4", "M12 16h4", "M8 11h.01", "M8 16h.01" ],
     livre: [ "M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z", "M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" ],
     journal: [ "M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2", "M18 14h-8", "M15 18h-5", "M10 6h8v4h-8V6Z" ],
+    personnes: [ "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2", { circle: { cx: 9, cy: 7, r: 4 } }, "M22 21v-2a4 4 0 0 0-3-3.87", "M16 3.13a4 4 0 0 1 0 7.75" ],
+    info: [ { circle: { cx: 12, cy: 12, r: 10 } }, "M12 16v-4", "M12 8h.01" ],
     etoile: [ "M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" ],
     courriel: [ { rect: { x: 2, y: 4, width: 20, height: 16, rx: 2 } }, "m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" ],
     termine: [ { circle: { cx: 12, cy: 12, r: 10 } }, "m9 12 2 2 4-4" ],
@@ -89,6 +91,40 @@ module AccueilHelper
   rescue StandardError
     nil
   end
+
+  # Photo de couverture d'une fiche : première photo de la galerie, sinon l'ancienne image.
+  def photo_couverture(fiche)
+    fiche.couverture ? url_for(fiche.couverture) : photo_de(fiche)
+  rescue StandardError
+    nil
+  end
+
+  # Carte d'opportunité de l'accueil : jamais sans image (repli par catégorie).
+  def photo_opportunite(opportunite)
+    photo_couverture(opportunite) || asset_path("fallback-opportunity-#{opportunite.category}.jpg")
+  rescue StandardError
+    asset_path("fallback-opportunity.jpg")
+  end
+
+  MOIS_ABREGES = %w[janv. févr. mars avr. mai juin juil. août sept. oct. nov. déc.].freeze
+
+  # « Ven. 2 oct. » : la prochaine date utile d'une opportunité datée.
+  def date_courte(opportunite)
+    date = opportunite.starts_on || opportunite.ends_on
+    return nil unless date
+
+    texte = "#{Opportunity::JOURS_ABREGES[date.wday].capitalize} #{date.day} #{MOIS_ABREGES[date.month - 1]}"
+    opportunite.starts_on ? texte : "Jusqu'au #{texte.downcase_first}"
+  end
+
+  # Pastille d'agenda : [« 2 », « oct. »], la même date que date_courte.
+  def date_pastille(opportunite)
+    date = opportunite.starts_on || opportunite.ends_on
+    [ date.day.to_s, MOIS_ABREGES[date.month - 1] ] if date
+  end
+
+  # 1245 -> « 1 245 » (espace insécable).
+  def nombre_fr(nombre) = number_with_delimiter(nombre, delimiter: "\u00A0")
 
   # La commune déclarée, sinon celle qui suit le code postal dans l'adresse (« 54000 Nancy »).
   def commune_de(ville, adresse)

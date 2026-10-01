@@ -36,7 +36,7 @@ class AmbiancesTest < ApplicationSystemTestCase
 
   def sur_la_carte(&bloc)
     DioramaTuiles.stub(:new, @tuiles) do
-      visit labo_accueil_path
+      visit root_path
       assert_selector "[data-controller~=diorama][data-fond=diorama]"
       bloc.call
     end
@@ -69,7 +69,7 @@ class AmbiancesTest < ApplicationSystemTestCase
       assert_operator particules, :>, 0
       assert_equal %w[nuit hiver neige], evaluate_script("['moment', 'saison', 'meteo'].map((r) => localStorage.getItem('declic:' + r))")
 
-      visit labo_accueil_path
+      visit root_path
 
       assert_selector "[data-controller~=diorama][data-moment=nuit]"
       assert_equal({ "moment" => "nuit", "saison" => "hiver", "meteo" => "neige" }, etat)
@@ -104,7 +104,7 @@ class AmbiancesTest < ApplicationSystemTestCase
       assert_equal "pluie", etat["meteo"]
       assert_nil evaluate_script("localStorage.getItem('declic:ambiance-auto')")
 
-      visit labo_accueil_path
+      visit root_path
 
       assert_selector "[data-controller~=diorama][data-moment]"
       assert_equal "pluie", etat["meteo"]

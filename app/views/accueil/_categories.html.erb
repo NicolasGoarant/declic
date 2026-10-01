@@ -5,9 +5,9 @@
     <button type="button" class="acc-cat" aria-pressed="false"
             data-cle="<%= categorie.cle %>" data-diorama-target="categorie"
             data-action="diorama#basculerCategorie" data-diorama-cle-param="<%= categorie.cle %>">
-      <%= icone_categorie(categorie, taille: 44) %>
-      <span><%= categorie.libelle %></span>
-      <small data-compte></small>
+      <%# .acc-cat-icone : enveloppe de l'icône, repère du badge sur téléphone (display: contents ailleurs). %>
+      <span class="acc-cat-icone"><%= icone_categorie(categorie, taille: 44) %><small data-compte></small></span>
+      <span class="acc-cat-libelle"><%= categorie.libelle %></span>
     </button>
   <% end %>
 </div>

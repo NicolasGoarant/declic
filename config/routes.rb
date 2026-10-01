@@ -2,8 +2,10 @@
 Rails.application.routes.draw do
   # --- SITE PUBLIC ---
 
-  # Page d'accueil
-  root "pages#home"
+  # Page d'accueil : le diorama (ex-/labo/accueil). L'ancienne accueil (hero « Change ta vie, ») est
+  # conservée sous /pourquoi-declic.
+  root "labo#accueil"
+  get "pourquoi-declic", to: "pages#home", as: :pourquoi_declic
 
   # Opportunités publiques
   resources :opportunities, only: %i[index show new create] do
@@ -35,8 +37,9 @@ Rails.application.routes.draw do
 
   # Page de test du pyramide de tuiles diorama (non liée depuis la navigation)
   get "labo/diorama", to: "labo#diorama", as: :labo_diorama
-  # Future page d'accueil sur le diorama (non liée depuis la navigation)
-  get "labo/accueil", to: "labo#accueil", as: :labo_accueil
+  # Ancienne adresse de la nouvelle accueil : redirection permanente vers la racine (favoris, liens
+  # partagés), en gardant la query string (?favoris=1).
+  get "labo/accueil", to: redirect(301) { |_params, req| req.query_string.present? ? "/?#{req.query_string}" : "/" }, as: :labo_accueil
   # Refonte des pages Opportunités et Belles Histoires (navbar du labo) : remplacent, sur les pages
   # du labo, les liens vers /opportunities et /stories. Ceux-ci restent en service côté public.
   get "labo/opportunites", to: "labo#opportunites", as: :labo_opportunites

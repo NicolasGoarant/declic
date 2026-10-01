@@ -5,25 +5,35 @@
       diorama_categories_value: categories_pour_js.to_json,
       diorama_tuiles_value: @tuiles.pour_js.to_json,
       diorama_developpement_value: Rails.env.development?,
-      action: "keydown@window->diorama#echap sheet:ouverte->diorama#fermerPopup"
+      action: "keydown@window->diorama#echap sheet:ouverte->diorama#fermerPopup diorama:localisation-echec->diorama#localisationRefusee"
     } do %>
-  <%= render "accueil/barre_haute" %>
+  <%= render "accueil/barre_haute", flottante: true %>
 
   <div class="acc-ecran" id="carte">
     <div class="acc-tete">
-      <%= render "accueil/entete" %>
+      <%= render "accueil/entete", recherche: true %>
       <%= render "accueil/accroche" %>
     </div>
-    <%= render "accueil/carte", disponibles: @tuiles.disponibles %>
+    <%= render "accueil/carte", disponibles: @tuiles.disponibles, localiser: :pastille %>
     <%= render "accueil/volet" %>
+    <%# Indice de défilement (≥ 768 px) : invite à descendre vers les blocs, disparaît dès que la page défile. %>
+    <button type="button" class="acc-invite" aria-label="Faire défiler vers le contenu de la page"
+            data-controller="invite" data-invite-cible-value="#suite"
+            data-action="invite#descendre scroll@window->invite#surDefilement">
+      <span>Découvrir ce qui se passe près de chez vous</span>
+      <%= picto(:chevron, taille: 18) %>
+    </button>
   </div>
 
-  <main class="acc-suite">
-    <%= render "accueil/histoires", histoires: @histoires %>
-    <%= render "accueil/temoignages" %>
-    <%= render "accueil/presse" %>
+  <main class="acc-suite" id="suite" data-controller="apparition">
+    <%= render "accueil/temoignages", temoignages: @temoignages %>
+    <%= render "accueil/opportunites", opportunites: @prochaines %>
+    <%= render "accueil/belles_histoires", une: @une, histoires: @histoires_accueil %>
+    <%= render "accueil/impact", chiffres: @chiffres %>
+    <%= render "accueil/presse", passages: @passages %>
   </main>
 
+  <%= render "accueil/silhouette" %>
   <%= render "accueil/pied" %>
-  <%= render "accueil/barre_onglets" %>
+  <%= render "accueil/barre_onglets", courant: "carte" %>
 <% end %>

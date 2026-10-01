@@ -308,7 +308,7 @@ a.fch-organisateur:hover { border-color: color-mix(in srgb, var(--violet) 40%, v
     display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 28px; align-items: start;
   }
   .fch-principal, .fch-cote { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-  .fch-cote { position: sticky; top: calc(var(--barre-h) + 20px); }
+  .fch-cote { position: sticky; top: calc(var(--barre-h) + 8px); }
   .fch-galerie-cadre { aspect-ratio: 16 / 9; }
   .fch-galerie-fleche { width: 44px; height: 44px; margin-top: -22px; }
   .fch-galerie-vignette { width: 96px; height: 66px; }

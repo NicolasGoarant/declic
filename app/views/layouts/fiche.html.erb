@@ -33,7 +33,7 @@
       <%= render "accueil/barre_haute", courant: yield(:onglet_courant) %>
       <%= yield %>
       <%= render "accueil/pied" %>
-      <%= render "fiches/barre_onglets" %>
+      <%= render "accueil/barre_onglets", courant: yield(:onglet_courant) %>
     </div>
   </body>
 </html>
