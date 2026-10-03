@@ -249,7 +249,11 @@ export const LAMPADAIRES = {
     ecart_grappes: 0.8,       // 0 : toutes pareilles ; 1 : de presque éteintes à presque toutes allumées
     couleur: "#FFD98C",
     intensite: 0.88,
-    intensite_au_loin: 0.58   // sous le niveau 8 (un point par pixel d'écran), moins vives : sinon, du grain
+    intensite_au_loin: 0.58,  // sous le niveau 8 (un point par pixel d'écran), moins vives : sinon, du grain
+    // Styles dont les dalles portent leurs fenêtres peintes : la nuit allume celles-là, au lieu de la
+    // grille ci-dessus, tirée des masques de toits-v1 et mal calée sur eux (grain jaune sur les toits).
+    peintes: ["jeu-video-v2"],
+    vitre_contraste: 0.12     // une vitre peinte : au moins 0,12 de clarté sous son mur, tout autour
   },
   // Correctif gare : les quais et murs de soutènement des voies sont classés bâti avec du sol dégagé
   // juste en dessous (le ballast, le quai) et reçoivent donc à tort des fenêtres. Faute de masque
