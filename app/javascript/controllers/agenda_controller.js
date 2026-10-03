@@ -8,8 +8,9 @@ const LIGNES = 4
 export default class extends Controller {
   static targets = ["filtres", "filtre", "vedette", "ligne", "vide"]
 
+  // Sans opportunité datée à venir, la vue ne rend ni pastilles ni agenda : rien à afficher.
   connect() {
-    this.filtresTarget.hidden = false
+    if (this.hasFiltresTarget) this.filtresTarget.hidden = false
   }
 
   filtrer({ currentTarget, params: { cle } }) {
