@@ -72,6 +72,8 @@ const SOURCE_FS = [
   "uniform vec3 fenetreCouleur;",
   "uniform vec4 fenetres;    // part, taille de grappe (px du niveau 8), écart entre grappes, intensité",
   "uniform vec4 fenetreForme; // cellule (l, h), fenêtre (l, h), en px du niveau 8",
+  "uniform int fenetresPeintes; // 1 : la dalle porte ses fenêtres peintes (jeu-video-v2) : on allume celles-là",
+  "uniform float vitreContraste; // écart de clarté minimal d'une vitre peinte avec son mur, de part et d'autre",
   "uniform vec4 zoneGare;    // segment (x0, y0, x1, y1) en px du niveau 8, sans fenêtres (quais)",
   "uniform float zoneGareRayon; // demi-largeur du couloir, en px du niveau 8 ; <= 0 : désactivé",
   // v7b : couleurs cibles mesurées (médianes HSV) sur la référence, en RGB 0-1 ; converties en Lab dans
@@ -122,6 +124,13 @@ const SOURCE_FS = [
   "  return vec3(h, mx > 0.0 ? d / mx : 0.0, mx); }",
   "bool feuillage(vec3 c){ vec3 k = hsv(c); return k.y > 0.12 && k.x >= 60.0 && k.x <= 130.0; }",
   "float luma(vec3 c){ return dot(c, vec3(0.2126, 0.7152, 0.0722)); }",
+  // Vitre peinte : un pixel nettement plus sombre que le mur tout autour (à 2 px, sur les quatre côtés :
+  // une fenêtre est un petit rectangle sombre sur une façade claire). Ni un pan de toit uni ni un trait
+  // d'égout ne l'est : plus de fenêtres sur les toits, ni sur le sol mal calé par les masques.
+  "float clarteA(vec2 p){ return luma(texture2D(tBase, vec2(p.x / 256.0, 1.0 - p.y / 256.0)).rgb); }",
+  "bool vitrePeinte(vec2 px, float l){ vec2 c = floor(px) + 0.5;",
+  "  float g = clarteA(c - vec2(2.0, 0.0)), d = clarteA(c + vec2(2.0, 0.0)), h = clarteA(c - vec2(0.0, 2.0)), b = clarteA(c + vec2(0.0, 2.0));",
+  "  return min(min(g, d), min(h, b)) - l > vitreContraste; }",
   // Hachage sans sinus (Dave Hoskins) : stable sur les grandes coordonnées.
   "float hache(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }",
   "vec2 hache2(vec2 p){ return vec2(hache(p), hache(p + 17.31)); }",
@@ -258,6 +267,13 @@ const SOURCE_FS = [
   "        rgb = depuisLab(labF);",
   "      }",
   // Fenêtres : cellules fixées au sol ; au niveau 8 une fenêtre dans sa cellule, plus loin un pixel d'écran.
+  "      if (fenetresPeintes == 1) {",
+  // Une vitre peinte, allumée ou non selon sa cellule au sol (stable d'un chargement à l'autre).
+  "        vec2 n = floor(monde / fenetreForme.xy);",
+  "        float humeur = 1.0 + (hache(floor(monde / fenetres.y) + 71.3) * 2.0 - 1.0) * fenetres.z;",
+  "        if (vitrePeinte(px, luma(o)) && hache(n * 1.37 + 11.1) < 3.0 * fenetres.x * humeur)",
+  "          rgb = mix(rgb, fenetreCouleur, fenetres.w * fac * lumForce);",
+  "      } else {",
   "      vec2 cel = echelle <= 1.0 ? fenetreForme.xy : vec2(echelle);",
   "      vec2 n = floor(monde / cel), dans = monde - n * cel;",
   "      float remplie = echelle <= 1.0 ? fenetreForme.z * fenetreForme.w / (cel.x * cel.y) : 1.0;",
@@ -265,7 +281,7 @@ const SOURCE_FS = [
   "      float humeur = 1.0 + (hache(floor(monde / fenetres.y) + 71.3) * 2.0 - 1.0) * fenetres.z;",
   "      bool horsGare = zoneGareRayon <= 0.0 || distSeg(monde, zoneGare.xy, zoneGare.zw) > zoneGareRayon;",
   "      if (vitre && horsGare && t > 0.08 && t < 0.95 && hache(n * 1.37 + 11.1) < fenetres.x * humeur / remplie)",
-  "        rgb = mix(rgb, fenetreCouleur, fenetres.w * fac * lumForce * (echelle > 1.0 ? eclairage.z : 1.0)); } }",
+  "        rgb = mix(rgb, fenetreCouleur, fenetres.w * fac * lumForce * (echelle > 1.0 ? eclairage.z : 1.0)); } } }",
   "  gl_FragColor = vec4(clamp(rgb, 0.0, 1.0), c.a); }"
 ].join("\n")
 
@@ -448,6 +464,7 @@ export function uniformesEtat(etat, publies, { arbres = false, projection = null
   u.fenetres = ["4f", fe.part, fe.grappe_px, fe.ecart_grappes, fe.intensite]
   u.fenetreForme = ["4f", ...fe.cellule_px, ...fe.fenetre_px]
   u.fenetreCouleur = ["3fv", hex(fe.couleur)]
+  u.vitreContraste = ["1f", fe.vitre_contraste]
   u.cibleRue = ["3fv", rgb(NUIT_CIBLES.rue)]
   u.cibleFacade = ["3fv", rgb(NUIT_CIBLES.facade)]
   u.cibleOmbre = ["3fv", rgb(NUIT_CIBLES.ombre)]
@@ -471,7 +488,7 @@ export function uniformesEtat(etat, publies, { arbres = false, projection = null
 
 // opts : cle (l'état, pour le cache) ; uniformes (Promise, voir uniformesEtat) ;
 // dalle (coords → URL, le style actif ou son repli) ; propriete / masque / arbres (chemin → URL) ;
-// estCouverte, masqueListe, arbresListe (coords → booléen) ; moment (nom du moment, pour
+// estCouverte, masqueListe, arbresListe, fenetresPeintes (coords → booléen) ; moment (nom du moment, pour
 // l'intensité des lampadaires) ; lampadaires (Promise de l'index de diorama/lampadaires, ou null) ;
 // options (options de couche Leaflet).
 export function creerCoucheAmbiance(L, opts) {
@@ -520,7 +537,8 @@ export function creerCoucheAmbiance(L, opts) {
             classeBas: ["1i", classe && classeBas ? 1 : 0],
             origine: ["2f", coords.x * COTE * echelle, coords.y * COTE * echelle],
             echelle: ["1f", echelle],
-            modeArbres: ["1i", arbres ? 1 : 0]
+            modeArbres: ["1i", arbres ? 1 : 0],
+            fenetresPeintes: ["1i", opts.fenetresPeintes?.(coords) ? 1 : 0]
           }
           delete uniformes.arbresPublies
           moteur ||= new Moteur()

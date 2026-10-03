@@ -693,7 +693,7 @@ export default class extends Controller {
       const publies = Promise.all(PUBLIEES.map((nom) => Object.values(etat).includes(nom) ? this.etalonnage(nom) : null))
         .then((jsons) => Object.fromEntries(PUBLIEES.map((nom, i) => [nom, jsons[i]])))
       this.couches[cle] = this.surveillerEchecs(this.decouper(creerCoucheAmbiance(this.L, {
-        cle,
+        cle: `${this.style}|${cle}`, // le cache des dalles calculées est commun à tous les styles
         uniformes: publies.then((p) => uniformesEtat(etat, p, { arbres: Boolean(this.dallesArbres), projection: this.projection })),
         dalle: this.urlDalle,
         propriete: (chemin) => this.url(t.propriete, `${chemin}.png`),
@@ -701,6 +701,7 @@ export default class extends Controller {
         arbres: (chemin) => this.url(t.arbres, `${chemin}.png`),
         estCouverte: this.estCouverte, masqueListe: this.masqueListe,
         arbresListe: (coords) => this.listee(this.dallesArbres, coords),
+        fenetresPeintes: (coords) => LAMPADAIRES.fenetres.peintes.includes(this.styleDalle(coords)),
         moment: etat.moment,
         lampadaires: LAMPADAIRES.intensite[etat.moment] ? this.lampadaires() : null,
         options: this.optionsCouche
