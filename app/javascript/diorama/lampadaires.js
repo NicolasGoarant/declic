@@ -15,7 +15,7 @@
 import { COTE } from "diorama/couches"
 import { LAMPADAIRES } from "diorama/reglages"
 
-const NIVEAU_MAX = 8
+const NIVEAU_REPERE = 8
 export const DEBORD = 40 // px de dalle sous la dalle, dans la carte de lumière (≥ LAMPADAIRES.facades.hauteur_px)
 
 // Lit le fichier et l'indexe par dalle du niveau 8 : { cases: Map("X/Y" → Float32Array [x, y, feu]*),
@@ -97,7 +97,7 @@ function preparerMotifs() {
 
 // Géométrie d'une dalle : échelle, origine et côté en px du niveau 8.
 function cadre(coords) {
-  const s = 2 ** (coords.z - NIVEAU_MAX) // px de la dalle par px du niveau 8
+  const s = 2 ** (coords.z - NIVEAU_REPERE) // px de la dalle par px du niveau 8
   const cote8 = COTE / s
   return { s, cote8, ox: coords.x * cote8, oy: coords.y * cote8 }
 }

@@ -10,7 +10,7 @@
 // proches se regroupent en bouquets (diorama/bouquets), sans Leaflet.markercluster.
 import { Controller } from "@hotwired/stimulus"
 import { creerProjection } from "diorama_projection"
-import { creerCoucheDalles, creerCoucheBlanche } from "diorama/couches"
+import { creerCoucheDalles, creerCoucheBlanche, NIVEAU_ANNEXES } from "diorama/couches"
 import { creerCoucheAmbiance, lireAmbiance, uniformesEtat } from "diorama/ambiance"
 import { momentAuto, saisonAuto, libelleAuto } from "diorama/soleil"
 import { meteoAuto, meteoGardee } from "diorama/meteo"
@@ -24,17 +24,20 @@ import {
 } from "diorama/preferences"
 import { lireDate, aujourdhui, estPasse, estAVenir, dansLaFenetre, etiquette, periode, jourCourt } from "diorama/dates"
 
-const NIVEAU_MAX = 8
+// Repère des pixels de mosaïque (taille_mosaique_px du manifeste, projection, contour, lampadaires) :
+// le niveau 8, quel que soit le style. Le zoom maximal, lui, suit le niveau_max du manifeste du style
+// actif (zoomMaxStyle) : 9 pour un style publié plus finement que le repère.
+const NIVEAU_REPERE = 8
 // Au-delà de ce nombre d'échecs consécutifs sur des dalles pourtant couvertes, une trace (dev
 // seulement) : un pan de la pyramide publiée sur R2, à repérer avant qu'un futur style n'en
 // publie un plus grand que ce que STYLE_REPLI peut compenser.
 const ECHECS_CONSECUTIFS_TRACE = 6
-// Le style toujours publié en entier (0 à 8) : sert de doublure à tout style dont le manifeste
+// Le style toujours publié en entier (0 à 8, au moins) : sert de doublure à tout style dont le manifeste
 // annonce un niveau_min plus haut (« même grille, mêmes niveaux » ne tient pas encore pour tous,
 // voir DioramaTuiles). Générique : aucun style n'est jamais nommé ailleurs dans ce fichier.
 const STYLE_REPLI = "toits-v1"
-// Vue initiale, à retoucher ici : place Stanislas (WGS84) et niveau de zoom Leaflet du diorama (0-8,
-// 8 = pleine résolution) ; le plan prend le zoom d'échelle équivalente. Ajouter ?debug_vue=1 à l'URL
+// Vue initiale, à retoucher ici : place Stanislas (WGS84) et niveau de zoom Leaflet du diorama (0 au
+// niveau_max du style) ; le plan prend le zoom d'échelle équivalente. Ajouter ?debug_vue=1 à l'URL
 // affiche en direct le centre et le zoom courants.
 const CENTRE_INITIAL = { lat: 48.6936, lon: 6.1833 }
 const ZOOM_INITIAL = 6
@@ -151,7 +154,7 @@ export default class extends Controller {
       this.style = styleDeDepart(this.tuilesValue.disponibles.styles || [])
       try {
         const contour = this.chargerContour()
-        await this.chargerManifeste({ repli: false }) // figée à NIVEAU_MAX (§ pixelDansLeDiorama) : jamais dans un trou
+        await this.chargerManifeste({ repli: false }) // figée à NIVEAU_REPERE (§ pixelDansLeDiorama) : jamais dans un trou
         this.preparerDecoupe(await contour)
         pixel = this.pixelDansLeDiorama(p)
       } catch (erreur) {
@@ -167,7 +170,7 @@ export default class extends Controller {
   // Gardé par style (pas seulement son grade de dalles) : chaque style a sa propre liste de dalles
   // publiées, et « même grille, mêmes niveaux » ne tient pas tant qu'un style n'a pas sa pyramide
   // complète. Charge aussi STYLE_REPLI (sauf s'il est déjà le style actif, ou pour la mini-carte,
-  // toujours figée à NIVEAU_MAX donc jamais dans un trou) : coucheVraie/Blanche/Ambiance s'en
+  // toujours figée à NIVEAU_REPERE donc jamais dans un trou) : coucheVraie/Blanche/Ambiance s'en
   // servent pour combler les niveaux que le style actif n'a pas encore.
   async chargerManifeste({ repli = true } = {}) {
     const t = this.tuilesValue
@@ -200,7 +203,7 @@ export default class extends Controller {
     const px = this.projection.pixelL93(x, y)
     if (!this.projection.dansLaMosaique(px)) return null
     if (this.decoupe && !this.decoupe.contient(px)) return null
-    return this.dallesListees[NIVEAU_MAX]?.has(`${Math.floor(px[0] / 256)}/${Math.floor(px[1] / 256)}`) ? px : null
+    return this.dallesListees[NIVEAU_REPERE]?.has(`${Math.floor(px[0] / 256)}/${Math.floor(px[1] / 256)}`) ? px : null
   }
 
   // Le contour de la Métropole (diorama/contour) ; sans lui, le diorama s'affiche sur sa grille de dalles.
@@ -216,7 +219,7 @@ export default class extends Controller {
   bornesContour() {
     if (!this.decoupe) return this.bornes
     const [x0, y0, x1, y1] = this.decoupe.emprise
-    return this.L.latLngBounds(this.carte.unproject([x0, y1], NIVEAU_MAX), this.carte.unproject([x1, y0], NIVEAU_MAX))
+    return this.L.latLngBounds(this.carte.unproject([x0, y1], NIVEAU_REPERE), this.carte.unproject([x1, y0], NIVEAU_REPERE))
   }
 
   // Les dalles d'une couche, découpées au contour ; le socle et l'ombre dessous.
@@ -233,13 +236,13 @@ export default class extends Controller {
 
   miniDiorama(p, pixel) {
     const L = this.L
-    this.carte = L.map(this.carteTarget, { crs: L.CRS.Simple, minZoom: 0, maxZoom: NIVEAU_MAX, attributionControl: false, ...this.optionsFigees() })
-    this.preparerCouchesDiorama(NIVEAU_MAX)
+    this.carte = L.map(this.carteTarget, { crs: L.CRS.Simple, minZoom: 0, maxZoom: NIVEAU_REPERE, attributionControl: false, ...this.optionsFigees() })
+    this.preparerCouchesDiorama(NIVEAU_REPERE)
     this.poserAttribution()
     this.poserSocle()
     this.poserCoucheFond(this.coucheVraie())
-    const latlng = this.carte.unproject(L.point(pixel[0], pixel[1]), NIVEAU_MAX)
-    this.poserPinMini(p, latlng, NIVEAU_MAX - 1)
+    const latlng = this.carte.unproject(L.point(pixel[0], pixel[1]), NIVEAU_REPERE)
+    this.poserPinMini(p, latlng, NIVEAU_REPERE - 1)
   }
 
   miniPlan(p) {
@@ -346,13 +349,14 @@ export default class extends Controller {
 
   creerDiorama() {
     const L = this.L
-    // Niveau 8 = pleine résolution native (maxNativeZoom, preparerCouchesDiorama) : au-delà, Leaflet
-    // agrandirait sa dernière dalle et l'image deviendrait floue, sans rien montrer de plus.
+    // Le dernier niveau publié du style = pleine résolution native (maxNativeZoom, preparerCouchesDiorama) :
+    // au-delà, Leaflet agrandirait sa dernière dalle et l'image deviendrait floue, sans rien montrer de plus.
+    const zoomMax = this.zoomMaxStyle()
     this.carte = L.map(this.carteTarget, {
-      crs: L.CRS.Simple, minZoom: 0, maxZoom: NIVEAU_MAX, zoomSnap: 1,
+      crs: L.CRS.Simple, minZoom: 0, maxZoom: zoomMax, zoomSnap: 1,
       zoomControl: false, attributionControl: false
     })
-    this.preparerCouchesDiorama(NIVEAU_MAX)
+    this.preparerCouchesDiorama(zoomMax)
     // On ne sort pas de la table : la Métropole et une marge autour, sans élasticité au bord.
     this.carte.setMaxBounds(this.bornesContour().pad(0.25))
     this.carte.options.maxBoundsViscosity = 0.95
@@ -414,13 +418,22 @@ export default class extends Controller {
   // Emprise de la mosaïque et options des couches de dalles, pour une carte diorama neuve.
   preparerCouchesDiorama(zoomMax) {
     const [largeur, hauteur] = this.manifeste.taille_mosaique_px
-    this.bornes = this.L.latLngBounds(this.carte.unproject([0, hauteur], NIVEAU_MAX), this.carte.unproject([largeur, 0], NIVEAU_MAX))
+    this.bornes = this.L.latLngBounds(this.carte.unproject([0, hauteur], NIVEAU_REPERE), this.carte.unproject([largeur, 0], NIVEAU_REPERE))
     this.optionsCouche = {
-      minZoom: 0, maxZoom: zoomMax, maxNativeZoom: NIVEAU_MAX, tileSize: 256,
+      minZoom: 0, maxZoom: zoomMax, maxNativeZoom: zoomMax, tileSize: 256,
       noWrap: true, bounds: this.bornes, attribution: ATTRIBUTION
     }
     this.couches = {}
     this.coucheFond = null
+  }
+
+  // Le dernier niveau publié par le style actif (niveau_max de son manifeste, à défaut son dernier
+  // niveau de dalles listées) ; jamais sous le repère. Au-delà de NIVEAU_REPERE, STYLE_REPLI ne
+  // comble rien (styleDalle) : ce niveau doit être complet dans le style qui l'annonce.
+  zoomMaxStyle() {
+    const m = this.manifeste
+    const niveau = Number(m?.niveau_max ?? Math.max(...Object.keys(m?.dalles || {}).map(Number)))
+    return Number.isFinite(niveau) ? Math.max(NIVEAU_REPERE, niveau) : NIVEAU_REPERE
   }
 
   // La carte occupe tout l'écran (100dvh moins la tab bar) : sa taille change avec la barre d'URL
@@ -446,7 +459,7 @@ export default class extends Controller {
     if (!this.carte || this.fond !== "diorama") return
     const { haut, bas } = this.marges()
     const zoom = this.carte.getBoundsZoom(this.bornesContour(), false, this.L.point(2 * 16, haut + bas))
-    this.carte.setMinZoom(Math.max(0, Math.min(zoom, NIVEAU_MAX - 1)))
+    this.carte.setMinZoom(Math.max(0, Math.min(zoom, NIVEAU_REPERE - 1)))
   }
 
   // L'attribution est obligatoire (licences IGN, Géonancy, OSM) : repliée en « ⓘ », elle
@@ -494,7 +507,7 @@ export default class extends Controller {
   vueGeo() {
     const c = this.carte.getCenter(), z = this.carte.getZoom()
     if (this.fond === "plan") return { lat: c.lat, lon: c.lng, zoomPlan: z }
-    const { x, y } = this.carte.project(c, NIVEAU_MAX)
+    const { x, y } = this.carte.project(c, NIVEAU_REPERE)
     const [lon, lat] = this.projection.versWGS84(x, y)
     return { lat, lon, zoomPlan: this.projection.zoomPlan(z, lat) }
   }
@@ -506,7 +519,7 @@ export default class extends Controller {
     }
     const [px, py] = this.projection.pixel(lat, lon)
     const zoom = Math.round(this.projection.zoomDiorama(zoomPlan, lat))
-    this.carte.setView(this.carte.unproject(this.L.point(px, py), NIVEAU_MAX), zoom, { animate: false })
+    this.carte.setView(this.carte.unproject(this.L.point(px, py), NIVEAU_REPERE), zoom, { animate: false })
   }
 
   // ─── Bascule du style du diorama (Réaliste / Jeu vidéo) ──────────────────────────────
@@ -531,7 +544,13 @@ export default class extends Controller {
     this.chargerManifeste().then(() => {
       ecrire(CLE_STYLE, style)
       this.couches = {}
-      if (this.fond === "diorama") this.poserCoucheFond(this.coucheCourante())
+      if (this.fond === "diorama") {
+        // Un style publié moins finement ramène le zoom à son dernier niveau (setMaxZoom recadre).
+        const zoomMax = this.zoomMaxStyle()
+        Object.assign(this.optionsCouche, { maxZoom: zoomMax, maxNativeZoom: zoomMax })
+        this.carte.setMaxZoom(zoomMax)
+        this.poserCoucheFond(this.coucheCourante())
+      }
       this.majCalques()
     }).catch((erreur) => {
       console.error("diorama : style indisponible", erreur)
@@ -598,8 +617,9 @@ export default class extends Controller {
   // Une dalle affichable, du style actif ou de son repli.
   estCouverte = (coords) => Boolean(this.styleDalle(coords))
 
+  // Au-delà du niveau 8, `coords` est celle de la dalle annexe d'origine (versAnnexe).
   masqueListe = (coords) => {
-    if (coords.z < 6 || coords.z > NIVEAU_MAX) return false
+    if (coords.z < 6 || coords.z > NIVEAU_ANNEXES) return false
     return this.dallesMasque ? (this.dallesMasque[coords.z]?.has(`${coords.x}/${coords.y}`) ?? false) : true
   }
 
@@ -708,7 +728,7 @@ export default class extends Controller {
   async lampadairesDansLaVue() {
     const index = await this.lampadaires()
     if (!index || !this.carte) return null
-    const b = this.carte.getPixelBounds(), k = 2 ** (8 - this.carte.getZoom())
+    const b = this.carte.getPixelBounds(), k = 2 ** (NIVEAU_REPERE - this.carte.getZoom())
     return compterLampadaires(index, b.min.x * k, b.min.y * k, b.max.x * k, b.max.y * k)
   }
 
@@ -852,7 +872,7 @@ export default class extends Controller {
       if (!Number.isFinite(p.latitude) || !Number.isFinite(p.longitude)) return
       if (this.fond === "plan") { p.latlng = L.latLng(p.latitude, p.longitude); return }
       const px = this.pixelDansLeDiorama(p)
-      if (px) p.latlng = this.carte.unproject(L.point(px[0], px[1]), NIVEAU_MAX)
+      if (px) p.latlng = this.carte.unproject(L.point(px[0], px[1]), NIVEAU_REPERE)
     })
     this.poses = this.points.filter((p) => p.latlng)
     this.majCompteurs()
@@ -863,7 +883,7 @@ export default class extends Controller {
     if (this.fond === "plan") return this.L.latLng(lat, lon)
     const px = this.projection.pixel(lat, lon)
     if (!this.projection.dansLaMosaique(px)) return null
-    return this.carte.unproject(this.L.point(px[0], px[1]), NIVEAU_MAX)
+    return this.carte.unproject(this.L.point(px[0], px[1]), NIVEAU_REPERE)
   }
 
   iconePin(p) {
@@ -1424,7 +1444,7 @@ export default class extends Controller {
       return
     }
     const [px, py] = this.projection.pixel(CENTRE_INITIAL.lat, CENTRE_INITIAL.lon)
-    this.carte.setView(this.carte.unproject(this.L.point(px, py), NIVEAU_MAX), ZOOM_INITIAL, { animate: false })
+    this.carte.setView(this.carte.unproject(this.L.point(px, py), NIVEAU_REPERE), ZOOM_INITIAL, { animate: false })
   }
 
   // Réglage de la vue : ?debug_vue=1 affiche le centre (lat/lon), le zoom et le fond courants. Sans ce

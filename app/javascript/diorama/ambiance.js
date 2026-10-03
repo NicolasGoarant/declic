@@ -16,19 +16,19 @@
 // « nancy-3d/ambiance ») : une suite de règles, chacune un affine Lab par canal et une force,
 //     lab' = lab + force * ((lab - ms) / es * er + mr - lab)
 // appliquée au pixel par la PREMIÈRE règle dont la classe le contient. Classes : 0 exclu,
-// 1 sol, 2 volume, 3 feuillage. La classe vient de la carte de propriété au niveau 8, du
+// 1 sol, 2 volume, 3 feuillage. La classe vient de la carte de propriété au niveau 8 (agrandie au-delà), du
 // masque du bâti aux niveaux 6-7, et ailleurs tout pixel non transparent est un volume.
 //
 // L'automne n'applique la règle « feuillage » de son étalonnage qu'aux pixels du masque des arbres
 // (masque-arbres, niveaux 6 à 8) ; sans ce masque, aux verts sombres (repli). Chaque arbre prend
 // ensuite sa propre teinte, du jaune au roux : une cellule de Voronoï de la taille d'un houppier,
 // calée sur les pixels du niveau 8, donc fixe au sol quel que soit le zoom ou le déplacement.
-import { COTE, creerCache, comblerInterstices } from "diorama/couches"
+import { COTE, creerCache, comblerInterstices, NIVEAU_ANNEXES, versAnnexe, chargerAnnexe } from "diorama/couches"
 import { carteDeLumiere, dessinerFeux, DEBORD } from "diorama/lampadaires"
 import { MOMENTS, PUBLIES, AUTOMNE, PLUIE, NEIGE, LAMPADAIRES, NUIT_CIBLES } from "diorama/reglages"
 
 const REGLES_MAX = 3 // par étalonnage publié (hiver : 2, heure bleue et automne : 1)
-const NIVEAU_MAX = 8
+const NIVEAU_REPERE = 8
 const SOURCE_VS = "attribute vec2 p; varying vec2 uv; void main(){ uv = p * 0.5 + 0.5; gl_Position = vec4(p, 0.0, 1.0); }"
 
 // Une suite de règles publiées, sous le préfixe `x` (s : saison, m : moment).
@@ -487,28 +487,30 @@ export function creerCoucheAmbiance(L, opts) {
       if (cache.lire(cle, toile)) { setTimeout(() => fini(null, toile), 0); return toile }
       opts.uniformes.then((commun) => {
         let urlClasse = null, urlBas = null, mode = 2
-        const dessous = { ...coords, y: coords.y + 1 }, cheminBas = `${coords.z}/${coords.x}/${coords.y + 1}`
-        if (coords.z === NIVEAU_MAX) {
-          urlClasse = opts.propriete(chemin); mode = 0
-          if (opts.estCouverte(dessous)) urlBas = opts.propriete(cheminBas)
-        } else if (coords.z >= 6 && opts.masqueListe(coords)) {
-          urlClasse = opts.masque(chemin); mode = 1
-          if (opts.masqueListe(dessous)) urlBas = opts.masque(cheminBas)
+        // Au-delà du niveau 8, propriété et masques viennent de la dalle d'origine, agrandie (versAnnexe).
+        const dessous = { ...coords, y: coords.y + 1 }
+        const annexe = versAnnexe(coords), annexeBas = versAnnexe(dessous)
+        if (coords.z >= NIVEAU_ANNEXES) {
+          urlClasse = opts.propriete(annexe.chemin); mode = 0
+          if (opts.estCouverte(dessous)) urlBas = opts.propriete(annexeBas.chemin)
+        } else if (coords.z >= 6 && opts.masqueListe(annexe)) {
+          urlClasse = opts.masque(annexe.chemin); mode = 1
+          if (opts.masqueListe(annexeBas)) urlBas = opts.masque(annexeBas.chemin)
         }
-        // Masque des arbres : aux niveaux qu'il couvre (6 à 8), une dalle non couverte n'a pas d'arbre.
+        // Masque des arbres : aux niveaux qu'il couvre (6 à 8, agrandi au-delà), une dalle non couverte n'a pas d'arbre.
         const arbres = commun?.saison[1] === 2 && commun.arbresPublies && coords.z >= 6
         return Promise.all([
-          commun, charger(opts.dalle(coords)), charger(urlClasse),
-          arbres && opts.arbresListe(coords) ? charger(opts.arbres(chemin)) : null,
+          commun, charger(opts.dalle(coords)), chargerAnnexe(urlClasse, annexe),
+          arbres && opts.arbresListe(annexe) ? chargerAnnexe(opts.arbres(annexe.chemin), annexe) : null,
           force > 0 ? opts.lampadaires : null,
-          force > 0 ? charger(urlBas) : null
+          force > 0 ? chargerAnnexe(urlBas, annexeBas) : null
         ]).then(([commun, base, classe, imageArbres, lampadaires, classeBas]) => {
           if (!base) { fini(new Error("dalle absente"), toile); return }
           // Pas de willReadFrequently : on ne relit jamais ces pixels, et un canevas 2D gardé sur le GPU
           // reçoit la copie du canevas WebGL sans la faire passer par le processeur.
           const ctx = toile.getContext("2d")
           if (!commun) { ctx.drawImage(base, 0, 0); fini(null, toile); return }
-          const echelle = 2 ** (NIVEAU_MAX - coords.z)
+          const echelle = 2 ** (NIVEAU_REPERE - coords.z)
           const lumiere = force > 0 ? carteDeLumiere(coords, lampadaires) : null
           const uniformes = { ...commun,
             modeClasse: ["1i", classe ? mode : 2],

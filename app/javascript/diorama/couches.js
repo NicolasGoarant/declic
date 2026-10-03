@@ -6,6 +6,32 @@
 
 export const COTE = 256
 
+// Les couches annexes (carte de propriété, masques du bâti et des arbres) s'arrêtent au niveau 8 ;
+// un style peut aller plus loin (niveau_max de son manifeste). Plus près, une dalle annexe se tire
+// de son ancêtre au niveau 8 : la part qu'elle en couvre, agrandie au plus proche voisin (des
+// classes et des masques : un lissage inventerait des valeurs intermédiaires).
+export const NIVEAU_ANNEXES = 8
+
+// La dalle annexe d'origine de `coords` : { x, y, z, chemin } et sa part (sx, sy, cote) en px.
+export function versAnnexe(coords) {
+  const d = Math.max(0, coords.z - NIVEAU_ANNEXES), k = 2 ** d
+  const x = Math.floor(coords.x / k), y = Math.floor(coords.y / k), z = coords.z - d
+  return { x, y, z, chemin: `${z}/${x}/${y}`, sx: (coords.x - x * k) * COTE / k, sy: (coords.y - y * k) * COTE / k, cote: COTE / k }
+}
+
+// L'image annexe de `annexe` (versAnnexe), agrandie à la dalle si besoin ; null si absente.
+export function chargerAnnexe(url, annexe) {
+  return charger(url).then((image) => {
+    if (!image || annexe.cote === COTE) return image
+    const toile = document.createElement("canvas")
+    toile.width = toile.height = COTE
+    const ctx = toile.getContext("2d")
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(image, annexe.sx, annexe.sy, annexe.cote, annexe.cote, 0, 0, COTE, COTE)
+    return toile
+  })
+}
+
 // Un canevas est toujours son propre calque GPU ; sur un écran au rapport de pixels non entier
 // (125 %, 150 %…, très courant sur les portables), Chrome arrondit indépendamment la position de
 // chaque calque au pixel physique le plus proche, ce qui laisse parfois un interstice sous-pixel
@@ -65,6 +91,7 @@ export function creerCache(max = 160) {
 
 function charger(url) {
   return new Promise((ok) => {
+    if (!url) { ok(null); return }
     const image = new Image()
     image.crossOrigin = "anonymous"
     image.onload = () => ok(image)
@@ -75,7 +102,7 @@ function charger(url) {
 
 // La « Maquette blanche » : un grade au-dessus des dalles, jamais un nouveau rendu. Le masque
 // du bâti (un octet par pixel, 0 = pas de bâti, 255 = entièrement bâti) ne couvre que le
-// centre-ville aux niveaux 6 à 8 ; ailleurs la dalle sort telle quelle.
+// centre-ville aux niveaux 6 à 8 (agrandi au-delà) ; ailleurs la dalle sort telle quelle.
 const DESAT = 0.85 // vers le gris, part du chemin
 const CLAIR = 0.55 // puis vers le blanc
 
@@ -89,8 +116,9 @@ export function creerCoucheBlanche(L, { dalle, masque, estCouverte, masqueListe,
       toile.height = COTE
       const chemin = `${coords.z}/${coords.x}/${coords.y}`
       if (cache.lire(chemin, toile)) { setTimeout(() => fini(null, toile), 0); return toile }
-      const urlMasque = masqueListe(coords) ? masque(chemin) : null
-      Promise.all([charger(dalle(coords)), urlMasque ? charger(urlMasque) : null]).then(([fond, couverture]) => {
+      const annexe = versAnnexe(coords)
+      const urlMasque = masqueListe(annexe) ? masque(annexe.chemin) : null
+      Promise.all([charger(dalle(coords)), chargerAnnexe(urlMasque, annexe)]).then(([fond, couverture]) => {
         if (!fond) { fini(new Error("dalle absente"), toile); return }
         const ctx = toile.getContext("2d", { willReadFrequently: true })
         ctx.drawImage(fond, 0, 0, COTE, COTE)
