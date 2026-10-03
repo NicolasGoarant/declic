@@ -14,7 +14,7 @@
 
 export const URL_CONTOUR = "/data/contour-metropole-v1.geojson"
 const COTE = 256
-const NIVEAU_MAX = 8
+const NIVEAU_REPERE = 8
 const FLOU = 4 // écart type du fondu, en px d'écran : transition d'une dizaine de pixels
 const PORTEE = 3 * FLOU // au-delà, le masque vaut 0 ou 1
 
@@ -59,7 +59,7 @@ export function creerDecoupe(anneau, projection) {
   // L'anneau à l'échelle d'un niveau, son tracé SVG et son emprise.
   function niveau(z) {
     if (!niveaux.has(z)) {
-      const k = 2 ** (z - NIVEAU_MAX)
+      const k = 2 ** (z - NIVEAU_REPERE)
       const points = pixels.map(([x, y]) => [x * k, y * k])
       const d = "M" + points.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join("L") + "Z"
       niveaux.set(z, { points, d, emprise: emprise.map((v) => v * k) })
@@ -109,7 +109,7 @@ export function poserSocle(L, carte, pixels) {
   const volet = carte.createPane("socle")
   volet.style.zIndex = 150
   const rendu = L.svg({ pane: "socle", padding: 0.5 })
-  const latlngs = pixels.map(([x, y]) => carte.unproject(L.point(x, y), NIVEAU_MAX))
+  const latlngs = pixels.map(([x, y]) => carte.unproject(L.point(x, y), NIVEAU_REPERE))
   const options = { renderer: rendu, interactive: false, stroke: false, fillOpacity: 1 }
   L.polygon(latlngs, { ...options, className: "diorama-ombre" }).addTo(carte)
   L.polygon(latlngs, { ...options, className: "diorama-socle" }).addTo(carte)
