@@ -174,7 +174,9 @@ const SOURCE_FS = [
   // 1. Saison.
   "  if (saison == 1) lab = regles_s(lab, classe);",
   "  else if (saison == 2) {",
-  "    float w = (modeArbres == 1 ? texture2D(tArbres, uv).r : verts_sombres(o) * repliForce) * automne.x;",
+  // Le masque des arbres est calculé sur le rendu de toits-v1 : sur un autre style (jeu-video-v2), ses
+  // houppiers tombent aussi sur des toits, des façades ou la chaussée. Seul le feuillage prend la teinte.
+  "    float w = (modeArbres == 1 ? texture2D(tArbres, uv).r * (feuillage(o) ? 1.0 : 0.0) : verts_sombres(o) * repliForce) * automne.x;",
   "    if (w > 0.0) {",
   "      vec3 a = lab + sForce[0] * ((lab - sMs[0]) / sEs[0] * sEr[0] + sMr[0] - lab);",
   "      float id = arbre(monde / automne.w), ang = (id * 2.0 - 1.0) * automne.y;",
