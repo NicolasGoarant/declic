@@ -16,8 +16,9 @@ require "net/http"
 class DioramaTuiles
   URL_DEFAUT = "https://tuiles-declic.mist-media.eu".freeze
 
-  # Styles du « Vrai Nancy » : même grille, mêmes niveaux (0 à 8), même format ({z}/{x}/{y}.webp) ;
-  # seul le grade des dalles change. Par défaut : Jeu vidéo. Un style dont le manifeste manque sur
+  # Styles du « Vrai Nancy » : même grille, même format ({z}/{x}/{y}.webp) ; seul le grade des dalles
+  # change. Chaque lot annonce son propre niveau_max dans son manifeste (9 pour jeu-video-v2, 8 pour
+  # toits-v1), lu côté navigateur (zoomMaxStyle). Par défaut : Jeu vidéo. Un style dont le manifeste manque sur
   # R2 est retiré de la liste (masqué côté panneau Calques).
   STYLES = { "jeu-video-v2" => "Jeu vidéo", "toits-v1" => "Réaliste" }.freeze
   STYLE_DEFAUT = "jeu-video-v2".freeze
