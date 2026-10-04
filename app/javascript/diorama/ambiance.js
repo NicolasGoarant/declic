@@ -123,6 +123,11 @@ const SOURCE_FS = [
   "    else h = 240.0 + 60.0 * (c.r - c.g) / d; if (h < 0.0) h += 360.0; }",
   "  return vec3(h, mx > 0.0 ? d / mx : 0.0, mx); }",
   "bool feuillage(vec3 c){ vec3 k = hsv(c); return k.y > 0.12 && k.x >= 60.0 && k.x <= 130.0; }",
+  // Houppier (automne seulement) : vert de 79° à 130°. Les pelouses de jeu-video-v2, vert-jaune (73-78°),
+  // restent dehors : le masque des arbres, calé sur toits-v1, déborde dessus (plaques d'automne). Les
+  // houppiers sont plus bleutés (80-99° sur jeu-video-v2, 81-120° sur toits-v1, gardés à 96 %). Pas dans
+  // feuillage() : la classe 3 qu'il donne règle aussi l'hiver, où les pelouses sorties viraient au jaune.
+  "bool houppier(vec3 c){ return feuillage(c) && hsv(c).x >= 79.0; }",
   "float luma(vec3 c){ return dot(c, vec3(0.2126, 0.7152, 0.0722)); }",
   // Vitre peinte : un pixel nettement plus sombre que le mur tout autour (à 2 px, sur les quatre côtés :
   // une fenêtre est un petit rectangle sombre sur une façade claire). Ni un pan de toit uni ni un trait
@@ -185,7 +190,7 @@ const SOURCE_FS = [
   "  else if (saison == 2) {",
   // Le masque des arbres est calculé sur le rendu de toits-v1 : sur un autre style (jeu-video-v2), ses
   // houppiers tombent aussi sur des toits, des façades ou la chaussée. Seul le feuillage prend la teinte.
-  "    float w = (modeArbres == 1 ? texture2D(tArbres, uv).r * (feuillage(o) ? 1.0 : 0.0) : verts_sombres(o) * repliForce) * automne.x;",
+  "    float w = (modeArbres == 1 ? texture2D(tArbres, uv).r * (houppier(o) ? 1.0 : 0.0) : verts_sombres(o) * repliForce) * automne.x;",
   "    if (w > 0.0) {",
   "      vec3 a = lab + sForce[0] * ((lab - sMs[0]) / sEs[0] * sEr[0] + sMr[0] - lab);",
   "      float id = arbre(monde / automne.w), ang = (id * 2.0 - 1.0) * automne.y;",
