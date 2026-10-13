@@ -438,7 +438,7 @@ DEPENDENCIES
   capybara
   commonmarker
   debug
-  dotenv-rails
+  dotenv-rails (~> 3.2)
   faraday
   feedjira (~> 3.2)
   friendly_id (~> 5.5)

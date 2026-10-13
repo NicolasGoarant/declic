@@ -1,0 +1,45 @@
+<% if error.present? %>
+  <div class="flash alert"><%= error %></div>
+<% end %>
+
+<% if draft.present? %>
+  <hr style="margin:20px 0;border:0;border-top:1px solid #e5e7eb">
+  <h2>Brouillon</h2>
+
+  <% manquants = Array(draft["champs_manquants"]) %>
+  <% if manquants.any? %>
+    <div class="manquants">
+      <strong>Le modèle signale des informations absentes de l'article :</strong>
+      <ul><% manquants.each do |champ| %><li><%= champ %></li><% end %></ul>
+      Vérifie-les à la source avant publication. Elles n'ont volontairement pas été devinées.
+    </div>
+  <% end %>
+
+  <%= form_with url: publier_admin_veille_candidate_path(candidate), method: :post, scope: :draft do |f| %>
+    <label>Titre</label>
+    <%= f.text_field :titre, value: draft["titre"] %>
+
+    <label>Personne ou collectif</label>
+    <%= f.text_field :personne, value: draft["personne"] %>
+
+    <label>Commune</label>
+    <%= f.text_field :commune, value: draft["commune"] %>
+
+    <label>Thème</label>
+    <%= f.text_field :theme, value: draft["theme"] %>
+
+    <label>Résumé — reformulation intégrale, trois phrases</label>
+    <%= f.text_area :resume, value: draft["resume"] %>
+
+    <p class="small muted">
+      Relis avant de publier. La fiche est créée en brouillon (inactive) et
+      <code>full_text</code> est effacé au passage.
+    </p>
+
+    <p><%= f.submit "Publier", class: "btn" %></p>
+  <% end %>
+<% elsif error.blank? %>
+  <p class="muted small" style="margin-top:20px">
+    Le brouillon apparaîtra ici après la rédaction.
+  </p>
+<% end %>

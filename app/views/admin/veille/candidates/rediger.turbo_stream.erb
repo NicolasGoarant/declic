@@ -1,0 +1,4 @@
+<%# Le brouillon revient sans rechargement de page. %>
+<%= turbo_stream.update "brouillon" do %>
+  <%= render "brouillon", candidate: @candidate, draft: @draft, error: @error %>
+<% end %>

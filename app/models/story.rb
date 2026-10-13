@@ -1,5 +1,11 @@
 class Story < ApplicationRecord
   include NancyGeocodable
+  # Candidat de veille dont cette fiche est issue. Nil pour les histoires
+  # saisies à la main ou proposées par le public.
+  belongs_to :veille_candidate,
+             class_name: "Veille::Candidate",
+             inverse_of: :story,
+             optional:   true
 
   # Image principale (hero)
   has_one_attached :image
@@ -92,6 +98,14 @@ class Story < ApplicationRecord
   # Par défaut, les nouvelles stories sont inactives (en attente de validation)
   before_validation :set_default_active, on: :create
 
+  # Le texte intégral de l'article source est un tampon de travail, et rien
+  # de plus : dès que la fiche est créée, il est effacé.
+  #
+  # Déclic évite de constituer une base dérivée d'articles de presse. On
+  # conserve la fiche réécrite et le lien vers la source d'origine ; on ne
+  # conserve pas l'article. Ne jamais transformer ce callback en archivage.
+  after_create :purge_veille_candidate_full_text
+
   # Scope pour ne récupérer que les stories actives
   scope :active, -> { where(is_active: true) }
 
@@ -133,6 +147,17 @@ class Story < ApplicationRecord
   end
 
   private
+
+  def purge_veille_candidate_full_text
+    return if veille_candidate.nil? || veille_candidate.full_text.blank?
+
+    # update_columns : on est dans un after_create, on ne veut ni relancer
+    # les validations du candidat ni déclencher d'autres callbacks.
+    veille_candidate.update_columns(full_text: nil, updated_at: Time.current)
+    Rails.logger.info(
+      "[Veille] full_text purgé du candidat ##{veille_candidate.id} après création de la Story ##{id}"
+    )
+  end
 
   def ensure_slug
     self.slug = title.to_s.parameterize if slug.blank? && title.present?

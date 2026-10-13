@@ -1,0 +1,4 @@
+<%= turbo_stream.remove dom_id(@candidate) %>
+<%= turbo_stream.update "compteurs" do %>
+  <%= render "compteurs", counts: @counts %>
+<% end %>

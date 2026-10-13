@@ -180,6 +180,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_27_100000) do
     t.date "source_published_on"
     t.json "photos_order"
     t.string "thematique"
+    t.integer "veille_candidate_id"
+    t.index ["veille_candidate_id"], name: "index_stories_on_veille_candidate_id"
   end
 
   create_table "testimonials", force: :cascade do |t|
@@ -192,6 +194,40 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_27_100000) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "veille_candidates", force: :cascade do |t|
+    t.integer "veille_source_id"
+    t.string "title"
+    t.text "excerpt"
+    t.string "url", null: false
+    t.date "published_on"
+    t.text "full_text"
+    t.string "category"
+    t.integer "score"
+    t.string "reason"
+    t.datetime "qualified_at"
+    t.string "status", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["score"], name: "index_veille_candidates_on_score"
+    t.index ["status"], name: "index_veille_candidates_on_status"
+    t.index ["url"], name: "index_veille_candidates_on_url", unique: true
+    t.index ["veille_source_id"], name: "index_veille_candidates_on_veille_source_id"
+  end
+
+  create_table "veille_sources", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "kind", null: false
+    t.string "url", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "last_collected_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_veille_sources_on_active"
+    t.index ["name"], name: "index_veille_sources_on_name", unique: true
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "stories", "veille_candidates", on_delete: :nullify
+  add_foreign_key "veille_candidates", "veille_sources", on_delete: :nullify
 end

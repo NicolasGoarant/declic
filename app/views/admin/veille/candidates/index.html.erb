@@ -1,0 +1,38 @@
+<h1>File de tri</h1>
+<p class="muted small" id="compteurs"><%= render "compteurs", counts: @counts %></p>
+
+<p style="margin:14px 0">
+  <% { "pending" => "En attente", "retenu" => "Retenus", "ecarte" => "Écartés", "publie" => "Publiés" }.each do |statut, libelle| %>
+    <%= link_to "#{libelle} (#{@counts[statut.to_sym]})",
+                admin_veille_candidates_path(status: statut),
+                class: "btn #{'secondary' unless @status == statut}",
+                style: "margin-right:6px" %>
+  <% end %>
+</p>
+
+<% if @candidates.empty? %>
+  <div class="vide">
+    <% if @status == "pending" %>
+      <p><strong>La file est vide.</strong></p>
+      <p class="small">Alimente-la avec <code>rake veille:import[fichier.txt]</code>,
+         un fichier d'URL à raison d'une par ligne.</p>
+    <% else %>
+      <p>Aucun candidat dans ce statut.</p>
+    <% end %>
+  </div>
+<% else %>
+  <table class="table">
+    <thead>
+      <tr>
+        <th style="width:44%">Article</th>
+        <th style="width:14%">Source</th>
+        <th style="width:9%">Date</th>
+        <th style="width:7%">Score</th>
+        <th style="width:26%">Motif &amp; décision</th>
+      </tr>
+    </thead>
+    <tbody id="file_de_tri">
+      <%= render partial: "candidate", collection: @candidates %>
+    </tbody>
+  </table>
+<% end %>

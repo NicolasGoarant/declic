@@ -1,0 +1,51 @@
+<%# La ligne porte un id : c'est la cible que le Turbo Stream retire de la file. %>
+<tr id="<%= dom_id(candidate) %>">
+  <td>
+    <strong><%= candidate.title.presence || "(sans titre)" %></strong>
+    <% if candidate.excerpt.present? %>
+      <div class="muted small"><%= truncate(candidate.excerpt, length: 240) %></div>
+    <% end %>
+    <div class="small" style="margin-top:6px">
+      <%# target="_blank" : l'article s'ouvre à côté, la file reste en place. %>
+      <%= link_to "Ouvrir l'article ↗", candidate.url, target: "_blank", rel: "noopener noreferrer" %>
+    </div>
+  </td>
+
+  <td class="small"><%= candidate.source_label || "—" %></td>
+
+  <td class="small"><%= candidate.published_on&.strftime("%d/%m/%Y") || "—" %></td>
+
+  <td>
+    <% if candidate.score %>
+      <span class="score <%= candidate.score >= 75 ? 'haut' : candidate.score >= 40 ? 'moyen' : 'bas' %>">
+        <%= candidate.score %>
+      </span>
+      <div class="small muted"><%= candidate.category == "belle_histoire" ? "belle histoire" : "autre" %></div>
+    <% else %>
+      <span class="muted small">non qualifié</span>
+    <% end %>
+  </td>
+
+  <td>
+    <div class="small muted" style="margin-bottom:8px"><%= candidate.reason.presence || "—" %></div>
+    <div class="actions">
+      <% if candidate.pending? %>
+        <%= button_to "Retenir", retenir_admin_veille_candidate_path(candidate),
+                      method: :patch, class: "btn" %>
+        <%= button_to "Écarter", ecarter_admin_veille_candidate_path(candidate),
+                      method: :patch, class: "btn secondary" %>
+      <% elsif candidate.retenu? %>
+        <%= link_to "Rédiger →", admin_veille_candidate_path(candidate), class: "btn" %>
+      <% elsif candidate.publie? %>
+        <span class="badge ok">publié</span>
+        <% if candidate.story %>
+          <%= link_to "Voir la fiche", edit_admin_story_path(candidate.story), class: "btn secondary" %>
+        <% end %>
+      <% else %>
+        <span class="badge no">écarté</span>
+        <%= button_to "Reprendre", retenir_admin_veille_candidate_path(candidate),
+                      method: :patch, class: "btn secondary" %>
+      <% end %>
+    </div>
+  </td>
+</tr>
