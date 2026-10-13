@@ -13,6 +13,9 @@ module Veille
   class AiPass
     class ParseError < StandardError; end
 
+    # Consommation du dernier appel : { "input_tokens" => n, "output_tokens" => n }.
+    attr_reader :usage
+
     # Injectable pour les tests : n'importe quel objet répondant à #messages.
     def initialize(client: nil)
       @client = client
@@ -51,6 +54,7 @@ module Veille
     # Envoie la requête et rend le hash parsé.
     def run(params)
       response = client.messages(**params)
+      @usage = response["usage"]
       self.class.parse_response(AnthropicClient.extract_text(response))
     end
 

@@ -86,3 +86,45 @@ namespace :veille do
     puts "  À trancher : #{Rails.application.routes.url_helpers.admin_veille_candidates_path}"
   end
 end
+
+# --- Veille automatique -----------------------------------------------------
+# Heroku Scheduler : « rake veille:quotidien » chaque jour ; « rake veille:hebdomadaire »
+# chaque jour aussi (le Scheduler n'a pas de cadence hebdomadaire) : la tâche ne
+# travaille que le lundi, sauf FORCE=1. Clés : ANTHROPIC_API_KEY, ENGAGEMENT_API_KEY.
+namespace :veille do
+  def afficher_rapport(rapport)
+    puts "── Sources ─────────────────────────────────────────"
+    rapport.sources.each { |s| puts format("  %-20s %-9s %s", s.nom, s.statut, s.message) }
+    puts "── Bilan ───────────────────────────────────────────"
+    puts "  nouveaux éléments ingérés : #{rapport.crees}"
+    puts "  doublons / hors zone / passés : #{rapport.doublons} / #{rapport.hors_zone} / #{rapport.passes}"
+    puts "  enrichis (IA)             : #{rapport.enrichis} (dont #{rapport.ecartes} écartés), erreurs IA #{rapport.erreurs_ia}"
+    puts "  en attente d'enrichissement : #{rapport.restants}"
+    puts "  coût estimé               : #{format('%.4f', rapport.cout_usd)} USD"
+    puts "  À relire : #{Rails.application.routes.url_helpers.admin_veille_root_path}"
+  end
+
+  desc "Veille quotidienne : sources 1 à 5, 30 éléments enrichis au plus"
+  task quotidien: :environment do
+    afficher_rapport(Veille::Runner.new(connecteurs: Veille::Runner::QUOTIDIEN).run)
+  end
+
+  desc "Veille hebdomadaire : alertes de presse (le lundi, sauf FORCE=1)"
+  task hebdomadaire: :environment do
+    if Date.current.monday? || ENV["FORCE"] == "1"
+      afficher_rapport(Veille::Runner.new(connecteurs: Veille::Runner::HEBDOMADAIRE).run)
+    else
+      puts "Pas lundi : rien à faire (FORCE=1 pour forcer)."
+    end
+  end
+
+  desc "Importe le repérage initial — rake veille:import_xlsx[docs/declic-reperage-v1-2026-10-13.xlsx]"
+  task :import_xlsx, [:fichier] => :environment do |_t, args|
+    fichier = args[:fichier].presence || "docs/declic-reperage-v1-2026-10-13.xlsx"
+    abort "❌ Fichier introuvable : #{fichier}" unless File.file?(fichier)
+
+    bilan = Veille::XlsxImporter.new(fichier).call
+    puts "Onglets lus : #{bilan.onglets.join(' | ').presence || 'aucun (noms attendus : « Opportunités », « Belles Histoires - pistes »)'}"
+    puts "créés #{bilan.crees} · déjà connus #{bilan.doublons} · lignes ignorées #{bilan.ignores}"
+  end
+end
