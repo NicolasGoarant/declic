@@ -1,34 +1,53 @@
-<h1>File de tri</h1>
+<h1>Veille</h1>
 <p class="muted small" id="compteurs"><%= render "compteurs", counts: @counts %></p>
 
 <p style="margin:14px 0">
-  <% { "pending" => "En attente", "retenu" => "Retenus", "ecarte" => "Écartés", "publie" => "Publiés" }.each do |statut, libelle| %>
+  <% { "pending" => "À relire", "a_verifier" => "À vérifier", "retenu" => "Retenus", "publie" => "Validés (brouillon créé)", "ecarte" => "Écartés" }.each do |statut, libelle| %>
     <%= link_to "#{libelle} (#{@counts[statut.to_sym]})",
-                admin_veille_candidates_path(status: statut),
+                admin_veille_candidates_path(@filtres.merge(status: statut)),
                 class: "btn #{'secondary' unless @status == statut}",
                 style: "margin-right:6px" %>
   <% end %>
 </p>
 
+<%= form_with url: admin_veille_candidates_path, method: :get, class: "filtres", data: { turbo: false } do |f| %>
+  <%= hidden_field_tag :status, @status %>
+  <label>Type
+    <%= select_tag :type, options_for_select([["Tous", ""], ["Opportunités", "opportunite"], ["Belles Histoires", "belle_histoire"]], @filtres[:type]) %>
+  </label>
+  <label>Catégorie
+    <%= select_tag :categorie, options_for_select([["Toutes", ""]] + Categorie::TOUTES.reject { |c| c.cle == Categorie::HISTOIRES }.map { |c| [c.libelle, c.cle] }, @filtres[:categorie]) %>
+  </label>
+  <label>Source
+    <%= select_tag :origine, options_for_select([["Toutes", ""]] + ::Veille::Candidate::ORIGINS.map { |cle, nom| [nom, cle] }, @filtres[:origine]) %>
+  </label>
+  <label>Collecté depuis le
+    <%= date_field_tag :depuis, @filtres[:depuis] %>
+  </label>
+  <%= submit_tag "Filtrer", class: "btn", name: nil %>
+  <%= link_to "Réinitialiser", admin_veille_candidates_path(status: @status), class: "btn secondary" %>
+<% end %>
+
 <% if @candidates.empty? %>
   <div class="vide">
     <% if @status == "pending" %>
-      <p><strong>La file est vide.</strong></p>
-      <p class="small">Alimente-la avec <code>rake veille:import[fichier.txt]</code>,
-         un fichier d'URL à raison d'une par ligne.</p>
+      <p><strong>Rien à relire.</strong></p>
+      <p class="small">La file se remplit avec <code>rake veille:quotidien</code> et
+         <code>rake veille:hebdomadaire</code> (Heroku Scheduler), ou
+         <code>rake veille:import[fichier.txt]</code> pour une liste d'URL.</p>
     <% else %>
-      <p>Aucun candidat dans ce statut.</p>
+      <p>Aucun élément dans ce statut avec ces filtres.</p>
     <% end %>
   </div>
 <% else %>
   <table class="table">
     <thead>
       <tr>
-        <th style="width:44%">Article</th>
-        <th style="width:14%">Source</th>
-        <th style="width:9%">Date</th>
-        <th style="width:7%">Score</th>
-        <th style="width:26%">Motif &amp; décision</th>
+        <th style="width:42%">Élément</th>
+        <th style="width:15%">Type &amp; catégorie</th>
+        <th style="width:13%">Source &amp; quand</th>
+        <th style="width:8%">Fiabilité</th>
+        <th style="width:22%">Décision</th>
       </tr>
     </thead>
     <tbody id="file_de_tri">

@@ -91,6 +91,8 @@ Rails.application.routes.draw do
         member do
           patch :retenir
           patch :ecarter
+          patch :a_verifier
+          post  :valider # crée le brouillon Opportunity ou Story (inactif)
           post  :rediger # passe B — appel Sonnet, réponse en Turbo Stream
           post  :publier # crée la Story et purge full_text
         end

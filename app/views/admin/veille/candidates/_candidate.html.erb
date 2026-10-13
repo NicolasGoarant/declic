@@ -1,50 +1,69 @@
-<%# La ligne porte un id : c'est la cible que le Turbo Stream retire de la file. %>
+<%# La ligne porte un id : c'est la cible que les Turbo Streams retirent ou remplacent. %>
 <tr id="<%= dom_id(candidate) %>">
   <td>
     <strong><%= candidate.title.presence || "(sans titre)" %></strong>
-    <% if candidate.excerpt.present? %>
-      <div class="muted small"><%= truncate(candidate.excerpt, length: 240) %></div>
+    <% resume = candidate.summary.presence || candidate.excerpt %>
+    <% if resume.present? %>
+      <div class="small" style="margin-top:4px"><%= truncate(resume, length: 320) %></div>
+    <% end %>
+    <% if candidate.reason.present? %>
+      <div class="muted small" style="margin-top:4px">↳ <%= truncate(candidate.reason, length: 200) %></div>
     <% end %>
     <div class="small" style="margin-top:6px">
-      <%# target="_blank" : l'article s'ouvre à côté, la file reste en place. %>
-      <%= link_to "Ouvrir l'article ↗", candidate.url, target: "_blank", rel: "noopener noreferrer" %>
+      <%# target="_blank" : la source s'ouvre à côté, la file reste en place. %>
+      <%= link_to "Lien d'origine ↗", candidate.url, target: "_blank", rel: "noopener noreferrer" %>
     </div>
   </td>
 
-  <td class="small"><%= candidate.source_label || "—" %></td>
+  <td class="small">
+    <% if candidate.item_type %>
+      <span class="badge"><%= candidate.histoire? ? "Belle Histoire" : "Opportunité" %></span>
+    <% else %>
+      <span class="muted">non classé</span>
+    <% end %>
+    <div style="margin-top:4px"><%= candidate.categorie_label || (candidate.category == "belle_histoire" ? "belle histoire" : "—") %></div>
+    <div class="muted"><%= candidate.commune.presence || "commune ?" %></div>
+  </td>
 
-  <td class="small"><%= candidate.published_on&.strftime("%d/%m/%Y") || "—" %></td>
+  <td class="small">
+    <%= candidate.source_label || "—" %>
+    <div class="muted"><%= candidate.quand || candidate.published_on&.strftime("%d/%m/%Y") || "—" %></div>
+  </td>
 
   <td>
+    <% niveau = candidate.reliability || "basse" %>
+    <span class="badge fiabilite <%= niveau %>" title="Fiabilité de la source<%= candidate.score ? " · confiance IA #{candidate.score}" : "" %>"><%= niveau %></span>
     <% if candidate.score %>
-      <span class="score <%= candidate.score >= 75 ? 'haut' : candidate.score >= 40 ? 'moyen' : 'bas' %>">
-        <%= candidate.score %>
-      </span>
-      <div class="small muted"><%= candidate.category == "belle_histoire" ? "belle histoire" : "autre" %></div>
-    <% else %>
-      <span class="muted small">non qualifié</span>
+      <div class="small muted">IA <%= candidate.score %></div>
     <% end %>
   </td>
 
   <td>
-    <div class="small muted" style="margin-bottom:8px"><%= candidate.reason.presence || "—" %></div>
     <div class="actions">
-      <% if candidate.pending? %>
-        <%= button_to "Retenir", retenir_admin_veille_candidate_path(candidate),
-                      method: :patch, class: "btn" %>
-        <%= button_to "Écarter", ecarter_admin_veille_candidate_path(candidate),
-                      method: :patch, class: "btn secondary" %>
-      <% elsif candidate.retenu? %>
-        <%= link_to "Rédiger →", admin_veille_candidate_path(candidate), class: "btn" %>
+      <% if candidate.pending? || candidate.a_verifier? || candidate.retenu? %>
+        <% if candidate.item_type.present? && (candidate.pending? || candidate.a_verifier?) %>
+          <%= button_to "Valider", valider_admin_veille_candidate_path(candidate), method: :post, class: "btn",
+                        form: { data: { turbo_confirm: "Créer un brouillon (hors ligne) à partir de cet élément ?" } } %>
+        <% elsif candidate.pending? %>
+          <%= button_to "Retenir", retenir_admin_veille_candidate_path(candidate), method: :patch, class: "btn" %>
+        <% else %>
+          <%= link_to "Rédiger →", admin_veille_candidate_path(candidate), class: "btn" %>
+        <% end %>
+        <%= button_to "Écarter", ecarter_admin_veille_candidate_path(candidate), method: :patch, class: "btn secondary" %>
+        <% unless candidate.a_verifier? %>
+          <%= button_to "À vérifier", a_verifier_admin_veille_candidate_path(candidate), method: :patch, class: "btn secondary" %>
+        <% end %>
       <% elsif candidate.publie? %>
-        <span class="badge ok">publié</span>
+        <span class="badge ok">brouillon créé</span>
         <% if candidate.story %>
           <%= link_to "Voir la fiche", edit_admin_story_path(candidate.story), class: "btn secondary" %>
+        <% elsif candidate.opportunity %>
+          <%= link_to "Voir la fiche", edit_admin_opportunity_path(candidate.opportunity), class: "btn secondary" %>
         <% end %>
       <% else %>
         <span class="badge no">écarté</span>
-        <%= button_to "Reprendre", retenir_admin_veille_candidate_path(candidate),
-                      method: :patch, class: "btn secondary" %>
+        <% if candidate.discard_reason.present? %><div class="small muted"><%= candidate.discard_reason %></div><% end %>
+        <%= button_to "Reprendre", retenir_admin_veille_candidate_path(candidate), method: :patch, class: "btn secondary" %>
       <% end %>
     </div>
   </td>

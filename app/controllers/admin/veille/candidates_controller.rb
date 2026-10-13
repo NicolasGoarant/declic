@@ -14,13 +14,17 @@ module Admin
       # les pending.
       def index
         @status = params[:status].presence_in(::Veille::Candidate::STATUSES) || "pending"
+        @filtres = params.permit(:type, :categorie, :origine, :depuis).to_h.symbolize_keys
 
-        @candidates =
+        base =
           if @status == "pending"
             ::Veille::Candidate.file_de_tri
           else
             ::Veille::Candidate.where(status: @status).order(updated_at: :desc)
-          end.includes(:source)
+          end
+        @candidates = base.par_type(@filtres[:type]).par_categorie(@filtres[:categorie])
+                          .par_origine(@filtres[:origine]).collectes_depuis(date_filtre(@filtres[:depuis]))
+                          .includes(:source, :story, :opportunity)
 
         @counts = compteurs
       end
@@ -32,6 +36,22 @@ module Admin
       def retenir = trancher("retenu", "Candidat retenu.")
 
       def ecarter = trancher("ecarte", "Candidat écarté.")
+
+      def a_verifier = trancher("a_verifier", "Marqué à vérifier.")
+
+      # « Valider » : crée le brouillon (Opportunity ou Story, inactif) à partir du
+      # résumé reformulé. Aucune publication : la mise en ligne se fait ensuite
+      # depuis l'admin des fiches.
+      def valider
+        fiche = ::Veille::Validation.new(@candidate).call
+        redirect_back fallback_location: admin_veille_root_path,
+                      notice: "Brouillon créé, hors ligne : #{fiche.title}"
+      rescue ::Veille::Validation::Incomplet => e
+        redirect_back fallback_location: admin_veille_root_path, alert: e.message
+      rescue ActiveRecord::RecordInvalid => e
+        redirect_back fallback_location: admin_veille_root_path,
+                      alert: "Création impossible : #{e.record.errors.full_messages.to_sentence}"
+      end
 
       # Passe B. Tourne dans la requête web, en synchrone : voir
       # Veille::Drafter pour le budget de temps sous les 30 s d'Heroku.
@@ -62,6 +82,12 @@ module Admin
       end
 
       private
+
+      def date_filtre(valeur)
+        Date.iso8601(valeur.to_s) if valeur.present?
+      rescue Date::Error
+        nil
+      end
 
       def set_candidate
         @candidate = ::Veille::Candidate.find(params[:id])
@@ -124,6 +150,7 @@ module Admin
       def compteurs
         {
           pending: ::Veille::Candidate.pending.count,
+          a_verifier: ::Veille::Candidate.a_verifier.count,
           retenu:  ::Veille::Candidate.retenu.count,
           ecarte:  ::Veille::Candidate.ecarte.count,
           publie:  ::Veille::Candidate.publie.count

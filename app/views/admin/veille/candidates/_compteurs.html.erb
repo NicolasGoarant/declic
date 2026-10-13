@@ -1,4 +1,5 @@
-<%= pluralize(counts[:pending], "candidat en attente", "candidats en attente") %>
+<%= pluralize(counts[:pending], "élément à relire", "éléments à relire") %>
+· <%= counts[:a_verifier] %> à vérifier
 · <%= counts[:retenu] %> retenu(s)
 · <%= counts[:ecarte] %> écarté(s)
-· <%= counts[:publie] %> publié(s)
+· <%= counts[:publie] %> validé(s)

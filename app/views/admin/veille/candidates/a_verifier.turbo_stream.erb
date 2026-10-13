@@ -1,0 +1,4 @@
+<%= turbo_stream.replace dom_id(@candidate), partial: "candidate", locals: { candidate: @candidate } %>
+<%= turbo_stream.update "compteurs" do %>
+  <%= render "compteurs", counts: @counts %>
+<% end %>
