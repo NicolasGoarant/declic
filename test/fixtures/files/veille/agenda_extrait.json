@@ -1,0 +1,197 @@
+[
+ {
+  "uuid": "d3b7ae0c-bcaa-11f1-8cf8-ebf34b5123b7",
+  "name": "Les Rêveurs, film d'Isabelle Carré",
+  "startDate": "2026-10-13T00:00:00+02:00",
+  "endDate": "2026-10-13T00:00:00+02:00",
+  "mainCategory": {
+   "code": "632dacf7d1b97",
+   "name": "Conférence - Rencontre"
+  },
+  "subCategories": [
+   {
+    "code": "6399dd6c539d3",
+    "name": "Cinéma / projection"
+   }
+  ],
+  "beforeDateText": "Mardi 13 octobre 2026",
+  "duringDateText": "Aujourd'hui à 18h",
+  "displayPriority": 1626001,
+  "free": false,
+  "place": {
+   "id": 94,
+   "name": "Forum - IRTS de Lorraine - Nancy",
+   "relatedEntity": {
+    "id": 6,
+    "code": "VDN",
+    "name": "Ville de Nancy"
+   },
+   "city": {
+    "name": "Nancy"
+   }
+  },
+  "reservation": false,
+  "isSuperEvent": false,
+  "publicationDate": "2026-09-30T00:00:00+02:00",
+  "updatedAt": "2026-09-30T10:46:52+02:00",
+  "otherPlace": null,
+  "status": "OK",
+  "placeKeywords": "forum   irts de lorraine   nancy nancy"
+ },
+ {
+  "uuid": "9ec9ec26-b8ab-11f1-b465-6b794522c650",
+  "name": "Les rendez-vous du Collectif Autrement Dit",
+  "startDate": "2026-10-13T00:00:00+02:00",
+  "endDate": "2026-10-17T00:00:00+02:00",
+  "mainCategory": {
+   "code": "64008521d3e92",
+   "name": "Spectacle"
+  },
+  "subCategories": [
+   {
+    "code": "63874a0c9c188",
+    "name": "Théâtre"
+   }
+  ],
+  "beforeDateText": "Du 13 au 17 octobre",
+  "duringDateText": "Du 13 au 17 octobre",
+  "displayPriority": 1626005,
+  "free": false,
+  "place": {
+   "id": 7,
+   "name": "Théâtre de Mon désert",
+   "relatedEntity": {
+    "id": 4,
+    "code": "SGP",
+    "name": "Salle & Galerie Poirel"
+   },
+   "city": {
+    "name": "Nancy"
+   }
+  },
+  "reservation": false,
+  "isSuperEvent": false,
+  "publicationDate": "2026-09-25T00:00:00+02:00",
+  "updatedAt": "2026-09-30T13:55:13+02:00",
+  "otherPlace": null,
+  "status": null,
+  "placeKeywords": "theatre de mon desert nancy"
+ },
+ {
+  "uuid": "42e7d508-b8f6-11f1-a02b-b5e7dd4ec185",
+  "name": "Don de sang festif",
+  "startDate": "2026-10-16T00:00:00+02:00",
+  "endDate": "2026-10-17T00:00:00+02:00",
+  "mainCategory": {
+   "code": "6399daa585e6d",
+   "name": "Citoyenneté"
+  },
+  "subCategories": [
+   {
+    "code": "63b5323996c49",
+    "name": "Santé"
+   }
+  ],
+  "beforeDateText": "Les 16 et 17 octobre 2026",
+  "duringDateText": "Les 16 et 17 octobre 2026",
+  "displayPriority": 1629002,
+  "free": true,
+  "place": {
+   "id": 30,
+   "name": "Hôtel de Ville - mairie de Nancy",
+   "relatedEntity": {
+    "id": 6,
+    "code": "VDN",
+    "name": "Ville de Nancy"
+   },
+   "city": {
+    "name": "Nancy"
+   }
+  },
+  "reservation": false,
+  "isSuperEvent": false,
+  "publicationDate": "2026-09-25T00:00:00+02:00",
+  "updatedAt": "2026-09-25T17:33:22+02:00",
+  "otherPlace": null,
+  "status": null,
+  "placeKeywords": "hotel de ville   mairie de nancy nancy"
+ },
+ {
+  "uuid": "hors-zone",
+  "name": "Rencontre à Toul",
+  "startDate": "2026-10-13T00:00:00+02:00",
+  "endDate": "2026-10-13T00:00:00+02:00",
+  "mainCategory": {
+   "code": "632dacf7d1b97",
+   "name": "Conférence - Rencontre"
+  },
+  "subCategories": [
+   {
+    "code": "6399dd6c539d3",
+    "name": "Cinéma / projection"
+   }
+  ],
+  "beforeDateText": "Mardi 13 octobre 2026",
+  "duringDateText": "Aujourd'hui à 18h",
+  "displayPriority": 1626001,
+  "free": false,
+  "place": {
+   "id": 94,
+   "name": "Forum - IRTS de Lorraine - Nancy",
+   "relatedEntity": {
+    "id": 6,
+    "code": "VDN",
+    "name": "Ville de Nancy"
+   },
+   "city": {
+    "name": "Toul"
+   }
+  },
+  "reservation": false,
+  "isSuperEvent": false,
+  "publicationDate": "2026-09-30T00:00:00+02:00",
+  "updatedAt": "2026-09-30T10:46:52+02:00",
+  "otherPlace": null,
+  "status": "OK",
+  "placeKeywords": "forum   irts de lorraine   nancy nancy"
+ },
+ {
+  "uuid": "passe",
+  "name": "Conférence passée",
+  "startDate": "2026-01-10T00:00:00+01:00",
+  "endDate": "2026-01-10T00:00:00+01:00",
+  "mainCategory": {
+   "code": "632dacf7d1b97",
+   "name": "Conférence - Rencontre"
+  },
+  "subCategories": [
+   {
+    "code": "6399dd6c539d3",
+    "name": "Cinéma / projection"
+   }
+  ],
+  "beforeDateText": "Mardi 13 octobre 2026",
+  "duringDateText": "Aujourd'hui à 18h",
+  "displayPriority": 1626001,
+  "free": false,
+  "place": {
+   "id": 94,
+   "name": "Forum - IRTS de Lorraine - Nancy",
+   "relatedEntity": {
+    "id": 6,
+    "code": "VDN",
+    "name": "Ville de Nancy"
+   },
+   "city": {
+    "name": "Nancy"
+   }
+  },
+  "reservation": false,
+  "isSuperEvent": false,
+  "publicationDate": "2026-09-30T00:00:00+02:00",
+  "updatedAt": "2026-09-30T10:46:52+02:00",
+  "otherPlace": null,
+  "status": "OK",
+  "placeKeywords": "forum   irts de lorraine   nancy nancy"
+ }
+]
