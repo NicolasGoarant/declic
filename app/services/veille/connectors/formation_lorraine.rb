@@ -19,7 +19,8 @@ module Veille
 
       def collect
         urls = Nokogiri::XML(http.get(SITEMAP)).remove_namespaces!.xpath("//url/loc").map(&:text)
-        urls = urls.select { |u| URI(u).path.match?(MOTIF) }.first(MAX_PAGES)
+        # Les pages déjà connues ne sont pas relues : chaque exécution avance dans le sitemap.
+        urls = urls.select { |u| URI(u).path.match?(MOTIF) }.reject { |u| Veille::Candidate.exists?(url: u) }.first(MAX_PAGES)
         urls.filter_map { |u| item_pour(u) }
       end
 

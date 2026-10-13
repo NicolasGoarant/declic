@@ -8,6 +8,9 @@ module Veille
   # Rien n'est publié : tout aboutit dans la file de relecture /admin/veille.
   class Runner
     MAX_ENRICHIS = 30
+    # Au-delà, l'API est manifestement hors service (crédit épuisé, clé refusée,
+    # panne) : inutile d'essuyer 30 refus et de remplir les logs.
+    ERREURS_CONSECUTIVES_MAX = 3
 
     QUOTIDIEN   = [Connectors::Engagement, Connectors::AgendaNancy, Connectors::FormationLorraine,
                    Connectors::Transentreprise, Connectors::GazetteFrance].freeze
@@ -60,8 +63,10 @@ module Veille
       end
       rapport.restants = [file.size - @max, 0].max
 
+      d_affilee = 0
       file.first(@max).each do |candidat|
         enrichir_un(candidat, rapport)
+        d_affilee = 0
       rescue AnthropicClient::AuthenticationError => e
         @log.error("[Veille] enrichissement arrêté : #{e.message}")
         rapport.erreurs_ia += 1
@@ -69,6 +74,11 @@ module Veille
       rescue AnthropicClient::Error, AiPass::ParseError => e
         @log.warn("[Veille] enrichissement ##{candidat.id} : #{e.class.name.demodulize} — #{e.message.slice(0, 150)}")
         rapport.erreurs_ia += 1
+        d_affilee += 1
+        if d_affilee >= ERREURS_CONSECUTIVES_MAX
+          @log.error("[Veille] enrichissement arrêté après #{d_affilee} erreurs d'affilée")
+          break
+        end
       end
     end
 

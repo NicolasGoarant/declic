@@ -14,7 +14,7 @@ module Veille
 
       def collect
         doc = Nokogiri::HTML(http.get(RUBRIQUE))
-        liens = doc.css("a[href^='/article/']").map { |a| URI.join(RUBRIQUE, a["href"]).to_s }.uniq.first(MAX)
+        liens = doc.css("a[href^='/article/']").map { |a| URI.join(RUBRIQUE, a["href"]).to_s }.uniq.reject { |u| Veille::Candidate.exists?(url: u) }.first(MAX)
         liens.filter_map { |u| item_pour(u) }
       end
 

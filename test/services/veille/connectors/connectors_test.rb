@@ -106,6 +106,17 @@ class Veille::ConnectorsTest < ActiveSupport::TestCase
     assert_nil res.items.first.type_hint, "le type est laissé à l'IA"
   end
 
+  test "presse : un flux refusé n'empêche pas de lire l'autre (statut partiel)" do
+    http = FakeHttp.new("https://presse.example/rss" => RSS_PRESSE,
+                        "https://refuse.example/rss" => Veille::Http::Refused.new("robots.txt interdit /rss"))
+    res = Veille::Connectors::Presse.new(flux: { "Ouverte" => "https://presse.example/rss", "Fermée" => "https://refuse.example/rss" },
+                                         http: http, today: TODAY).call
+
+    assert_equal :partiel, res.statut
+    assert_equal 1, res.items.size
+    assert_match(/Fermée : refuse/, res.message)
+  end
+
   # --- Gazette -----------------------------------------------------------------
   test "gazette : lit la rubrique puis les articles qui citent une commune du Grand Nancy" do
     rubrique = '<a href="/article/a-nancy">a</a><a href="/article/ailleurs">b</a><a href="/article/a-nancy">dup</a>'

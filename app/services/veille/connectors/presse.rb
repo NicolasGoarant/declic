@@ -26,10 +26,35 @@ module Veille
 
       def origin = "presse"
 
-      def collect
-        @flux.flat_map do |nom, url|
-          Nokogiri::XML(http.get(url)).xpath("//item").filter_map { |n| item_pour(n, nom) }
-        end
+      # Chaque flux est jugé à part : le refus de l'un (robots.txt) n'empêche pas
+      # de lire les autres. Statut :partiel si certains seulement répondent.
+      def call
+        @etat = {}
+        items = @flux.flat_map { |nom, url| lire_flux(nom, url) }
+        refuses = @etat.select { |_, (st, _)| st != :ok }
+        return super_resultat(items) if refuses.empty?
+
+        detail = @etat.map { |nom, (st, msg)| "#{nom} : #{st == :ok ? 'ok' : "#{st} (#{msg})"}" }.join(" ; ")
+        statut = refuses.size == @etat.size ? refuses.values.first.first : :partiel
+        Resultat.new(nom: nom, statut: statut, items: items, message: detail)
+      end
+
+      def collect = @flux.flat_map { |nom, url| lire_flux(nom, url) }
+
+      def lire_flux(nom, url)
+        items = Nokogiri::XML(http.get(url)).xpath("//item").filter_map { |n| item_pour(n, nom) }
+        @etat[nom] = [:ok, nil] if @etat
+        items
+      rescue Veille::Http::Refused => e
+        @etat[nom] = [:refuse, e.message] if @etat
+        []
+      rescue Veille::Http::Error => e
+        @etat[nom] = [:erreur, e.message] if @etat
+        []
+      end
+
+      def super_resultat(items)
+        Resultat.new(nom: nom, statut: :ok, items: items, message: "#{items.size} élément(s) retenu(s)")
       end
 
       def item_pour(noeud, nom_flux)

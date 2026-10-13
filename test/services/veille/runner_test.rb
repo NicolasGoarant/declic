@@ -111,6 +111,16 @@ class Veille::RunnerTest < ActiveSupport::TestCase
     assert_equal 0, rapport.enrichis
   end
 
+  test "l'enrichissement s'arrête après 3 erreurs d'affilée (crédit épuisé, panne)" do
+    enricher = FauxEnricher.new
+    enricher.define_singleton_method(:enrich) { |_c| raise AnthropicClient::Error, "HTTP 400 — credit balance is too low" }
+    items = 10.times.map { |i| item(title: "Élément #{i}", starts_on: Date.new(2027, 1, 1) + i) }
+    rapport = runner([FauxConnecteur.new("A", items: items)], enricher: enricher).run
+
+    assert_equal 3, rapport.erreurs_ia
+    assert_equal 10, Veille::Candidate.a_enrichir.count, "tout reste à enrichir pour le lendemain"
+  end
+
   test "l'estimation de coût suit le modèle" do
     usage = { "input_tokens" => 1_000_000, "output_tokens" => 1_000_000 }
     assert_in_delta 6.0,  Veille::Cout.estimer("claude-haiku-4-5-20251001", usage), 0.001
