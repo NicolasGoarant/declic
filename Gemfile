@@ -97,3 +97,4 @@ gem "image_processing", "~> 1.14"
 gem 'httparty'
 gem 'nokogiri'
 
+gem "roo", "~> 2.10" # lecture du repérage initial (.xlsx) de la veille

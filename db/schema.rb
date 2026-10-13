@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_09_27_100000) do
+ActiveRecord::Schema[7.2].define(version: 2026_10_13_090000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -208,6 +208,23 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_27_100000) do
     t.string "status", default: "pending", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "origin"
+    t.string "item_type"
+    t.string "declic_category"
+    t.string "commune"
+    t.date "starts_on"
+    t.date "ends_on"
+    t.string "schedule_text"
+    t.text "summary"
+    t.text "draft_body"
+    t.string "reliability"
+    t.string "normalized_title"
+    t.string "discard_reason"
+    t.datetime "fetched_at"
+    t.datetime "enriched_at"
+    t.integer "opportunity_id"
+    t.index ["normalized_title", "starts_on"], name: "index_veille_candidates_on_normalized_title_and_starts_on"
+    t.index ["origin"], name: "index_veille_candidates_on_origin"
     t.index ["score"], name: "index_veille_candidates_on_score"
     t.index ["status"], name: "index_veille_candidates_on_status"
     t.index ["url"], name: "index_veille_candidates_on_url", unique: true
@@ -229,5 +246,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_27_100000) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "stories", "veille_candidates", on_delete: :nullify
+  add_foreign_key "veille_candidates", "opportunities", on_delete: :nullify
   add_foreign_key "veille_candidates", "veille_sources", on_delete: :nullify
 end

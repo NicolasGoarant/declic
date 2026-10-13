@@ -8,7 +8,20 @@ module Veille
   #   publie   → une Story a été créée à partir de ce candidat
   class Candidate < ApplicationRecord
     CATEGORIES = %w[belle_histoire autre].freeze
-    STATUSES   = %w[pending retenu ecarte publie].freeze
+    STATUSES   = %w[pending a_verifier retenu ecarte publie].freeze
+
+    # Règle éditoriale : une opportunité invite à agir ; une belle histoire est un récit.
+    ITEM_TYPES   = %w[opportunite belle_histoire].freeze
+    RELIABILITY  = %w[haute moyenne basse].freeze
+    ORIGINS = {
+      "jeveuxaider"     => "JeVeuxAider",
+      "agenda_nancy"    => "Agenda Grand Nancy",
+      "formation"       => "Formation Lorraine",
+      "transentreprise" => "Transentreprise",
+      "gazette"         => "La Gazette France",
+      "presse"          => "Presse locale",
+      "import_xlsx"     => "Repérage initial"
+    }.freeze
 
     # category reste nil tant que la passe A n'a pas tourné : allow_nil.
     # status est renseigné dès la création (défaut "pending"), donc requis.
@@ -27,7 +40,14 @@ module Veille
             inverse_of:  :veille_candidate,
             dependent:   :nullify
 
+    belongs_to :opportunity, optional: true, inverse_of: :veille_candidate
+
     validates :url, presence: true, uniqueness: true
+    validates :item_type,       inclusion: { in: ITEM_TYPES },  allow_nil: true
+    validates :declic_category, inclusion: { in: ::Opportunity::CATEGORIES }, allow_nil: true
+    validates :reliability,     inclusion: { in: RELIABILITY }, allow_nil: true
+
+    before_validation :set_normalized_title
     validates :score, numericality: {
       only_integer:             true,
       greater_than_or_equal_to: 0,
@@ -38,18 +58,61 @@ module Veille
     scope :file_de_tri, -> { pending.order(Arel.sql("score DESC NULLS LAST"), created_at: :desc) }
     scope :qualifies,   -> { where.not(qualified_at: nil) }
 
+    scope :par_type,      ->(t) { t.present? ? where(item_type: t) : all }
+    scope :par_categorie, ->(c) { c.present? ? where(declic_category: c) : all }
+    scope :par_origine,   ->(o) { o.present? ? where(origin: o) : all }
+    scope :collectes_depuis, ->(d) { d.present? ? where("veille_candidates.fetched_at >= ? OR veille_candidates.created_at >= ?", d, d) : all }
+    # Ce qui attend encore un enrichissement IA : jamais passé par AiEnricher, pas déjà tranché.
+    scope :a_enrichir, -> { where(enriched_at: nil, status: %w[pending]).where(discard_reason: nil) }
+    # À relire par un humain : enrichi, non écarté. « À vérifier » en fait partie.
+    scope :a_relire, -> { where(status: %w[pending a_verifier]).where(discard_reason: nil) }
+
+    def self.origine_label(origine) = ORIGINS.fetch(origine.to_s, origine.to_s.humanize)
+
+    # Dédoublonnage : même URL, ou même titre normalisé avec la même date de début.
+    # Sans date (régime « toute l'année »), la même origine est exigée en plus, pour ne pas
+    # confondre deux missions homonymes de sources différentes.
+    def self.doublon?(url:, title:, starts_on: nil, origin: nil)
+      return true if url.present? && exists?(url: url)
+
+      norme = Veille::Text.normalize(title)
+      return false if norme.blank?
+
+      scope = where(normalized_title: norme, starts_on: starts_on)
+      scope = scope.where(origin: origin) if starts_on.nil?
+      scope.exists?
+    end
+
     def qualified? = qualified_at.present?
+    def opportunite?    = item_type == "opportunite"
+    def histoire?       = item_type == "belle_histoire"
+    def enriched?       = enriched_at.present?
+    def categorie_label = declic_category && Categorie.trouver(declic_category)&.libelle
+    def origine_label   = self.class.origine_label(origin)
+
+    # Date ou régime tel qu'affiché dans la file.
+    def quand
+      return schedule_text if starts_on.nil? && ends_on.nil?
+      return I18n.l(starts_on, format: "%-d/%m/%Y") if ends_on.nil? || ends_on == starts_on
+      "#{starts_on && I18n.l(starts_on, format: '%-d/%m/%Y')} → #{I18n.l(ends_on, format: '%-d/%m/%Y')}"
+    end
 
     # Le tampon de travail est-il disponible ? Après publication il ne
     # l'est plus, par construction (voir Story#purge_veille_candidate_full_text).
     def full_text? = full_text.present?
 
-    def source_label = source&.name.presence || host
+    def source_label = source&.name.presence || (origin.present? ? origine_label : host)
 
     def host
       URI.parse(url.to_s).host&.delete_prefix("www.")
     rescue URI::InvalidURIError
       nil
+    end
+
+    private
+
+    def set_normalized_title
+      self.normalized_title = Veille::Text.normalize(title).presence
     end
   end
 end

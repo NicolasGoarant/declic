@@ -2,6 +2,9 @@
 class Opportunity < ApplicationRecord
   include NancyGeocodable
 
+  # Candidat de veille dont cette fiche est issue (nil pour les fiches saisies à la main).
+  has_one :veille_candidate, class_name: "Veille::Candidate", inverse_of: :opportunity, dependent: :nullify
+
   # --- Stockage JSON (SQLite/Postgres) ---
   attribute :raw_payload, :json
 

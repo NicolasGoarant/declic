@@ -38,7 +38,7 @@ module Veille
 
     test "n'accepte que les catégories et statuts prévus" do
       assert_equal %w[belle_histoire autre], Veille::Candidate::CATEGORIES
-      assert_equal %w[pending retenu ecarte publie], Veille::Candidate::STATUSES
+      assert_equal %w[pending a_verifier retenu ecarte publie], Veille::Candidate::STATUSES
 
       assert_not build(category: "faits_divers").valid?
       assert_not build(status: "brouillon").valid?
