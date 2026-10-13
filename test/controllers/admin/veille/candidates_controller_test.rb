@@ -225,6 +225,7 @@ module Admin
       # ----------------------------------------------------------------
       test "Publier crée la fiche en brouillon, la relie au candidat et vide full_text" do
         c = candidat(status: "retenu", published_on: Date.new(2026, 3, 14))
+        Geocoder::Lookup::Test.add_stub("Laxou", [{ "latitude" => 48.6936, "longitude" => 6.1496, "address" => "Laxou" }])
 
         assert_difference -> { Story.count }, 1 do
           post publier_admin_veille_candidate_path(c),
@@ -251,9 +252,10 @@ module Admin
 
       test "un titre vide dans le formulaire retombe sur celui du candidat" do
         c = candidat(status: "retenu")
+        Geocoder::Lookup::Test.add_stub("Nancy", [{ "latitude" => 48.6937, "longitude" => 6.1834, "address" => "Nancy" }])
 
         post publier_admin_veille_candidate_path(c),
-             params:  { draft: { titre: "", resume: "Un résumé." } },
+             params:  { draft: { titre: "", commune: "Nancy", resume: "Un résumé." } },
              headers: auth
 
         assert_equal c.title, Story.find_by(veille_candidate_id: c.id).title

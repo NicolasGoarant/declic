@@ -88,7 +88,7 @@ class StoryTest < ActiveSupport::TestCase
     c = candidat
     assert c.full_text?, "préalable : le tampon est rempli"
 
-    Story.create!(title: "Une belle histoire", veille_candidate: c)
+    Story.create!(title: "Une belle histoire", location: "Nancy", latitude: 48.69, longitude: 6.18, veille_candidate: c)
 
     assert_nil c.reload.full_text,
                "full_text est un tampon de travail : Déclic ne constitue pas " \
@@ -100,7 +100,7 @@ class StoryTest < ActiveSupport::TestCase
     c = candidat(excerpt: "Le chapeau", score: 88, category: "belle_histoire", reason: "Motif")
     url_avant = c.url
 
-    Story.create!(title: "T", veille_candidate: c)
+    Story.create!(title: "T", location: "Nancy", latitude: 48.69, longitude: 6.18, veille_candidate: c)
     c.reload
 
     assert_equal "Le chapeau", c.excerpt
@@ -111,12 +111,12 @@ class StoryTest < ActiveSupport::TestCase
   end
 
   test "la purge n'écrase pas une fiche sans candidat" do
-    assert_nothing_raised { Story.create!(title: "Histoire saisie à la main") }
+    assert_nothing_raised { Story.create!(title: "Histoire saisie à la main", location: "Nancy", latitude: 48.69, longitude: 6.18) }
   end
 
   test "la purge est sans effet si le tampon est déjà vide" do
     c = candidat(full_text: nil)
-    story = Story.create!(title: "T", veille_candidate: c)
+    story = Story.create!(title: "T", location: "Nancy", latitude: 48.69, longitude: 6.18, veille_candidate: c)
 
     assert_nil c.reload.full_text
     assert_equal c, story.veille_candidate
@@ -124,7 +124,7 @@ class StoryTest < ActiveSupport::TestCase
 
   test "le lien candidat vers fiche fonctionne dans les deux sens" do
     c = candidat
-    story = Story.create!(title: "T", veille_candidate: c)
+    story = Story.create!(title: "T", location: "Nancy", latitude: 48.69, longitude: 6.18, veille_candidate: c)
 
     assert_equal story, c.reload.story
     assert_equal c, story.veille_candidate
@@ -132,7 +132,7 @@ class StoryTest < ActiveSupport::TestCase
 
   test "supprimer le candidat ne détruit pas la fiche publiée" do
     c = candidat
-    story = Story.create!(title: "T", veille_candidate: c)
+    story = Story.create!(title: "T", location: "Nancy", latitude: 48.69, longitude: 6.18, veille_candidate: c)
 
     c.destroy
     assert Story.exists?(story.id), "une histoire publiée survit à son candidat"
@@ -140,7 +140,7 @@ class StoryTest < ActiveSupport::TestCase
   end
 
   test "la fiche issue de la veille naît inactive" do
-    story = Story.create!(title: "T", veille_candidate: candidat)
+    story = Story.create!(title: "T", location: "Nancy", latitude: 48.69, longitude: 6.18, veille_candidate: candidat)
     assert_not story.is_active, "elle est relue en admin avant publication"
   end
 end
