@@ -1,0 +1,7 @@
+<%# Bandeau de géolocalisation (invitation, aide si la position est bloquée, échec). Masqué par défaut :
+    app/javascript/bandeau_position.js l'affiche selon l'état publié par geoloc_auto.js. %>
+<div class="bandeau-position" role="status" hidden data-bandeau-position>
+  <p data-bandeau-texte></p>
+  <button type="button" class="bandeau-position-activer" hidden data-bandeau-activer>Activer ma position</button>
+  <button type="button" class="bandeau-position-fermer" aria-label="Fermer ce message" data-bandeau-fermer>&times;</button>
+</div>

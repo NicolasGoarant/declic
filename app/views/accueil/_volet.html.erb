@@ -15,6 +15,11 @@
   <div class="acc-volet-panneau" id="acc-volet-panneau" data-sheet-target="panneau">
     <div class="acc-volet-tete">
       <h2 id="acc-volet-titre" data-diorama-target="voletTitre">Au centre de la vue</h2>
+      <%# Visibles dès que la position est connue (diorama#majPillesPosition). %>
+      <div class="acc-pilles-position" hidden data-diorama-target="pillesPosition">
+        <button type="button" aria-pressed="false" data-diorama-target="pillePlusProches" data-action="diorama#basculerPlusProches">Plus proches</button>
+        <button type="button" aria-pressed="false" data-diorama-target="pilleProximite" data-action="diorama#basculerProximite">À proximité</button>
+      </div>
       <a href="#carte" class="acc-lien-violet" data-action="diorama#voirTout">
         Voir tout sur la carte <%= picto(:fleche, taille: 16) %>
       </a>

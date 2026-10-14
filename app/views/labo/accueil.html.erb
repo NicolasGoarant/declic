@@ -7,6 +7,7 @@
       diorama_developpement_value: Rails.env.development?,
       action: "keydown@window->diorama#echap sheet:ouverte->diorama#fermerPopup diorama:localisation-echec->diorama#localisationRefusee"
     } do %>
+  <%= render "shared/bandeau_position" %>
   <%= render "accueil/barre_haute", flottante: true %>
 
   <div class="acc-ecran" id="carte">

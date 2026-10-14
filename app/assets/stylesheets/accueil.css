@@ -949,3 +949,12 @@ body.acc-corps {
   position: absolute; left: 8px; top: 50%; z-index: 900; padding: 4px 8px; border-radius: 6px;
   background: rgba(29, 26, 43, 0.85); color: #fff; font: 12px/1.3 ui-monospace, monospace; pointer-events: none;
 }
+
+/* Volet : « Plus proches » / « À proximité », visibles quand la position est connue. */
+.acc-pilles-position { display: flex; gap: 6px; flex-wrap: wrap; }
+.acc-pilles-position[hidden] { display: none; }
+.acc-pilles-position button {
+  border: 1px solid var(--violet-pale); border-radius: 999px; padding: 4px 10px; cursor: pointer;
+  background: #fff; color: var(--violet); font: inherit; font-size: 13px; font-weight: 700;
+}
+.acc-pilles-position button[aria-pressed="true"] { background: var(--violet); border-color: var(--violet); color: #fff; }

@@ -4,6 +4,7 @@
 // labo/_filtre_categories) ; la géolocalisation est partagée via l'événement `diorama:localise`
 // (bouton « Me localiser » de la carte) ou demandée ici directement (pastille « À proximité »).
 import { Controller } from "@hotwired/stimulus"
+import { demander } from "geoloc_auto"
 
 const CLE_FAVORIS = "declic:favoris" // même clé que diorama_controller.js et fiche_controller.js
 const JOUR_MS = 24 * 60 * 60 * 1000
@@ -77,29 +78,32 @@ export default class extends Controller {
 
   // ─── À proximité : demande sa propre géolocalisation si « Me localiser » n'a pas déjà répondu ──
   basculerProximite(evenement) {
-    if (!this.position) { this.demanderLocalisation(evenement.currentTarget); return }
+    if (!this.position) { this.demanderLocalisation(); return }
     this.filtre.proximite = !this.filtre.proximite
     this.majPilleProximite()
     this.rendre()
   }
 
-  demanderLocalisation(bouton) {
-    if (!navigator.geolocation) { this.signalerEchecLocalisation(); return }
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        this.surLocalisation({ detail: { lat: position.coords.latitude, lon: position.coords.longitude } })
-        this.filtre.proximite = true
-        bouton?.setAttribute("aria-pressed", "true")
-        this.rendre()
-      },
-      () => this.signalerEchecLocalisation(),
-      { enableHighAccuracy: false, timeout: 8000 }
-    )
+  // La demande passe par geoloc_auto (partagée avec « Me localiser ») : la position revient par diorama:localise.
+  demanderLocalisation() {
+    this.proximiteEnAttente = true
+    demander(() => { this.proximiteEnAttente = false; this.signalerEchecLocalisation() })
   }
 
   // Écoute diorama:localise (bouton « Me localiser » de la carte) : une seule permission pour les deux.
   surLocalisation({ detail: { lat, lon } }) {
+    const premiere = !this.position
     this.position = { lat, lon }
+    // Position connue pour la première fois : les résultats passent par distance (le menu reste modifiable).
+    if (premiere && this.hasTriTarget && this.triTarget.querySelector('option[value="proches"]')) {
+      this.filtre.tri = "proches"
+      this.triTarget.value = "proches"
+    }
+    if (this.proximiteEnAttente) { // pastille « À proximité » cliquée avant que la position soit connue
+      this.proximiteEnAttente = false
+      this.filtre.proximite = true
+      this.majPilleProximite()
+    }
     if (this.hasRayonBlocTarget) this.rayonBlocTarget.hidden = false
     if (this.hasProximiteMessageTarget) this.proximiteMessageTarget.hidden = true
     this.rendre()
