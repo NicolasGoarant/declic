@@ -1,5 +1,5 @@
 // Les bateaux : péniches sur le canal, petits bateaux sur la Meurthe, posés SUR la maquette.
-// Données de nancy-3d (rapports/animations-v1, jeu R2 « mobiles-v1 ») : le calque des itinéraires sur l'eau
+// Données de nancy-3d (rapports/animations-v1, jeu R2 « mobiles-v2 ») : le calque des itinéraires sur l'eau
 // (bateaux.json, format nancy-3d/calque-vivant v2, en pixels de mosaïque au niveau 8) et l'atlas des sprites
 // cuits pour la caméra du diorama (50°, azimut 200° en relèvement de grille Lambert-93 de l'œil vu du centre).
 //
@@ -33,6 +33,7 @@ const Z_VOLET = 440
 const DENSITE = [3.0, 4.0]          // CHOISI : bateaux par km et par file — péniches (canal), petits bateaux (rivière)
 const VITESSE = [1.0, 1.6]          // CHOISI : m/s d'une file, ± 10 % tirés par file
 const FONDU_M = 15                  // CHOISI : longueur du fondu aux bouts d'un intervalle
+const DEBORD_M = 1                  // CHOISI : un bateau dont la coque passerait la berge PEINTE de plus que cela est effacé
 const RECUL_CONTOUR_M = 12          // CHOISI : retrait, en m, d'un bout d'intervalle coupé par le contour de la Métropole
 const LARGEUR_DEUX_FILES_M = 12     // sous cette largeur (borne basse), deux bateaux ne se croisent pas
 const CRANS = 5, SILLAGE_RGB = "236,244,246", PAS_M = 1.5, OUVERTURE = 0.25 // CHOISIS ; 0,25 = tan 14°
@@ -107,7 +108,7 @@ export class Mobiles {
     this.cam = cam
     this.parType = [[], []]
     this.modeles.forEach((m, q) => this.parType[m.type === "peniche" ? 0 : 1].push(q))
-    this.routes = this.eau.itineraires.map(([type, , , trace, largeurs, intervalles, couverts = [], couverts9 = null], i) => {
+    this.routes = this.eau.itineraires.map(([type, , , trace, largeurs, intervalles, couverts = [], couverts9 = null, peintes = null], i) => {
       const n = trace.length / 2, cum = new Float64Array(n), dirs = new Float64Array(2 * n)
       let s = 0
       for (let j = 1; j < n; j++) {
@@ -119,6 +120,9 @@ export class Mobiles {
       if (n > 1) { dirs[2 * (n - 1)] = dirs[2 * (n - 2)]; dirs[2 * (n - 1) + 1] = dirs[2 * (n - 2) + 1] }
       // les niveaux 8 et 9 du style ne dessinent pas la même eau partout : chaque niveau a ses portions couvertes
       const route = { i, type, trace, cum, dirs, largeurs, couvertsParNiveau: { 8: couverts, 9: couverts9 || couverts }, couverts, Lm: s }
+      // largeur d'eau PEINTE utile, tous les 5 m (nancy-3d, berges/largeurs-peintes.py) : la largeur du calque ignore l'eau
+      // dessinée (20 m au chenal du port pour une dizaine de mètres peints) ; absente, on garde celle du calque
+      if (peintes?.length) route.peintes = { s: Float64Array.from(peintes, (p) => p[0]), w: Float64Array.from(peintes, (p) => p[1]) }
       route.intervalles = this.recouper(route, intervalles).map(([s0, s1], j) => {
         // les sommets de l'intervalle ET ses deux extrémités : un bout coupé au contour tombe souvent au milieu d'un segment
         const boite = [Infinity, Infinity, -Infinity, -Infinity], etendre = (x, y) => {
@@ -175,6 +179,19 @@ export class Mobiles {
     let d = Infinity
     for (const [a, b] of r.couverts) d = Math.min(d, s < a ? a - s : s > b ? s - b : 0)
     return d
+  }
+
+  // Largeur PEINTE utile en s, interpolée entre les points du calque ; repli : la largeur du calque.
+  largeurUtile(r, s) {
+    const P = r.peintes
+    if (!P) return this.largeurEn(r, s)
+    const n = P.s.length
+    if (s <= P.s[0]) return P.w[0]
+    if (s >= P.s[n - 1]) return P.w[n - 1]
+    let lo = 0, hi = n - 1
+    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (P.s[m] <= s) lo = m; else hi = m }
+    const u = (s - P.s[lo]) / (P.s[hi] - P.s[lo])
+    return P.w[lo] + u * (P.w[hi] - P.w[lo])
   }
 
   largeurEn(r, s) {
@@ -357,10 +374,15 @@ export class Mobiles {
             const ph = (kk + 0.6 * (graineDe(cle, fi, 300 + kk) - 0.5)) / n
             const s = iv.s0 + replier(ph * Li + dir * v * t, Li)
             // fondu aux bouts de l'intervalle, et à l'approche d'une portion couverte (sur une demi-longueur + 4 m)
-            const alpha = Math.min(1, (s - iv.s0) / FONDU_M, (iv.s1 - s) / FONDU_M, this.distanceCouvert(r, s) / (M.L / 2 + 4))
-            if (alpha <= 0.02 && !this.garderInvisibles) continue // crochet d'instrument : la planche cherche aussi les effacés
-            const p = this.situer(r, s), larg = this.largeurEn(r, s)
+            // la largeur peinte la plus étroite sous la coque (milieu et deux bouts) borne le décalage de la file ; si même
+            // centrée la coque passerait la berge, le bateau s'efface sur DEBORD_M (une péniche agrandie dans une darse)
+            const larg = Math.min(this.largeurUtile(r, s), this.largeurUtile(r, s - M.L / 2), this.largeurUtile(r, s + M.L / 2))
             const decal = files.length === 2 ? Math.max(0, Math.min(larg / 4, larg / 2 - M.W / 2 - 0.5)) : 0
+            const debord = decal + M.W / 2 - larg / 2
+            // aux bouts, le fondu s'achève quand la PROUE atteint le bout, pas le milieu : un bateau long ne dépasse pas l'eau
+            const alpha = Math.min(1, (s - iv.s0 - M.L / 2) / FONDU_M, (iv.s1 - s - M.L / 2) / FONDU_M, this.distanceCouvert(r, s) / (M.L / 2 + 4), 1 - debord / DEBORD_M)
+            if (alpha <= 0.02 && !this.garderInvisibles) continue // crochet d'instrument : la planche cherche aussi les effacés
+            const p = this.situer(r, s)
             const gE = p[2] * dir, gN = p[3] * dir, dE = gN, dN = -gE // tribord : à droite du sens de marche
             const cx = p[0] + (E[0] * dE + N[0] * dN) * decal, cy = p[1] + (E[1] * dE + N[1] * dN) * decal
             const X = sc.ox + cx * sc.k, Y = sc.oy + cy * sc.k

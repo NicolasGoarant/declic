@@ -50,10 +50,10 @@ class DioramaTuilesTest < ActiveSupport::TestCase
   end
 
   test "les bateaux demandent leur manifeste ET la carte de propriété, qui les masque" do
-    refute tuiles(%w[toits-v1/manifeste.json mobiles-v1/manifeste.json]).disponibles[:mobiles]
-    t = tuiles(%w[toits-v1/manifeste.json propriete-toits-v1/manifeste.json mobiles-v1/manifeste.json])
+    refute tuiles(%w[toits-v1/manifeste.json mobiles-v2/manifeste.json]).disponibles[:mobiles]
+    t = tuiles(%w[toits-v1/manifeste.json propriete-toits-v1/manifeste.json mobiles-v2/manifeste.json])
     assert t.disponibles[:mobiles]
-    assert_equal "#{t.base}/mobiles-v1", t.pour_js[:mobiles]
+    assert_equal "#{t.base}/mobiles-v2", t.pour_js[:mobiles]
   end
 
   test "DIORAMA_MOBILES_URL fait lire les bateaux ailleurs que sur R2" do
