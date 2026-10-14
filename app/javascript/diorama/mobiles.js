@@ -3,8 +3,9 @@
 // (bateaux.json, format nancy-3d/calque-vivant v2, en pixels de mosaïque au niveau 8) et l'atlas des sprites
 // cuits pour la caméra du diorama (50°, azimut 200° en relèvement de grille Lambert-93 de l'œil vu du centre).
 //
-// Un canevas dans un volet Leaflet entre les dalles et les marqueurs (z-index 500 : au-dessus de la météo à
-// 450, sous les pins à 600), recalé à chaque déplacement comme celui des précipitations.
+// Un canevas dans un volet Leaflet entre les dalles et les marqueurs (z-index 440 : au-dessus des vecteurs
+// de Leaflet à 400, SOUS la météo à 450 — la pluie tombe sur les bateaux —, sous les ombres des marqueurs à 500
+// et les pins à 600), recalé à chaque déplacement comme celui des précipitations.
 //
 // Ce que fait chaque image (rien n'est gardé d'une image à l'autre : la position est une fonction de l'heure) :
 //   1. la POSE : sur chaque intervalle de circulation, des bateaux régulièrement espacés, tirés à la graine,
@@ -28,7 +29,7 @@ const NIVEAU_REPERE = 8
 const NIVEAU_MIN = 7                // en dessous, une péniche fait moins de 20 px : on ne pose rien
 const MOINS_DE_MOUVEMENT = "(prefers-reduced-motion: reduce)"
 const INTERVALLE_MS = 1000 / 30 - 2
-const Z_VOLET = 500
+const Z_VOLET = 440
 const DENSITE = [3.0, 4.0]          // CHOISI : bateaux par km et par file — péniches (canal), petits bateaux (rivière)
 const VITESSE = [1.0, 1.6]          // CHOISI : m/s d'une file, ± 10 % tirés par file
 const FONDU_M = 15                  // CHOISI : longueur du fondu aux bouts d'un intervalle
