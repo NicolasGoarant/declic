@@ -8,7 +8,7 @@ class DioramaTuilesTest < ActiveSupport::TestCase
   end
 
   test "seul le lot toits-v1 : pas de maquette blanche ni d'ambiance" do
-    assert_equal({ vrai: true, styles: %w[toits-v1], blanche: false, ambiances: [], arbres: false, lumieres: false },
+    assert_equal({ vrai: true, styles: %w[toits-v1], blanche: false, ambiances: [], arbres: false, lumieres: false, mobiles: false },
                  tuiles([ "toits-v1/manifeste.json" ]).disponibles)
   end
 
@@ -32,7 +32,7 @@ class DioramaTuilesTest < ActiveSupport::TestCase
   end
 
   test "sans le lot, rien n'est disponible" do
-    assert_equal({ vrai: false, styles: [], blanche: false, ambiances: [], arbres: false, lumieres: false },
+    assert_equal({ vrai: false, styles: [], blanche: false, ambiances: [], arbres: false, lumieres: false, mobiles: false },
                  tuiles(%w[masque-bati/manifeste.json masque-arbres/manifeste.json]).disponibles)
   end
 
@@ -47,6 +47,21 @@ class DioramaTuilesTest < ActiveSupport::TestCase
   test "les lanternes relevées passent avant les lampadaires BD TOPO" do
     t = tuiles(%w[toits-v1/manifeste.json lampadaires-bdtopo/manifeste.json lumieres-nuit/manifeste.json])
     assert_equal "lumieres-nuit/lanternes.json", t.pour_js[:lumieres]
+  end
+
+  test "les bateaux demandent leur manifeste ET la carte de propriété, qui les masque" do
+    refute tuiles(%w[toits-v1/manifeste.json mobiles-v1/manifeste.json]).disponibles[:mobiles]
+    t = tuiles(%w[toits-v1/manifeste.json propriete-toits-v1/manifeste.json mobiles-v1/manifeste.json])
+    assert t.disponibles[:mobiles]
+    assert_equal "#{t.base}/mobiles-v1", t.pour_js[:mobiles]
+  end
+
+  test "DIORAMA_MOBILES_URL fait lire les bateaux ailleurs que sur R2" do
+    base = "https://tuiles.test/#{SecureRandom.hex(4)}"
+    present = [ "#{base}/toits-v1/manifeste.json", "#{base}/propriete-toits-v1/manifeste.json", "http://localhost:8766/mobiles-v1/manifeste.json" ]
+    t = DioramaTuiles.new(base: base, mobiles: "http://localhost:8766/mobiles-v1/", sonde: ->(url) { present.include?(url) })
+    assert t.disponibles[:mobiles]
+    assert_equal "http://localhost:8766/mobiles-v1", t.pour_js[:mobiles]
   end
 
   test "la base vient de DIORAMA_TILES_URL, sinon du domaine par défaut" do

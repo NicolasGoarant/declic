@@ -30,17 +30,23 @@ class DioramaTuiles
   # Lampadaires de la nuit (format nancy-3d/lumieres-nuit, points au niveau 8) : les lanternes
   # relevées si elles sont publiées un jour, sinon les positions procédurales IGN BD TOPO®.
   LAMPADAIRES = [ %w[lumieres-nuit lanternes.json], %w[lampadaires-bdtopo lampadaires-bdtopo.json] ].freeze
+  # Les bateaux (diorama/mobiles) : calque des itinéraires sur l'eau, atlas des sprites et leurs modèles. Ils
+  # se masquent derrière les ponts et les arbres grâce à la carte de propriété : sans elle, pas de bateaux.
+  # DIORAMA_MOBILES_URL désigne un autre dossier de même forme (manifeste.json compris, servi en CORS) : c'est
+  # ainsi qu'on essaie un jeu avant de le publier sur R2.
+  MOBILES = "mobiles-v1".freeze
 
   DUREE_CACHE = 10.minutes
   DELAI_SONDE_S = 2
   CACHE = {}
   VERROU = Mutex.new
 
-  attr_reader :base
+  attr_reader :base, :mobiles
 
   # `sonde` : appelable qui reçoit une URL et rend true si elle répond 200 (injectable en test).
-  def initialize(base: ENV["DIORAMA_TILES_URL"].presence || URL_DEFAUT, sonde: nil)
+  def initialize(base: ENV["DIORAMA_TILES_URL"].presence || URL_DEFAUT, mobiles: ENV["DIORAMA_MOBILES_URL"].presence, sonde: nil)
     @base = base.chomp("/")
+    @mobiles = (mobiles || url(MOBILES)).chomp("/")
     @sonde = sonde || method(:repond?)
   end
 
@@ -59,14 +65,15 @@ class DioramaTuiles
     # Couches facultatives : sans elles, l'automne se replie sur les verts sombres et la nuit reste sans lumières.
     arbres = vrai && p.fetch(url("#{ARBRES}/manifeste.json"))
     lumieres = vrai && lampadaires(p).present?
-    { vrai: vrai, styles: styles, blanche: blanche, ambiances: ambiances, arbres: arbres, lumieres: lumieres }
+    bateaux = vrai && propriete && p.fetch("#{mobiles}/manifeste.json")
+    { vrai: vrai, styles: styles, blanche: blanche, ambiances: ambiances, arbres: arbres, lumieres: lumieres, mobiles: bateaux }
   end
 
   # Ce que reçoit le contrôleur Stimulus.
   def pour_js
     {
       base: base, styles: STYLES.keys, style_defaut: STYLE_DEFAUT, masque: MASQUE, propriete: PROPRIETE,
-      arbres: ARBRES, lumieres: lampadaires(presents),
+      arbres: ARBRES, lumieres: lampadaires(presents), mobiles: mobiles,
       ambiances: AMBIANCES.index_with { |nom| parametres_ambiance(nom) },
       disponibles: disponibles
     }
@@ -84,16 +91,16 @@ class DioramaTuiles
 
   def urls_a_sonder
     [ *STYLES.keys, MASQUE, PROPRIETE, ARBRES, *LAMPADAIRES.map(&:first) ].map { |dossier| url("#{dossier}/manifeste.json") } +
-      AMBIANCES.map { |nom| url(parametres_ambiance(nom)) }
+      AMBIANCES.map { |nom| url(parametres_ambiance(nom)) } + [ "#{mobiles}/manifeste.json" ]
   end
 
   def presents
     VERROU.synchronize do
-      entree = CACHE[base]
+      entree = CACHE[[ base, mobiles ]]
       return entree[:resultat] if entree && entree[:le] > DUREE_CACHE.ago
     end
     resultat = urls_a_sonder.map { |u| Thread.new { [ u, @sonde.call(u) ] } }.to_h(&:value)
-    VERROU.synchronize { CACHE[base] = { le: Time.current, resultat: resultat } }
+    VERROU.synchronize { CACHE[[ base, mobiles ]] = { le: Time.current, resultat: resultat } }
     resultat
   end
 
