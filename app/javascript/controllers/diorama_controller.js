@@ -16,6 +16,7 @@ import { creerCoucheAmbiance, lireAmbiance, uniformesEtat } from "diorama/ambian
 import { momentAuto, saisonAuto, libelleAuto } from "diorama/soleil"
 import { meteoAuto, meteoGardee } from "diorama/meteo"
 import { Precipitations } from "diorama/precipitations"
+import { Mobiles } from "diorama/mobiles"
 import { chargerLampadaires, compterLampadaires } from "diorama/lampadaires"
 import { LAMPADAIRES, PINS } from "diorama/reglages"
 import { regrouper, eventail, FLEURS_MAX, respiration, echelleIcone, dispositionPin } from "diorama/bouquets"
@@ -115,6 +116,7 @@ export default class extends Controller {
     clearTimeout(this.minuterieAide)
     this.aideZoom?.remove()
     this.precipitations?.detruire()
+    this.mobiles?.detruire()
     this.observateur?.disconnect()
     window.removeEventListener("declic:position", this.surPositionAuto)
     window.removeEventListener("orientationchange", this.surOrientation)
@@ -288,11 +290,12 @@ export default class extends Controller {
     if (this.dioramaDispo) {
       try {
         // Les masques se lisent avant la carte : sans leur liste de dalles, on demanderait des dalles absentes (404).
-        const [, masque, arbres] = await Promise.all([
+        const [, masque, arbres, propriete] = await Promise.all([
           this.chargerManifeste(), t.disponibles.blanche ? this.chargerListe(t.masque) : null,
-          t.disponibles.arbres ? this.chargerListe(t.arbres) : null
+          t.disponibles.arbres ? this.chargerListe(t.arbres) : null,
+          t.disponibles.mobiles ? this.chargerListe(t.propriete) : null
         ])
-        Object.assign(this, { dallesMasque: masque, dallesArbres: arbres })
+        Object.assign(this, { dallesMasque: masque, dallesArbres: arbres, dallesPropriete: propriete })
         this.preparerDecoupe(await contour)
       } catch (erreur) {
         console.error("diorama :", erreur)
@@ -503,6 +506,8 @@ export default class extends Controller {
     this.fermerPopup()
     this.precipitations?.detruire()
     this.precipitations = null
+    this.mobiles?.detruire()
+    this.mobiles = null
     this.carte.remove()
     this.popup = null
     this.fond = fond
@@ -869,6 +874,26 @@ export default class extends Controller {
     if (type && !this.precipitations) this.precipitations = new Precipitations(this.L, this.carte, type)
     if (ambiance) this.element.dataset.moment = this.etat.moment
     else delete this.element.dataset.moment
+    this.majMobiles(ambiance)
+  }
+
+  // Les bateaux (diorama/mobiles), de jour seulement : leurs sprites sont cuits sous le soleil du diorama et
+  // ne reçoivent pas l'étalonnage des ambiances, qui ne s'applique qu'aux dalles.
+  // Crochet d'instrument déclaré : ?mobiles=0 ne les pose pas (témoin du banc de cadence).
+  majMobiles(ambiance) {
+    const t = this.tuilesValue
+    const coupe = new URLSearchParams(window.location.search).get("mobiles") === "0"
+    const voulu = ambiance && !coupe && this.etat.moment === "jour" && Boolean(t.disponibles?.mobiles) && Boolean(this.dallesPropriete)
+    if (this.mobiles && (!voulu || this.mobiles.carte !== this.carte)) {
+      this.mobiles.detruire()
+      this.mobiles = null
+    }
+    if (voulu && !this.mobiles) {
+      this.mobiles = new Mobiles(this.L, this.carte, {
+        dossier: t.mobiles, dallesPropriete: this.dallesPropriete, contient: this.decoupe?.contient,
+        propriete: (chemin) => this.url(t.propriete, `${chemin}.png`)
+      })
+    }
   }
 
   // ─── Les points et leurs marqueurs ───────────────────────────────────────────────────
