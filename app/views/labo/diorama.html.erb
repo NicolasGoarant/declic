@@ -53,7 +53,10 @@
     </div>
     <button id="btn-locate"><span>📍</span> <span>Me localiser</span></button>
   </div>
+  <%= stylesheet_link_tag "bandeau_position" %>
+  <%= render "shared/bandeau_position" %>
   <%= javascript_importmap_tags "diorama_projection" %>
+  <%= javascript_import_module_tag "geoloc_auto", "bandeau_position" %>
   <script type="module">
     import { creerProjection } from "diorama_projection";
     // Opportunités réelles (même endpoint que la carte de la home), posées à z_ref faute de MNS.
@@ -275,6 +278,16 @@
         e => console.warn("[geo] watch ERR", e), opts);
     }
     btn.addEventListener("click", () => (watchId !== null ? stopFollow() : startFollow()));
+    // Position obtenue d'office à l'arrivée (geoloc_auto.js) : mêmes effets que le bouton, sans suivi continu.
+    // La vue se monte de façon asynchrone : on patiente un peu ; hors secteur couvert, aucun message d'office.
+    const surPositionAuto = ({ lat, lon }, essais = 0) => {
+      if (watchId !== null) return;
+      if (!(proj && window.__diorama)) { if (essais < 40) setTimeout(() => surPositionAuto({ lat, lon }, essais + 1), 250); return; }
+      const px = proj.pixel(lat, lon);
+      if (px && couvert(px)) majMoi(lat, lon, null, true);
+    };
+    window.addEventListener("declic:position", (e) => surPositionAuto(e.detail));
+    if (window.declicPosition) surPositionAuto(window.declicPosition);
 
     window.__dioramaMoi = () => moi;
     window.__dioramaPoints = POINTS;

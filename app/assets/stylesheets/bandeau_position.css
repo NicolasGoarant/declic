@@ -1,0 +1,23 @@
+/* Bandeau de géolocalisation (shared/_bandeau_position) : discret, en haut de l'écran, au-dessus de la carte. */
+.bandeau-position {
+  position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 1300; /* au-dessus de la barre haute (1200) */
+  display: flex; align-items: center; gap: 12px;
+  width: max-content; max-width: min(560px, calc(100vw - 24px)); box-sizing: border-box;
+  padding: 10px 12px 10px 16px; border-radius: 14px;
+  background: #fff; color: #1d1a2b; font: 600 14px/1.35 "Plus Jakarta Sans", system-ui, sans-serif;
+  box-shadow: 0 6px 24px rgba(29, 26, 43, .22);
+}
+.bandeau-position[hidden] { display: none; }
+.bandeau-position p { margin: 0; }
+.bandeau-position-activer {
+  flex: none; border: 0; border-radius: 999px; padding: 8px 14px; cursor: pointer;
+  background: #6a3df5; color: #fff; font: inherit; font-weight: 700;
+}
+.bandeau-position-activer:hover { background: #5528d8; }
+.bandeau-position-fermer {
+  flex: none; width: 28px; height: 28px; border: 0; border-radius: 50%; cursor: pointer;
+  background: transparent; color: #6b6880; font-size: 22px; line-height: 1;
+}
+.bandeau-position-fermer:hover { background: #f1eefb; color: #1d1a2b; }
+@media (min-width: 768px) { .bandeau-position { top: 76px; } } /* sous la barre haute du bureau */
+@media (max-width: 767.98px) { .bandeau-position { top: auto; bottom: 84px; } } /* au-dessus de la barre d'onglets */

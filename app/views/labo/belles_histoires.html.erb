@@ -9,6 +9,7 @@
 <% histoires_carte = histoires.select { |h| h[:latitude] && h[:longitude] } %>
 <% content_for :title, "Les Belles Histoires — Déclic" %>
 <% content_for :onglet_courant, "histoires" %>
+<% content_for :bandeau_position, true %>
 <% content_for :feuilles do %>
   <%= stylesheet_link_tag "labo_pages" %>
 <% end %>

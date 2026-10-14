@@ -10,6 +10,7 @@
 // proches se regroupent en bouquets (diorama/bouquets), sans Leaflet.markercluster.
 import { Controller } from "@hotwired/stimulus"
 import { creerProjection } from "diorama_projection"
+import { demander } from "geoloc_auto"
 import { creerCoucheDalles, creerCoucheBlanche, NIVEAU_ANNEXES } from "diorama/couches"
 import { creerCoucheAmbiance, lireAmbiance, uniformesEtat } from "diorama/ambiance"
 import { momentAuto, saisonAuto, libelleAuto } from "diorama/soleil"
@@ -63,6 +64,13 @@ const FICHES_MAX = 24
 const HISTOIRES = "histoires" // Categorie::HISTOIRES : les Belles Histoires
 const CLE_FAVORIS = "declic:favoris"
 const ETROIT = "(max-width: 699.98px)"
+const RAYON_PROXIMITE_KM = 10 // filtre « À proximité » du volet (la liste Opportunités a son propre curseur)
+
+function distanceKm(lat1, lon1, lat2, lon2) {
+  const rad = (d) => (d * Math.PI) / 180
+  const a = Math.sin(rad(lat2 - lat1) / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lon2 - lon1) / 2) ** 2
+  return 12742 * Math.asin(Math.sqrt(a))
+}
 
 // Texte noir ou blanc selon la clarté de la couleur de catégorie (luminance relative WCAG).
 function encreSur(hex) {
@@ -78,7 +86,7 @@ export default class extends Controller {
     "carte", "alerte", "voletTitre", "poigneeTitre", "compteur", "fiches", "vide", "stats",
     "modeleFiche", "modelePin", "modelePopup", "categorie", "toutes", "recherche",
     "boutonCalques", "panneauCalques", "voileCalques", "choixFond", "rubriqueAmbiance", "choixAuto",
-    "choixReglage", "choixBlanche", "ambianceAuto", "rubriqueStyle", "choixStyle"
+    "choixReglage", "choixBlanche", "ambianceAuto", "rubriqueStyle", "choixStyle", "pillesPosition", "pillePlusProches", "pilleProximite"
   ]
 
   connect() {
@@ -87,7 +95,8 @@ export default class extends Controller {
     if (this.miniValue) { this.demarrerMini(); return }
     window.addEventListener("declic:position", this.surPositionAuto)
     if (window.declicPosition) this.surPositionAuto()
-    this.filtre = { categories: new Set(), favoris: false, texte: "" }
+    this.filtre = { categories: new Set(), favoris: false, texte: "", proximite: false, proches: false }
+    this.position = null
     this.favoris = this.lireFavoris()
     this.selection = null
     this.points = this.pointsValue.map((p) => ({ ...p, debut: lireDate(p.debut), fin: lireDate(p.fin) }))
@@ -1138,6 +1147,7 @@ export default class extends Controller {
     if (f.categories.size && !f.categories.has(p.categorie)) return false
     if (f.favoris && !this.favoris.has(p.id)) return false
     if (f.texte && !this.correspond(p, f.texte)) return false
+    if (f.proximite && this.position && this.kmDe(p) > RAYON_PROXIMITE_KM) return false
     return true
   }
 
@@ -1191,16 +1201,17 @@ export default class extends Controller {
   // ─── Me localiser (pages Opportunités / Belles Histoires) ───────────────────────────────
   // Bouton optionnel : n'existe que sur les pages qui le posent. Pose un marqueur « vous êtes ici »
   // et prévient (événement CustomEvent) qui veut filtrer par distance, ex. explorateur_controller.
+  // La demande passe par geoloc_auto (même invite, même état de permission que l'arrivée sur la page) ;
+  // le succès revient par l'événement « declic:position » (surPositionAuto).
   localiser() {
-    if (!navigator.geolocation) { this.dispatch("localisation-echec"); return }
-    navigator.geolocation.getCurrentPosition(
-      (position) => this.appliquerPosition(position.coords.latitude, position.coords.longitude),
-      () => this.dispatch("localisation-echec"),
-      { enableHighAccuracy: false, timeout: 8000 }
-    )
+    if (window.declicPosition) { this.surPositionAuto(); return }
+    demander(() => this.dispatch("localisation-echec"))
   }
 
   appliquerPosition(latitude, longitude) {
+    const premiere = !this.position
+    this.position = { lat: latitude, lon: longitude }
+    this.filtre.proches ||= premiere // position connue : la liste passe d'office par distance, désactivable
     const latlng = this.versLatLng(latitude, longitude)
     this.marqueurMoi?.remove()
     if (latlng) {
@@ -1210,6 +1221,33 @@ export default class extends Controller {
       this.carte.setView(latlng, this.carte.getZoom())
     }
     this.dispatch("localise", { detail: { lat: latitude, lon: longitude } })
+    this.majPillesPosition()
+    if (this.filtre.proches || this.filtre.proximite) this.appliquerFiltres()
+  }
+
+  kmDe(p) {
+    if (!Number.isFinite(p.latitude) || !Number.isFinite(p.longitude)) return Infinity
+    return distanceKm(this.position.lat, this.position.lon, p.latitude, p.longitude)
+  }
+
+  // « Plus proches » et « À proximité » (volet de l'accueil) : proposés dès que la position est connue.
+  basculerPlusProches() {
+    this.filtre.proches = !this.filtre.proches
+    this.majPillesPosition()
+    this.appliquerFiltres()
+  }
+
+  basculerProximite() {
+    this.filtre.proximite = !this.filtre.proximite
+    this.majPillesPosition()
+    this.appliquerFiltres()
+  }
+
+  majPillesPosition() {
+    if (!this.hasPillesPositionTarget) return
+    this.pillesPositionTarget.hidden = !this.position
+    if (this.hasPillePlusProchesTarget) this.pillePlusProchesTarget.setAttribute("aria-pressed", String(this.filtre.proches))
+    if (this.hasPilleProximiteTarget) this.pilleProximiteTarget.setAttribute("aria-pressed", String(this.filtre.proximite))
   }
 
   // Position obtenue d'office à l'arrivée (geoloc_auto.js) : mêmes effets que « Me localiser », sans jamais
@@ -1275,13 +1313,17 @@ export default class extends Controller {
       .sort((a, b) => Math.max(a.debut, jour) - Math.max(b.debut, jour) || parDistance(a, b))
     const sansDate = visibles.filter((p) => !p.debut && !p.fin).sort(parDistance)
 
+    const parProximite = this.filtre.proches && this.position
     let titre = "Au centre de la vue"
     if (!aVenir.length) titre = "Toujours d'actualité"
+    if (parProximite) titre = "Plus proches de vous"
     const titreVolet = this.filtre.favoris ? "Vos favoris" : this.filtre.texte ? "Résultats" : titre
     this.voletTitreTarget.textContent = titreVolet
     this.poigneeTitreTarget.textContent = titreVolet
 
-    let liste = [...aVenir, ...sansDate]
+    let liste = parProximite
+      ? [...aVenir, ...sansDate].sort((a, b) => this.kmDe(a) - this.kmDe(b))
+      : [...aVenir, ...sansDate]
     if (this.selection) {
       const choisi = liste.find((p) => p.id === this.selection)
       if (choisi) liste = [choisi, ...liste.filter((p) => p !== choisi)]
