@@ -15,6 +15,9 @@
 //   3. le MASQUE AU SOL : la carte de propriété (dalles de codes) retire le sillage sous les ponts et les arbres ;
 //   4. les BATEAUX, du plus loin au plus près, chacun masqué colonne par colonne par les volumes qui le couvrent.
 // Un bateau qui passe sous un pont-volume est donc caché par le pont, progressivement, et non retiré d'un coup.
+// Les bateaux À QUAI (amarrages.json, facultatif : lu seulement si le manifeste du jeu le nomme) sont des postes fixes
+// déclarés dans nancy-3d (reperes.geojson) : même sprite, même masque, ni sillage ni fondu ; leur passerelle n'est
+// dessinée qu'à partir de NIVEAU_PASSERELLE, illisible en dessous (2 px au niveau 8).
 // Les tabliers posés À PLAT, les houppiers des arbres du style et les bouts de canal que la dalle ne dessine pas
 // sont du « sol » pour la propriété : le calque les déclare (`couverts`), et le bateau s'y efface en fondu.
 //
@@ -24,6 +27,7 @@
 // Crochets d'instrument, déclarés (ils ne changent rien quand on ne les demande pas) :
 //   ?mobiles-t=S     fige l'horloge à S secondes (captures comparables)
 //   ?mobiles-banc=1  relève les instants d'image et le coût JS dans `banc`
+//   ?mobiles-plancher=PX, ?mobiles-contour=F   remplacent LONGUEUR_MIN_PX et CONTOUR (balayage de la lisibilité)
 
 const NIVEAU_REPERE = 8
 const NIVEAU_MIN = 7                // en dessous, une péniche fait moins de 20 px : on ne pose rien
@@ -38,6 +42,18 @@ const RECUL_CONTOUR_M = 12          // CHOISI : retrait, en m, d'un bout d'inter
 const LARGEUR_DEUX_FILES_M = 12     // sous cette largeur (borne basse), deux bateaux ne se croisent pas
 const CRANS = 5, SILLAGE_RGB = "236,244,246", PAS_M = 1.5, OUVERTURE = 0.25 // CHOISIS ; 0,25 = tan 14°
 const MARGE_MASQUE = 384            // px : le masque au sol tient pendant un glissé de cette ampleur
+// Lisibilité aux petits zooms (diagnostic du 14/10 : la clarté moyenne d'un bateau égale celle de l'eau, 155 contre 156
+// au zoom 7). Deux leviers, comme le plancher de rayon des houppiers (R_MIN_PX de jeu-video-v2) :
+//  - un PLANCHER de longueur à l'écran : un bateau plus court que LONGUEUR_MIN_PX est agrandi, d'au plus GAIN_MAX ;
+//  - un CONTOUR d'un pixel autour de la coque, qui ASSOMBRIT l'eau d'un facteur au lieu d'y poser une
+//    couleur : un petit objet se lit par son écart de clarté avec le fond, et le fond varie (CLAUDE.md).
+const LONGUEUR_MIN_PX = 32          // CHOISI : px CSS ; ne touche aucune péniche aux niveaux 8 et 9, une barque à peine au 9
+const GAIN_MAX = 2                  // CHOISI : un canoë de 7 m n'en devient pas un de 30
+const CONTOUR = 0.55                // CHOISI : facteur appliqué à l'eau sous l'anneau ; 1 = pas de contour
+const CONTOUR_NIVEAU_MAX = 8        // au niveau 9 la coque se lit seule : rien n'y change
+const NIVEAU_PASSERELLE = 9
+const PASSERELLE_RGB = [176, 138, 90], PASSERELLE_BORD = "rgba(72,52,32,0.9)" // CHOISIS : bois clair, bord sombre
+const PROFONDEUR_L93 = [0.342020143, 0.939692621] // s'éloigner de l'œil (azimut 200°) : un quai de ce côté est DERRIÈRE la coque
 
 function graineDe(i, j, k) {
   let h = (i * 374761393 + j * 668265263 + k * 2246822519) | 0
@@ -75,6 +91,8 @@ export class Mobiles {
     const params = new URLSearchParams(location.search)
     this.horlogeFigee = params.has("mobiles-t") ? parseFloat(params.get("mobiles-t")) : null
     this.banc = params.get("mobiles-banc") === "1" ? { instants: [], js: [], peints: [], segments: [] } : null
+    this.longueurMinPx = params.has("mobiles-plancher") ? parseFloat(params.get("mobiles-plancher")) : LONGUEUR_MIN_PX
+    this.contour = params.has("mobiles-contour") ? parseFloat(params.get("mobiles-contour")) : CONTOUR
     this.stats = { peints: 0, segments: 0, js: 0, niveau: null, masque: false }
     this.t0 = performance.now()
     this.reduit = window.matchMedia(MOINS_DE_MOUVEMENT)
@@ -91,14 +109,17 @@ export class Mobiles {
 
   async charger() {
     const u = (n) => `${this.dossier}/${n}`
-    const [eau, sprites, modeles, atlas] = await Promise.all([
+    const [eau, sprites, modeles, atlas, manifeste] = await Promise.all([
       lireJSON(u("bateaux.json")), lireJSON(u("sprites-bateaux.json")), lireJSON(u("modeles-bateaux.json")),
-      lireImage(u("sprites-bateaux.png"), false)
+      lireImage(u("sprites-bateaux.png"), false), lireJSON(u("manifeste.json")).catch(() => null)
     ])
+    // les amarrages sont facultatifs : on ne les demande que si le manifeste les nomme (pas de 404 sur un jeu qui n'en a pas)
+    const amarrages = manifeste?.fichiers?.["amarrages.json"] ? await lireJSON(u("amarrages.json")) : null
     if (this.detruit) return
     if (!eau.itineraires || !eau.camera) throw new Error("bateaux.json sans itinéraires ni caméra (format v2 attendu)")
     Object.assign(this, { eau, sprites, atlas, modeles: modeles.modeles })
     this.preparer()
+    this.preparerAmarres(amarrages)
   }
 
   // ─── Les itinéraires : abscisse au sol de chaque sommet, direction, emprise de chaque intervalle ─────────────
@@ -139,6 +160,19 @@ export class Mobiles {
         return { j, s0, s1, boite, deuxFiles: largMin >= LARGEUR_DEUX_FILES_M }
       })
       return route
+    })
+  }
+
+  // Les postes à quai : [x, y px L8, cap_deg, cle, [E, N] coque → quai, passerelle [largeur m, position m du milieu
+  // vers l'étrave, eau m de la coque à la berge] ou null].
+  preparerAmarres(a) {
+    const parCle = new Map(this.modeles.map((M) => [M.cle, M]))
+    this.surQuai = a?.passerelle_sur_quai_m || 0
+    this.amarres = (a?.postes || []).filter((p) => parCle.has(p[3])).map(([x, y, cap, cle, quai, passerelle]) => {
+      const M = parCle.get(cle), c = cap * Math.PI / 180
+      const pont = Math.max(...M.couches[0].map((bo) => bo[4])) // haut de la coque : la passerelle part du pont
+      return { x, y, gE: Math.sin(c), gN: Math.cos(c), M, quai, passerelle, pont,
+               derriere: quai[0] * PROFONDEUR_L93[0] + quai[1] * PROFONDEUR_L93[1] > 0 }
     })
   }
 
@@ -216,6 +250,7 @@ export class Mobiles {
     this.toile.setAttribute("aria-hidden", "true")
     this.ctx = this.toile.getContext("2d")
     this.toileObjet = document.createElement("canvas")
+    this.anneaux = new Map()
     this.masque = document.createElement("canvas")
     this.masqueCadre = null
     this.carte.on("move", this.surDeplacement)
@@ -370,24 +405,25 @@ export class Mobiles {
           const n = Math.floor(DENSITE[r.type] / 1000 * Li + graineDe(cle, fi, 13))
           for (let kk = 0; kk < n; kk++) {
             const choix = this.parType[r.type], mi = choix[Math.floor(graineDe(cle, fi, 400 + kk) * choix.length) % choix.length]
-            const M = this.modeles[mi]
+            const M = this.modeles[mi], g = this.gain(M, sc), L = M.L * g, W = M.W * g
             const ph = (kk + 0.6 * (graineDe(cle, fi, 300 + kk) - 0.5)) / n
             const s = iv.s0 + replier(ph * Li + dir * v * t, Li)
             // fondu aux bouts de l'intervalle, et à l'approche d'une portion couverte (sur une demi-longueur + 4 m)
             // la largeur peinte la plus étroite sous la coque (milieu et deux bouts) borne le décalage de la file ; si même
             // centrée la coque passerait la berge, le bateau s'efface sur DEBORD_M (une péniche agrandie dans une darse)
-            const larg = Math.min(this.largeurUtile(r, s), this.largeurUtile(r, s - M.L / 2), this.largeurUtile(r, s + M.L / 2))
-            const decal = files.length === 2 ? Math.max(0, Math.min(larg / 4, larg / 2 - M.W / 2 - 0.5)) : 0
-            const debord = decal + M.W / 2 - larg / 2
+            // (coque agrandie par le plancher : la berge juge la coque DESSINÉE)
+            const larg = Math.min(this.largeurUtile(r, s), this.largeurUtile(r, s - L / 2), this.largeurUtile(r, s + L / 2))
+            const decal = files.length === 2 ? Math.max(0, Math.min(larg / 4, larg / 2 - W / 2 - 0.5)) : 0
+            const debord = decal + W / 2 - larg / 2
             // aux bouts, le fondu s'achève quand la PROUE atteint le bout, pas le milieu : un bateau long ne dépasse pas l'eau
-            const alpha = Math.min(1, (s - iv.s0 - M.L / 2) / FONDU_M, (iv.s1 - s - M.L / 2) / FONDU_M, this.distanceCouvert(r, s) / (M.L / 2 + 4), 1 - debord / DEBORD_M)
+            const alpha = Math.min(1, (s - iv.s0 - L / 2) / FONDU_M, (iv.s1 - s - L / 2) / FONDU_M, this.distanceCouvert(r, s) / (L / 2 + 4), 1 - debord / DEBORD_M)
             if (alpha <= 0.02 && !this.garderInvisibles) continue // crochet d'instrument : la planche cherche aussi les effacés
             const p = this.situer(r, s)
             const gE = p[2] * dir, gN = p[3] * dir, dE = gN, dN = -gE // tribord : à droite du sens de marche
             const cx = p[0] + (E[0] * dE + N[0] * dN) * decal, cy = p[1] + (E[1] * dE + N[1] * dN) * decal
             const X = sc.ox + cx * sc.k, Y = sc.oy + cy * sc.k
             if (X < -marge || X > this.largeur + marge || Y < -marge || Y > this.hauteur + marge) continue
-            liste.push({ X, Y, gE, gN, M, r, s, s0: iv.s0, s1: iv.s1, dir, decal, v, larg, alpha })
+            liste.push({ X, Y, gE, gN, M, g, L, W, r, s, s0: iv.s0, s1: iv.s1, dir, decal, v, larg, alpha })
           }
         }
       }
@@ -396,16 +432,50 @@ export class Mobiles {
     return liste
   }
 
+  // Les bateaux à quai de la vue. Le plancher les agrandit comme les autres, mais depuis le QUAI : la coque grandit
+  // vers l'eau, sans quoi elle monterait sur la berge au zoom 7.
+  poserAmarres(sc) {
+    const E = this.cam.metre_est_px, N = this.cam.metre_nord_px, marge = 40 * sc.pxParM, liste = []
+    for (const a of this.amarres || []) {
+      const M = a.M, g = this.gain(M, sc), recul = -(g - 1) * M.W / 2
+      const cx = a.x + (E[0] * a.quai[0] + N[0] * a.quai[1]) * recul, cy = a.y + (E[1] * a.quai[0] + N[1] * a.quai[1]) * recul
+      const X = sc.ox + cx * sc.k, Y = sc.oy + cy * sc.k
+      if (X < -marge || X > this.largeur + marge || Y < -marge || Y > this.hauteur + marge) continue
+      liste.push({ X, Y, gE: a.gE, gN: a.gN, M, g, L: M.L * g, W: M.W * g, alpha: 1, amarre: a })
+    }
+    return liste
+  }
+
+  // La passerelle d'un bateau à quai : une planche du pont (côté quai) au quai, au milieu de la coque, en mètres au sol
+  // puis projetée ; le pied est à la hauteur de la berge MESURÉE (celle où le poste a été posé, l'eau).
+  tracerPasserelle(ctx, sc, b) {
+    const a = b.amarre, E = this.cam.metre_est_px, N = this.cam.metre_nord_px, H = this.cam.metre_hauteur_px, k = sc.k
+    const [largeur, position, ecart] = a.passerelle, l2 = largeur / 2, q = a.quai, u0 = position * b.g
+    const pt = (u, w, h) => {
+      const dE = b.gE * (u0 + u) + q[0] * w, dN = b.gN * (u0 + u) + q[1] * w
+      return [b.X + (E[0] * dE + N[0] * dN + H[0] * h) * k, b.Y + (E[1] * dE + N[1] * dN + H[1] * h) * k]
+    }
+    const w0 = b.W / 2 - 0.3, w1 = b.W / 2 + ecart + this.surQuai, hp = a.pont * b.g
+    const coins = [pt(-l2, w0, hp), pt(l2, w0, hp), pt(l2, w1, 0), pt(-l2, w1, 0)]
+    ctx.beginPath(); ctx.moveTo(...coins[0]); for (const c of coins.slice(1)) ctx.lineTo(...c); ctx.closePath()
+    ctx.fillStyle = `rgb(${PASSERELLE_RGB})`; ctx.fill()
+    ctx.lineWidth = 1; ctx.strokeStyle = PASSERELLE_BORD; ctx.stroke()
+    return 1
+  }
+
+  // Gain du plancher de longueur : 1 tant que la coque fait LONGUEUR_MIN_PX à l'écran, au plus GAIN_MAX.
+  gain(M, sc) { return Math.min(GAIN_MAX, Math.max(1, this.longueurMinPx / (M.L * sc.pxParM))) }
+
   // ─── 2. Le sillage : largeur 1, bout rond (chemin rapide du canevas) ─────────────────────────────────────────
   tracerSillages(ctx, sc, liste) {
     const chemins = Array.from({ length: CRANS }, () => new Path2D())
     const E = this.cam.metre_est_px, N = this.cam.metre_nord_px, k = sc.k
     let segments = 0
     for (const b of liste) {
-      const M = b.M, L2 = M.L / 2, W2 = M.W / 2
+      const L2 = b.L / 2, W2 = b.W / 2
       const fondu = Math.round((1 - b.alpha) * CRANS) // un bateau qui s'efface pâlit son sillage d'autant de crans
       if (fondu >= CRANS) continue
-      const S = (0.9 * M.L + 6) * Math.min(2, Math.sqrt(b.v)), J = Math.max(2, Math.round(S / PAS_M)), borne = b.larg / 2 - 0.3
+      const S = (0.9 * b.L + 6) * Math.min(2, Math.sqrt(b.v)), J = Math.max(2, Math.round(S / PAS_M)), borne = b.larg / 2 - 0.3
       for (let ligne = 0; ligne < 3; ligne++) {
         let prec = null
         for (let j = 0; j <= J; j++) {
@@ -428,7 +498,7 @@ export class Mobiles {
       }
       const ga = b.gE, gn = b.gN
       const ax = (E[0] * ga + N[0] * gn) * k, ay = (E[1] * ga + N[1] * gn) * k, bx = (E[0] * gn - N[0] * ga) * k, by = (E[1] * gn - N[1] * ga) * k
-      const ar = L2 - Math.min(3, M.L / 4)
+      const ar = L2 - Math.min(3, b.L / 4)
       for (const sg of [-1, 1]) {
         chemins[fondu].moveTo(b.X + ax * (L2 + 0.2), b.Y + ay * (L2 + 0.2))
         chemins[fondu].lineTo(b.X + ax * ar + bx * sg * (W2 + 0.5), b.Y + ay * ar + by * sg * (W2 + 0.5))
@@ -445,17 +515,36 @@ export class Mobiles {
     return segments // relevé sur ce qui est tracé
   }
 
+  // L'anneau du contour d'un sprite à une échelle : sa silhouette dilatée d'un pixel CSS, en noir d'opacité 1 − CONTOUR
+  // (la toile est transparente, les dalles sont dessous : un multiply n'y verrait rien, ce noir rend l'eau × CONTOUR).
+  // Fait une fois par modèle, cap et échelle, puis posé SOUS le sprite avant le masque des volumes, qui le coupe avec lui.
+  anneau(cle, ci, s, f) {
+    const dpr = this.dpr, cleA = `${cle}|${ci}|${f.toFixed(5)}|${dpr}|${this.contour}`
+    let a = this.anneaux.get(cleA)
+    if (a) return a
+    const d = 1, w = s[2] * f + 2 * d, h = s[3] * f + 2 * d, W = Math.ceil(w * dpr), H = Math.ceil(h * dpr)
+    const toile = document.createElement("canvas"); toile.width = W; toile.height = H
+    const c = toile.getContext("2d"), o = d * dpr
+    for (const [u, v] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]])
+      c.drawImage(this.atlas, s[0], s[1], s[2], s[3], o + u * o, o + v * o, s[2] * f * dpr, s[3] * f * dpr)
+    c.globalCompositeOperation = "source-in"; c.fillStyle = `rgba(0,0,0,${(1 - this.contour).toFixed(3)})`; c.fillRect(0, 0, W, H)
+    a = { toile, d, w: W / dpr, h: H / dpr }
+    if (this.anneaux.size > 2000) this.anneaux.clear() // borne : 8 modèles × 32 caps × quelques échelles en usage normal
+    this.anneaux.set(cleA, a)
+    return a
+  }
+
   // ─── 4. Un bateau : le sprite du cap le plus proche, masqué colonne par colonne ──────────────────────────────
   //  Dans une colonne, si le pixel juste au-dessus du bas de l'emprise montre un volume (pont, arbre), on masque
   //  la caisse sur la nappe continue de volume qui monte de là (règle des colonnes de pitch60-v1 y33).
   peindreBateau(ctx, sc, b) {
     const sp = this.sprites, n = sp.caps, a = Math.atan2(b.gE, b.gN) * 180 / Math.PI // relèvement de grille de l'étrave
     const ci = ((Math.round(a / (360 / n)) % n) + n) % n, s = sp.index[b.M.cle][ci]
-    const f = sc.k / sp.echelle_sprite_par_px_mosaique_L8, dpr = this.dpr
+    const f = b.g * sc.k / sp.echelle_sprite_par_px_mosaique_L8, dpr = this.dpr
     const E = this.cam.metre_est_px, N = this.cam.metre_nord_px, k = sc.k
     const ax = (E[0] * b.gE + N[0] * b.gN) * k, ay = (E[1] * b.gE + N[1] * b.gN) * k
     const bx = (E[0] * b.gN - N[0] * b.gE) * k, by = (E[1] * b.gN - N[1] * b.gE) * k
-    const A = b.M.L / 2, B = b.M.W / 2
+    const A = b.L / 2, B = b.W / 2
     const coins = [[A, B], [A, -B], [-A, -B], [-A, B]].map(([u, w]) => [b.X + ax * u + bx * w, b.Y + ay * u + by * w])
     const x0 = Math.floor(b.X - s[4] * f) - 1, y0 = Math.floor(b.Y - s[5] * f) - 1
     const x1 = Math.ceil(b.X + (s[2] - s[4]) * f) + 1, y1 = Math.ceil(b.Y + (s[3] - s[5]) * f) + 1
@@ -465,6 +554,8 @@ export class Mobiles {
     const c = to.getContext("2d")
     c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = "source-over"; c.clearRect(0, 0, W, H)
     c.setTransform(dpr, 0, 0, dpr, -x0 * dpr, -y0 * dpr)
+    const contour = this.contour < 1 && sc.niveau <= CONTOUR_NIVEAU_MAX
+    if (contour) { const a = this.anneau(b.M.cle, ci, s, f); c.drawImage(a.toile, b.X - s[4] * f - a.d, b.Y - s[5] * f - a.d, a.w, a.h) }
     c.drawImage(this.atlas, s[0], s[1], s[2], s[3], b.X - s[4] * f, b.Y - s[5] * f, s[2] * f, s[3] * f)
     c.globalCompositeOperation = "destination-out"; c.fillStyle = "#000"
     for (let x = x0; x < x1; x++) {
@@ -492,18 +583,25 @@ export class Mobiles {
     const j0 = performance.now(), sc = this.cadre(), ctx = this.ctx, dpr = this.dpr
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, this.toile.width, this.toile.height)
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    const liste = this.poserBateaux(sc, this.horloge())
-    const segments = this.tracerSillages(ctx, sc, liste)
+    const enMarche = this.poserBateaux(sc, this.horloge())
+    const segments = this.tracerSillages(ctx, sc, enMarche)
+    const liste = enMarche.concat(this.poserAmarres(sc)).sort((a, b) => a.Y - b.Y)
     const mc = this.masqueCadre, masque = Boolean(mc && mc.k === sc.k)
     if (masque) {
       ctx.save(); ctx.globalCompositeOperation = "destination-out"
       ctx.drawImage(this.masque, sc.ox - mc.ox - MARGE_MASQUE, sc.oy - mc.oy - MARGE_MASQUE)
       ctx.restore()
     }
-    let peints = 0
-    for (const b of liste) { this.peindreBateau(ctx, sc, b); peints++ } // relevé où le bateau est peint
+    let peints = 0, aQuai = 0, passerelles = 0
+    for (const b of liste) {
+      const passerelle = Boolean(b.amarre?.passerelle) && sc.niveau >= NIVEAU_PASSERELLE
+      if (passerelle && b.amarre.derriere) passerelles += this.tracerPasserelle(ctx, sc, b)
+      this.peindreBateau(ctx, sc, b); peints++ // relevé où le bateau est peint
+      if (b.amarre) aQuai++
+      if (passerelle && !b.amarre.derriere) passerelles += this.tracerPasserelle(ctx, sc, b)
+    }
     const js = performance.now() - j0
-    this.stats = { peints, segments, js, niveau: sc.niveau, masque }
+    this.stats = { peints, aQuai, passerelles, segments, js, niveau: sc.niveau, masque }
     if (this.banc) { this.banc.instants.push(tms); this.banc.js.push(js); this.banc.peints.push(peints); this.banc.segments.push(segments) }
   }
 }
