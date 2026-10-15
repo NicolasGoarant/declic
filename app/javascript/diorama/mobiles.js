@@ -1,5 +1,5 @@
 // Les bateaux : péniches sur le canal, petits bateaux sur la Meurthe, posés SUR la maquette.
-// Données de nancy-3d (rapports/animations-v1, jeu R2 « mobiles-v3 ») : le calque des itinéraires sur l'eau
+// Données de nancy-3d (rapports/animations-v1, jeu R2 « mobiles-v4 ») : le calque des itinéraires sur l'eau
 // (bateaux.json, format nancy-3d/calque-vivant v2, en pixels de mosaïque au niveau 8) et l'atlas des sprites
 // cuits pour la caméra du diorama (50°, azimut 200° en relèvement de grille Lambert-93 de l'œil vu du centre).
 //
@@ -53,13 +53,17 @@ const LONGUEUR_MIN_PX = 32          // CHOISI : px CSS ; ne touche aucune pénic
 const GAIN_MAX = 2                  // CHOISI : un canoë de 7 m n'en devient pas un de 30
 // Les péniches (type « peniche » : péniches-logements et vedette, à quai ou en marche) ont leur PROPRE plancher : un
 // plancher commun à tous les types déformait le rapport barque / péniche (0,88 au zoom 8 à 48 px ×3, essai du 15/10).
-const LONGUEUR_MIN_PX_PENICHE = 32  // = LONGUEUR_MIN_PX tant qu'aucune valeur propre n'est retenue
-const GAIN_MAX_PENICHE = 2
+// RETENU le 15/10 (mobiles-v4) : à quai 34 px ×2,5, seul plancher au-dessus de 32 qui garde les 7 postes d'amarrage
+// (35 px → 6, 36 → 5, 40 à 48 → 3) ; en navigation 48 px ×2,5 (barque / péniche 0,34 au zoom 7, contre 0,51).
+const LONGUEUR_MIN_PX_PENICHE = 34
+const GAIN_MAX_PENICHE = 2.5
 // Une péniche EN MARCHE et une péniche À QUAI sont deux populations (poserBateaux, poserAmarres) : aucune ne passe de
 // l'une à l'autre. Le plancher des péniches à quai décide de la place des postes ; celui des péniches en marche, de la
-// largeur de passage exigée autour d'eux (poser-amarrages.py, W_PASSAGE_Z7). Par défaut, le même.
-const LONGUEUR_MIN_PX_NAVIGATION = LONGUEUR_MIN_PX_PENICHE
-const GAIN_MAX_NAVIGATION = GAIN_MAX_PENICHE
+// largeur de passage exigée autour d'eux (poser-amarrages.py, W_PASSAGE_Z7). Compromis ASSUMÉ (décision du 15/10) : la
+// coque élargie fait effacer la péniche en marche par la garde de berge 37 à 41 % du temps au zoom 7 dans le canal
+// (22,6 % à 32 px), et une péniche en marche y est ×1,41 plus grande que la même à quai.
+const LONGUEUR_MIN_PX_NAVIGATION = 48
+const GAIN_MAX_NAVIGATION = 2.5
 const CONTOUR = 0.55                // CHOISI : facteur appliqué à l'eau sous l'anneau ; 1 = pas de contour
 const CONTOUR_NIVEAU_MAX = 8        // au niveau 9 la coque se lit seule : rien n'y change
 const NIVEAU_PASSERELLE = 9
