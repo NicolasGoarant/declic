@@ -28,6 +28,7 @@
 //   ?mobiles-t=S     fige l'horloge à S secondes (captures comparables)
 //   ?mobiles-banc=1  relève les instants d'image et le coût JS dans `banc`
 //   ?mobiles-plancher=PX, ?mobiles-contour=F   remplacent LONGUEUR_MIN_PX et CONTOUR (balayage de la lisibilité)
+//   ?mobiles-plancher-peniche=PX, ?mobiles-gain-peniche=G   remplacent LONGUEUR_MIN_PX_PENICHE et GAIN_MAX_PENICHE
 
 const NIVEAU_REPERE = 8
 const NIVEAU_MIN = 7                // en dessous, une péniche fait moins de 20 px : on ne pose rien
@@ -49,6 +50,10 @@ const MARGE_MASQUE = 384            // px : le masque au sol tient pendant un gl
 //    couleur : un petit objet se lit par son écart de clarté avec le fond, et le fond varie (CLAUDE.md).
 const LONGUEUR_MIN_PX = 32          // CHOISI : px CSS ; ne touche aucune péniche aux niveaux 8 et 9, une barque à peine au 9
 const GAIN_MAX = 2                  // CHOISI : un canoë de 7 m n'en devient pas un de 30
+// Les péniches (type « peniche » : péniches-logements et vedette, à quai ou en marche) ont leur PROPRE plancher : un
+// plancher commun à tous les types déformait le rapport barque / péniche (0,88 au zoom 8 à 48 px ×3, essai du 15/10).
+const LONGUEUR_MIN_PX_PENICHE = 32  // = LONGUEUR_MIN_PX tant qu'aucune valeur propre n'est retenue
+const GAIN_MAX_PENICHE = 2
 const CONTOUR = 0.55                // CHOISI : facteur appliqué à l'eau sous l'anneau ; 1 = pas de contour
 const CONTOUR_NIVEAU_MAX = 8        // au niveau 9 la coque se lit seule : rien n'y change
 const NIVEAU_PASSERELLE = 9
@@ -93,6 +98,8 @@ export class Mobiles {
     this.banc = params.get("mobiles-banc") === "1" ? { instants: [], js: [], peints: [], segments: [] } : null
     this.longueurMinPx = params.has("mobiles-plancher") ? parseFloat(params.get("mobiles-plancher")) : LONGUEUR_MIN_PX
     this.contour = params.has("mobiles-contour") ? parseFloat(params.get("mobiles-contour")) : CONTOUR
+    this.longueurMinPxPeniche = params.has("mobiles-plancher-peniche") ? parseFloat(params.get("mobiles-plancher-peniche")) : LONGUEUR_MIN_PX_PENICHE
+    this.gainMaxPeniche = params.has("mobiles-gain-peniche") ? parseFloat(params.get("mobiles-gain-peniche")) : GAIN_MAX_PENICHE
     this.stats = { peints: 0, segments: 0, js: 0, niveau: null, masque: false }
     this.t0 = performance.now()
     this.reduit = window.matchMedia(MOINS_DE_MOUVEMENT)
@@ -463,8 +470,12 @@ export class Mobiles {
     return 1
   }
 
-  // Gain du plancher de longueur : 1 tant que la coque fait LONGUEUR_MIN_PX à l'écran, au plus GAIN_MAX.
-  gain(M, sc) { return Math.min(GAIN_MAX, Math.max(1, this.longueurMinPx / (M.L * sc.pxParM))) }
+  // Gain du plancher de longueur : 1 tant que la coque fait le plancher de son type à l'écran, au plus le gain maximal du type.
+  gain(M, sc) {
+    const peniche = M.type === "peniche"
+    const plancher = peniche ? this.longueurMinPxPeniche : this.longueurMinPx, gmax = peniche ? this.gainMaxPeniche : GAIN_MAX
+    return Math.min(gmax, Math.max(1, plancher / (M.L * sc.pxParM)))
+  }
 
   // ─── 2. Le sillage : largeur 1, bout rond (chemin rapide du canevas) ─────────────────────────────────────────
   tracerSillages(ctx, sc, liste) {
