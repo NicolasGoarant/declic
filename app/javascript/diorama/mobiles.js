@@ -29,6 +29,7 @@
 //   ?mobiles-banc=1  relève les instants d'image et le coût JS dans `banc`
 //   ?mobiles-plancher=PX, ?mobiles-contour=F   remplacent LONGUEUR_MIN_PX et CONTOUR (balayage de la lisibilité)
 //   ?mobiles-plancher-peniche=PX, ?mobiles-gain-peniche=G   remplacent LONGUEUR_MIN_PX_PENICHE et GAIN_MAX_PENICHE
+//   ?mobiles-plancher-navigation=PX, ?mobiles-gain-navigation=G   remplacent ceux des péniches EN MARCHE seulement
 
 const NIVEAU_REPERE = 8
 const NIVEAU_MIN = 7                // en dessous, une péniche fait moins de 20 px : on ne pose rien
@@ -54,6 +55,11 @@ const GAIN_MAX = 2                  // CHOISI : un canoë de 7 m n'en devient pa
 // plancher commun à tous les types déformait le rapport barque / péniche (0,88 au zoom 8 à 48 px ×3, essai du 15/10).
 const LONGUEUR_MIN_PX_PENICHE = 32  // = LONGUEUR_MIN_PX tant qu'aucune valeur propre n'est retenue
 const GAIN_MAX_PENICHE = 2
+// Une péniche EN MARCHE et une péniche À QUAI sont deux populations (poserBateaux, poserAmarres) : aucune ne passe de
+// l'une à l'autre. Le plancher des péniches à quai décide de la place des postes ; celui des péniches en marche, de la
+// largeur de passage exigée autour d'eux (poser-amarrages.py, W_PASSAGE_Z7). Par défaut, le même.
+const LONGUEUR_MIN_PX_NAVIGATION = LONGUEUR_MIN_PX_PENICHE
+const GAIN_MAX_NAVIGATION = GAIN_MAX_PENICHE
 const CONTOUR = 0.55                // CHOISI : facteur appliqué à l'eau sous l'anneau ; 1 = pas de contour
 const CONTOUR_NIVEAU_MAX = 8        // au niveau 9 la coque se lit seule : rien n'y change
 const NIVEAU_PASSERELLE = 9
@@ -100,6 +106,10 @@ export class Mobiles {
     this.contour = params.has("mobiles-contour") ? parseFloat(params.get("mobiles-contour")) : CONTOUR
     this.longueurMinPxPeniche = params.has("mobiles-plancher-peniche") ? parseFloat(params.get("mobiles-plancher-peniche")) : LONGUEUR_MIN_PX_PENICHE
     this.gainMaxPeniche = params.has("mobiles-gain-peniche") ? parseFloat(params.get("mobiles-gain-peniche")) : GAIN_MAX_PENICHE
+    this.longueurMinPxNavigation = params.has("mobiles-plancher-navigation") ? parseFloat(params.get("mobiles-plancher-navigation"))
+      : params.has("mobiles-plancher-peniche") ? this.longueurMinPxPeniche : LONGUEUR_MIN_PX_NAVIGATION
+    this.gainMaxNavigation = params.has("mobiles-gain-navigation") ? parseFloat(params.get("mobiles-gain-navigation"))
+      : params.has("mobiles-gain-peniche") ? this.gainMaxPeniche : GAIN_MAX_NAVIGATION
     this.stats = { peints: 0, segments: 0, js: 0, niveau: null, masque: false }
     this.t0 = performance.now()
     this.reduit = window.matchMedia(MOINS_DE_MOUVEMENT)
@@ -412,7 +422,7 @@ export class Mobiles {
           const n = Math.floor(DENSITE[r.type] / 1000 * Li + graineDe(cle, fi, 13))
           for (let kk = 0; kk < n; kk++) {
             const choix = this.parType[r.type], mi = choix[Math.floor(graineDe(cle, fi, 400 + kk) * choix.length) % choix.length]
-            const M = this.modeles[mi], g = this.gain(M, sc), L = M.L * g, W = M.W * g
+            const M = this.modeles[mi], g = this.gain(M, sc, true), L = M.L * g, W = M.W * g
             const ph = (kk + 0.6 * (graineDe(cle, fi, 300 + kk) - 0.5)) / n
             const s = iv.s0 + replier(ph * Li + dir * v * t, Li)
             // fondu aux bouts de l'intervalle, et à l'approche d'une portion couverte (sur une demi-longueur + 4 m)
@@ -471,9 +481,11 @@ export class Mobiles {
   }
 
   // Gain du plancher de longueur : 1 tant que la coque fait le plancher de son type à l'écran, au plus le gain maximal du type.
-  gain(M, sc) {
+  // enMarche : une péniche en navigation prend le plancher de navigation, une péniche à quai celui des péniches.
+  gain(M, sc, enMarche = false) {
     const peniche = M.type === "peniche"
-    const plancher = peniche ? this.longueurMinPxPeniche : this.longueurMinPx, gmax = peniche ? this.gainMaxPeniche : GAIN_MAX
+    const plancher = !peniche ? this.longueurMinPx : enMarche ? this.longueurMinPxNavigation : this.longueurMinPxPeniche
+    const gmax = !peniche ? GAIN_MAX : enMarche ? this.gainMaxNavigation : this.gainMaxPeniche
     return Math.min(gmax, Math.max(1, plancher / (M.L * sc.pxParM)))
   }
 
