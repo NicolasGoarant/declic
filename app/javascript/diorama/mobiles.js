@@ -1,5 +1,5 @@
 // Les bateaux : péniches sur le canal, petits bateaux sur la Meurthe, posés SUR la maquette.
-// Données de nancy-3d (rapports/animations-v1, jeu R2 « mobiles-v4 ») : le calque des itinéraires sur l'eau
+// Données de nancy-3d (rapports/animations-v1, jeu R2 « mobiles-v5 ») : le calque des itinéraires sur l'eau
 // (bateaux.json, format nancy-3d/calque-vivant v2, en pixels de mosaïque au niveau 8) et l'atlas des sprites
 // cuits pour la caméra du diorama (50°, azimut 200° en relèvement de grille Lambert-93 de l'œil vu du centre).
 //
@@ -462,8 +462,9 @@ export class Mobiles {
         for (const dir of files) {
           const fi = dir > 0 ? 0 : 1
           const v = VITESSE[r.type] * (0.9 + 0.2 * graineDe(cle, fi, 17))
-          // au moins un bateau par file : à 6 / 2, la densité d'une file courte tombait à zéro (Meurthe, route 14)
-          const n = Math.max(1, Math.floor(this.densite[r.type] / 1000 * Li + graineDe(cle, fi, 13)))
+          // au moins un bateau par file : à 6 / 2, la densité d'une file courte tombait à zéro (Meurthe, route 14) — sauf
+          // sur un intervalle où aucun bateau du type ne peut être montré plein (route 1 : 79 m au pied d'un couvert)
+          const n = Math.max(this.montrable(r, iv, niveauDalles) ? 1 : 0, Math.floor(this.densite[r.type] / 1000 * Li + graineDe(cle, fi, 13)))
           for (let kk = 0; kk < n; kk++) {
             const choix = this.parType[r.type], mi = choix[Math.floor(graineDe(cle, fi, 400 + kk) * choix.length) % choix.length]
             const M = this.modeles[mi], g = this.gain(M, sc, true), L = M.L * g, W = M.W * g
@@ -491,6 +492,18 @@ export class Mobiles {
     }
     liste.sort((a, b) => a.Y - b.Y)
     return liste
+  }
+
+  // Un intervalle peut-il montrer un bateau de son type à pleine opacité ? Le plus court modèle du type, sans plancher, doit
+  // trouver un point à l'écart des fondus de bout et d'une portion couverte (mêmes termes que l'α de poserBateaux, berge
+  // exceptée : elle dépend de la file). Calculé une fois par intervalle et par niveau de dalles, au pas de 2 m.
+  montrable(r, iv, niveau) {
+    const cache = (iv.montrable ??= {})
+    if (niveau in cache) return cache[niveau]
+    const L = Math.min(...this.parType[r.type].map((mi) => this.modeles[mi].L))
+    let ok = false
+    for (let s = iv.s0 + L / 2 + FONDU_M; s <= iv.s1 - L / 2 - FONDU_M && !ok; s += 2) ok = this.distanceCouvert(r, s) >= L / 2 + 4
+    return (cache[niveau] = ok)
   }
 
   // Les bateaux à quai de la vue. Le plancher les agrandit comme les autres, mais depuis le QUAI : la coque grandit
