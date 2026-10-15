@@ -34,7 +34,7 @@ class DioramaTuiles
   # se masquent derrière les ponts et les arbres grâce à la carte de propriété : sans elle, pas de bateaux.
   # DIORAMA_MOBILES_URL désigne un autre dossier de même forme (manifeste.json compris, servi en CORS) : c'est
   # ainsi qu'on essaie un jeu avant de le publier sur R2.
-  MOBILES = "mobiles-v4".freeze   # mobiles-v3, amarrages reposés pour le plancher des péniches (15/10) ; v1 à v3 restent sur R2
+  MOBILES = "mobiles-v5".freeze   # v4 + occlusion-jv2.json, correctif d'occlusion du style jeu vidéo (15/10) ; v1 à v4 restent sur R2
 
   DUREE_CACHE = 10.minutes
   DELAI_SONDE_S = 2
