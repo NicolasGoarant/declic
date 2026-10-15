@@ -1,5 +1,5 @@
 // Les bateaux : péniches sur le canal, petits bateaux sur la Meurthe, posés SUR la maquette.
-// Données de nancy-3d (rapports/animations-v1, jeu R2 « mobiles-v2 ») : le calque des itinéraires sur l'eau
+// Données de nancy-3d (rapports/animations-v1, jeu R2 « mobiles-v3 ») : le calque des itinéraires sur l'eau
 // (bateaux.json, format nancy-3d/calque-vivant v2, en pixels de mosaïque au niveau 8) et l'atlas des sprites
 // cuits pour la caméra du diorama (50°, azimut 200° en relèvement de grille Lambert-93 de l'œil vu du centre).
 //
