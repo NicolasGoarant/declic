@@ -31,13 +31,16 @@
 //   ?mobiles-plancher-peniche=PX, ?mobiles-gain-peniche=G   remplacent LONGUEUR_MIN_PX_PENICHE et GAIN_MAX_PENICHE
 //   ?mobiles-plancher-navigation=PX, ?mobiles-gain-navigation=G   remplacent ceux des péniches EN MARCHE seulement
 //   ?mobiles-densite=P,B   remplace DENSITE (péniches, petits bateaux), en bateaux par km et par file
+//   ?mobiles-occlusion=propriete   ignore le correctif d'occlusion du style (témoin : la propriété brute)
 
 const NIVEAU_REPERE = 8
 const NIVEAU_MIN = 7                // en dessous, une péniche fait moins de 20 px : on ne pose rien
 const MOINS_DE_MOUVEMENT = "(prefers-reduced-motion: reduce)"
 const INTERVALLE_MS = 1000 / 30 - 2
 const Z_VOLET = 440
-const DENSITE = [3.0, 4.0]          // CHOISI : bateaux par km et par file — péniches (canal), petits bateaux (rivière)
+// CHOISI : bateaux par km et par file — péniches (canal), petits bateaux (rivière). RETENU le 15/10 (Nicolas) : 6 / 2 au lieu
+// de 3 / 4, la péniche fait 68,3 % des bateaux-instants au lieu de 34,9 % (60,0 % du temps visible au zoom 8, contre 27,2 %).
+const DENSITE = [6.0, 2.0]
 // Modèles retirés du tirage, chacun REMPLACÉ par un autre de même type : la place du retiré dans la liste de tirage
 // est tenue par son remplaçant, donc chaque trajectoire garde son nombre de bateaux et tous les autres bateaux leur
 // modèle. Le sprite reste dans l'atlas. (15/10 : le canoë bordeaux → la barque à rames, la plus proche en taille,
@@ -101,7 +104,9 @@ export class Mobiles {
   // options : dossier (URL du jeu mobiles), propriete (chemin "8/x/y" → URL de la dalle de codes),
   //           dallesPropriete ({ 8: Set("x/y") } : les dalles publiées ; une absente vaut « dehors », code 0),
   //           contient (px L8 → booléen : dans le contour de la Métropole, hors duquel les dalles sont découpées)
-  constructor(L, carte, { dossier, propriete, dallesPropriete, contient = null }) {
+  //           style (() → nom du style affiché) : le correctif d'occlusion du jeu ne vaut que pour SON style
+  constructor(L, carte, { dossier, propriete, dallesPropriete, contient = null, style = null }) {
+    this.styleAffiche = style
     this.contient = contient
     this.L = L
     this.carte = carte
@@ -120,6 +125,7 @@ export class Mobiles {
       : params.has("mobiles-plancher-peniche") ? this.longueurMinPxPeniche : LONGUEUR_MIN_PX_NAVIGATION
     this.gainMaxNavigation = params.has("mobiles-gain-navigation") ? parseFloat(params.get("mobiles-gain-navigation"))
       : params.has("mobiles-gain-peniche") ? this.gainMaxPeniche : GAIN_MAX_NAVIGATION
+    this.sansCorrectif = params.get("mobiles-occlusion") === "propriete"
     this.densite = params.has("mobiles-densite") ? params.get("mobiles-densite").split(",").map(parseFloat) : DENSITE
     this.stats = { peints: 0, segments: 0, js: 0, niveau: null, masque: false }
     this.t0 = performance.now()
@@ -143,6 +149,10 @@ export class Mobiles {
     ])
     // les amarrages sont facultatifs : on ne les demande que si le manifeste les nomme (pas de 404 sur un jeu qui n'en a pas)
     const amarrages = manifeste?.fichiers?.["amarrages.json"] ? await lireJSON(u("amarrages.json")) : null
+    // Le correctif d'occlusion (facultatif, nommé par le manifeste) : la propriété a été calculée sur toits-v1, dont des
+    // houppiers débordent sur l'eau ; jeu-video-v2 les a effacés. Ses segments repassent ces volumes en sol pour SON style.
+    const occlusion = manifeste?.fichiers?.["occlusion-jv2.json"] && !this.sansCorrectif ? await lireJSON(u("occlusion-jv2.json")) : null
+    if (occlusion) this.occlusion = { style: occlusion.style, dalles: new Map(Object.entries(occlusion.dalles)) }
     if (this.detruit) return
     if (!eau.itineraires || !eau.camera) throw new Error("bateaux.json sans itinéraires ni caméra (format v2 attendu)")
     Object.assign(this, { eau, sprites, atlas, modeles: modeles.modeles })
@@ -362,9 +372,26 @@ export class Mobiles {
       const c = cv.getContext("2d", { willReadFrequently: true }); c.drawImage(im, 0, 0)
       const px = c.getImageData(0, 0, im.width, im.height).data, a = new Uint8Array(im.width * im.height)
       for (let q = 0; q < a.length; q++) a[q] = px[4 * q]
-      ent.a = a; ent.w = im.width
+      ent.brut = a; ent.w = im.width
+      const segs = this.occlusion?.dalles.get(`${tx}/${ty}`)
+      if (segs) { // [ligne, début, longueur] : volume → sol posé (code 1)
+        const c = a.slice()
+        for (const [y, x, n] of segs) c.fill(1, y * im.width + x, y * im.width + x + n)
+        ent.corrige = c
+      }
+      ent.a = this.codesDe(ent)
     }, () => { ent.a = false })
     return ent.promesse
+  }
+
+  // Les codes d'une dalle pour le style affiché : corrigés si le correctif du jeu vaut pour lui, bruts sinon.
+  correctifActif() { return Boolean(this.occlusion) && this.styleAffiche?.() === this.occlusion.style }
+  codesDe(ent) { return this.correctifActif() && ent.corrige ? ent.corrige : ent.brut }
+
+  // Le style a changé : chaque dalle déjà lue reprend ses codes, et le masque au sol est refait.
+  majStyle() {
+    for (const ent of this.codes.values()) if (ent.brut) ent.a = this.codesDe(ent)
+    this.construireMasque()
   }
 
   // -1 : pas encore lue (tenue pour du sol : on montre plutôt qu'on cache) ; 0 : dehors.

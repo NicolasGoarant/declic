@@ -565,6 +565,7 @@ export default class extends Controller {
         this.carte.setMaxZoom(zoomMax)
         this.poserCoucheFond(this.coucheCourante())
       }
+      this.mobiles?.majStyle() // le correctif d'occlusion des bateaux ne vaut que pour son style
       this.majCalques()
     }).catch((erreur) => {
       console.error("diorama : style indisponible", erreur)
@@ -891,7 +892,7 @@ export default class extends Controller {
     if (voulu && !this.mobiles) {
       this.mobiles = new Mobiles(this.L, this.carte, {
         dossier: t.mobiles, dallesPropriete: this.dallesPropriete, contient: this.decoupe?.contient,
-        propriete: (chemin) => this.url(t.propriete, `${chemin}.png`)
+        propriete: (chemin) => this.url(t.propriete, `${chemin}.png`), style: () => this.style
       })
     }
   }
