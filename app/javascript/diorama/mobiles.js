@@ -32,14 +32,16 @@
 //   ?mobiles-plancher-navigation=PX, ?mobiles-gain-navigation=G   remplacent ceux des péniches EN MARCHE seulement
 //   ?mobiles-densite=P,B   remplace DENSITE (péniches, petits bateaux), en bateaux par km et par file
 //   ?mobiles-occlusion=propriete   ignore le correctif d'occlusion du style (témoin : la propriété brute)
+//   ?mobiles-melange=voie   tire le modèle dans le seul lot du type de voie (témoin : l'ancien tirage, péniches au canal)
 
 const NIVEAU_REPERE = 8
 const NIVEAU_MIN = 7                // en dessous, une péniche fait moins de 20 px : on ne pose rien
 const MOINS_DE_MOUVEMENT = "(prefers-reduced-motion: reduce)"
 const INTERVALLE_MS = 1000 / 30 - 2
 const Z_VOLET = 440
-// CHOISI : bateaux par km et par file — péniches (canal), petits bateaux (rivière). RETENU le 15/10 (Nicolas) : 6 / 2 au lieu
-// de 3 / 4, la péniche fait 68,3 % des bateaux-instants au lieu de 34,9 % (60,0 % du temps visible au zoom 8, contre 27,2 %).
+// CHOISI : bateaux par km et par file — canal, rivière (jusqu'au 15/10 : péniches au canal, petits bateaux à la
+// rivière). RETENU le 15/10 (Nicolas) : 6 / 2 au lieu de 3 / 4, la péniche fait 68,3 % des bateaux-instants au lieu
+// de 34,9 % (60,0 % du temps visible au zoom 8, contre 27,2 %).
 const DENSITE = [6.0, 2.0]
 // Modèles retirés du tirage, chacun REMPLACÉ par un autre de même type : la place du retiré dans la liste de tirage
 // est tenue par son remplaçant, donc chaque trajectoire garde son nombre de bateaux et tous les autres bateaux leur
@@ -126,6 +128,7 @@ export class Mobiles {
     this.gainMaxNavigation = params.has("mobiles-gain-navigation") ? parseFloat(params.get("mobiles-gain-navigation"))
       : params.has("mobiles-gain-peniche") ? this.gainMaxPeniche : GAIN_MAX_NAVIGATION
     this.sansCorrectif = params.get("mobiles-occlusion") === "propriete"
+    this.parVoie = params.get("mobiles-melange") === "voie"
     this.densite = params.has("mobiles-densite") ? params.get("mobiles-densite").split(",").map(parseFloat) : DENSITE
     this.stats = { peints: 0, segments: 0, js: 0, niveau: null, masque: false }
     this.t0 = performance.now()
@@ -172,6 +175,10 @@ export class Mobiles {
       const r = REMPLACES[this.modeles[q].cle]
       if (r && indice.has(r) && this.modeles[indice.get(r)].type === this.modeles[q].type) choix[j] = indice.get(r)
     })
+    // Le TIRAGE est commun à tout le réseau (15/10) : le canal ne tirait que des péniches et la rivière que des petits bateaux
+    // (100 % de l'un et de l'autre, repartition.js). La voie ne décide plus que du NOMBRE de bateaux (DENSITE) et de leur
+    // vitesse ; le modèle se tire dans la liste entière, remplacés compris (le canoë y garde sa place, tenue par la barque).
+    this.tirage = this.parVoie ? null : [...this.parType[0], ...this.parType[1]]
     this.routes = this.eau.itineraires.map(([type, , , trace, largeurs, intervalles, couverts = [], couverts9 = null, peintes = null], i) => {
       const n = trace.length / 2, cum = new Float64Array(n), dirs = new Float64Array(2 * n)
       let s = 0
@@ -466,7 +473,7 @@ export class Mobiles {
           // sur un intervalle où aucun bateau du type ne peut être montré plein (route 1 : 79 m au pied d'un couvert)
           const n = Math.max(this.montrable(r, iv, niveauDalles) ? 1 : 0, Math.floor(this.densite[r.type] / 1000 * Li + graineDe(cle, fi, 13)))
           for (let kk = 0; kk < n; kk++) {
-            const choix = this.parType[r.type], mi = choix[Math.floor(graineDe(cle, fi, 400 + kk) * choix.length) % choix.length]
+            const choix = this.tirage || this.parType[r.type], mi = choix[Math.floor(graineDe(cle, fi, 400 + kk) * choix.length) % choix.length]
             const M = this.modeles[mi], g = this.gain(M, sc, true), L = M.L * g, W = M.W * g
             const ph = (kk + 0.6 * (graineDe(cle, fi, 300 + kk) - 0.5)) / n
             const s = iv.s0 + replier(ph * Li + dir * v * t, Li)
@@ -494,13 +501,13 @@ export class Mobiles {
     return liste
   }
 
-  // Un intervalle peut-il montrer un bateau de son type à pleine opacité ? Le plus court modèle du type, sans plancher, doit
+  // Un intervalle peut-il montrer un bateau à pleine opacité ? Le plus court modèle du tirage, sans plancher, doit
   // trouver un point à l'écart des fondus de bout et d'une portion couverte (mêmes termes que l'α de poserBateaux, berge
   // exceptée : elle dépend de la file). Calculé une fois par intervalle et par niveau de dalles, au pas de 2 m.
   montrable(r, iv, niveau) {
     const cache = (iv.montrable ??= {})
     if (niveau in cache) return cache[niveau]
-    const L = Math.min(...this.parType[r.type].map((mi) => this.modeles[mi].L))
+    const L = Math.min(...(this.tirage || this.parType[r.type]).map((mi) => this.modeles[mi].L))
     let ok = false
     for (let s = iv.s0 + L / 2 + FONDU_M; s <= iv.s1 - L / 2 - FONDU_M && !ok; s += 2) ok = this.distanceCouvert(r, s) >= L / 2 + 4
     return (cache[niveau] = ok)
