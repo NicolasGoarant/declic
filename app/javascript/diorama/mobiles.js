@@ -462,7 +462,8 @@ export class Mobiles {
         for (const dir of files) {
           const fi = dir > 0 ? 0 : 1
           const v = VITESSE[r.type] * (0.9 + 0.2 * graineDe(cle, fi, 17))
-          const n = Math.floor(this.densite[r.type] / 1000 * Li + graineDe(cle, fi, 13))
+          // au moins un bateau par file : à 6 / 2, la densité d'une file courte tombait à zéro (Meurthe, route 14)
+          const n = Math.max(1, Math.floor(this.densite[r.type] / 1000 * Li + graineDe(cle, fi, 13)))
           for (let kk = 0; kk < n; kk++) {
             const choix = this.parType[r.type], mi = choix[Math.floor(graineDe(cle, fi, 400 + kk) * choix.length) % choix.length]
             const M = this.modeles[mi], g = this.gain(M, sc, true), L = M.L * g, W = M.W * g
