@@ -30,6 +30,7 @@
 //   ?mobiles-plancher=PX, ?mobiles-contour=F   remplacent LONGUEUR_MIN_PX et CONTOUR (balayage de la lisibilité)
 //   ?mobiles-plancher-peniche=PX, ?mobiles-gain-peniche=G   remplacent LONGUEUR_MIN_PX_PENICHE et GAIN_MAX_PENICHE
 //   ?mobiles-plancher-navigation=PX, ?mobiles-gain-navigation=G   remplacent ceux des péniches EN MARCHE seulement
+//   ?mobiles-densite=P,B   remplace DENSITE (péniches, petits bateaux), en bateaux par km et par file
 
 const NIVEAU_REPERE = 8
 const NIVEAU_MIN = 7                // en dessous, une péniche fait moins de 20 px : on ne pose rien
@@ -37,6 +38,11 @@ const MOINS_DE_MOUVEMENT = "(prefers-reduced-motion: reduce)"
 const INTERVALLE_MS = 1000 / 30 - 2
 const Z_VOLET = 440
 const DENSITE = [3.0, 4.0]          // CHOISI : bateaux par km et par file — péniches (canal), petits bateaux (rivière)
+// Modèles retirés du tirage, chacun REMPLACÉ par un autre de même type : la place du retiré dans la liste de tirage
+// est tenue par son remplaçant, donc chaque trajectoire garde son nombre de bateaux et tous les autres bateaux leur
+// modèle. Le sprite reste dans l'atlas. (15/10 : le canoë bordeaux → la barque à rames, la plus proche en taille,
+// 7,2 m contre 6,9 m.)
+const REMPLACES = { "b2-canoe": "b0-rames" }
 const VITESSE = [1.0, 1.6]          // CHOISI : m/s d'une file, ± 10 % tirés par file
 const FONDU_M = 15                  // CHOISI : longueur du fondu aux bouts d'un intervalle
 const DEBORD_M = 1                  // CHOISI : un bateau dont la coque passerait la berge PEINTE de plus que cela est effacé
@@ -114,6 +120,7 @@ export class Mobiles {
       : params.has("mobiles-plancher-peniche") ? this.longueurMinPxPeniche : LONGUEUR_MIN_PX_NAVIGATION
     this.gainMaxNavigation = params.has("mobiles-gain-navigation") ? parseFloat(params.get("mobiles-gain-navigation"))
       : params.has("mobiles-gain-peniche") ? this.gainMaxPeniche : GAIN_MAX_NAVIGATION
+    this.densite = params.has("mobiles-densite") ? params.get("mobiles-densite").split(",").map(parseFloat) : DENSITE
     this.stats = { peints: 0, segments: 0, js: 0, niveau: null, masque: false }
     this.t0 = performance.now()
     this.reduit = window.matchMedia(MOINS_DE_MOUVEMENT)
@@ -150,6 +157,11 @@ export class Mobiles {
     this.cam = cam
     this.parType = [[], []]
     this.modeles.forEach((m, q) => this.parType[m.type === "peniche" ? 0 : 1].push(q))
+    const indice = new Map(this.modeles.map((m, q) => [m.cle, q]))
+    for (const choix of this.parType) choix.forEach((q, j) => {
+      const r = REMPLACES[this.modeles[q].cle]
+      if (r && indice.has(r) && this.modeles[indice.get(r)].type === this.modeles[q].type) choix[j] = indice.get(r)
+    })
     this.routes = this.eau.itineraires.map(([type, , , trace, largeurs, intervalles, couverts = [], couverts9 = null, peintes = null], i) => {
       const n = trace.length / 2, cum = new Float64Array(n), dirs = new Float64Array(2 * n)
       let s = 0
@@ -423,7 +435,7 @@ export class Mobiles {
         for (const dir of files) {
           const fi = dir > 0 ? 0 : 1
           const v = VITESSE[r.type] * (0.9 + 0.2 * graineDe(cle, fi, 17))
-          const n = Math.floor(DENSITE[r.type] / 1000 * Li + graineDe(cle, fi, 13))
+          const n = Math.floor(this.densite[r.type] / 1000 * Li + graineDe(cle, fi, 13))
           for (let kk = 0; kk < n; kk++) {
             const choix = this.parType[r.type], mi = choix[Math.floor(graineDe(cle, fi, 400 + kk) * choix.length) % choix.length]
             const M = this.modeles[mi], g = this.gain(M, sc, true), L = M.L * g, W = M.W * g
