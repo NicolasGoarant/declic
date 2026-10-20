@@ -5,6 +5,7 @@ class LaboController < ApplicationController
 
   # Page autonome (sans layout) : le visualiseur n'a besoin ni de Leaflet ni de Turbo.
   def diorama
+    @tuiles = DioramaTuiles.new # le dossier des vivants (?vivants=1) ; rien n'est sondé
     render layout: false
   end
 

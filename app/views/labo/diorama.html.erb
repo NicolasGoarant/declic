@@ -446,5 +446,43 @@
   }).catch(e => { document.getElementById("err").textContent = "Erreur : " + e.message; });
 })();
 </script>
+<%# Les vivants (vélos, piétons, voitures : diorama/vivants.js), seulement avec ?vivants=1 : une toile à part posée
+    sur celle des dalles, qui n'en change ni le chargement ni le dessin. Sans le paramètre, rien n'est lu. %>
+<script type="module">
+  if (new URLSearchParams(location.search).get("vivants") === "1") {
+    const DOSSIER = <%= json_escape(@tuiles.vivants.to_json).html_safe %>;
+    const PROPRIETE = <%= json_escape(@tuiles.url(DioramaTuiles::PROPRIETE).to_json).html_safe %>;
+    const ligne = document.createElement("div");
+    ligne.innerHTML = '<label><input type="checkbox" id="vivants" checked disabled> vivants</label> · <span id="vivants-info">chargement…</span>';
+    document.getElementById("hud").insertBefore(ligne, document.getElementById("err"));
+    const info = document.getElementById("vivants-info"), boite = document.getElementById("vivants");
+    const pret = () => new Promise(ok => { const t = setInterval(() => { if (window.__diorama) { clearInterval(t); ok(window.__diorama); } }, 100); });
+    try {
+      const { Vivants } = await import("diorama/vivants");
+      if (!Vivants.permis()) throw new Error("animations réduites demandées par l'appareil");
+      const [D, manifeste] = await Promise.all([pret(), fetch(PROPRIETE + "/manifeste.json").then(r => r.json())]);
+      const vivants = new Vivants({
+        dossier: DOSSIER, propriete: chemin => `${PROPRIETE}/${chemin}.png`,
+        dallesPropriete: new Set(manifeste.dalles["8"].map(([x, y]) => x + "/" + y)),
+        vue: () => ({ cx: D.view.cx, cy: D.view.cy, s: D.view.s, W: window.innerWidth, H: window.innerHeight }),
+        ancre: document.getElementById("c")
+      });
+      await vivants.charger();
+      vivants.demarrer();
+      boite.disabled = false;
+      boite.addEventListener("change", () => boite.checked ? vivants.demarrer() : vivants.arreter());
+      setInterval(() => {
+        const s = vivants.stats;
+        info.textContent = !vivants.actif ? "coupés" : s.niveau < 7 ? "visibles dès le niveau 7" :
+          `${s.velos} vélos, ${s.pietons} piétons, ${s.voitures} voitures · ${s.js.toFixed(1)} ms`;
+      }, 500);
+      window.__dioramaVivants = vivants;
+    } catch (e) {
+      boite.checked = false;
+      info.textContent = "indisponibles (" + e.message + ")";
+      console.warn("vivants :", e);
+    }
+  }
+</script>
 </body>
 </html>

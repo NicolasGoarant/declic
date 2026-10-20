@@ -64,6 +64,12 @@ class DioramaTuilesTest < ActiveSupport::TestCase
     assert_equal "http://localhost:8766/mobiles-v1", t.pour_js[:mobiles]
   end
 
+  test "les vivants se lisent dans vivants-v1 sous la base, ou à DIORAMA_VIVANTS_URL" do
+    base = "https://tuiles.test/#{SecureRandom.hex(4)}"
+    assert_equal "#{base}/vivants-v1", DioramaTuiles.new(base: base, vivants: nil, sonde: ->(_) { false }).vivants
+    assert_equal "http://localhost:8777", DioramaTuiles.new(base: base, vivants: "http://localhost:8777/", sonde: ->(_) { false }).vivants
+  end
+
   test "la base vient de DIORAMA_TILES_URL, sinon du domaine par défaut" do
     assert_equal DioramaTuiles::URL_DEFAUT, DioramaTuiles.new(sonde: ->(_) { false }).base unless ENV["DIORAMA_TILES_URL"].present?
     assert_equal "https://ailleurs.test", DioramaTuiles.new(base: "https://ailleurs.test/", sonde: ->(_) { false }).base
