@@ -473,10 +473,8 @@
       boite.addEventListener("change", () => boite.checked ? vivants.demarrer() : vivants.arreter());
       setInterval(() => {
         const s = vivants.stats;
-        // seuils en échelle (×, comme la ligne des dalles) et non en « niveau » : le niveau des dalles dépend du dpr
-        // et s'arrondit, à dpr 2 il affiche déjà 8 à ×0,5, où piétons et vélos ne sont pas encore dessinés
-        info.textContent = !vivants.actif ? "coupés" : s.niveau < 7 ? "voitures dès ×0,5, piétons et vélos dès ×1" :
-          s.niveau < 8 ? `${s.voitures} voitures · piétons et vélos dès ×1 · ${s.js.toFixed(1)} ms` :
+        // seuil en échelle (×, comme la ligne des dalles) et non en « niveau » : le niveau des dalles dépend du dpr
+        info.textContent = !vivants.actif ? "coupés" : s.niveau < 7 ? "visibles dès ×0,5" :
           `${s.velos} vélos, ${s.pietons} piétons, ${s.voitures} voitures · ${s.js.toFixed(1)} ms`;
       }, 500);
       window.__dioramaVivants = vivants;
