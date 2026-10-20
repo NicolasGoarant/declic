@@ -54,5 +54,6 @@ comme à dpr 2. Correctif : la ligne des vivants donne ses seuils en échelle (�
 
 Demande de Nicolas : même seuil que les voitures (`niveauMin` 7). Sous ×1, piétons et vélos gardent la taille qu'ils ont à l'écran
 à ×1 (`tailleFigee`, piéton 6,1 px, vélo 9,8 px). Sinon, ils tomberaient à 3,0 et 4,9 px. Densités inchangées ; voitures, ×1 et ×2
-identiques. Stanislas à ×0,5 : 63 vélos, 878 piétons, 42 voitures (vue quatre fois plus large qu'à ×1). Planche :
-`docs/maquettes/vivants-labo-diorama/planche-seuil-05.webp`.
+identiques. Stanislas à ×0,5 : 63 vélos, 878 piétons, 42 voitures (vue quatre fois plus large qu'à ×1). Planches (production,
+avant v358, après v359, ×0,5, ×1 et ×2) : `docs/maquettes/vivants-labo-diorama/planche-seuil-05-dpr{1,2}.webp`. À ×1 et ×2, seuls
+les pins d'opportunités (chargés de façon asynchrone) et le compteur de ms du HUD diffèrent.
