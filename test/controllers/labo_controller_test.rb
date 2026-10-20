@@ -219,4 +219,14 @@ class LaboControllerTest < ActionDispatch::IntegrationTest
     get philosophie_url
     assert_select "nav.acc-onglets a[aria-current=page]", text: "Déclic ?"
   end
+
+  test "/labo/diorama passe le dossier des vivants sans rien sonder ; le calque ne s'active qu'avec ?vivants=1" do
+    tuiles = DioramaTuiles.new(base: "https://tuiles.test/x", vivants: "http://localhost:8777", sonde: ->(_) { flunk "aucune sonde attendue" })
+    DioramaTuiles.stub(:new, tuiles) { get labo_diorama_url }
+
+    assert_response :success
+    assert_includes response.body, 'const DOSSIER = "http://localhost:8777";'
+    assert_includes response.body, 'get("vivants") === "1"'
+    assert_select "#vivants", 0 # la case n'est posée qu'au chargement, et seulement avec le paramètre
+  end
 end

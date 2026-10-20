@@ -35,18 +35,23 @@ class DioramaTuiles
   # DIORAMA_MOBILES_URL désigne un autre dossier de même forme (manifeste.json compris, servi en CORS) : c'est
   # ainsi qu'on essaie un jeu avant de le publier sur R2.
   MOBILES = "mobiles-v6".freeze   # v5 sur un calque raccordé aux ponts (bateaux qui ressortent des ponts, 15/10) ; v1 à v5 restent sur R2
+  # Les vivants (diorama/vivants : vélos, piétons, voitures), sur /labo/diorama seulement, avec ?vivants=1. Nom de jeu
+  # proposé par nancy-3d, NON publié sur R2 au 20/10/2026 : DIORAMA_VIVANTS_URL désigne un dossier local servi en CORS.
+  VIVANTS = "vivants-v1".freeze
 
   DUREE_CACHE = 10.minutes
   DELAI_SONDE_S = 2
   CACHE = {}
   VERROU = Mutex.new
 
-  attr_reader :base, :mobiles
+  attr_reader :base, :mobiles, :vivants
 
   # `sonde` : appelable qui reçoit une URL et rend true si elle répond 200 (injectable en test).
-  def initialize(base: ENV["DIORAMA_TILES_URL"].presence || URL_DEFAUT, mobiles: ENV["DIORAMA_MOBILES_URL"].presence, sonde: nil)
+  def initialize(base: ENV["DIORAMA_TILES_URL"].presence || URL_DEFAUT, mobiles: ENV["DIORAMA_MOBILES_URL"].presence,
+                 vivants: ENV["DIORAMA_VIVANTS_URL"].presence, sonde: nil)
     @base = base.chomp("/")
     @mobiles = (mobiles || url(MOBILES)).chomp("/")
+    @vivants = (vivants || url(VIVANTS)).chomp("/")
     @sonde = sonde || method(:repond?)
   end
 
