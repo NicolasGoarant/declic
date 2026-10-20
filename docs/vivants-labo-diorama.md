@@ -49,3 +49,10 @@ répondent en 200, sans erreur). Le « niveau » de la ligne des dalles est celu
 l'échelle : voitures dès ×0,5, piétons et vélos dès ×1 (`niveauMin` 7 et 8, réglage inchangé). À dpr 2 et ×0,5, le HUD affiche
 « niveau 8 » alors que seules les voitures sont dessinées. À ×1, la production donne 2 vélos, 145 piétons et 2 voitures, à dpr 1
 comme à dpr 2. Correctif : la ligne des vivants donne ses seuils en échelle (« piétons et vélos dès ×1 »).
+
+## Piétons et vélos dès ×0,5 (20/10, v359)
+
+Demande de Nicolas : même seuil que les voitures (`niveauMin` 7). Sous ×1, piétons et vélos gardent la taille qu'ils ont à l'écran
+à ×1 (`tailleFigee`, piéton 6,1 px, vélo 9,8 px). Sinon, ils tomberaient à 3,0 et 4,9 px. Densités inchangées ; voitures, ×1 et ×2
+identiques. Stanislas à ×0,5 : 63 vélos, 878 piétons, 42 voitures (vue quatre fois plus large qu'à ×1). Planche :
+`docs/maquettes/vivants-labo-diorama/planche-seuil-05.webp`.
