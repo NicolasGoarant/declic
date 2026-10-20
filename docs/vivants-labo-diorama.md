@@ -40,3 +40,12 @@ au niveau 8 ; 1280 × 800, dpr 1, horloge figée à 120 s). Captures pleines : `
 - Points ouverts : les pins d'opportunités sont dessinés sur la toile des dalles, donc **sous** les vivants. Rien n'est sous
   `prefers-reduced-motion`. Il n'existe pas de chargement différé : environ 13 Mo de données et la préparation des calques au chargement,
   ce que le rapport du paquet chiffre à environ 0,9 s de fil principal sous Node.
+
+## Seuils et « niveau » du HUD (20/10, après v357)
+
+« 0 vélos, 0 piétons, 41 voitures » en production à Stanislas : ce n'est ni un cache ni un fichier manquant (les 9 fichiers lus
+répondent en 200, sans erreur). Le « niveau » de la ligne des dalles est celui des dalles chargées :
+`ceil(8 + log2(s × dpr) − 0,25)`, plafonné à 8. Il vaut donc 8 dès ×0,42 à dpr 2 et dès ×0,84 à dpr 1. Or les vivants suivent
+l'échelle : voitures dès ×0,5, piétons et vélos dès ×1 (`niveauMin` 7 et 8, réglage inchangé). À dpr 2 et ×0,5, le HUD affiche
+« niveau 8 » alors que seules les voitures sont dessinées. À ×1, la production donne 2 vélos, 145 piétons et 2 voitures, à dpr 1
+comme à dpr 2. Correctif : la ligne des vivants donne ses seuils en échelle (« piétons et vélos dès ×1 »).
