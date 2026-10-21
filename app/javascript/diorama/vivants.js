@@ -38,13 +38,15 @@ const MODELE_VELO = "velo-detaille" // 20/10
 // niveau en dessous duquel on ne dessine rien. Voiture 10 px g ≤ 1,5 et piéton 8 px g ≤ 2 DÉCIDÉS le 16/10 (§ 6) ;
 // vélo 10 px g ≤ 2,4 DÉCIDÉ le 20/10 (§ 12). Piétons et vélos dès ×0,5 comme les voitures (20/10, Nicolas) : sous
 // `tailleFigee` (×1), ils gardent la taille à l'écran jugée à ×1 (piéton 6,1 px, vélo 9,8 px) au lieu de rétrécir.
-// Bus et trolleybus 24 px g ≤ 1,25, échelle ×1,25 (et non ×1,6) dès ×0,5 : DÉCIDÉS le 19/10 (§ 9-10).
+// Bus et trolleybus 24 px g ≤ 1,25, échelle ×1,25 (et non ×1,6) : DÉCIDÉS le 19/10 (§ 9-10).
+// Toutes les familles dès ×0,25 (niveau 6, 21/10, Nicolas) : sous ×0,5, voitures, bus et trolleybus gardent leur taille
+// à l'écran de ×0,5 (`tailleFigee` 7), comme piétons et vélos gardent celle de ×1 ; ×0,5 à ×2 inchangés.
 const PLANCHER = {
-  voiture: { px: 10, gain: 1.5, niveauMin: 7, mesure: "L" },
-  bus: { px: 24, gain: 1.25, niveauMin: 7, mesure: "L", echelle: 1.25 },
-  trolleybus: { px: 24, gain: 1.25, niveauMin: 7, mesure: "L", echelle: 1.25 },
-  velo: { px: 10, gain: 2.4, niveauMin: 7, tailleFigee: 8, mesure: "L" },
-  pieton: { px: 8, gain: 2, niveauMin: 7, tailleFigee: 8, mesure: "H" }
+  voiture: { px: 10, gain: 1.5, niveauMin: 6, tailleFigee: 7, mesure: "L" },
+  bus: { px: 24, gain: 1.25, niveauMin: 6, tailleFigee: 7, mesure: "L", echelle: 1.25 },
+  trolleybus: { px: 24, gain: 1.25, niveauMin: 6, tailleFigee: 7, mesure: "L", echelle: 1.25 },
+  velo: { px: 10, gain: 2.4, niveauMin: 6, tailleFigee: 8, mesure: "L" },
+  pieton: { px: 8, gain: 2, niveauMin: 6, tailleFigee: 8, mesure: "H" }
 }
 const VITESSE_VEH = [25, 13, 11, 9, 7, 4]   // m/s par classe : autoroute … partagée
 const DENSITE_VEH = [12, 14, 12, 9, 5, 2]   // par km et par file
@@ -280,7 +282,7 @@ export class Vivants {
   // ─── Le plancher et les sprites ──────────────────────────────────────────────────────────────────────────
   gainDe(M, k) {
     const P = PLANCHER[typeDe(M)]
-    const kf = P.tailleFigee ? Math.max(k, 2 ** (P.tailleFigee - NIVEAU_REPERE)) : k // sous ×1 : la taille de ×1
+    const kf = P.tailleFigee ? Math.max(k, 2 ** (P.tailleFigee - NIVEAU_REPERE)) : k // sous ce zoom : la taille qu'on y a
     const naturel = P.mesure === "H" ? M.H * Math.abs(this.rep.metre_hauteur_px[1]) * kf : M.L * this.rep.echelle_px_par_m * kf
     return Math.max(P.echelle ?? ECHELLE_VIVANTS, Math.max(1, Math.min(P.gain, P.px / naturel))) * kf / k
   }
