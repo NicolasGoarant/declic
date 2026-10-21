@@ -100,3 +100,47 @@ par cas. Cadrages : Stanislas, Villers et gare, à ×0,5, ×1 et ×2.
   sur sa propre carte.
 - **Occlusion** : un bus de Villers ×2 passe derrière un arbre et un toit, et il est coupé comme il faut.
 - Planche : `docs/maquettes/vivants-labo-diorama/planche-bus-prod.webp` (six cadrages, avant/après, recadrage ×2).
+
+## Vivants dès ×0,25 (21/10, branche `vivants-niveau-6`, NON déployée : rendu trop lent)
+
+**Faisabilité : oui, sans nouvelle donnée.** Les calques sont en pixels de mosaïque du niveau 8 et couvrent toute la mosaïque ;
+ils ne dépendent pas du niveau des dalles. Ce sont les mêmes trajets, vus de plus loin. Le seuil est un simple réglage du
+lecteur (`niveauMin`). La capture de Nicolas (« niveau 7 · ×0,296 ») est à dpr 2 : le niveau des dalles y vaut 7 entre
+×0,15 et ×0,30, et entre ×0,30 et ×0,59 à dpr 1. Le seuil est donc exprimé en échelle, comme depuis le 20/10 : **×0,25**
+(`niveauMin` 6, un zoom entier comme les autres seuils). Il couvre ×0,296.
+
+Changement (deux lignes de réglage et le HUD) : `niveauMin` passe à 6 pour les cinq familles. Sous ×0,5, voitures, bus et
+trolleybus gardent leur taille de ×0,5 (`tailleFigee` 7), comme piétons et vélos gardent celle de ×1. Densités inchangées.
+HUD : « visibles dès ×0,25 ».
+
+Mesures (Déclic local lisant `vivants-v2` sur R2, Chromium 1280 × 800 sans GPU, 60 instants de 0 à 1 180 s, cinq familles) :
+
+| cadrage | × | piétons | vélos | voitures | bus | trolleybus | JS médian dpr 1 (p90) | JS médian dpr 2 (p90) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Stanislas | 0,25 | 4 069 | 468 | 312 | 6,5 | 1,1 | 56,9 (78,6) ms | 79,9 (128,1) ms |
+| Stanislas | 0,3 | 2 867 | 308 | 216 | 5,0 | 1,0 | 27,0 (46,6) ms | 28,1 (50,9) ms |
+| Stanislas | 0,5 | 901 | 72 | 40 | 0,8 | 0,3 | 10,5 (14,3) ms | 10,1 (12,0) ms |
+| Villers | 0,25 | 4 713 | 231 | 451 | 4,1 | 0,5 | 58,9 (90,5) ms | 69,3 (91,8) ms |
+| Villers | 0,3 | 3 528 | 172 | 343 | 3,6 | 0 | 44,5 (65,2) ms | 53,9 (82,7) ms |
+| Villers | 0,5 | 1 268 | 64 | 136 | 1,2 | 0 | 11,4 (27,3) ms | 11,3 (29,8) ms |
+| gare | 0,25 | 3 762 | 327 | 267 | 6,3 | 0,9 | 57,8 (90,4) ms | 94,5 (137,7) ms |
+| gare | 0,3 | 2 522 | 215 | 176 | 4,6 | 0,5 | 25,9 (47,1) ms | 28,2 (49,7) ms |
+| gare | 0,5 | 890 | 89 | 59 | 1,8 | 0,3 | 10,9 (24,2) ms | 10,1 (25,6) ms |
+
+- **Temps de rendu : hors fourchette.** Médiane de 26 à 59 ms à dpr 1 et de 28 à 95 ms à dpr 2, contre moins de 25 ms
+  attendu. La vue couvre 2,8 fois (×0,3) à 4 fois (×0,25) la surface de ×0,5, avec 2 500 à 4 700 piétons. Profil (gare,
+  horloge libre) : la peinture (découpe des toits colonne par colonne) fait 71 % du temps à ×0,25, contre 39 % à ×0,5.
+  L'animation tombe à environ 13 images par seconde à ×0,25 et 19 à ×0,3 (30 visées).
+- **Lisibilité** (planche `planche-seuil-025.webp`, dpr 2) : les piétons gardent leur taille de ×1. À ×0,25, ils
+  paraissent hauts d'un étage et forment des traînées continues sur les rues, plutôt qu'une ville habitée.
+- **×0,5 à ×2 inchangés** : 0 px d'écart avec `main` sur 18 cas (3 cadrages × 3 échelles × dpr 1 et 2), effectifs
+  identiques ; `bin/rails test` vert. Contrôle à faire contre `main` en local : la production a d'autres pins d'opportunités.
+
+Pistes, à décider (aucune n'est faite, chacune sort du périmètre « seuil et taille ») :
+1. **Seuil ×0,35 ou ×0,4** : moins de surface (×2 à ×1,6 celle de ×0,5), donc plus près de 25 ms ; à mesurer, et ×0,296 ne
+   serait pas couvert.
+2. **Moins de piétons sous ×0,5** : on n'en peint qu'une partie, tirée par graine, ce qui touche aux effectifs validés.
+   Coût presque proportionnel au nombre d'objets peints.
+3. **Peinture plus légère sous ×0,5** : sans la découpe des toits (des piétons resteraient dessinés sur des toits) ou par
+   paquets ; travail de fond dans le lecteur.
+4. **Piétons laissés à ×0,5**, et seuls voitures, vélos, bus et trolleybus dès ×0,25 (environ 1 000 objets) : à mesurer.
