@@ -35,7 +35,8 @@ class DioramaTuiles
   # DIORAMA_MOBILES_URL désigne un autre dossier de même forme (manifeste.json compris, servi en CORS) : c'est
   # ainsi qu'on essaie un jeu avant de le publier sur R2.
   MOBILES = "mobiles-v6".freeze   # v5 sur un calque raccordé aux ponts (bateaux qui ressortent des ponts, 15/10) ; v1 à v5 restent sur R2
-  # Les vivants (diorama/vivants : vélos, piétons, voitures, bus, trolleybus), sur /labo/diorama seulement, avec ?vivants=1.
+  # Les vivants (diorama/vivants : vélos, piétons, voitures, bus, trolleybus) : par défaut sur la page d'accueil (21/10),
+  # avec ?vivants=1 sur /labo/diorama.
   # vivants-v2 (publié le 21/10/2026) ajoute bus et trolleybus ; vivants-v1 reste sur R2. DIORAMA_VIVANTS_URL : essayer un autre dossier.
   VIVANTS = "vivants-v2".freeze
 
@@ -71,14 +72,16 @@ class DioramaTuiles
     arbres = vrai && p.fetch(url("#{ARBRES}/manifeste.json"))
     lumieres = vrai && lampadaires(p).present?
     bateaux = vrai && propriete && p.fetch("#{mobiles}/manifeste.json")
-    { vrai: vrai, styles: styles, blanche: blanche, ambiances: ambiances, arbres: arbres, lumieres: lumieres, mobiles: bateaux }
+    vivants = vrai && propriete && p.fetch("#{self.vivants}/manifeste.json")
+    { vrai: vrai, styles: styles, blanche: blanche, ambiances: ambiances, arbres: arbres, lumieres: lumieres, mobiles: bateaux,
+      vivants: vivants }
   end
 
   # Ce que reçoit le contrôleur Stimulus.
   def pour_js
     {
       base: base, styles: STYLES.keys, style_defaut: STYLE_DEFAUT, masque: MASQUE, propriete: PROPRIETE,
-      arbres: ARBRES, lumieres: lampadaires(presents), mobiles: mobiles,
+      arbres: ARBRES, lumieres: lampadaires(presents), mobiles: mobiles, vivants: vivants,
       ambiances: AMBIANCES.index_with { |nom| parametres_ambiance(nom) },
       disponibles: disponibles
     }
@@ -96,16 +99,16 @@ class DioramaTuiles
 
   def urls_a_sonder
     [ *STYLES.keys, MASQUE, PROPRIETE, ARBRES, *LAMPADAIRES.map(&:first) ].map { |dossier| url("#{dossier}/manifeste.json") } +
-      AMBIANCES.map { |nom| url(parametres_ambiance(nom)) } + [ "#{mobiles}/manifeste.json" ]
+      AMBIANCES.map { |nom| url(parametres_ambiance(nom)) } + [ "#{mobiles}/manifeste.json", "#{vivants}/manifeste.json" ]
   end
 
   def presents
     VERROU.synchronize do
-      entree = CACHE[[ base, mobiles ]]
+      entree = CACHE[[ base, mobiles, vivants ]]
       return entree[:resultat] if entree && entree[:le] > DUREE_CACHE.ago
     end
     resultat = urls_a_sonder.map { |u| Thread.new { [ u, @sonde.call(u) ] } }.to_h(&:value)
-    VERROU.synchronize { CACHE[[ base, mobiles ]] = { le: Time.current, resultat: resultat } }
+    VERROU.synchronize { CACHE[[ base, mobiles, vivants ]] = { le: Time.current, resultat: resultat } }
     resultat
   end
 

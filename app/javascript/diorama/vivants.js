@@ -28,6 +28,14 @@
 //   ?vivants-t=S                fige l'horloge à S secondes (captures comparables)
 //   ?vivants-densite-velo=P,B   vélos par km et par sens, piste et bande (témoin : 16,12, la densité d'avant ×5)
 //   ?vivants-bus=0              ni bus ni trolleybus, même si le jeu en porte (témoin : la page d'avant le 21/10)
+//   ?vivants-heure=H            effectifs de l'heure H de Nancy (décimale : 18.5), sur toute page ; « pointe » : les
+//                               effectifs validés, sans courbe (sur /labo/diorama, c'est le défaut)
+//
+// Effectifs selon l'heure (21/10/2026, page d'accueil) : à chaque famille un facteur entre 0 et 1, lu sur une courbe de
+// quelques ancres horaires (heure de Nancy, interpolée à la minute) qui culmine à 1, soit aux effectifs validés. Un mobile
+// k est gardé si sa graine est sous le facteur : la file garde ses rangs (rien ne saute quand le facteur bouge), seuls
+// des mobiles s'effacent. Bus et trolleybus : un passage sur m (fréquence ÷ m, intervalles réguliers) en début et fin de
+// service, aucun de 0 h 30 à 5 h. Courbe plausible, pas une donnée : à reprendre si des comptages arrivent.
 
 const NIVEAU_REPERE = 8
 const MOINS_DE_MOUVEMENT = "(prefers-reduced-motion: reduce)"
@@ -60,6 +68,34 @@ const MODELES_BUS = { bus: "bus-detaille-v2", trolleybus: "trolleybus-tempo1-v2"
 const TYPE_CALQUE = { vehicules: "voiture", pietons: "pieton", velos: "velo", bus: "bus", trolleybus: "trolleybus" }
 const FONDU_M = 10                          // un mobile s'efface sur ses 10 derniers mètres avant un bout
 const MARGE_VUS = 0.5                       // les segments vus couvrent la vue élargie de moitié de chaque côté
+// Facteur d'effectif par famille aux heures de Nancy (ancres [heure, facteur], interpolées) : piétons au plus fort à midi
+// et en fin d'après-midi, vélos et voitures aux heures de bureau, presque personne au cœur de la nuit.
+const COURBES = {
+  pieton: [[0, 0.1], [5, 0.04], [7, 0.3], [9, 0.6], [12, 1], [14, 0.8], [17, 0.95], [18, 1], [20, 0.6], [22, 0.3], [24, 0.1]],
+  velo: [[0, 0.04], [5, 0.02], [7, 0.5], [8, 0.9], [10, 0.5], [12, 0.7], [14, 0.55], [17, 0.9], [18, 1], [20, 0.4], [22, 0.15], [24, 0.04]],
+  voiture: [[0, 0.12], [5, 0.08], [7, 0.6], [8, 0.95], [10, 0.7], [12, 0.8], [14, 0.75], [17, 0.95], [18, 1], [20, 0.55], [22, 0.3], [24, 0.12]]
+}
+// Bus et trolleybus, par paliers [début, fin[ → part des passages : service réduit au matin et en soirée, rien la nuit.
+const SERVICE_BUS = [[0, 0.5, 0.5], [0.5, 5, 0], [5, 6.5, 0.5], [6.5, 20.5, 1], [20.5, 24, 0.5]]
+const HEURE_NANCY = new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", hour: "numeric", minute: "numeric", hourCycle: "h23" })
+const OCCLUSION_JV2 = "occlusion-vivants-jv2.json" // correctif des toits du style jeu vidéo (nancy-3d, deriver-toits-jv2.py)
+
+function heureANancy(date = new Date()) {
+  const p = Object.fromEntries(HEURE_NANCY.formatToParts(date).map((x) => [x.type, x.value]))
+  return Number(p.hour) + Number(p.minute) / 60
+}
+function surCourbe(ancres, h) {
+  for (let i = 1; i < ancres.length; i++) {
+    const [h0, f0] = ancres[i - 1], [h1, f1] = ancres[i]
+    if (h <= h1) return f0 + (f1 - f0) * (h - h0) / (h1 - h0)
+  }
+  return ancres[ancres.length - 1][1]
+}
+// Les facteurs de l'heure h (0 à 24) : { pieton, velo, voiture, bus, trolleybus }.
+export function facteursHoraires(h) {
+  const bus = SERVICE_BUS.find(([a, b]) => h >= a && h < b)?.[2] ?? 1
+  return { pieton: surCourbe(COURBES.pieton, h), velo: surCourbe(COURBES.velo, h), voiture: surCourbe(COURBES.voiture, h), bus, trolleybus: bus }
+}
 
 function graineDe(i, j, k) {
   let h = (i * 374761393 + j * 668265263 + k * 2246822519) | 0
@@ -88,23 +124,44 @@ export class Vivants {
   //           dallesPropriete (Set("x/y") des dalles publiées au niveau 8 ; une absente vaut « dehors »),
   //           vue (() → { cx, cy, s, W, H } : centre en px de mosaïque L8, px CSS par px de mosaïque, taille CSS),
   //           ancre (la toile des dalles : celle des vivants est posée juste après, sous le reste de la page)
-  constructor({ dossier, propriete, dallesPropriete, vue, ancre }) {
+  //           ou, sur une carte Leaflet : volet (() → l'élément qui reçoit la toile), placer (toile → la recale à
+  //           l'origine de la vue, à chaque image) et cachee (() → vrai pendant une animation de zoom) ;
+  //           style (() → nom du style affiché : le correctif des toits jv2 ne vaut que pour SON style) ;
+  //           horaire (vrai : effectifs selon l'heure de Nancy ; faux, le défaut : les effectifs validés)
+  constructor({ dossier, propriete, dallesPropriete, vue, ancre = null, volet = null, placer = null, cachee = null, style = null, horaire = false }) {
     this.dossier = dossier.replace(/\/$/, "")
     this.urlCode = propriete
     this.dallesCodes = dallesPropriete
     this.vue = vue
     this.ancre = ancre
+    this.volet = volet
+    this.placer = placer
+    this.cachee = cachee
+    this.styleAffiche = style
     this.codes = new Map()
     const params = new URLSearchParams(location.search)
     this.horlogeFigee = params.has("vivants-t") ? parseFloat(params.get("vivants-t")) : null
+    const heure = params.get("vivants-heure")
+    this.heureFixe = heure === "pointe" ? null : heure !== null ? parseFloat(heure) : undefined
+    this.horaire = heure === "pointe" ? false : heure !== null || horaire
+    this.facteurs = null
     this.densiteVelo = params.has("vivants-densite-velo") ? params.get("vivants-densite-velo").split(",").map(parseFloat) : DENSITE_VELO
     this.sansBus = params.get("vivants-bus") === "0"
-    this.stats = { pietons: 0, voitures: 0, velos: 0, bus: 0, trolleybus: 0, js: 0, niveau: null }
+    this.stats = { pietons: 0, voitures: 0, velos: 0, bus: 0, trolleybus: 0, js: 0, niveau: null, heure: null }
     this.t0 = performance.now()
     this.actif = false
   }
 
   horloge() { return this.horlogeFigee ?? (performance.now() - this.t0) / 1000 }
+
+  // Les facteurs horaires, relus au plus toutes les 30 s (null : effectifs validés, sans courbe).
+  majFacteurs(tms) {
+    if (!this.horaire) return
+    if (this.facteurs && tms - this.facteursLe < 30000) return
+    this.heure = this.heureFixe ?? heureANancy()
+    this.facteurs = facteursHoraires(this.heure)
+    this.facteursLe = tms
+  }
 
   async charger() {
     const f = (n) => `${this.dossier}/${n}`
@@ -113,6 +170,11 @@ export class Vivants {
       lireJSON(f("modeles-vivants.json")), lireJSON(f("sprites-vivants.json")), lireImage(f("sprites-vivants.png"), true),
       lireJSON(f("reduits/sprites.json")), lireImage(f("reduits/atlas.png"), true)
     ])
+    // le correctif des toits jv2 : seulement là où un style peut s'afficher (pas /labo/diorama, toujours en toits-v1)
+    if (this.styleAffiche) {
+      const occ = await lireJSON(f(OCCLUSION_JV2)).catch(() => null)
+      if (occ) this.occlusion = { style: occ.style, dalles: occ.dalles }
+    }
     // bus et trolleybus : seulement si le jeu en porte les modèles (vivants-v1 n'en a pas : aucune requête de plus)
     const lignes = this.sansBus ? [] : ["bus", "trolleybus"].filter((t) => modeles.modeles.some((m) => m.cle === MODELES_BUS[t]))
     const calquesLignes = await Promise.all(lignes.map((t) => lireJSON(f(`${t}.json`))))
@@ -216,10 +278,13 @@ export class Vivants {
   }
 
   // Recalculés quand la vue sort de la boîte élargie du dernier calcul (la démo : à chaque fin de déplacement).
+  // La boîte gardée sert tant qu'elle contient la vue ET qu'elle n'est pas devenue deux fois trop large : après un zoom
+  // avant (l'accueil s'ouvre à ×0,25), la boîte du zoom d'avant faisait poser seize fois trop de mobiles (21/10).
   majVus(sc) {
     const b = this.vus?.boite
-    if (b && sc.xmin >= b[0] && sc.ymin >= b[1] && sc.xmax <= b[2] && sc.ymax <= b[3]) return
     const mx = (sc.xmax - sc.xmin) * MARGE_VUS + 60 / sc.k, my = (sc.ymax - sc.ymin) * MARGE_VUS + 60 / sc.k
+    if (b && sc.xmin >= b[0] && sc.ymin >= b[1] && sc.xmax <= b[2] && sc.ymax <= b[3] &&
+        b[2] - b[0] < 2 * (sc.xmax - sc.xmin + 2 * mx)) return
     const boite = [sc.xmin - mx, sc.ymin - my, sc.xmax + mx, sc.ymax + my]
     this.vus = { boite, listes: this.calques.map((K) => this.segmentsVus(K, boite)) }
   }
@@ -228,6 +293,8 @@ export class Vivants {
   //  Mobile k de l'itinéraire : temps de parcours τ_k(t) = (phase + k·Δ + gigue_k + t) mod T_total, Δ = T_total / n.
   poserCalque(K, vus, sc, t, liste) {
     const pie = K.nom === "pietons", E = this.rep.metre_est_px, N = this.rep.metre_nord_px, marge = 40
+    const f = this.facteurs?.[K.type] ?? 1, bus = Boolean(K.frequences) // part des mobiles gardés à cette heure
+    if (f <= 0) return
     for (let q = 0; q < vus.length; q += 2) {
       const ii = vus[q], j = vus[q + 1], it = K.its[ii], Tt = it.T[it.segs.length]
       if (!(Tt > 0)) continue
@@ -239,7 +306,9 @@ export class Vivants {
       let k0 = Math.floor(m0 / dl) - 1, k1 = Math.ceil((m0 + tb - ta) / dl) + 1
       if (k1 - k0 + 1 >= n) { k0 = 0; k1 = n - 1 }
       for (let kk = k0; kk <= k1; kk++) {
-        const k = replier(kk, n), gig = 0.6 * (graineDe(ii, 17, k) - 0.5) * dl * (pie ? 1 : 0.5)
+        const k = replier(kk, n)
+        if (f < 1 && (bus ? f <= 0 || k % Math.round(1 / f) !== 0 : graineDe(ii, 23, k) >= f)) continue
+        const gig = 0.6 * (graineDe(ii, 17, k) - 0.5) * dl * (pie ? 1 : 0.5)
         const tau = replier(base + k * dl + gig, Tt)
         if (tau < ta || tau >= tb) continue
         const sg = it.segs[j], u = it.C[j] + (tau - ta) * it.vit[j], sens = sg[2] >= sg[1] ? 1 : -1
@@ -324,8 +393,26 @@ export class Vivants {
       const c = cv.getContext("2d", { willReadFrequently: true }); c.drawImage(im, 0, 0)
       const px = c.getImageData(0, 0, im.width, im.height).data, a = new Uint8Array(im.width * im.height)
       for (let q = 0; q < a.length; q++) a[q] = px[4 * q]
-      ent.a = a; ent.w = im.width
+      ent.brut = a; ent.w = im.width; ent.cle = `${tx}/${ty}`
+      ent.a = this.codesDe(ent)
     }, () => { ent.a = false })
+  }
+
+  // Les codes d'une dalle pour le style affiché : en jeu vidéo, le « sol » que couvrent ses toits devient volume
+  // (segments [ligne, début, longueur] du correctif, comme dans la démo nancy-3d).
+  codesDe(ent) {
+    const runs = this.correctifActif() && this.occlusion.dalles[ent.cle]
+    if (!runs) return ent.brut
+    const a = ent.brut.slice()
+    for (const [l, d, n] of runs) a.fill(2, l * ent.w + d, l * ent.w + d + n)
+    return a
+  }
+
+  correctifActif() { return Boolean(this.occlusion) && this.styleAffiche?.() === this.occlusion.style }
+
+  // Le style affiché a changé : les dalles déjà lues reprennent (ou quittent) le correctif.
+  majStyle() {
+    for (const ent of this.codes.values()) if (ent.brut) ent.a = this.codesDe(ent)
   }
 
   // -1 : pas encore lue (tenue pour du sol : on montre plutôt qu'on cache) ; 0 : dehors.
@@ -398,18 +485,25 @@ export class Vivants {
     if (!this.toile) {
       this.toile = document.createElement("canvas")
       this.toile.className = "vivants"
-      Object.assign(this.toile.style, { position: "fixed", left: "0", top: "0", pointerEvents: "none" })
+      Object.assign(this.toile.style, { position: this.volet ? "absolute" : "fixed", left: "0", top: "0", pointerEvents: "none" })
+      this.toile.setAttribute("aria-hidden", "true")
+      if (this.filtre) this.toile.style.filter = this.filtre
       this.ctx = this.toile.getContext("2d")
     }
-    this.ancre.after(this.toile)
+    if (this.volet) this.volet().appendChild(this.toile)
+    else this.ancre.after(this.toile)
     this.derniere = 0
     this.cleVue = null
     const boucle = (tms) => {
       if (!this.actif) return
       this.raf = requestAnimationFrame(boucle)
+      if (document.hidden) return
+      if (this.cachee?.()) { if (this.cleVue !== "cachee") { this.effacer(); this.cleVue = "cachee" } return }
       const v = this.vue(), cle = `${v.cx},${v.cy},${v.s},${v.W},${v.H}`
-      if (document.hidden || (cle === this.cleVue && tms - this.derniere < INTERVALLE_MS)) return
+      if (cle === this.cleVue && tms - this.derniere < INTERVALLE_MS) return
       this.cleVue = cle; this.derniere = tms
+      this.majFacteurs(tms)
+      this.placer?.(this.toile)
       this.image(v)
     }
     this.raf = requestAnimationFrame(boucle)
@@ -419,6 +513,16 @@ export class Vivants {
     this.actif = false
     cancelAnimationFrame(this.raf)
     this.toile?.remove()
+  }
+
+  effacer() {
+    if (this.ctx) { this.ctx.setTransform(1, 0, 0, 1, 0, 0); this.ctx.clearRect(0, 0, this.toile.width, this.toile.height) }
+  }
+
+  // Un filtre CSS sur toute la toile (les sprites sont cuits en plein jour : le soir et la nuit, on les assombrit).
+  teinter(filtre) {
+    this.filtre = filtre
+    if (this.toile) this.toile.style.filter = filtre
   }
 
   image(v) {
@@ -447,7 +551,7 @@ export class Vivants {
     const n = { pieton: 0, voiture: 0, velo: 0, bus: 0, trolleybus: 0 }
     for (const o of liste) { this.peindre(ctx, sc, o); n[typeDe(o.M)]++ }
     this.stats = { pietons: n.pieton, voitures: n.voiture, velos: n.velo, bus: n.bus, trolleybus: n.trolleybus,
-                   js: performance.now() - j0, niveau: sc.niveau }
+                   js: performance.now() - j0, niveau: sc.niveau, heure: this.facteurs ? this.heure : null }
   }
 
   // Rien si l'appareil demande moins d'animations.
