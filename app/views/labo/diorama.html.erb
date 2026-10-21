@@ -446,7 +446,7 @@
   }).catch(e => { document.getElementById("err").textContent = "Erreur : " + e.message; });
 })();
 </script>
-<%# Les vivants (vélos, piétons, voitures : diorama/vivants.js), seulement avec ?vivants=1 : une toile à part posée
+<%# Les vivants (vélos, piétons, voitures, et bus et trolleybus si le jeu en porte : diorama/vivants.js), seulement avec ?vivants=1 : une toile à part posée
     sur celle des dalles, qui n'en change ni le chargement ni le dessin. Sans le paramètre, rien n'est lu. %>
 <script type="module">
   if (new URLSearchParams(location.search).get("vivants") === "1") {
@@ -475,7 +475,7 @@
         const s = vivants.stats;
         // seuil en échelle (×, comme la ligne des dalles) et non en « niveau » : le niveau des dalles dépend du dpr
         info.textContent = !vivants.actif ? "coupés" : s.niveau < 7 ? "visibles dès ×0,5" :
-          `${s.velos} vélos, ${s.pietons} piétons, ${s.voitures} voitures · ${s.js.toFixed(1)} ms`;
+          `${s.velos} vélos, ${s.pietons} piétons, ${s.voitures} voitures${vivants.aBus ? `, ${s.bus} bus, ${s.trolleybus} trolleybus` : ""} · ${s.js.toFixed(1)} ms`;
       }, 500);
       window.__dioramaVivants = vivants;
     } catch (e) {
