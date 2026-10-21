@@ -33,7 +33,7 @@ au niveau 8 ; 1280 × 800, dpr 1, horloge figée à 120 s). Captures pleines : `
   a été composé à partir des fichiers de la démo (calques `calques-50/{vehicules,pietons,velos}.json`, `repere.json`, atlas et
   pyramide de sprites, modèles filtrés), et servi en CORS. Avant toute publication, il faut trancher entre un jeu séparé et un
   `mobiles-v7` (`rapport-paquet-vivants-v1.md`).
-- **Bus et trolleybus** : portés le 21/10 (dernière section), pas encore publiés.
+- **Bus et trolleybus** : en production depuis le 21/10 (v361, `vivants-v2`, dernières sections).
 - **Correctif des toits jv2** (`occlusion-toits-jv2.json`) : il ne vaut que pour le style jeu-video-v2, alors que /labo/diorama affiche toits-v1.
 - **Neige, nuit, fenêtres** (vivant jv2) : ce sont des recettes de rendu des dalles du style jeu-video-v2, pas un calque animé.
   Elles ne sont pas reportées (voir NOTES, réglages du 30/09). /labo/diorama n'a pas d'ambiances.
@@ -58,7 +58,7 @@ identiques. Stanislas à ×0,5 : 63 vélos, 878 piétons, 42 voitures (vue quatr
 avant v358, après v359, ×0,5, ×1 et ×2) : `docs/maquettes/vivants-labo-diorama/planche-seuil-05-dpr{1,2}.webp`. À ×1 et ×2, seuls
 les pins d'opportunités (chargés de façon asynchrone) et le compteur de ms du HUD diffèrent.
 
-## Bus et trolleybus (21/10, branche `vivants-bus`, non déployée)
+## Bus et trolleybus (21/10, branche `vivants-bus`)
 
 Portage de nancy-3d `78546f1` (rapport-vivants-v1-diagnostics § 16) : le partage des fréquences entre variantes d'une même ligne
 est calculé dans le calque ; le lecteur prend `itineraires_bus_par_heure` tel quel (bus/h ÷ 3600, pas une densité).
@@ -71,5 +71,32 @@ est calculé dans le calque ; le lecteur prend `itineraires_bus_par_heure` tel q
     à la gare. Piétons, vélos et voitures sont identiques à ceux du paquet v1.
   - `paquet-v1` : **0 pixel d'écart** avec `main`, sur 9 cadrages sur 9 (HUD masqué, à cause de son compteur de ms).
   - `bin/rails test` : 123 verts.
-- Reste à faire, avec l'accord de Nicolas : publier `vivants-v2` sur R2 (`construire-paquet.py --avec-bus`, 15 Mio), passer
-  `DioramaTuiles::VIVANTS` à `vivants-v2`, puis déployer.
+
+## Bus et trolleybus en production (21/10, v361, `vivants-v2`)
+
+`vivants-v2` a été publié sur R2 par nancy-3d (`publier-r2.py --publier --jeu vivants-v2`) : 13 fichiers, 15,06 Mio. Relu en ligne,
+les 13 fichiers ont le sha256 du paquet et le CORS de `www.declic.site`. `vivants-v1` reste en place, avec un manifeste inchangé.
+Ensuite : `VIVANTS = "vivants-v2"` (a206b21), fusion en avance rapide dans `main`, `git push heroku main:main` → **v361**.
+
+Méthode : production avant (v360) puis après (v361) ; `?vivants=1&vivants-t=S` ; Chromium 1280 × 800, dpr 1 ; un contexte neuf
+par cas. Cadrages : Stanislas, Villers et gare, à ×0,5, ×1 et ×2.
+- **Pixels** (t = 40 et 400 s, HUD masqué). Pas de bus dans le cadre : 0 px d'écart (Stanislas aux deux instants, gare à
+  t = 40). Avec un bus ou un trolleybus, l'écart va de 94 à 3 164 px, et il est concentré sur ce seul véhicule (planche).
+  **`?vivants-bus=0` en v361 : 0 px contre v360 dans les 18 cas.** Avant la mise en ligne, le Déclic local lisant R2 rendait
+  à 0 px du paquet servi en local, sur les 9 cadrages.
+- **Autres familles** : sur 60 instants (0 à 1 180 s) par cas, piétons, vélos et voitures sont identiques, instant par instant,
+  avec et sans bus (540 relevés sur 540). Aucune erreur de console.
+- **Effectifs par image**, moyenne sur 60 instants, avec le maximum entre parenthèses :
+
+  | cadrage | bus ×0,5 | bus ×1 | bus ×2 | trolleybus ×0,5 | ×1 | ×2 |
+  | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+  | Stanislas | 0,85 (4) | 0,07 (1) | 0 | 0,28 (1) | 0,05 (1) | 0 |
+  | Villers | 1,20 (3) | 0,40 (2) | 0,23 (1) | 0 | 0 | 0 |
+  | gare | 1,83 (5) | 0,85 (4) | 0,35 (2) | 0,27 (2) | 0,13 (2) | 0,03 (1) |
+
+  La démo nancy-3d (§ 16, état « après ») donne la même allure, mais compte 0 à 40 % de moins. L'écart n'est pas propre aux
+  bus : sur les mêmes cadrages, les voitures, dont le code n'a pas changé, sortent ×1,14 à ×1,53 au-dessus de la démo. Déclic
+  compte les objets posés, y compris ceux cachés par un toit, sur une fenêtre de 1280 × 800. La démo compte les boîtes peintes,
+  sur sa propre carte.
+- **Occlusion** : un bus de Villers ×2 passe derrière un arbre et un toit, et il est coupé comme il faut.
+- Planche : `docs/maquettes/vivants-labo-diorama/planche-bus-prod.webp` (six cadrages, avant/après, recadrage ×2).
