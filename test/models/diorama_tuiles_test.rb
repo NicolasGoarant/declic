@@ -64,9 +64,9 @@ class DioramaTuilesTest < ActiveSupport::TestCase
     assert_equal "http://localhost:8766/mobiles-v1", t.pour_js[:mobiles]
   end
 
-  test "les vivants se lisent dans vivants-v1 sous la base, ou à DIORAMA_VIVANTS_URL" do
+  test "les vivants se lisent dans vivants-v2 sous la base, ou à DIORAMA_VIVANTS_URL" do
     base = "https://tuiles.test/#{SecureRandom.hex(4)}"
-    assert_equal "#{base}/vivants-v1", DioramaTuiles.new(base: base, vivants: nil, sonde: ->(_) { false }).vivants
+    assert_equal "#{base}/vivants-v2", DioramaTuiles.new(base: base, vivants: nil, sonde: ->(_) { false }).vivants
     assert_equal "http://localhost:8777", DioramaTuiles.new(base: base, vivants: "http://localhost:8777/", sonde: ->(_) { false }).vivants
   end
 

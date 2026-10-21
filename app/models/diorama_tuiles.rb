@@ -35,9 +35,9 @@ class DioramaTuiles
   # DIORAMA_MOBILES_URL désigne un autre dossier de même forme (manifeste.json compris, servi en CORS) : c'est
   # ainsi qu'on essaie un jeu avant de le publier sur R2.
   MOBILES = "mobiles-v6".freeze   # v5 sur un calque raccordé aux ponts (bateaux qui ressortent des ponts, 15/10) ; v1 à v5 restent sur R2
-  # Les vivants (diorama/vivants : vélos, piétons, voitures), sur /labo/diorama seulement, avec ?vivants=1. Nom de jeu
-  # proposé par nancy-3d, NON publié sur R2 au 20/10/2026 : DIORAMA_VIVANTS_URL désigne un dossier local servi en CORS.
-  VIVANTS = "vivants-v1".freeze
+  # Les vivants (diorama/vivants : vélos, piétons, voitures, bus, trolleybus), sur /labo/diorama seulement, avec ?vivants=1.
+  # vivants-v2 (publié le 21/10/2026) ajoute bus et trolleybus ; vivants-v1 reste sur R2. DIORAMA_VIVANTS_URL : essayer un autre dossier.
+  VIVANTS = "vivants-v2".freeze
 
   DUREE_CACHE = 10.minutes
   DELAI_SONDE_S = 2
