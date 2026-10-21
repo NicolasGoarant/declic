@@ -166,3 +166,39 @@ place de leur nombre. Planche : `planche-seuil-025-option4.webp` (dpr 2, ×0,3 e
   (t = 400 s) donne 0 px sur 17 cas. Le dix-huitième, Villers ×0,5 à dpr 2, montre 3 363 px d'écart, avec les mêmes effectifs :
   la ligne du HUD des dalles dépasse le masque, et les pins d'opportunités, chargés de façon asynchrone, n'étaient pas encore
   posés. Aucune erreur de console. `bin/rails test` passe.
+
+## Page d'accueil et effectifs selon l'heure (21/10, branche `vivants-accueil`)
+
+La carte de l'accueil (`/`, `labo#accueil`) n'est PAS le lecteur de `/labo/diorama` : c'est la carte Leaflet de
+`diorama_controller.js` (CRS.Simple, zoom z ↔ ×2^(z−8), ouverture à ×0,25). Le moteur `vivants.js` est le même ; il y est
+branché par des options neuves (`vue`, `volet`, `placer`, `cachee`, `style`, `horaire`), sans rien changer à /labo/diorama.
+
+- **Par défaut sur l'accueil**, fond diorama seulement, mêmes seuils (option 4) ; `?vivants=0` les coupe (aucune donnée
+  demandée : seuls la page et le module JS). Rien sous `prefers-reduced-motion` ni avec `Save-Data`. Volet Leaflet
+  « vivants » (z 445) : bateaux 440 < vivants 445 < météo 450 < ombres 500 < pins 600. Les pins restent au-dessus et
+  lisibles. Toile cachée pendant un zoom animé (`zoomstart`/`zoomend`), recalée sur la carte à chaque image.
+- **Correctif d'occlusion jv2** (`occlusion-vivants-jv2.json`) : appliqué sur l'accueil quand le style affiché est
+  jeu-video-v2 (le défaut), recalculé à la bascule de style (`majStyle`). /labo/diorama ne passe pas `style` : inchangé.
+- **Ambiance** : la toile reçoit un filtre CSS selon le moment (`TEINTES_VIVANTS` : aube 0,85, heure dorée 0,9 + sépia,
+  heure bleue 0,65, nuit 0,45 de luminosité). Valeurs réglées à l'œil, à reprendre si besoin.
+- **Courbes horaires** (heure de Nancy, `Europe/Paris`, relue toutes les 30 s ; `?vivants-heure=H` pour simuler) : un
+  facteur 0–1 par famille, qui culmine à 1 = effectifs validés, jamais au-delà. Piétons : 0,04 à 5 h, 1 à 12 h et 18 h,
+  0,3 à 22 h. Vélos et voitures : pointes à 8 h et 18 h, creux de nuit (0,02–0,12). Bus et trolleybus : un passage sur
+  deux de 5 h à 6 h 30 et de 20 h 30 à 0 h 30, aucun de 0 h 30 à 5 h, plein service entre. Un mobile est gardé si sa
+  graine est sous le facteur : rien ne saute quand l'heure avance, des mobiles s'effacent seulement. /labo/diorama garde
+  les effectifs validés (pas de courbe, sauf `?vivants-heure`, que le HUD affiche alors).
+- **Correctif de `majVus`** (vaut aussi pour /labo/diorama) : la boîte des segments vus, gardée d'une image à l'autre, ne
+  sert plus si elle est devenue deux fois trop large. Après un zoom avant depuis ×0,25, l'ancienne boîte faisait situer
+  16 fois trop de segments (Stanislas ×1 : 54 → 7 ms par image). Images inchangées (0 px, ci-dessous).
+
+**Vérifications** (local, jeu R2 `vivants-v2`)
+- Planche `docs/maquettes/vivants-accueil/planche-heures-stanislas.webp` : Stanislas à ×0,25, ×0,5, ×1 ; 3 h (nuit),
+  8 h, 12 h, 18 h, 21 h (heure bleue). Piétons à ×0,5 : 29 / 256 / 558 / 558 / 256 ; vélos à ×0,25 : 7 / 245 / 199 /
+  276 / 64 ; bus à 3 h : 0. Aucune erreur de console.
+- **Temps de rendu** (médianes JS par image, fenêtres alternées labo / accueil, même machine, charge 2 à 5) : accueil
+  1,8 à 9,6 ms en 1280 × 800 dpr 1, 3 à 7,5 ms à dpr 2, 4,2 à 19,7 ms en 1920 × 1080 ; toujours sous 25 ms et sous le
+  labo au même endroit (la carte de l'accueil est plus petite : volet de 380 px).
+- **Non-régression /labo/diorama** : 0 px contre `main` sur 15 cas sur 15 à dpr 1 et à dpr 2 (×0,25 à ×2, trois cadrages).
+- Bascules Réaliste ↔ Jeu vidéo et Diorama ↔ Plan : vivants arrêtés sur le plan, repris au retour, correctif suivi.
+- **Coût** : environ 15 Mio téléchargés (cache navigateur ensuite) et environ 1 s de préparation sur le fil principal à la
+  première visite. C'est le prix des vivants par défaut.

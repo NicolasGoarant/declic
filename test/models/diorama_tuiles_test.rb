@@ -8,7 +8,7 @@ class DioramaTuilesTest < ActiveSupport::TestCase
   end
 
   test "seul le lot toits-v1 : pas de maquette blanche ni d'ambiance" do
-    assert_equal({ vrai: true, styles: %w[toits-v1], blanche: false, ambiances: [], arbres: false, lumieres: false, mobiles: false },
+    assert_equal({ vrai: true, styles: %w[toits-v1], blanche: false, ambiances: [], arbres: false, lumieres: false, mobiles: false, vivants: false },
                  tuiles([ "toits-v1/manifeste.json" ]).disponibles)
   end
 
@@ -32,7 +32,7 @@ class DioramaTuilesTest < ActiveSupport::TestCase
   end
 
   test "sans le lot, rien n'est disponible" do
-    assert_equal({ vrai: false, styles: [], blanche: false, ambiances: [], arbres: false, lumieres: false, mobiles: false },
+    assert_equal({ vrai: false, styles: [], blanche: false, ambiances: [], arbres: false, lumieres: false, mobiles: false, vivants: false },
                  tuiles(%w[masque-bati/manifeste.json masque-arbres/manifeste.json]).disponibles)
   end
 
@@ -62,6 +62,13 @@ class DioramaTuilesTest < ActiveSupport::TestCase
     t = DioramaTuiles.new(base: base, mobiles: "http://localhost:8766/mobiles-v1/", sonde: ->(url) { present.include?(url) })
     assert t.disponibles[:mobiles]
     assert_equal "http://localhost:8766/mobiles-v1", t.pour_js[:mobiles]
+  end
+
+  test "les vivants ne sont disponibles qu'avec un style, la carte de propriété et leur manifeste" do
+    refute tuiles(%w[toits-v1/manifeste.json vivants-v2/manifeste.json]).disponibles[:vivants]
+    t = tuiles(%w[toits-v1/manifeste.json propriete-toits-v1/manifeste.json vivants-v2/manifeste.json])
+    assert t.disponibles[:vivants]
+    assert_equal "#{t.base}/vivants-v2", t.pour_js[:vivants]
   end
 
   test "les vivants se lisent dans vivants-v2 sous la base, ou à DIORAMA_VIVANTS_URL" do

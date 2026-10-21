@@ -17,6 +17,7 @@ import { momentAuto, saisonAuto, libelleAuto } from "diorama/soleil"
 import { meteoAuto, meteoGardee } from "diorama/meteo"
 import { Precipitations } from "diorama/precipitations"
 import { Mobiles } from "diorama/mobiles"
+import { Vivants } from "diorama/vivants"
 import { chargerLampadaires, compterLampadaires } from "diorama/lampadaires"
 import { LAMPADAIRES, PINS } from "diorama/reglages"
 import { regrouper, eventail, FLEURS_MAX, respiration, echelleIcone, dispositionPin } from "diorama/bouquets"
@@ -66,6 +67,13 @@ const HISTOIRES = "histoires" // Categorie::HISTOIRES : les Belles Histoires
 const CLE_FAVORIS = "declic:favoris"
 const ETROIT = "(max-width: 699.98px)"
 const RAYON_PROXIMITE_KM = 10 // filtre « À proximité » du volet (la liste Opportunités a son propre curseur)
+// Les vivants : leur volet (entre les bateaux, 440, et la météo, 450) et l'assombrissement de leur toile par moment
+// (leurs sprites sont cuits en plein jour ; les dalles, elles, reçoivent l'étalonnage de l'ambiance).
+const Z_VIVANTS = 445
+const TEINTES_VIVANTS = {
+  aube: "brightness(0.85) saturate(0.85)", "heure-doree": "brightness(0.9) sepia(0.15)",
+  "heure-bleue": "brightness(0.65) saturate(0.7)", nuit: "brightness(0.45) saturate(0.6)"
+}
 
 function distanceKm(lat1, lon1, lat2, lon2) {
   const rad = (d) => (d * Math.PI) / 180
@@ -117,6 +125,7 @@ export default class extends Controller {
     this.aideZoom?.remove()
     this.precipitations?.detruire()
     this.mobiles?.detruire()
+    this.vivants?.arreter()
     this.observateur?.disconnect()
     window.removeEventListener("declic:position", this.surPositionAuto)
     window.removeEventListener("orientationchange", this.surOrientation)
@@ -293,7 +302,7 @@ export default class extends Controller {
         const [, masque, arbres, propriete] = await Promise.all([
           this.chargerManifeste(), t.disponibles.blanche ? this.chargerListe(t.masque) : null,
           t.disponibles.arbres ? this.chargerListe(t.arbres) : null,
-          t.disponibles.mobiles ? this.chargerListe(t.propriete) : null
+          t.disponibles.mobiles || t.disponibles.vivants ? this.chargerListe(t.propriete) : null
         ])
         Object.assign(this, { dallesMasque: masque, dallesArbres: arbres, dallesPropriete: propriete })
         this.preparerDecoupe(await contour)
@@ -508,6 +517,7 @@ export default class extends Controller {
     this.precipitations = null
     this.mobiles?.detruire()
     this.mobiles = null
+    this.vivants?.arreter() // la toile part avec la carte ; les données restent, pour le retour au diorama
     this.carte.remove()
     this.popup = null
     this.fond = fond
@@ -566,6 +576,7 @@ export default class extends Controller {
         this.poserCoucheFond(this.coucheCourante())
       }
       this.mobiles?.majStyle() // le correctif d'occlusion des bateaux ne vaut que pour son style
+      this.vivants?.majStyle() // celui des toits jv2, pour les vivants, aussi
       this.majCalques()
     }).catch((erreur) => {
       console.error("diorama : style indisponible", erreur)
@@ -876,6 +887,7 @@ export default class extends Controller {
     if (ambiance) this.element.dataset.moment = this.etat.moment
     else delete this.element.dataset.moment
     this.majMobiles(ambiance)
+    this.majVivants(ambiance)
   }
 
   // Les bateaux (diorama/mobiles), de jour seulement : leurs sprites sont cuits sous le soleil du diorama et
@@ -895,6 +907,50 @@ export default class extends Controller {
         propriete: (chemin) => this.url(t.propriete, `${chemin}.png`), style: () => this.style
       })
     }
+  }
+
+  // Les vivants (diorama/vivants : piétons, vélos, voitures, bus, trolleybus), sur le diorama hors maquette blanche,
+  // mêmes seuils et réglages que /labo/diorama ; effectifs selon l'heure de Nancy. Une toile dans un volet entre les
+  // bateaux (440) et la météo (450) : sous les pins (600). Les sprites sont cuits en plein jour : hors du jour, la toile
+  // est assombrie (TEINTES_VIVANTS). Lus une fois (15 Mio sur R2), après la pose de la carte ; rien si l'appareil
+  // demande moins d'animations ou économise ses données. Crochet : ?vivants=0 ne les pose pas.
+  majVivants(ambiance) {
+    const t = this.tuilesValue
+    const coupe = new URLSearchParams(window.location.search).get("vivants") === "0"
+    const voulu = ambiance && !coupe && Boolean(t.disponibles?.vivants) && Boolean(this.dallesPropriete?.[NIVEAU_REPERE]) &&
+                  Vivants.permis() && !navigator.connection?.saveData
+    if (!voulu) { this.vivants?.arreter(); return }
+    if (!this.vivants) {
+      const carte = () => this.carte
+      this.vivants = new Vivants({
+        dossier: t.vivants, propriete: (chemin) => this.url(t.propriete, `${chemin}.png`),
+        dallesPropriete: this.dallesPropriete[NIVEAU_REPERE], style: () => this.style, horaire: true,
+        vue: () => {
+          const c = carte().project(carte().getCenter(), NIVEAU_REPERE), z = carte().getSize()
+          return { cx: c.x, cy: c.y, s: 2 ** (carte().getZoom() - NIVEAU_REPERE), W: z.x, H: z.y }
+        },
+        volet: () => {
+          const volet = carte().getPane("vivants") || carte().createPane("vivants")
+          volet.style.zIndex = Z_VIVANTS
+          volet.style.pointerEvents = "none"
+          return volet
+        },
+        placer: (toile) => this.L.DomUtil.setPosition(toile, carte().containerPointToLayerPoint([0, 0])),
+        cachee: () => this.zoomEnCours
+      })
+      window.__dioramaVivants = this.vivants
+      this.vivantsPrets = this.vivants.charger().catch((erreur) => { console.warn("vivants :", erreur); this.vivantsEchec = true })
+    }
+    if (this.vivantsEchec) return
+    this.vivants.teinter(TEINTES_VIVANTS[this.etat.moment] || "")
+    if (this.vivants.carte !== this.carte) {
+      // une nouvelle carte (retour du plan) : la toile change de volet, l'animation de zoom se suit sur elle
+      this.vivants.arreter()
+      this.vivants.carte = this.carte
+      this.carte.on("zoomstart", () => { this.zoomEnCours = true })
+      this.carte.on("zoomend", () => { this.zoomEnCours = false })
+    }
+    this.vivantsPrets.then(() => { if (!this.vivantsEchec && this.vivants?.carte === this.carte && this.fond === "diorama") this.vivants.demarrer() })
   }
 
   // ─── Les points et leurs marqueurs ───────────────────────────────────────────────────
