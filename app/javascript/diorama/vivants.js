@@ -1,12 +1,17 @@
-// Les vivants : vélos, piétons et voitures animés, posés SUR la maquette, par-dessus les dalles statiques.
+// Les vivants : vélos, piétons, voitures, bus et trolleybus animés, posés SUR la maquette, par-dessus les dalles statiques.
 // Portage du prototype nancy-3d (rapports/animations-v1/vivants-demo/index.html, commit ddc2ae8 du 20/10/2026),
 // réglages repris TELS QUELS : rien n'est réglé ici. Données : calques des réseaux (format nancy-3d/calque-vivant,
 // pixels de mosaïque au niveau 8, itinéraires raccordés aux carrefours), atlas des sprites cuits pour la caméra du
 // diorama et sa pyramide pré-réduite, modèles, repère de la caméra. Le jeu n'est PAS publié sur R2 (20/10/2026) :
 // la page le lit à l'adresse que lui donne DIORAMA_VIVANTS_URL.
 //
-// Laissés de côté, faute d'être réglés côté nancy-3d : bus et trolleybus (« premier lot, non réglé »), et le
-// correctif d'occlusion des toits jv2 (occlusion-toits-jv2.json), qui ne vaut que pour le style jeu-video-v2.
+// Bus et trolleybus (21/10/2026, démo nancy-3d 78546f1, diagnostics § 16) : lus SEULEMENT si le jeu en porte les modèles
+// (vivants-v2 et suivants) ; vivants-v1, qui n'en a pas, ne demande ni bus.json ni trolleybus.json et rend la même image.
+// Un bus suit la fréquence de sa ligne (itineraires_bus_par_heure du calque, variantes d'une ligne partagées), pas une
+// densité ; arrêts non marqués (décidé, § 16.2).
+//
+// Laissé de côté : le correctif d'occlusion des toits jv2 (occlusion-toits-jv2.json), qui ne vaut que pour le style
+// jeu-video-v2.
 //
 // Une toile À PART, posée sur celle des dalles (pointer-events: none) : le chargement et le dessin des dalles ne
 // changent pas. Elle suit la vue de la page (cx, cy, s) à chaque image.
@@ -22,6 +27,7 @@
 // Crochets d'instrument, déclarés (ils ne changent rien quand on ne les demande pas) :
 //   ?vivants-t=S                fige l'horloge à S secondes (captures comparables)
 //   ?vivants-densite-velo=P,B   vélos par km et par sens, piste et bande (témoin : 16,12, la densité d'avant ×5)
+//   ?vivants-bus=0              ni bus ni trolleybus, même si le jeu en porte (témoin : la page d'avant le 21/10)
 
 const NIVEAU_REPERE = 8
 const MOINS_DE_MOUVEMENT = "(prefers-reduced-motion: reduce)"
@@ -32,8 +38,11 @@ const MODELE_VELO = "velo-detaille" // 20/10
 // niveau en dessous duquel on ne dessine rien. Voiture 10 px g ≤ 1,5 et piéton 8 px g ≤ 2 DÉCIDÉS le 16/10 (§ 6) ;
 // vélo 10 px g ≤ 2,4 DÉCIDÉ le 20/10 (§ 12). Piétons et vélos dès ×0,5 comme les voitures (20/10, Nicolas) : sous
 // `tailleFigee` (×1), ils gardent la taille à l'écran jugée à ×1 (piéton 6,1 px, vélo 9,8 px) au lieu de rétrécir.
+// Bus et trolleybus 24 px g ≤ 1,25, échelle ×1,25 (et non ×1,6) dès ×0,5 : DÉCIDÉS le 19/10 (§ 9-10).
 const PLANCHER = {
   voiture: { px: 10, gain: 1.5, niveauMin: 7, mesure: "L" },
+  bus: { px: 24, gain: 1.25, niveauMin: 7, mesure: "L", echelle: 1.25 },
+  trolleybus: { px: 24, gain: 1.25, niveauMin: 7, mesure: "L", echelle: 1.25 },
   velo: { px: 10, gain: 2.4, niveauMin: 7, tailleFigee: 8, mesure: "L" },
   pieton: { px: 8, gain: 2, niveauMin: 7, tailleFigee: 8, mesure: "H" }
 }
@@ -42,6 +51,10 @@ const DENSITE_VEH = [12, 14, 12, 9, 5, 2]   // par km et par file
 const DENSITE_PIE = [30, 30, 40, 15, 20]    // par km et par sens : trottoir, passage, piéton, escalier, bord
 const VITESSE_VELO = [4, 5]                 // m/s, bornes du tirage par itinéraire
 const DENSITE_VELO = [20, 15]               // par km et par sens, piste et bande : ×5, 20/10 au soir (§ 15)
+const VITESSE_BUS = [7, 8]                  // m/s : chaussée, voie réservée (bus et trolleybus)
+const MODELES_BUS = { bus: "bus-detaille-v2", trolleybus: "trolleybus-tempo1-v2" } // 20/10
+// le type de modèle (et de plancher) de chaque calque
+const TYPE_CALQUE = { vehicules: "voiture", pietons: "pieton", velos: "velo", bus: "bus", trolleybus: "trolleybus" }
 const FONDU_M = 10                          // un mobile s'efface sur ses 10 derniers mètres avant un bout
 const MARGE_VUS = 0.5                       // les segments vus couvrent la vue élargie de moitié de chaque côté
 
@@ -52,7 +65,7 @@ function graineDe(i, j, k) {
 }
 const replier = (a, b) => ((a % b) + b) % b
 const estVolume = (c) => c === 2 || c === 4 // propriété : 1 sol posé, 2 volume posé, 3 sol repris, 4 volume repris
-const typeDe = (M) => (M.type === "pieton" || M.type === "velo" ? M.type : "voiture")
+const typeDe = (M) => (M.type in PLANCHER ? M.type : "voiture")
 
 function lireJSON(u) {
   return fetch(u).then((r) => { if (!r.ok) throw new Error(`${u} : ${r.status}`); return r.json() })
@@ -82,7 +95,8 @@ export class Vivants {
     const params = new URLSearchParams(location.search)
     this.horlogeFigee = params.has("vivants-t") ? parseFloat(params.get("vivants-t")) : null
     this.densiteVelo = params.has("vivants-densite-velo") ? params.get("vivants-densite-velo").split(",").map(parseFloat) : DENSITE_VELO
-    this.stats = { pietons: 0, voitures: 0, velos: 0, js: 0, niveau: null }
+    this.sansBus = params.get("vivants-bus") === "0"
+    this.stats = { pietons: 0, voitures: 0, velos: 0, bus: 0, trolleybus: 0, js: 0, niveau: null }
     this.t0 = performance.now()
     this.actif = false
   }
@@ -96,6 +110,9 @@ export class Vivants {
       lireJSON(f("modeles-vivants.json")), lireJSON(f("sprites-vivants.json")), lireImage(f("sprites-vivants.png"), true),
       lireJSON(f("reduits/sprites.json")), lireImage(f("reduits/atlas.png"), true)
     ])
+    // bus et trolleybus : seulement si le jeu en porte les modèles (vivants-v1 n'en a pas : aucune requête de plus)
+    const lignes = this.sansBus ? [] : ["bus", "trolleybus"].filter((t) => modeles.modeles.some((m) => m.cle === MODELES_BUS[t]))
+    const calquesLignes = await Promise.all(lignes.map((t) => lireJSON(f(`${t}.json`))))
     this.rep = rep
     this.sprites = sprites
     this.atlas = atlas
@@ -104,18 +121,21 @@ export class Vivants {
     this.inv = [N[1] / det, -N[0] / det, -E[1] / det, E[0] / det] // px L8 → mètres (E, N) au sol
     this.parType = {}
     for (const m of modeles.modeles) {
-      if ((m.type === "pieton" && m.pose < 0) || (m.type === "velo" && m.cle !== MODELE_VELO)) continue
+      if ((m.type === "pieton" && m.pose < 0) || (m.type === "velo" && m.cle !== MODELE_VELO) ||
+          (m.type in MODELES_BUS && m.cle !== MODELES_BUS[m.type])) continue
       ;(this.parType[m.type] ||= []).push(m)
     }
     this.calques = [
-      this.preparerCalque(veh, "vehicules"), this.preparerCalque(pie, "pietons"), this.preparerCalque(velo, "velos")
+      this.preparerCalque(veh, "vehicules"), this.preparerCalque(pie, "pietons"), this.preparerCalque(velo, "velos"),
+      ...lignes.map((t, i) => this.preparerCalque(calquesLignes[i], t))
     ]
+    this.aBus = lignes.length > 0
   }
 
   // ─── Les calques ──────────────────────────────────────────────────────────────────────────────────────────
   // Un calque : ses morceaux vus (rangés par voie) et ses itinéraires.
   preparerCalque(C, nom) {
-    const K = { nom, voies: C.voies, mq: [], parVoie: {}, boiteVoie: {} }
+    const K = { nom, type: TYPE_CALQUE[nom], voies: C.voies, mq: [], parVoie: {}, boiteVoie: {}, frequences: C.itineraires_bus_par_heure }
     const inv = this.inv
     C.liste.forEach((M, i) => {
       const c = M[3], n = c.length / 2, cum = new Float64Array(n), dirs = new Float64Array(2 * n)
@@ -142,21 +162,22 @@ export class Vivants {
     return K
   }
 
-  // Pour chaque itinéraire : longueurs et temps cumulés, flux (mobiles par seconde).
+  // Pour chaque itinéraire : longueurs et temps cumulés, flux (mobiles par seconde). Bus et trolleybus : le flux est la
+  // fréquence de la ligne (bus/h ÷ 3 600), pas une densité.
   preparerParcours(K) {
-    const pie = K.nom === "pietons", velo = K.nom === "velos"
+    const pie = K.nom === "pietons", velo = K.nom === "velos", bus = !!K.frequences
     K.its.forEach((it, ii) => {
       const n = it.segs.length, C = new Float64Array(n + 1), T = new Float64Array(n + 1), vit = new Float64Array(n)
       const vPieton = 1.1 + 0.4 * graineDe(ii, 7, 3), vVelo = VITESSE_VELO[0] + (VITESSE_VELO[1] - VITESSE_VELO[0]) * graineDe(ii, 7, 4)
       let flux = 0
       for (let j = 0; j < n; j++) {
         const sg = it.segs[j], l = Math.abs(sg[2] - sg[1]), cl = K.voies[sg[0]][0]
-        vit[j] = pie ? vPieton : velo ? vVelo : VITESSE_VEH[cl]
-        flux += (pie ? DENSITE_PIE[cl] : velo ? this.densiteVelo[cl] : DENSITE_VEH[cl]) / 1000 * vit[j] * l
+        vit[j] = pie ? vPieton : velo ? vVelo : bus ? VITESSE_BUS[cl] : VITESSE_VEH[cl]
+        flux += (pie ? DENSITE_PIE[cl] : velo ? this.densiteVelo[cl] : bus ? 0 : DENSITE_VEH[cl]) / 1000 * vit[j] * l
         C[j + 1] = C[j] + l; T[j + 1] = T[j] + l / vit[j]
       }
       Object.assign(it, { C, T, vit, L: C[n], id: ii, phase: graineDe(ii, 11, 5) })
-      it.flux = it.L > 0 ? flux / it.L : 0 // moyenne des flux de classe, pondérée par la longueur
+      it.flux = bus ? K.frequences[ii] / 3600 : it.L > 0 ? flux / it.L : 0 // sinon : moyenne des flux de classe, pondérée par la longueur
     })
   }
 
@@ -238,7 +259,7 @@ export class Vivants {
       const cote = graineDe(it.id, 23, k) < 0.5 ? -1 : 1
       return v[0] === 4 ? cote * (v[2] + 0.9) : cote * 0.35 * graineDe(k, 29, it.id)
     }
-    if (v[6]) { const d = v[6][it.segs[j][2] >= it.segs[j][1] ? 0 : 1]; return d === null ? 0 : d } // vélos : la file écrite par le calque
+    if (v[6]) { const d = v[6][it.segs[j][2] >= it.segs[j][1] ? 0 : 1]; return d === null ? 0 : d } // vélos, bus : la file écrite par le calque
     return v[1] === 0 ? Math.max(0, Math.min(v[2] / 2, v[2] - 1.2)) : 0 // double sens : file de droite
   }
 
@@ -252,7 +273,7 @@ export class Vivants {
 
   // Le tirage des modèles est COMMUN à toutes les voies (leçon des bateaux) : la graine est celle du mobile.
   choisirModele(K, ii, k) {
-    const L = this.parType[K.nom === "pietons" ? "pieton" : K.nom === "velos" ? "velo" : "voiture"]
+    const L = this.parType[K.type]
     return L[Math.floor(graineDe(ii, 41, k) * L.length) % L.length]
   }
 
@@ -261,7 +282,7 @@ export class Vivants {
     const P = PLANCHER[typeDe(M)]
     const kf = P.tailleFigee ? Math.max(k, 2 ** (P.tailleFigee - NIVEAU_REPERE)) : k // sous ×1 : la taille de ×1
     const naturel = P.mesure === "H" ? M.H * Math.abs(this.rep.metre_hauteur_px[1]) * kf : M.L * this.rep.echelle_px_par_m * kf
-    return Math.max(ECHELLE_VIVANTS, Math.max(1, Math.min(P.gain, P.px / naturel))) * kf / k
+    return Math.max(P.echelle ?? ECHELLE_VIVANTS, Math.max(1, Math.min(P.gain, P.px / naturel))) * kf / k
   }
 
   capIndex(gE, gN) {
@@ -413,16 +434,17 @@ export class Vivants {
     const liste = []
     // un niveau se montre à partir de son zoom entier (la démo n'a que des zooms entiers) : jamais plus petit
     // qu'aux niveaux où les planchers ont été jugés
-    const niveaux = [PLANCHER.voiture.niveauMin, PLANCHER.pieton.niveauMin, PLANCHER.velo.niveauMin]
+    const niveaux = this.calques.map((K) => PLANCHER[K.type].niveauMin)
     if (sc.niveau >= Math.min(...niveaux) - 1e-9) {
       this.majVus(sc)
       const t = this.horloge()
       this.calques.forEach((K, i) => { if (sc.niveau >= niveaux[i] - 1e-9) this.poserCalque(K, this.vus.listes[i], sc, t, liste) })
     }
     liste.sort((a, b) => a.Y - b.Y)
-    const n = { pieton: 0, voiture: 0, velo: 0 }
+    const n = { pieton: 0, voiture: 0, velo: 0, bus: 0, trolleybus: 0 }
     for (const o of liste) { this.peindre(ctx, sc, o); n[typeDe(o.M)]++ }
-    this.stats = { pietons: n.pieton, voitures: n.voiture, velos: n.velo, js: performance.now() - j0, niveau: sc.niveau }
+    this.stats = { pietons: n.pieton, voitures: n.voiture, velos: n.velo, bus: n.bus, trolleybus: n.trolleybus,
+                   js: performance.now() - j0, niveau: sc.niveau }
   }
 
   // Rien si l'appareil demande moins d'animations.

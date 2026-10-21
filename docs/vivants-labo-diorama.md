@@ -33,7 +33,7 @@ au niveau 8 ; 1280 × 800, dpr 1, horloge figée à 120 s). Captures pleines : `
   a été composé à partir des fichiers de la démo (calques `calques-50/{vehicules,pietons,velos}.json`, `repere.json`, atlas et
   pyramide de sprites, modèles filtrés), et servi en CORS. Avant toute publication, il faut trancher entre un jeu séparé et un
   `mobiles-v7` (`rapport-paquet-vivants-v1.md`).
-- **Bus et trolleybus** : « premier lot, non réglé » dans la démo (lignes confondues, arrêts à trancher).
+- **Bus et trolleybus** : portés le 21/10 (dernière section), pas encore publiés.
 - **Correctif des toits jv2** (`occlusion-toits-jv2.json`) : il ne vaut que pour le style jeu-video-v2, alors que /labo/diorama affiche toits-v1.
 - **Neige, nuit, fenêtres** (vivant jv2) : ce sont des recettes de rendu des dalles du style jeu-video-v2, pas un calque animé.
   Elles ne sont pas reportées (voir NOTES, réglages du 30/09). /labo/diorama n'a pas d'ambiances.
@@ -57,3 +57,19 @@ Demande de Nicolas : même seuil que les voitures (`niveauMin` 7). Sous ×1, pi�
 identiques. Stanislas à ×0,5 : 63 vélos, 878 piétons, 42 voitures (vue quatre fois plus large qu'à ×1). Planches (production,
 avant v358, après v359, ×0,5, ×1 et ×2) : `docs/maquettes/vivants-labo-diorama/planche-seuil-05-dpr{1,2}.webp`. À ×1 et ×2, seuls
 les pins d'opportunités (chargés de façon asynchrone) et le compteur de ms du HUD diffèrent.
+
+## Bus et trolleybus (21/10, branche `vivants-bus`, non déployée)
+
+Portage de nancy-3d `78546f1` (rapport-vivants-v1-diagnostics § 16) : le partage des fréquences entre variantes d'une même ligne
+est calculé dans le calque ; le lecteur prend `itineraires_bus_par_heure` tel quel (bus/h ÷ 3600, pas une densité).
+- Réglages de la démo, inchangés : 24 px, g ≤ 1,25, échelle ×1,25, dès ×0,5 (`niveauMin` 7) ; 7 m/s sur chaussée, 8 m/s en voie
+  réservée ; modèles `bus-detaille-v2` et `trolleybus-tempo1-v2`. Arrêts non marqués (décision du § 16).
+- Le lecteur ne lit `bus.json` et `trolleybus.json` que si `modeles-vivants.json` contient le modèle correspondant. `vivants-v1`
+  n'en a pas : aucune requête de plus, et la ligne du HUD reste la même. Crochet `?vivants-bus=0` pour les couper.
+- Vérifications (Chromium 1280 × 800, dpr 1, Stanislas, Villers et gare à ×0,5, ×1 et ×2) :
+  - `paquet-v2` servi en local : bus et trolleybus dessinés, aucune erreur de console. À t = 400 s : 1 bus à Villers, 2 trolleybus
+    à la gare. Piétons, vélos et voitures sont identiques à ceux du paquet v1.
+  - `paquet-v1` : **0 pixel d'écart** avec `main`, sur 9 cadrages sur 9 (HUD masqué, à cause de son compteur de ms).
+  - `bin/rails test` : 123 verts.
+- Reste à faire, avec l'accord de Nicolas : publier `vivants-v2` sur R2 (`construire-paquet.py --avec-bus`, 15 Mio), passer
+  `DioramaTuiles::VIVANTS` à `vivants-v2`, puis déployer.
