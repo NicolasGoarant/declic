@@ -202,3 +202,7 @@ branché par des options neuves (`vue`, `volet`, `placer`, `cachee`, `style`, `h
 - Bascules Réaliste ↔ Jeu vidéo et Diorama ↔ Plan : vivants arrêtés sur le plan, repris au retour, correctif suivi.
 - **Coût** : environ 15 Mio téléchargés (cache navigateur ensuite) et environ 1 s de préparation sur le fil principal à la
   première visite. C'est le prix des vivants par défaut.
+
+**Production (v363, www.declic.site)** : accueil, Stanislas ×0,5, mêmes effectifs qu'en local à 3 h, 12 h et 21 h (29 / 558 /
+256 piétons), teintes appliquées, aucune erreur de console ; `?vivants=0` ne demande aucune donnée. /labo/diorama :
+0 px (HUD masqué) contre v362 sur 24 cas sur 24 (×0,25 à ×2, dpr 1 et 2), mêmes effectifs.
