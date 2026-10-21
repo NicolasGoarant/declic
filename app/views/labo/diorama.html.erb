@@ -475,7 +475,7 @@
         const s = vivants.stats;
         // seuil en échelle (×, comme la ligne des dalles) et non en « niveau » : le niveau des dalles dépend du dpr
         info.textContent = !vivants.actif ? "coupés" : s.niveau < 6 ? "visibles dès ×0,25" :
-          `${s.velos} vélos, ${s.pietons} piétons, ${s.voitures} voitures${vivants.aBus ? `, ${s.bus} bus, ${s.trolleybus} trolleybus` : ""} · ${s.js.toFixed(1)} ms`;
+          `${s.velos} vélos, ${s.niveau < 7 ? "piétons dès ×0,5" : `${s.pietons} piétons`}, ${s.voitures} voitures${vivants.aBus ? `, ${s.bus} bus, ${s.trolleybus} trolleybus` : ""} · ${s.js.toFixed(1)} ms`;
       }, 500);
       window.__dioramaVivants = vivants;
     } catch (e) {
