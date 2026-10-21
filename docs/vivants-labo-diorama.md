@@ -101,7 +101,7 @@ par cas. Cadrages : Stanislas, Villers et gare, à ×0,5, ×1 et ×2.
 - **Occlusion** : un bus de Villers ×2 passe derrière un arbre et un toit, et il est coupé comme il faut.
 - Planche : `docs/maquettes/vivants-labo-diorama/planche-bus-prod.webp` (six cadrages, avant/après, recadrage ×2).
 
-## Vivants dès ×0,25 (21/10, branche `vivants-niveau-6`, NON déployée : rendu trop lent)
+## Vivants dès ×0,25, première version (21/10, toutes familles : NON déployée, rendu trop lent)
 
 **Faisabilité : oui, sans nouvelle donnée.** Les calques sont en pixels de mosaïque du niveau 8 et couvrent toute la mosaïque ;
 ils ne dépendent pas du niveau des dalles. Ce sont les mêmes trajets, vus de plus loin. Le seuil est un simple réglage du
@@ -144,3 +144,25 @@ Pistes, à décider (aucune n'est faite, chacune sort du périmètre « seuil et
 3. **Peinture plus légère sous ×0,5** : sans la découpe des toits (des piétons resteraient dessinés sur des toits) ou par
    paquets ; travail de fond dans le lecteur.
 4. **Piétons laissés à ×0,5**, et seuls voitures, vélos, bus et trolleybus dès ×0,25 (environ 1 000 objets) : à mesurer.
+
+## Option 4 en production (21/10, v362) : piétons dès ×0,5, les quatre autres familles dès ×0,25
+
+Décision de Nicolas : la piste 4 ci-dessus. Les piétons gardent `niveauMin` 7 (×0,5). Vélos, voitures, bus et trolleybus
+apparaissent dès ×0,25, avec les tailles décrites plus haut. Entre ×0,25 et ×0,5, le HUD affiche « piétons dès ×0,5 » à la
+place de leur nombre. Planche : `planche-seuil-025-option4.webp` (dpr 2, ×0,3 et ×0,25, trois cadrages).
+
+- **Effectifs** (60 instants, identiques en local et en production) : à ×0,25, 230 à 470 vélos, 270 à 450 voitures, 4 à 6,5 bus
+  et 0,5 à 1,1 trolleybus. À ×0,3, 170 à 310 vélos, 180 à 340 voitures, 3,6 à 5 bus et 0 à 1 trolleybus. Soit environ
+  500 à 900 objets, contre 2 900 à 5 400 quand les piétons étaient compris.
+- **Temps de rendu.** Charge de la machine entre 4 et 13 (d'autres sessions tournaient), donc les valeurs absolues sont
+  gonflées. Mesure relative, dans la même page, en fenêtres alternées ×0,25 / ×0,5 / ×0,3 / ×0,5 (horloge libre) : ×0,25 et
+  ×0,3 coûtent **2 à 3 fois moins que ×0,5**, déjà en production. Médianes : 9 à 15 ms à dpr 1 et 16 à 28 ms à dpr 2, contre
+  25 à 43 et 41 à 62 ms pour ×0,5 aux mêmes moments. Avec l'horloge figée (60 instants), les médianes vont de 7 à 20 ms, sous
+  25 ms dans tous les cas. Lors de la mesure au calme de la première version, ×0,5 prenait 10 à 11 ms.
+- **Lisibilité.** Voitures, bus et trolleybus restent nets, sans encombrement. Les rues se lisent comme des axes animés. Les
+  cyclistes gardent leur taille de ×1 (9,8 px), comme à ×0,5 : à ×0,25, ils paraissent grands à côté des immeubles. C'est
+  le seul point à revoir si cela gêne (par exemple, figer les vélos à la taille de ×0,5).
+- **Non-régression.** En local, ×0,5 à ×2 rendent à 0 px de `main` sur 18 cas sur 18. En production, v362 contre v361
+  (t = 400 s) donne 0 px sur 17 cas. Le dix-huitième, Villers ×0,5 à dpr 2, montre 3 363 px d'écart, avec les mêmes effectifs :
+  la ligne du HUD des dalles dépasse le masque, et les pins d'opportunités, chargés de façon asynchrone, n'étaient pas encore
+  posés. Aucune erreur de console. `bin/rails test` passe.
