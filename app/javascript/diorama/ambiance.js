@@ -25,7 +25,8 @@
 // calée sur les pixels du niveau 8, donc fixe au sol quel que soit le zoom ou le déplacement.
 import { COTE, creerCache, comblerInterstices, NIVEAU_ANNEXES, versAnnexe, chargerAnnexe } from "diorama/couches"
 import { carteDeLumiere, dessinerFeux, DEBORD } from "diorama/lampadaires"
-import { MOMENTS, PUBLIES, AUTOMNE, PLUIE, NEIGE, LAMPADAIRES, NUIT_CIBLES } from "diorama/reglages"
+import { MOMENTS, PUBLIES, AUTOMNE, PLUIE, NEIGE, LAMPADAIRES, NUIT_CIBLES, VUE } from "diorama/reglages"
+import { haloMode } from "diorama/vue"
 
 const REGLES_MAX = 3 // par étalonnage publié (hiver : 2, heure bleue et automne : 1)
 const NIVEAU_REPERE = 8
@@ -45,7 +46,15 @@ const reglesGLSL = (x) =>
 
 const SOURCE_FS = [
   "precision highp float;",
-  "uniform sampler2D tBase, tClasse, tArbres, tClasseBas, tLum;",
+  "uniform sampler2D tBase, tClasse, tArbres, tClasseBas, tLum, tClasseHaut, tBat;",
+  // nuit-chaude-v1 : classe de la dalle du DESSUS (ombre de contact : on cherche la façade au-dessus du sol, et près
+  // du bord haut elle est chez la voisine) ; bâtiment par pixel (tirage des fenêtres par bâtiment) ; sortie 1 = la
+  // seule ÉMISSION (fenêtres allumées, cœurs des lampadaires), que la vue floute en halo.
+  "uniform int classeHaut, batiments, sortie;",
+  "uniform vec4 contact;     // portée au pied (px n8), décroissance (px n8), force au pied, force en rue resserrée",
+  "uniform float contactRue; // largeur (px n8) sous laquelle une rue compte pour resserrée",
+  "uniform vec4 parBatiment; // part mini, part maxi, exposant du tirage, part des bâtiments tout éteints",
+  "uniform float emissionLampes; // part du cœur des lampadaires versée à l'émission",
   "uniform int modeClasse;   // 0 propriété (niveau 8), 1 masque du bâti, 2 aucune",
   "uniform vec2 origine;     // coin haut-gauche de la dalle, en pixels du niveau 8",
   "uniform float echelle;    // pixels du niveau 8 par pixel de la dalle",
@@ -133,9 +142,16 @@ const SOURCE_FS = [
   // une fenêtre est un petit rectangle sombre sur une façade claire). Ni un pan de toit uni ni un trait
   // d'égout ne l'est : plus de fenêtres sur les toits, ni sur le sol mal calé par les masques.
   "float clarteA(vec2 p){ return luma(texture2D(tBase, vec2(p.x / 256.0, 1.0 - p.y / 256.0)).rgb); }",
-  "bool vitrePeinte(vec2 px, float l){ vec2 c = floor(px) + 0.5;",
-  "  float g = clarteA(c - vec2(2.0, 0.0)), d = clarteA(c + vec2(2.0, 0.0)), h = clarteA(c - vec2(0.0, 2.0)), b = clarteA(c + vec2(0.0, 2.0));",
-  "  return min(min(g, d), min(h, b)) - l > vitreContraste; }",
+  // nuit-chaude-v1 : l'écart au mur (2 px au niveau 8) suit le niveau — au niveau 9 la vitre fait le double, et le
+  // voisin à 2 px tombait encore dans la vitre (793 vitres reconnues sur 138 802 px de façade du pilote).
+  "uniform float vitreEcart; // px du niveau 8",
+  "uniform float vitreCotes; // côtés plus clairs exigés autour d'une vitre",
+  "bool vitrePeinte(vec2 px, float l){ vec2 c = floor(px) + 0.5; float k = floor(vitreEcart / echelle + 0.5);",
+  "  float g = clarteA(c - vec2(k, 0.0)), d = clarteA(c + vec2(k, 0.0)), h = clarteA(c - vec2(0.0, k)), b = clarteA(c + vec2(0.0, k));",
+  // nuit-chaude-v1 : TROIS côtés sur quatre suffisent (?vitre-cotes=4 rend le test d'avant) — une vitre contre un
+  // trumeau sombre, un volet ou le bord de la façade gardait sa vitre éteinte.
+  "  float n = step(vitreContraste, g - l) + step(vitreContraste, d - l) + step(vitreContraste, h - l) + step(vitreContraste, b - l);",
+  "  return n >= vitreCotes - 0.5; }",
   // Hachage sans sinus (Dave Hoskins) : stable sur les grandes coordonnées.
   "float hache(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }",
   "vec2 hache2(vec2 p){ return vec2(hache(p), hache(p + 17.31)); }",
@@ -148,9 +164,12 @@ const SOURCE_FS = [
   "  return smoothstep(repli.x - 10.0, repli.x, k.x) * (1.0 - smoothstep(repli.y, repli.y + 10.0, k.x))",
   "       * smoothstep(repli.z, repli.z + 0.06, k.y) * (1.0 - smoothstep(repli.w, repli.w + 0.08, k.z)); }",
   // Pixel `p` de la dalle (y vers le bas), jusqu'à COTE px sous la dalle : bâti ou non.
-  "float bati(vec2 p){ bool bas = p.y >= 256.0; if (bas) { if (classeBas == 0) return 0.0; p.y -= 256.0; }",
+  "float bati(vec2 p){ bool bas = p.y >= 256.0, haut = p.y < 0.0;",
+  "  if (bas) { if (classeBas == 0) return 0.0; p.y -= 256.0; }",
+  "  if (haut) { if (classeHaut == 0) return 0.0; p.y += 256.0; }",
+  "  if (p.x < 0.0 || p.x >= 256.0) return 0.0;",
   "  vec2 q = vec2((floor(p.x) + 0.5) / 256.0, 1.0 - (floor(p.y) + 0.5) / 256.0);",
-  "  float r = bas ? texture2D(tClasseBas, q).r : texture2D(tClasse, q).r;",
+  "  float r = bas ? texture2D(tClasseBas, q).r : (haut ? texture2D(tClasseHaut, q).r : texture2D(tClasse, q).r);",
   "  if (modeClasse == 0) { float k = floor(r * 255.0 + 0.5); return (k == 2.0 || k == 4.0) ? 1.0 : 0.0; }",
   "  return r > 0.5 ? 1.0 : 0.0; }",
   // La lumière reçue en `p`, saturée en douceur ; `lumForce` (40 % à l'heure bleue) dose l'énergie, pas le
@@ -166,6 +185,8 @@ const SOURCE_FS = [
   "  vec4 c = texture2D(tBase, uv);",
   "  if (c.a < 0.5) { gl_FragColor = c; return; }",
   "  vec3 o = c.rgb;",
+  "  vec3 em = vec3(0.0); // nuit-chaude-v1 : émission (fenêtres, cœurs), sortie 1",
+  "  vec3 dbg = vec3(0.0); // sortie 2 (diagnostic) : r façade reconnue, g vitre peinte reconnue, b vitre allumée",
   "  vec2 px = vec2(uv.x, 1.0 - uv.y) * 256.0;       // pixel de la dalle (y vers le bas)",
   "  vec2 monde = origine + px * echelle;            // pixel du niveau 8",
   // Classe du pixel, et part de toit (neige).
@@ -243,6 +264,7 @@ const SOURCE_FS = [
   "    vec3 k = hsv(o);",
   "    bool tuile = k.y > 0.3 && k.x <= 32.0, ardoise = k.x >= 175.0 && k.x <= 260.0 && k.y < 0.35;",
   "    float fac = d > 0.0 && !tuile && !ardoise ? 1.0 : 0.0; // tuiles orangées et ardoises bleues : toit, pas de fenêtres",
+  "    dbg.r = fac;",
   "    float sol = toit < 0.0 || classe == 1.0 ? 1.0 : facade.w;",
   // l, w : déjà calculés plus haut (lLum, wLum), avant l'ombre — voir le commentaire à leur déclaration.
   "    vec3 l = lLum; float w = wLum;",
@@ -260,6 +282,7 @@ const SOURCE_FS = [
   "      rgb = depuisLab(labR);",
   "    }",
   "    rgb = ecran(rgb, coeurCouleur * l.g * eclairage.y * sol);",
+  "    em = max(em, coeurCouleur * l.g * emissionLampes * sol);",
   "    if (fac > 0.0) {",
   "      float t = d / h; vec3 p = lumiere(px + vec2(0.0, d));",
   "      float pied = 1.0 - (1.0 - p.r) * (1.0 - p.g) * (1.0 - p.b);",
@@ -276,8 +299,20 @@ const SOURCE_FS = [
   // Une vitre peinte, allumée ou non selon sa cellule au sol (stable d'un chargement à l'autre).
   "        vec2 n = floor(monde / fenetreForme.xy);",
   "        float humeur = 1.0 + (hache(floor(monde / fenetres.y) + 71.3) * 2.0 - 1.0) * fenetres.z;",
-  "        if (vitrePeinte(px, luma(o)) && hache(n * 1.37 + 11.1) < 3.0 * fenetres.x * humeur)",
-  "          rgb = mix(rgb, fenetreCouleur, fenetres.w * fac * lumForce);",
+  // nuit-chaude-v1 : là où le bâtiment est connu (tBat), sa part allumée est TIRÉE une fois pour lui, de sa
+  // couleur d'identifiant : une part `parBatiment.w` des bâtiments est tout éteinte, les autres tirent leur part
+  // entre parBatiment.x et .y (u^exposant, qui penche vers les parts basses). Sinon, l'humeur de grappe d'avant.
+  "        float seuil = 3.0 * fenetres.x * humeur;",
+  "        vec3 idb = batiments == 1 ? texture2D(tBat, uv).rgb : vec3(0.0);",
+  "        if (dot(idb, vec3(1.0)) > 0.0) { float u1 = hache(idb.rg * 255.0 + idb.b * 17.0), u2 = hache(idb.gb * 255.0 + 3.7);",
+  "          seuil = u2 < parBatiment.w ? 0.0 : mix(parBatiment.x, parBatiment.y, pow(u1, parBatiment.z)); }",
+  // nuit-chaude-v1 : comme la grille procédurale, ni le pied (portes, vitrines) ni le haut (égout, corniche, où le
+  // test à trois côtés prend des traits sombres pour des vitres) de la façade.
+  "        bool vit = t > 0.06 && t < 0.92 && vitrePeinte(px, luma(o));",
+  "        if (vit) dbg.g = 1.0;",
+  "        if (vit && hache(n * 1.37 + 11.1) < seuil) { dbg.b = 1.0;",
+  "          float a = fenetres.w * fac * lumForce;",
+  "          rgb = mix(rgb, fenetreCouleur, a); em = max(em, fenetreCouleur * a); }",
   "      } else {",
   "      vec2 cel = echelle <= 1.0 ? fenetreForme.xy : vec2(echelle);",
   "      vec2 n = floor(monde / cel), dans = monde - n * cel;",
@@ -287,6 +322,21 @@ const SOURCE_FS = [
   "      bool horsGare = zoneGareRayon <= 0.0 || distSeg(monde, zoneGare.xy, zoneGare.zw) > zoneGareRayon;",
   "      if (vitre && horsGare && t > 0.08 && t < 0.95 && hache(n * 1.37 + 11.1) < fenetres.x * humeur / remplie)",
   "        rgb = mix(rgb, fenetreCouleur, fenetres.w * fac * lumForce * (echelle > 1.0 ? eclairage.z : 1.0)); } } }",
+  // nuit-chaude-v1 — 5. Ombre de contact, sur le sol seul. On remonte à l'écran depuis le pixel de sol jusqu'au
+  // premier pixel bâti (la façade dont c'est le pied) : assombrissement en exp(−d / décroissance). Si le bâti est
+  // AUSSI proche en dessous (le dos de l'îlot d'en face) et que la somme passe sous `contactRue`, la rue est
+  // resserrée : assombrissement de plus. Distances en px du niveau 8, ramenées à la dalle par `echelle`.
+  "  if (contact.z + contact.w > 0.0 && classe == 1.0 && toit >= 0.0) {",
+  "    float portee = contact.x / echelle, dh = 0.0, db = 0.0;",
+  "    for (int i = 1; i <= 48; i++) { float fi = float(i); if (fi > portee) break;",
+  "      if (dh == 0.0 && bati(px - vec2(0.0, fi)) > 0.5) dh = fi;",
+  "      if (db == 0.0 && bati(px + vec2(0.0, fi)) > 0.5) db = fi;",
+  "      if (dh > 0.0 && db > 0.0) break; }",
+  "    float pied = dh > 0.0 ? exp(-(dh - 1.0) * echelle / contact.y) : 0.0;",
+  "    float rue = dh > 0.0 && db > 0.0 ? 1.0 - smoothstep(0.5 * contactRue, contactRue, (dh + db) * echelle) : 0.0;",
+  "    rgb *= 1.0 - clamp(contact.z * pied + contact.w * rue, 0.0, 0.9); }",
+  "  if (sortie == 1) { gl_FragColor = vec4(clamp(em, 0.0, 1.0), c.a); return; }",
+  "  if (sortie == 2) { gl_FragColor = vec4(dbg, c.a); return; }",
   "  gl_FragColor = vec4(clamp(rgb, 0.0, 1.0), c.a); }"
 ].join("\n")
 
@@ -308,7 +358,7 @@ function texture(gl) {
   return t
 }
 
-const TEXTURES = ["tBase", "tClasse", "tArbres", "tClasseBas", "tLum"]
+const TEXTURES = ["tBase", "tClasse", "tArbres", "tClasseBas", "tLum", "tClasseHaut", "tBat"]
 
 // UN SEUL contexte WebGL pour toutes les couches d'ambiance ; chaque dalle est calculée ici puis
 // recopiée dans son propre canevas 2D.
@@ -360,6 +410,19 @@ class Moteur {
 
 let moteur = null
 const cache = creerCache() // une dalle calculée par état et par chemin, partagé par toutes les ambiances
+// nuit-chaude-v1 : le canevas d'ÉMISSION de chaque dalle calculée, par la même clé que le cache, que la couche de halo
+// (creerCoucheEmission) attend. Une entrée se résout une fois, à null si la dalle n'a pas d'émission.
+const emissions = new Map()
+function emission(cle) {
+  let e = emissions.get(cle)
+  if (!e) {
+    let ok
+    e = { promesse: new Promise((r) => { ok = r }), ok }
+    emissions.set(cle, e)
+    if (emissions.size > 600) emissions.delete(emissions.keys().next().value)
+  }
+  return e
+}
 
 function charger(url) {
   return new Promise((ok) => {
@@ -470,6 +533,8 @@ export function uniformesEtat(etat, publies, { arbres = false, projection = null
   u.fenetreForme = ["4f", ...fe.cellule_px, ...fe.fenetre_px]
   u.fenetreCouleur = ["3fv", hex(fe.couleur)]
   u.vitreContraste = ["1f", fe.vitre_contraste]
+  u.vitreEcart = ["1f", fe.vitre_ecart_px ?? 2]
+  u.vitreCotes = ["1f", fe.vitre_cotes ?? 4]
   u.cibleRue = ["3fv", rgb(NUIT_CIBLES.rue)]
   u.cibleFacade = ["3fv", rgb(NUIT_CIBLES.facade)]
   u.cibleOmbre = ["3fv", rgb(NUIT_CIBLES.ombre)]
@@ -477,6 +542,11 @@ export function uniformesEtat(etat, publies, { arbres = false, projection = null
   u.doseFacade = ["1f", fa.doseTeinte ?? 1]
   u.gainRue = ["1f", lp.nappe.gainL ?? 40]
   u.gainFacade = ["1f", fa.gainL ?? 32]
+  const c = lp.contact, pb = fe.par_batiment
+  u.contact = ["4f", c.portee_px, c.decroissance_px, c.pied, c.rue]
+  u.contactRue = ["1f", c.rue_px]
+  u.parBatiment = ["4f", pb.part_min, pb.part_max, pb.exposant, pb.eteints]
+  u.emissionLampes = ["1f", lp.coeur.emission]
   const zg = LAMPADAIRES.zone_sans_fenetres
   if (projection && zg) {
     const [x0, y0] = projection.pixel(zg.a.lat, zg.a.lon)
@@ -498,6 +568,7 @@ export function uniformesEtat(etat, publies, { arbres = false, projection = null
 // options (options de couche Leaflet).
 export function creerCoucheAmbiance(L, opts) {
   const force = LAMPADAIRES.intensite[opts.moment] ?? 0
+  const halo = haloMode()
   const Couche = L.GridLayer.extend({
     createTile(coords, fini) {
       const toile = document.createElement("canvas")
@@ -508,15 +579,18 @@ export function creerCoucheAmbiance(L, opts) {
       }
       const chemin = `${coords.z}/${coords.x}/${coords.y}`
       const cle = `${opts.cle}|${chemin}`
-      if (cache.lire(cle, toile)) { setTimeout(() => fini(null, toile), 0); return toile }
+      const gardee = cache.lire(cle, toile)
+      if (gardee) { emission(cle).ok(gardee.emission ?? null); setTimeout(() => fini(null, toile), 0); return toile }
       opts.uniformes.then((commun) => {
         let urlClasse = null, urlBas = null, mode = 2
         // Au-delà du niveau 8, propriété et masques viennent de la dalle d'origine, agrandie (versAnnexe).
-        const dessous = { ...coords, y: coords.y + 1 }
-        const annexe = versAnnexe(coords), annexeBas = versAnnexe(dessous)
+        const dessous = { ...coords, y: coords.y + 1 }, dessus = { ...coords, y: coords.y - 1 }
+        const annexe = versAnnexe(coords), annexeBas = versAnnexe(dessous), annexeHaut = versAnnexe(dessus)
+        let urlHaut = null
         if (coords.z >= NIVEAU_ANNEXES) {
           urlClasse = opts.propriete(annexe.chemin); mode = 0
           if (opts.estCouverte(dessous)) urlBas = opts.propriete(annexeBas.chemin)
+          if (opts.estCouverte(dessus)) urlHaut = opts.propriete(annexeHaut.chemin)
         } else if (coords.z >= 6 && opts.masqueListe(annexe)) {
           urlClasse = opts.masque(annexe.chemin); mode = 1
           if (opts.masqueListe(annexeBas)) urlBas = opts.masque(annexeBas.chemin)
@@ -527,19 +601,24 @@ export function creerCoucheAmbiance(L, opts) {
           commun, charger(opts.dalle(coords)), chargerAnnexe(urlClasse, annexe),
           arbres && opts.arbresListe(annexe) ? chargerAnnexe(opts.arbres(annexe.chemin), annexe) : null,
           force > 0 ? opts.lampadaires : null,
-          force > 0 ? chargerAnnexe(urlBas, annexeBas) : null
-        ]).then(([commun, base, classe, imageArbres, lampadaires, classeBas]) => {
-          if (!base) { fini(new Error("dalle absente"), toile); return }
+          force > 0 ? chargerAnnexe(urlBas, annexeBas) : null,
+          force > 0 ? chargerAnnexe(urlHaut, annexeHaut) : null,
+          force > 0 && opts.batiments && coords.z >= NIVEAU_ANNEXES ? chargerAnnexe(opts.batiments(annexe.chemin), annexe) : null
+        ]).then(([commun, base, classe, imageArbres, lampadaires, classeBas, classeHaut, bat]) => {
+          if (!base) { emission(cle).ok(null); fini(new Error("dalle absente"), toile); return }
           // Pas de willReadFrequently : on ne relit jamais ces pixels, et un canevas 2D gardé sur le GPU
           // reçoit la copie du canevas WebGL sans la faire passer par le processeur.
           const ctx = toile.getContext("2d")
-          if (!commun) { ctx.drawImage(base, 0, 0); fini(null, toile); return }
+          if (!commun) { ctx.drawImage(base, 0, 0); emission(cle).ok(null); fini(null, toile); return }
           const echelle = 2 ** (NIVEAU_REPERE - coords.z)
           const lumiere = force > 0 ? carteDeLumiere(coords, lampadaires) : null
           const uniformes = { ...commun,
             modeClasse: ["1i", classe ? mode : 2],
             lumieres: ["1i", lumiere ? 1 : 0],
             classeBas: ["1i", classe && classeBas ? 1 : 0],
+            classeHaut: ["1i", classe && classeHaut ? 1 : 0],
+            batiments: ["1i", bat ? 1 : 0],
+            sortie: ["1i", 0],
             origine: ["2f", coords.x * COTE * echelle, coords.y * COTE * echelle],
             echelle: ["1f", echelle],
             modeArbres: ["1i", arbres ? 1 : 0],
@@ -547,14 +626,58 @@ export function creerCoucheAmbiance(L, opts) {
           }
           delete uniformes.arbresPublies
           moteur ||= new Moteur()
-          ctx.drawImage(moteur.traiter([base, classe, imageArbres, classeBas, lumiere], uniformes), 0, 0)
+          const images = [base, classe, imageArbres, classeBas, lumiere, classeHaut, bat]
+          // nuit-chaude-v1 : l'émission d'abord (même programme, sortie 1), dans son propre canevas ; la vue la floute.
+          if (force > 0 && halo) {
+            const e = document.createElement("canvas")
+            e.width = e.height = COTE
+            const ce = e.getContext("2d")
+            const diag = typeof location !== "undefined" && new URLSearchParams(location.search).get("diagnostic") === "1"
+            ce.drawImage(moteur.traiter(images, { ...uniformes, sortie: ["1i", diag ? 2 : 1] }), 0, 0)
+            dessinerFeux(ce, coords, lampadaires, force, true)
+            toile.emission = e
+          }
+          emission(cle).ok(toile.emission ?? null)
+          ctx.drawImage(moteur.traiter(images, uniformes), 0, 0)
           dessinerFeux(ctx, coords, lampadaires, force)
+          // Halo « dalle » : le flou et le gain du volet, appliqués une fois à la création, sans volet filtré. Le flou
+          // ne voit pas l'émission des voisines : un halo s'arrête au bord de la dalle (σ 3 px, donc ~9 px).
+          if (toile.emission && halo === "dalle") {
+            ctx.save()
+            ctx.filter = `blur(${VUE.halo.sigma_px}px) brightness(${VUE.halo.gain})`
+            ctx.globalCompositeOperation = "screen"
+            ctx.drawImage(toile.emission, 0, 0)
+            ctx.restore()
+            window.__haloDalles = (window.__haloDalles ?? 0) + 1 // témoin du banc : dalles qui ont reçu leur halo
+          }
           cache.garder(cle, toile)
           fini(null, toile)
         })
-      }).catch((erreur) => fini(erreur, toile))
+      }).catch((erreur) => { emission(cle).ok(null); fini(erreur, toile) })
       return toile
     }
   })
-  return comblerInterstices(new Couche(opts.options))
+  const couche = comblerInterstices(new Couche(opts.options))
+  // nuit-chaude-v1 : aux moments éclairés, la couche de halo qui l'accompagne (à poser dans le volet « halo », vue.js).
+  if (force > 0 && halo === "vue") couche.emission = creerCoucheEmission(L, opts)
+  return couche
+}
+
+// La couche d'ÉMISSION d'une couche d'ambiance : chaque dalle recopie le canevas d'émission que la dalle d'ambiance
+// de même clé a calculé (rien n'est calculé ici). Le flou et le gain du halo sont ceux du VOLET (vue.js) : ils
+// portent sur la vue entière et ne connaissent donc pas les bords de dalle.
+function creerCoucheEmission(L, opts) {
+  const Couche = L.GridLayer.extend({
+    createTile(coords, fini) {
+      const toile = document.createElement("canvas")
+      toile.width = toile.height = COTE
+      if (!opts.estCouverte(coords)) { setTimeout(() => fini(null, toile), 0); return toile }
+      emission(`${opts.cle}|${coords.z}/${coords.x}/${coords.y}`).promesse.then((e) => {
+        if (e) toile.getContext("2d").drawImage(e, 0, 0)
+        fini(null, toile)
+      })
+      return toile
+    }
+  })
+  return comblerInterstices(new Couche({ ...opts.options, pane: "halo", attribution: null }))
 }

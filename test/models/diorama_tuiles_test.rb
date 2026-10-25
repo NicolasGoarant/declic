@@ -8,7 +8,7 @@ class DioramaTuilesTest < ActiveSupport::TestCase
   end
 
   test "seul le lot toits-v1 : pas de maquette blanche ni d'ambiance" do
-    assert_equal({ vrai: true, styles: %w[toits-v1], blanche: false, ambiances: [], arbres: false, lumieres: false, mobiles: false, vivants: false },
+    assert_equal({ vrai: true, styles: %w[toits-v1], blanche: false, ambiances: [], arbres: false, lumieres: false, mobiles: false, vivants: false, nuit: false },
                  tuiles([ "toits-v1/manifeste.json" ]).disponibles)
   end
 
@@ -32,7 +32,7 @@ class DioramaTuilesTest < ActiveSupport::TestCase
   end
 
   test "sans le lot, rien n'est disponible" do
-    assert_equal({ vrai: false, styles: [], blanche: false, ambiances: [], arbres: false, lumieres: false, mobiles: false, vivants: false },
+    assert_equal({ vrai: false, styles: [], blanche: false, ambiances: [], arbres: false, lumieres: false, mobiles: false, vivants: false, nuit: false },
                  tuiles(%w[masque-bati/manifeste.json masque-arbres/manifeste.json]).disponibles)
   end
 
@@ -75,6 +75,18 @@ class DioramaTuilesTest < ActiveSupport::TestCase
     base = "https://tuiles.test/#{SecureRandom.hex(4)}"
     assert_equal "#{base}/vivants-v2", DioramaTuiles.new(base: base, vivants: nil, sonde: ->(_) { false }).vivants
     assert_equal "http://localhost:8777", DioramaTuiles.new(base: base, vivants: "http://localhost:8777/", sonde: ->(_) { false }).vivants
+  end
+
+  test "la nuit chaude n'est disponible qu'avec un style et son manifeste, sous la base ou à DIORAMA_NUIT_URL" do
+    refute tuiles(%w[nuit-chaude-v1/manifeste.json]).disponibles[:nuit]
+    t = tuiles(%w[toits-v1/manifeste.json nuit-chaude-v1/manifeste.json])
+    assert t.disponibles[:nuit]
+    assert_equal "#{t.base}/nuit-chaude-v1", t.pour_js[:nuit]
+    base = "https://tuiles.test/#{SecureRandom.hex(4)}"
+    present = [ "#{base}/toits-v1/manifeste.json", "http://localhost:8790/nuit-chaude-v1/manifeste.json" ]
+    t = DioramaTuiles.new(base: base, nuit: "http://localhost:8790/nuit-chaude-v1/", sonde: ->(url) { present.include?(url) })
+    assert t.disponibles[:nuit]
+    assert_equal "http://localhost:8790/nuit-chaude-v1", t.pour_js[:nuit]
   end
 
   test "la base vient de DIORAMA_TILES_URL, sinon du domaine par défaut" do
