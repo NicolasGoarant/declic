@@ -21,7 +21,12 @@ export const DEBORD = 40 // px de dalle sous la dalle, dans la carte de lumière
 // Lit le fichier et l'indexe par dalle du niveau 8 : { cases: Map("X/Y" → Float32Array [x, y, feu]*),
 // visibles, marge, places } (feu : hauteur du feu à l'écran, en px du niveau 8 ; marge : portée
 // maximale ; places : [x, y, rayon] en px du niveau 8). `projection` (diorama_projection) situe les places.
-export async function chargerLampadaires(url, projection = null) {
+// nuit-chaude-v2 : `urlFlaques` (flaques-places.json, calque « flaques-places » de nancy-3d) — chaque lanterne
+// Géonancy visible d'une place y pose une FLAQUE de lumière (canal bleu, avec les places) et son feu ; les places de la
+// liste gardent un fond plus faible. Voir LAMPADAIRES.places.flaques. Le fichier est déjà la sélection (places OSM qui
+// portent au moins une lanterne, et les trois places de la liste) : rien n'est filtré ici. Illisible, la nuit garde
+// ses lampadaires et perd ses flaques.
+export async function chargerLampadaires(url, projection = null, urlFlaques = null) {
   const reponse = await fetch(url)
   if (!reponse.ok) throw new Error(`${url} : HTTP ${reponse.status}`)
   const json = await reponse.json()
@@ -44,7 +49,23 @@ export async function chargerLampadaires(url, projection = null) {
   const places = projection
     ? LAMPADAIRES.places.liste.map((p) => [...projection.pixel(p.lat, p.lon, p.altitude_m ?? projection.zRef), p.rayon_m * LAMPADAIRES.sol_m_px])
     : []
-  return { cases, visibles, marge, places, calque: json.calque }
+  const flaques = urlFlaques ? await chargerFlaques(urlFlaques).catch((erreur) => {
+    console.error(`flaques : ${urlFlaques} illisible, les places restent sans flaques.`, erreur)
+    return []
+  }) : []
+  return { cases, visibles, marge, places, flaques, calque: json.calque }
+}
+
+// Les flaques : [x, y, feu, rayon] en px du niveau 8 ; rayon de la flaque = PLACES.flaques.rayon_par_m × hauteur du mât.
+async function chargerFlaques(url) {
+  const reponse = await fetch(url)
+  if (!reponse.ok) throw new Error(`${url} : HTTP ${reponse.status}`)
+  const json = await reponse.json()
+  const hauteurs = json.hauteurs || [8], fl = LAMPADAIRES.places.flaques
+  return json.points.map(([x, y, h]) => {
+    const m = hauteurs[h] ?? hauteurs[0]
+    return [x + 0.5, y + 0.5, m * LAMPADAIRES.metre_px, fl.rayon_par_m * m * LAMPADAIRES.sol_m_px]
+  })
 }
 
 // Les points visibles dont le pied est dans le rectangle [x0, y0, x1, y1] (px du niveau 8).
@@ -121,7 +142,9 @@ export function carteDeLumiere(coords, index) {
   const points = [...dansLeRectangle(index, ox - m, oy - m, ox + cote8 + m, oy + cote8 + bas + m)]
   const places = index.places.filter(([x, y, r]) =>
     x + r > ox && x - r < ox + cote8 && y + r > oy && y - r < oy + cote8 + bas)
-  if (!points.length && !places.length) return null
+  const flaques = (index.flaques || []).filter(([x, y, , r]) =>
+    x + r > ox && x - r < ox + cote8 && y + r > oy && y - r < oy + cote8 + bas)
+  if (!points.length && !places.length && !flaques.length) return null
   const toile = document.createElement("canvas")
   toile.width = COTE
   toile.height = COTE + DEBORD
@@ -136,8 +159,14 @@ export function carteDeLumiere(coords, index) {
       ctx.drawImage(motif, px - t.rx, py - t.ry, t.rx * 2, t.ry * 2)
     }
   }
-  ctx.globalAlpha = LAMPADAIRES.places.poids
+  const avecFlaques = (index.flaques || []).length > 0
+  ctx.globalAlpha = avecFlaques ? LAMPADAIRES.places.flaques.fond : LAMPADAIRES.places.poids
   for (const [x, y, r] of places) {
+    const rx = r * s, ry = rx * LAMPADAIRES.nappe.aplatissement
+    ctx.drawImage(motifs.place, (x - ox) * s - rx, (y - oy) * s - ry, rx * 2, ry * 2)
+  }
+  ctx.globalAlpha = LAMPADAIRES.places.flaques.poids
+  for (const [x, y, , r] of flaques) {
     const rx = r * s, ry = rx * LAMPADAIRES.nappe.aplatissement
     ctx.drawImage(motifs.place, (x - ox) * s - rx, (y - oy) * s - ry, rx * 2, ry * 2)
   }
@@ -145,7 +174,9 @@ export function carteDeLumiere(coords, index) {
 }
 
 // Les feux en haut des mâts, sur la dalle déjà étalonnée ; `force` : 1 la nuit, moins à l'heure bleue.
-export function dessinerFeux(ctx, coords, index, force) {
+// nuit-chaude-v1 : `emission` — on dessine dans le canevas d'ÉMISSION, que la vue floute en halo : le point du mât
+// seul, à pleine opacité (le halo dessiné ici ferait double emploi avec le flou).
+export function dessinerFeux(ctx, coords, index, force, emission = false) {
   if (!index || force <= 0 || coords.z < LAMPADAIRES.niveau_min) return 0
   motifs ||= preparerMotifs()
   const { s, cote8, ox, oy } = cadre(coords)
@@ -153,14 +184,17 @@ export function dessinerFeux(ctx, coords, index, force) {
   const coeur = Math.min(f.diametre_px[1], Math.max(f.diametre_px[0], 2.5 * Math.sqrt(s))) // px d'écran
   const halo = Math.max(coeur, f.halo_rayon_px * s)
   const m = Math.max(index.marge, index.marge - f.halo_rayon_px + halo / s)
-  const points = [...dansLeRectangle(index, ox - m, oy - m, ox + cote8 + m, oy + cote8 + m)]
+  const points = [...dansLeRectangle(index, ox - m, oy - m, ox + cote8 + m, oy + cote8 + m),
+    ...(index.flaques || []).filter(([x, y]) => x >= ox - m && x < ox + cote8 + m && y >= oy - m && y < oy + cote8 + m)]
   if (!points.length) return 0
   ctx.save()
   ctx.globalCompositeOperation = "lighter"
   for (const [x, y, feu] of points) {
     const px = (x - ox) * s, py = (y - feu - oy) * s
-    ctx.globalAlpha = f.opacite * force * f.halo_opacite
-    ctx.drawImage(motifs.halo, px - halo, py - halo, halo * 2, halo * 2)
+    if (!emission) {
+      ctx.globalAlpha = f.opacite * force * f.halo_opacite
+      ctx.drawImage(motifs.halo, px - halo, py - halo, halo * 2, halo * 2)
+    }
     ctx.globalAlpha = f.opacite * force
     ctx.drawImage(motifs.feu, px - coeur / 2, py - coeur / 2, coeur, coeur)
   }

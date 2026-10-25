@@ -39,20 +39,26 @@ class DioramaTuiles
   # avec ?vivants=1 sur /labo/diorama.
   # vivants-v2 (publié le 21/10/2026) ajoute bus et trolleybus ; vivants-v1 reste sur R2. DIORAMA_VIVANTS_URL : essayer un autre dossier.
   VIVANTS = "vivants-v2".freeze
+  # La nuit chaude (nancy-3d rapports/nuit-chaude-v1) : bâtiment par pixel au niveau 8 (batiments/8/{x}/{y}.png, le
+  # tirage des fenêtres allumées par bâtiment) et flaques des lanternes Géonancy des places (flaques-places.json).
+  # Pas encore publiée sur R2 : DIORAMA_NUIT_URL désigne un dossier de même forme (manifeste.json compris, servi en
+  # CORS), et c'est ainsi qu'on la valide en local. Absente, la nuit garde son tirage de fenêtres et ses places sans flaques.
+  NUIT = "nuit-chaude-v1".freeze
 
   DUREE_CACHE = 10.minutes
   DELAI_SONDE_S = 2
   CACHE = {}
   VERROU = Mutex.new
 
-  attr_reader :base, :mobiles, :vivants
+  attr_reader :base, :mobiles, :vivants, :nuit
 
   # `sonde` : appelable qui reçoit une URL et rend true si elle répond 200 (injectable en test).
   def initialize(base: ENV["DIORAMA_TILES_URL"].presence || URL_DEFAUT, mobiles: ENV["DIORAMA_MOBILES_URL"].presence,
-                 vivants: ENV["DIORAMA_VIVANTS_URL"].presence, sonde: nil)
+                 vivants: ENV["DIORAMA_VIVANTS_URL"].presence, nuit: ENV["DIORAMA_NUIT_URL"].presence, sonde: nil)
     @base = base.chomp("/")
     @mobiles = (mobiles || url(MOBILES)).chomp("/")
     @vivants = (vivants || url(VIVANTS)).chomp("/")
+    @nuit = (nuit || url(NUIT)).chomp("/")
     @sonde = sonde || method(:repond?)
   end
 
@@ -73,15 +79,16 @@ class DioramaTuiles
     lumieres = vrai && lampadaires(p).present?
     bateaux = vrai && propriete && p.fetch("#{mobiles}/manifeste.json")
     vivants = vrai && propriete && p.fetch("#{self.vivants}/manifeste.json")
+    nuit = vrai && p.fetch("#{self.nuit}/manifeste.json")
     { vrai: vrai, styles: styles, blanche: blanche, ambiances: ambiances, arbres: arbres, lumieres: lumieres, mobiles: bateaux,
-      vivants: vivants }
+      vivants: vivants, nuit: nuit }
   end
 
   # Ce que reçoit le contrôleur Stimulus.
   def pour_js
     {
       base: base, styles: STYLES.keys, style_defaut: STYLE_DEFAUT, masque: MASQUE, propriete: PROPRIETE,
-      arbres: ARBRES, lumieres: lampadaires(presents), mobiles: mobiles, vivants: vivants,
+      arbres: ARBRES, lumieres: lampadaires(presents), mobiles: mobiles, vivants: vivants, nuit: nuit,
       ambiances: AMBIANCES.index_with { |nom| parametres_ambiance(nom) },
       disponibles: disponibles
     }
@@ -99,16 +106,16 @@ class DioramaTuiles
 
   def urls_a_sonder
     [ *STYLES.keys, MASQUE, PROPRIETE, ARBRES, *LAMPADAIRES.map(&:first) ].map { |dossier| url("#{dossier}/manifeste.json") } +
-      AMBIANCES.map { |nom| url(parametres_ambiance(nom)) } + [ "#{mobiles}/manifeste.json", "#{vivants}/manifeste.json" ]
+      AMBIANCES.map { |nom| url(parametres_ambiance(nom)) } + [ "#{mobiles}/manifeste.json", "#{vivants}/manifeste.json", "#{nuit}/manifeste.json" ]
   end
 
   def presents
     VERROU.synchronize do
-      entree = CACHE[[ base, mobiles, vivants ]]
+      entree = CACHE[[ base, mobiles, vivants, nuit ]]
       return entree[:resultat] if entree && entree[:le] > DUREE_CACHE.ago
     end
     resultat = urls_a_sonder.map { |u| Thread.new { [ u, @sonde.call(u) ] } }.to_h(&:value)
-    VERROU.synchronize { CACHE[[ base, mobiles, vivants ]] = { le: Time.current, resultat: resultat } }
+    VERROU.synchronize { CACHE[[ base, mobiles, vivants, nuit ]] = { le: Time.current, resultat: resultat } }
     resultat
   end
 

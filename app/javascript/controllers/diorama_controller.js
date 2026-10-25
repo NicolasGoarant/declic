@@ -20,6 +20,7 @@ import { Mobiles } from "diorama/mobiles"
 import { Vivants } from "diorama/vivants"
 import { chargerLampadaires, compterLampadaires } from "diorama/lampadaires"
 import { LAMPADAIRES, PINS } from "diorama/reglages"
+import { voletHalo, haloPermis, TiltShift } from "diorama/vue"
 import { regrouper, eventail, FLEURS_MAX, respiration, echelleIcone, dispositionPin } from "diorama/bouquets"
 import { chargerContour, creerDecoupe, poserSocle } from "diorama/contour"
 import {
@@ -126,6 +127,8 @@ export default class extends Controller {
     this.precipitations?.detruire()
     this.mobiles?.detruire()
     this.vivants?.arreter()
+    this.tilt?.detruire()
+    this.tilt = null
     this.observateur?.disconnect()
     window.removeEventListener("declic:position", this.surPositionAuto)
     window.removeEventListener("orientationchange", this.surOrientation)
@@ -518,6 +521,8 @@ export default class extends Controller {
     this.mobiles?.detruire()
     this.mobiles = null
     this.vivants?.arreter() // la toile part avec la carte ; les données restent, pour le retour au diorama
+    this.tilt?.detruire()
+    this.tilt = null
     this.carte.remove()
     this.popup = null
     this.fond = fond
@@ -725,6 +730,8 @@ export default class extends Controller {
         propriete: (chemin) => this.url(t.propriete, `${chemin}.png`),
         masque: (chemin) => this.url(t.masque, `${chemin}.png`),
         arbres: (chemin) => this.url(t.arbres, `${chemin}.png`),
+        // nuit-chaude-v1 : bâtiment par pixel (niveau 8), pour tirer les fenêtres allumées par bâtiment
+        batiments: t.nuit && t.disponibles?.nuit ? (chemin) => `${t.nuit}/batiments/${chemin}.png` : null,
         estCouverte: this.estCouverte, masqueListe: this.masqueListe,
         arbresListe: (coords) => this.listee(this.dallesArbres, coords),
         fenetresPeintes: (coords) => LAMPADAIRES.fenetres.peintes.includes(this.styleDalle(coords)),
@@ -740,7 +747,8 @@ export default class extends Controller {
   lampadaires() {
     const t = this.tuilesValue
     this.promesseLampadaires ||= t.lumieres && t.disponibles?.lumieres
-      ? chargerLampadaires(`${t.base}/${t.lumieres}`, this.projection).catch((erreur) => {
+      ? chargerLampadaires(`${t.base}/${t.lumieres}`, this.projection,
+        t.nuit && t.disponibles?.nuit ? `${t.nuit}/flaques-places.json` : null).catch((erreur) => {
         console.error(`lampadaires : ${t.base}/${t.lumieres} illisible, la nuit reste sans lumières.`, erreur)
         return null
       })
@@ -773,10 +781,21 @@ export default class extends Controller {
   }
 
   // On ajoute avant de retirer : l'attribution ne doit pas s'effacer le temps d'une bascule.
+  // nuit-chaude-v1 : une couche d'ambiance éclairée amène sa couche d'émission, dans le volet du halo (diorama/vue).
+  // Le tilt-shift est posé une fois par carte du diorama, hors mini-carte ; ?tilt=0 le retire, ?halo=0 retire le halo.
   poserCoucheFond(nouvelle) {
     nouvelle.addTo(this.carte)
-    if (this.coucheFond && this.coucheFond !== nouvelle) this.carte.removeLayer(this.coucheFond)
+    if (nouvelle.emission && haloPermis()) { voletHalo(this.carte); nouvelle.emission.addTo(this.carte) }
+    if (this.coucheFond && this.coucheFond !== nouvelle) {
+      this.carte.removeLayer(this.coucheFond)
+      if (this.coucheFond.emission && this.coucheFond.emission !== nouvelle.emission) this.carte.removeLayer(this.coucheFond.emission)
+    }
     this.coucheFond = nouvelle
+    if (!this.miniValue && TiltShift.permis() && this.tilt?.carte !== this.carte) {
+      this.tilt?.detruire()
+      this.tilt = new TiltShift(this.L, this.carte)
+      window.__dioramaTilt = this.tilt
+    }
   }
 
   // ─── Ambiance (moment, saison, météo) et maquette blanche, gardées sur l'appareil ─────

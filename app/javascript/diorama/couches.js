@@ -73,14 +73,15 @@ export function creerCoucheDalles(L, { dalle, estCouverte, options }) {
 export function creerCache(max = 160) {
   const dalles = new Map()
   return {
-    // Recopie la dalle gardée dans `toile` ; false si elle n'a pas encore été calculée.
+    // Recopie la dalle gardée dans `toile` et la rend (ses propriétés comprises, `emission` des ambiances) ;
+    // false si elle n'a pas encore été calculée.
     lire(chemin, toile) {
       const gardee = dalles.get(chemin)
       if (!gardee) return false
       dalles.delete(chemin)
       dalles.set(chemin, gardee) // la plus récemment servie passe en dernier
       toile.getContext("2d").drawImage(gardee, 0, 0)
-      return true
+      return gardee
     },
     garder(chemin, toile) {
       dalles.set(chemin, toile)
