@@ -24,7 +24,7 @@ import { voletHalo, haloPermis, TiltShift } from "diorama/vue"
 import { regrouper, eventail, FLEURS_MAX, respiration, echelleIcone, dispositionPin } from "diorama/bouquets"
 import { chargerContour, creerDecoupe, poserSocle } from "diorama/contour"
 import {
-  CLE_FOND, CLE_AMBIANCE, CLE_AUTO, CLES_REGLAGES, CLE_BLANCHE, CLE_STYLE, lire, ecrire, fondDeDepart, styleDeDepart
+  CLE_FOND, CLE_AMBIANCE, CLE_AUTO, CLE_CHOIX_SOUS, CLES_REGLAGES, CLE_BLANCHE, CLE_STYLE, lire, ecrire, fondDeDepart, styleDeDepart
 } from "diorama/preferences"
 import { lireDate, aujourdhui, estPasse, estAVenir, dansLaFenetre, etiquette, periode, jourCourt } from "diorama/dates"
 
@@ -323,7 +323,12 @@ export default class extends Controller {
     this.majCalques()
     if (this.dioramaDispo) {
       // Automatique : le soleil bouge, la météo se renouvelle (appel gardé 30 minutes).
-      this.minuterieAuto = setInterval(() => { if (this.auto) this.rafraichirAuto() }, 60000)
+      // Un choix à la main se périme quand le ciel change de moment (choixEchu) : un onglet resté ouvert la nuit repasse
+      // aussi à l'automatique au matin.
+      this.minuterieAuto = setInterval(() => {
+        if (!this.auto && this.choixEchu()) this.reprendreAuto()
+        if (this.auto) this.rafraichirAuto()
+      }, 60000)
       if (this.auto) this.rafraichirAuto()
     }
   }
@@ -815,12 +820,25 @@ export default class extends Controller {
     const auto = lire(CLE_AUTO)
     const dejaRegle = (ancienne && ancienne !== "auto") || Object.values(CLES_REGLAGES).some((cle) => lire(cle) !== null)
     this.auto = auto === null ? !dejaRegle : auto === "1"
+    if (!this.auto && this.choixEchu()) this.reprendreAuto()
     this.choisis = Object.fromEntries(Object.keys(REGLAGES).map((r) => {
       const valeur = lire(CLES_REGLAGES[r]) ?? reprise[r]
       return [r, this.valide(r, valeur) ? valeur : NEUTRE[r]]
     }))
     this.meteoReelle = meteoGardee() || "clair"
     this.etat = this.etatEffectif()
+  }
+
+  // Un choix à la main (ou l'automatique coupé) ne tient que tant que le ciel réel garde le moment où il a été fait :
+  // une nuit choisie le soir ne s'impose plus au matin (26/10 : un réglage « nuit » d'un soir d'essais affichait encore la
+  // nuit à 9 h). Un choix gardé sans ce moment (d'avant le 26/10) est échu.
+  choixEchu() {
+    return lire(CLE_CHOIX_SOUS) !== momentAuto()
+  }
+
+  reprendreAuto() {
+    this.auto = true
+    ecrire(CLE_AUTO, "1")
   }
 
   // Ce qu'« Automatique » retient maintenant (sans filtre de disponibilité).
@@ -850,6 +868,7 @@ export default class extends Controller {
   choisirAuto(event) {
     this.auto = event.target.checked
     ecrire(CLE_AUTO, this.auto ? "1" : "0")
+    if (!this.auto) ecrire(CLE_CHOIX_SOUS, momentAuto())
     this.quitterBlanche()
     if (this.auto) this.rafraichirAuto()
     else this.appliquerAmbiance()
@@ -863,6 +882,7 @@ export default class extends Controller {
       this.auto = false
       ecrire(CLE_AUTO, "0")
     }
+    ecrire(CLE_CHOIX_SOUS, momentAuto())
     this.choisis = { ...this.choisis, [reglage]: event.target.value }
     Object.entries(this.choisis).forEach(([r, v]) => ecrire(CLES_REGLAGES[r], v))
     this.quitterBlanche()
@@ -909,13 +929,14 @@ export default class extends Controller {
     this.majVivants(ambiance)
   }
 
-  // Les bateaux (diorama/mobiles), de jour seulement : leurs sprites sont cuits sous le soleil du diorama et
-  // ne reçoivent pas l'étalonnage des ambiances, qui ne s'applique qu'aux dalles.
+  // Les bateaux (diorama/mobiles), à tout moment comme les vivants (jusqu'au 26/10 : de jour seulement) : leurs sprites
+  // sont cuits en plein jour, la toile est donc assombrie hors du jour (TEINTES_VIVANTS) ; les bateaux en marche suivent
+  // l'heure de Nancy (aucun la nuit), ceux à quai restent.
   // Crochet d'instrument déclaré : ?mobiles=0 ne les pose pas (témoin du banc de cadence).
   majMobiles(ambiance) {
     const t = this.tuilesValue
     const coupe = new URLSearchParams(window.location.search).get("mobiles") === "0"
-    const voulu = ambiance && !coupe && this.etat.moment === "jour" && Boolean(t.disponibles?.mobiles) && Boolean(this.dallesPropriete)
+    const voulu = ambiance && !coupe && Boolean(t.disponibles?.mobiles) && Boolean(this.dallesPropriete)
     if (this.mobiles && (!voulu || this.mobiles.carte !== this.carte)) {
       this.mobiles.detruire()
       this.mobiles = null
@@ -923,9 +944,10 @@ export default class extends Controller {
     if (voulu && !this.mobiles) {
       this.mobiles = new Mobiles(this.L, this.carte, {
         dossier: t.mobiles, dallesPropriete: this.dallesPropriete, contient: this.decoupe?.contient,
-        propriete: (chemin) => this.url(t.propriete, `${chemin}.png`), style: () => this.style
+        propriete: (chemin) => this.url(t.propriete, `${chemin}.png`), style: () => this.style, horaire: true
       })
     }
+    this.mobiles?.teinter(TEINTES_VIVANTS[this.etat.moment] || "")
   }
 
   // Les vivants (diorama/vivants : piétons, vélos, voitures, bus, trolleybus), sur le diorama hors maquette blanche,

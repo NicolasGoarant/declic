@@ -128,6 +128,23 @@ class AmbiancesTest < ApplicationSystemTestCase
     end
   end
 
+  test "un choix à la main fait sous un autre ciel est échu : retour à l'automatique" do
+    sur_la_carte do
+      # un soir d'essais : « nuit » choisie à la main, sous un ciel qui n'est plus celui de maintenant
+      execute_script(<<~JS)
+        localStorage.setItem("declic:ambiance-auto", "0")
+        localStorage.setItem("declic:moment", "nuit")
+        localStorage.setItem("declic:ambiance-choisie-sous", "un-autre-moment")
+      JS
+      visit root_path
+
+      assert_selector "[data-controller~=diorama][data-moment]"
+      assert evaluate_script("#{CONTROLEUR}.auto")
+      assert_equal evaluate_async_script('import("diorama/soleil").then((s) => arguments[0](s.momentAuto()))'), etat["moment"]
+      assert_equal "1", evaluate_script("localStorage.getItem('declic:ambiance-auto')")
+    end
+  end
+
   test "moins d'animations demandé : neige sans particules" do
     page.driver.browser.execute_cdp("Emulation.setEmulatedMedia", features: [ { name: "prefers-reduced-motion", value: "reduce" } ])
     sur_la_carte do
