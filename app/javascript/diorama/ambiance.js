@@ -137,6 +137,11 @@ const SOURCE_FS = [
   // houppiers sont plus bleutés (80-99° sur jeu-video-v2, 81-120° sur toits-v1, gardés à 96 %). Pas dans
   // feuillage() : la classe 3 qu'il donne règle aussi l'hiver, où les pelouses sorties viraient au jaune.
   "bool houppier(vec3 c){ return feuillage(c) && hsv(c).x >= 79.0; }",
+  // Eau (26/10) : la carte de propriété n'a pas de classe « eau », le canal et la Meurthe y sont du sol ; la nuit, la
+  // lumière des rues et des places (or) et le voile des ombres (brun) les doraient près des quais. Bleu-cyan saturé
+  // d'origine : 184-200°, saturation 0,46-0,72, valeur 0,71-0,85 mesurées sur jeu-video-v2 (port Sainte-Catherine).
+  "float eau(vec3 c){ vec3 k = hsv(c); return smoothstep(172.0, 182.0, k.x) * (1.0 - smoothstep(212.0, 222.0, k.x)) *",
+  "  smoothstep(0.30, 0.42, k.y) * smoothstep(0.35, 0.50, k.z); }",
   "float luma(vec3 c){ return dot(c, vec3(0.2126, 0.7152, 0.0722)); }",
   // Vitre peinte : un pixel nettement plus sombre que le mur tout autour (à 2 px, sur les quatre côtés :
   // une fenêtre est un petit rectangle sombre sur une façade claire). Ni un pan de toit uni ni un trait
@@ -196,6 +201,7 @@ const SOURCE_FS = [
   "  else if (modeClasse == 1) { toit = texture2D(tClasse, uv).r; classe = toit > 0.5 ? 2.0 : 1.0; }",
   "  else { classe = 2.0; toit = -1.0; }",
   "  if (classe > 0.0 && feuillage(o)) classe = 3.0;",
+  "  float eauW = classe < 1.5 ? eau(o) : 0.0; // l'eau garde son bleu : ni or des lumières, ni brun du voile",
   // Poids de la lumière des rues/places au pied de CE pixel, calculé ICI (avant l'ombre) et réutilisé
   // tel quel plus bas (étape 4) : sans cela, l'ombre teinte vers le bleu-violet un pixel qui va de toute
   // façon recevoir la lumière chaude juste après, et les deux rotations de teinte opposées se composent
@@ -204,7 +210,7 @@ const SOURCE_FS = [
   "  if (lumieres == 1) { lLum = lumiere(px);",
   "    float solPre = toit < 0.0 || classe == 1.0 ? 1.0 : facade.w;",
   "    float placePre = lLum.b * (classe == 3.0 ? 0.0 : 1.0);",
-  "    wLum = (1.0 - (1.0 - lLum.r) * (1.0 - placePre)) * solPre; }",
+  "    wLum = (1.0 - (1.0 - lLum.r) * (1.0 - placePre)) * solPre * (1.0 - eauW); }",
   "  vec3 lab = versLab(o);",
   // 1. Saison.
   "  if (saison == 1) lab = regles_s(lab, classe);",
@@ -243,7 +249,7 @@ const SOURCE_FS = [
   // (cibleOmbre). v7b : ce virage ne touche que a*/b* (Lab), jamais L* — donc aucun assombrissement
   // supplémentaire au-delà de celui déjà posé par `luminosite` ci-dessus.
   "    if (voileOmbres > 0.5) {",
-  "      float part = voile.a * (1.0 - smoothstep(0.05, 0.30, luma(rgb))) * (1.0 - clamp(wLum, 0.0, 1.0));",
+  "      float part = voile.a * (1.0 - smoothstep(0.05, 0.30, luma(rgb))) * (1.0 - clamp(wLum, 0.0, 1.0)) * (1.0 - eauW);",
   "      vec3 labV = versLab(rgb), cibleV = versLab(cibleOmbre);",
   // giroYZ (voir sa définition) : rotation à chroma conservé, grand tour forcé par le rouge/magenta pour
   // ne jamais traverser le vert/cyan — remplace le mix brut v7c, qui évitait bien la frange mais désaturait

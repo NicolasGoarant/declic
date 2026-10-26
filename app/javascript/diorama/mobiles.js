@@ -33,6 +33,13 @@
 //   ?mobiles-densite=P,B   remplace DENSITE (péniches, petits bateaux), en bateaux par km et par file
 //   ?mobiles-occlusion=propriete   ignore le correctif d'occlusion du style (témoin : la propriété brute)
 //   ?mobiles-melange=voie   tire le modèle dans le seul lot du type de voie (témoin : l'ancien tirage, péniches au canal)
+//   ?mobiles-heure=H        bateaux en marche de l'heure H de Nancy (décimale : 18.5) ; « pointe » : tous, sans courbe
+//
+// Effectifs selon l'heure (26/10/2026), comme les vivants : un facteur entre 0 et 1 lu sur COURBE_NAVIGATION (heure de
+// Nancy) ; un bateau EN MARCHE est gardé si sa graine est sous le facteur (la file garde ses rangs). Les bateaux À QUAI
+// restent à toute heure : la nuit, le port ne s'anime plus mais reste visible.
+
+import { heureANancy, surCourbe } from "diorama/vivants"
 
 const NIVEAU_REPERE = 8
 const NIVEAU_MIN = 7                // en dessous, une péniche fait moins de 20 px : on ne pose rien
@@ -43,6 +50,9 @@ const Z_VOLET = 440
 // rivière). RETENU le 15/10 (Nicolas) : 6 / 2 au lieu de 3 / 4, la péniche fait 68,3 % des bateaux-instants au lieu
 // de 34,9 % (60,0 % du temps visible au zoom 8, contre 27,2 %).
 const DENSITE = [6.0, 2.0]
+// Part des bateaux en marche selon l'heure de Nancy (ancres [heure, facteur], interpolées) : la navigation suit le jour,
+// personne ne circule de 22 h à 6 h. Courbe plausible, pas une donnée (horaires d'écluses VNF, plaisance de journée).
+const COURBE_NAVIGATION = [[0, 0], [6, 0], [8, 0.4], [10, 0.8], [12, 1], [17, 1], [19, 0.6], [21, 0.15], [22, 0], [24, 0]]
 // Modèles retirés du tirage, chacun REMPLACÉ par un autre de même type : la place du retiré dans la liste de tirage
 // est tenue par son remplaçant, donc chaque trajectoire garde son nombre de bateaux et tous les autres bateaux leur
 // modèle. Le sprite reste dans l'atlas. (15/10 : le canoë bordeaux → la barque à rames, la plus proche en taille,
@@ -107,7 +117,8 @@ export class Mobiles {
   //           dallesPropriete ({ 8: Set("x/y") } : les dalles publiées ; une absente vaut « dehors », code 0),
   //           contient (px L8 → booléen : dans le contour de la Métropole, hors duquel les dalles sont découpées)
   //           style (() → nom du style affiché) : le correctif d'occlusion du jeu ne vaut que pour SON style
-  constructor(L, carte, { dossier, propriete, dallesPropriete, contient = null, style = null }) {
+  //           horaire (vrai : bateaux en marche selon l'heure de Nancy ; faux, le défaut : tous)
+  constructor(L, carte, { dossier, propriete, dallesPropriete, contient = null, style = null, horaire = false }) {
     this.styleAffiche = style
     this.contient = contient
     this.L = L
@@ -130,6 +141,10 @@ export class Mobiles {
     this.sansCorrectif = params.get("mobiles-occlusion") === "propriete"
     this.parVoie = params.get("mobiles-melange") === "voie"
     this.densite = params.has("mobiles-densite") ? params.get("mobiles-densite").split(",").map(parseFloat) : DENSITE
+    const heure = params.get("mobiles-heure")
+    this.heureFixe = heure !== null && heure !== "pointe" ? parseFloat(heure) : null
+    this.horaire = heure === "pointe" ? false : heure !== null || horaire
+    this.filtre = ""
     this.stats = { peints: 0, segments: 0, js: 0, niveau: null, masque: false }
     this.t0 = performance.now()
     this.reduit = window.matchMedia(MOINS_DE_MOUVEMENT)
@@ -298,6 +313,7 @@ export class Mobiles {
     volet.style.pointerEvents = "none"
     this.toile = this.L.DomUtil.create("canvas", "acc-mobiles", volet)
     this.toile.setAttribute("aria-hidden", "true")
+    this.toile.style.filter = this.filtre
     this.ctx = this.toile.getContext("2d")
     this.toileObjet = document.createElement("canvas")
     this.anneaux = new Map()
@@ -327,6 +343,23 @@ export class Mobiles {
     this.retirer()
     this.reduit.removeEventListener("change", this.surReduit)
     document.removeEventListener("visibilitychange", this.surVisibilite)
+  }
+
+  // Les sprites sont cuits en plein jour : hors du jour, la toile est assombrie comme celle des vivants.
+  teinter(filtre) {
+    this.filtre = filtre
+    if (this.toile) this.toile.style.filter = filtre
+  }
+
+  // La part des bateaux en marche à garder, relue au plus toutes les 30 s (1 : tous).
+  navigation() {
+    if (!this.horaire) return 1
+    const t = performance.now()
+    if (this.facteurLe === undefined || t - this.facteurLe >= 30000) {
+      this.facteur = surCourbe(COURBE_NAVIGATION, this.heureFixe ?? heureANancy())
+      this.facteurLe = t
+    }
+    return this.facteur
   }
 
   toileVisible(oui) { if (this.toile) this.toile.style.visibility = oui ? "" : "hidden" }
@@ -458,7 +491,8 @@ export class Mobiles {
     const niveauDalles = sc.niveau >= 9 ? 9 : 8 // au-dessous de 8, les dalles sont réduites du niveau 8
     for (const r of this.routes) r.couverts = r.couvertsParNiveau[niveauDalles]
     const E = this.cam.metre_est_px, N = this.cam.metre_nord_px, liste = []
-    const marge = 40 * sc.pxParM
+    const marge = 40 * sc.pxParM, f = this.navigation()
+    if (f <= 0) return liste
     const bx0 = sc.xmin - marge / sc.k, bx1 = sc.xmax + marge / sc.k, by0 = sc.ymin - marge / sc.k, by1 = sc.ymax + marge / sc.k
     for (const r of this.routes) {
       for (const iv of r.intervalles) {
@@ -473,6 +507,7 @@ export class Mobiles {
           // sur un intervalle où aucun bateau du type ne peut être montré plein (route 1 : 79 m au pied d'un couvert)
           const n = Math.max(this.montrable(r, iv, niveauDalles) ? 1 : 0, Math.floor(this.densite[r.type] / 1000 * Li + graineDe(cle, fi, 13)))
           for (let kk = 0; kk < n; kk++) {
+            if (f < 1 && graineDe(cle, fi, 500 + kk) >= f) continue // à cette heure, ce bateau reste au port
             const choix = this.tirage || this.parType[r.type], mi = choix[Math.floor(graineDe(cle, fi, 400 + kk) * choix.length) % choix.length]
             const M = this.modeles[mi], g = this.gain(M, sc, true), L = M.L * g, W = M.W * g
             const ph = (kk + 0.6 * (graineDe(cle, fi, 300 + kk) - 0.5)) / n

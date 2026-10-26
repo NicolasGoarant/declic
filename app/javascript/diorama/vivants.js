@@ -80,11 +80,11 @@ const SERVICE_BUS = [[0, 0.5, 0.5], [0.5, 5, 0], [5, 6.5, 0.5], [6.5, 20.5, 1], 
 const HEURE_NANCY = new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", hour: "numeric", minute: "numeric", hourCycle: "h23" })
 const OCCLUSION_JV2 = "occlusion-vivants-jv2.json" // correctif des toits du style jeu vidéo (nancy-3d, deriver-toits-jv2.py)
 
-function heureANancy(date = new Date()) {
+export function heureANancy(date = new Date()) {
   const p = Object.fromEntries(HEURE_NANCY.formatToParts(date).map((x) => [x.type, x.value]))
   return Number(p.hour) + Number(p.minute) / 60
 }
-function surCourbe(ancres, h) {
+export function surCourbe(ancres, h) {
   for (let i = 1; i < ancres.length; i++) {
     const [h0, f0] = ancres[i - 1], [h1, f1] = ancres[i]
     if (h <= h1) return f0 + (f1 - f0) * (h - h0) / (h1 - h0)
