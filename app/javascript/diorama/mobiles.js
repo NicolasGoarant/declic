@@ -42,7 +42,14 @@
 import { heureANancy, surCourbe } from "diorama/vivants"
 
 const NIVEAU_REPERE = 8
-const NIVEAU_MIN = 7                // en dessous, une péniche fait moins de 20 px : on ne pose rien
+// Dès ×0,25 (niveau 6, 26/10, Nicolas), comme vélos, voitures, bus et trolleybus (vivants.js) : aucun palier où les uns
+// se voient sans les autres. Jusqu'au 26/10 : niveau 7.
+const NIVEAU_MIN = 6
+// Sous le niveau 7, toute coque est agrandie ×2 (les planchers de px des niveaux 7 à 9 ne s'y appliquent pas) : péniche
+// 19-32 px contre 34 px pour le trolleybus de 24 m (×2,5), barque 8-10 px contre 7 px pour la voiture et 10 px pour le
+// vélo. Avec la garde de berge à la tolérance en px du niveau 7, 71 % des bateaux en marche restent visibles au niveau 6
+// (péniches 60 %), contre 68 % (57 %) au niveau 7 ; à ×2,5, 58 % (42 %) : un palier où les péniches manquent (26/10).
+const NIVEAU_LARGE = 7, GAIN_LARGE = 2
 const MOINS_DE_MOUVEMENT = "(prefers-reduced-motion: reduce)"
 const INTERVALLE_MS = 1000 / 30 - 2
 const Z_VOLET = 440
@@ -491,7 +498,8 @@ export class Mobiles {
     const niveauDalles = sc.niveau >= 9 ? 9 : 8 // au-dessous de 8, les dalles sont réduites du niveau 8
     for (const r of this.routes) r.couverts = r.couvertsParNiveau[niveauDalles]
     const E = this.cam.metre_est_px, N = this.cam.metre_nord_px, liste = []
-    const marge = 40 * sc.pxParM, f = this.navigation()
+    // la garde de berge tolère sous le niveau 7 le même débord À L'ÉCRAN qu'au niveau 7 (1 m y fait 1,1 px)
+    const marge = 40 * sc.pxParM, f = this.navigation(), debordM = DEBORD_M * 2 ** Math.max(0, NIVEAU_LARGE - sc.niveau)
     if (f <= 0) return liste
     const bx0 = sc.xmin - marge / sc.k, bx1 = sc.xmax + marge / sc.k, by0 = sc.ymin - marge / sc.k, by1 = sc.ymax + marge / sc.k
     for (const r of this.routes) {
@@ -520,7 +528,7 @@ export class Mobiles {
             const decal = files.length === 2 ? Math.max(0, Math.min(larg / 4, larg / 2 - W / 2 - 0.5)) : 0
             const debord = decal + W / 2 - larg / 2
             // aux bouts, le fondu s'achève quand la PROUE atteint le bout, pas le milieu : un bateau long ne dépasse pas l'eau
-            const alpha = Math.min(1, (s - iv.s0 - L / 2) / FONDU_M, (iv.s1 - s - L / 2) / FONDU_M, this.distanceCouvert(r, s) / (L / 2 + 4), 1 - debord / DEBORD_M)
+            const alpha = Math.min(1, (s - iv.s0 - L / 2) / FONDU_M, (iv.s1 - s - L / 2) / FONDU_M, this.distanceCouvert(r, s) / (L / 2 + 4), 1 - debord / debordM)
             if (alpha <= 0.02 && !this.garderInvisibles) continue // crochet d'instrument : la planche cherche aussi les effacés
             const p = this.situer(r, s)
             const gE = p[2] * dir, gN = p[3] * dir, dE = gN, dN = -gE // tribord : à droite du sens de marche
@@ -582,6 +590,7 @@ export class Mobiles {
   // Gain du plancher de longueur : 1 tant que la coque fait le plancher de son type à l'écran, au plus le gain maximal du type.
   // enMarche : une péniche en navigation prend le plancher de navigation, une péniche à quai celui des péniches.
   gain(M, sc, enMarche = false) {
+    if (sc.niveau < NIVEAU_LARGE) return GAIN_LARGE
     const peniche = M.type === "peniche"
     const plancher = !peniche ? this.longueurMinPx : enMarche ? this.longueurMinPxNavigation : this.longueurMinPxPeniche
     const gmax = !peniche ? GAIN_MAX : enMarche ? this.gainMaxNavigation : this.gainMaxPeniche
