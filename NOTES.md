@@ -16,6 +16,7 @@ Détail ancien (fiches, bateaux, vivants, toits, accueil, géoloc…) : `git log
 - `bin/rails test` : 135 verts (27/10). Système : `CHROME_NO_SANDBOX=1`, `SE_CHROMEDRIVER` vers chromedriver = Chrome ; `calques_test.rb:48`/`:112` échouent aussi sur main, `geoloc_auto_test`/`accueil_test.rb:49` intermittents.
 
 ## Reste à faire
+- Défaut visuel mineur connu (fond nancy-3d) : « échelles » verticales de lucarnes sur les brisis côté cour (ex. bâtiment au nord de la place Maginot, n8 67-68/39-40, aussi au n9). Chantier séparé : limiter `lucarnes()` (jeu-video-v2 `v01-batiments.py`) aux façades sur rue, ou ne pas en poser côté cour. `nuit-chaude-v1` `batiments/8` ne dépend pas des lucarnes (mosaïque toits-v1 + identifiants).
 - GTFS : aucun service Nancy le 31/10/2026 (trou de la source) → boucle ce jour-là ; surveiller le rafraîchissement hebdo de l'extrait.
 - Quai plausible choisi côté client (voie à quai non publiée) ; Intercités rendus en TER (pas de sprite).
 - Éventuel correctif B (propriété jeu-vidéo régénérée côté nancy-3d, R2 + purge par Origin) si des défauts de rectangles clairs reviennent, y compris aux niveaux 6-7.
