@@ -39,6 +39,9 @@ class DioramaTuiles
   # avec ?vivants=1 sur /labo/diorama.
   # vivants-v2 (publié le 21/10/2026) ajoute bus et trolleybus ; vivants-v1 reste sur R2. DIORAMA_VIVANTS_URL : essayer un autre dossier.
   VIVANTS = "vivants-v2".freeze
+  # Les trains (diorama/trains : rames TER et TGV sur le réseau ferré, scénarios de démonstration de nancy-3d) : seulement
+  # avec ?trains=1 sur /labo/diorama, sur le style jeu-video-v2. DIORAMA_TRAINS_URL : essayer un autre dossier.
+  TRAINS = "trains-v1".freeze
   # La nuit chaude (nancy-3d rapports/nuit-chaude-v1) : bâtiment par pixel au niveau 8 (batiments/8/{x}/{y}.png, le
   # tirage des fenêtres allumées par bâtiment) et flaques des lanternes Géonancy des places (flaques-places.json).
   # Pas encore publiée sur R2 : DIORAMA_NUIT_URL désigne un dossier de même forme (manifeste.json compris, servi en
@@ -50,15 +53,17 @@ class DioramaTuiles
   CACHE = {}
   VERROU = Mutex.new
 
-  attr_reader :base, :mobiles, :vivants, :nuit
+  attr_reader :base, :mobiles, :vivants, :nuit, :trains
 
   # `sonde` : appelable qui reçoit une URL et rend true si elle répond 200 (injectable en test).
   def initialize(base: ENV["DIORAMA_TILES_URL"].presence || URL_DEFAUT, mobiles: ENV["DIORAMA_MOBILES_URL"].presence,
-                 vivants: ENV["DIORAMA_VIVANTS_URL"].presence, nuit: ENV["DIORAMA_NUIT_URL"].presence, sonde: nil)
+                 vivants: ENV["DIORAMA_VIVANTS_URL"].presence, nuit: ENV["DIORAMA_NUIT_URL"].presence,
+                 trains: ENV["DIORAMA_TRAINS_URL"].presence, sonde: nil)
     @base = base.chomp("/")
     @mobiles = (mobiles || url(MOBILES)).chomp("/")
     @vivants = (vivants || url(VIVANTS)).chomp("/")
     @nuit = (nuit || url(NUIT)).chomp("/")
+    @trains = (trains || url(TRAINS)).chomp("/")
     @sonde = sonde || method(:repond?)
   end
 

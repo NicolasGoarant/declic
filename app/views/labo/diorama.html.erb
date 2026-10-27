@@ -71,7 +71,7 @@
       const D = window.__diorama;
       proj = proj || creerProjection(D.M);
       dallesNiv8 = dallesNiv8 || new Set(D.M.dalles["8"].map(([x, y]) => x + "/" + y));
-      const c = D.M.cote_dalle_px * Math.pow(2, D.M.niveau_max - 8);
+      const c = D.M.cote_dalle_px; // px mosaïque (niveau 8) d'une dalle du niveau 8
       return proj.dansLaMosaique(px) && dallesNiv8.has(Math.floor(px[0] / c) + "/" + Math.floor(px[1] / c));
     }
 
@@ -296,7 +296,10 @@
 
 <script>
 (() => {
-  const BASE = "https://tuiles-declic.mist-media.eu/toits-v1/";
+  // ?trains=1 : le style jeu vidéo (celui des trains et de leur correctif d'occlusion) ; sinon toits-v1, comme toujours
+  const BASE = "https://tuiles-declic.mist-media.eu/" + (new URLSearchParams(location.search).get("trains") === "1" ? "jeu-video-v2" : "toits-v1") + "/";
+  // La vue compte en px de la mosaïque du NIVEAU 8 (taille_mosaique_px), quel que soit le niveau max du lot (9 en jeu vidéo)
+  const NIV_MOSAIQUE = 8;
   const canvas = document.getElementById("c");
   const ctx = canvas.getContext("2d");
   const info = document.getElementById("info");
@@ -309,7 +312,7 @@
   let raf = 0;
 
   const dim = z => M.dimensions_par_niveau_px[z];
-  const span = z => M.cote_dalle_px * Math.pow(2, M.niveau_max - z); // px mosaïque couverts par une dalle
+  const span = z => M.cote_dalle_px * Math.pow(2, NIV_MOSAIQUE - z); // px mosaïque couverts par une dalle
   const minScale = () => Math.min(W / M.taille_mosaique_px[0], H / M.taille_mosaique_px[1]) * 0.9;
   const maxScale = () => 2 / dpr * 2;
 
@@ -344,7 +347,7 @@
     const sx = (x * sp - view.cx) * view.s + W / 2, sy = (y * sp - view.cy) * view.s + H / 2;
     const w = sp * view.s;
     // 1 px de dalle = 2^(8-z) px mosaïque ; la dalle fait 256 px, sauf au bord de la mosaïque (tronquée)
-    const k = Math.pow(2, M.niveau_max - z) * view.s;
+    const k = Math.pow(2, NIV_MOSAIQUE - z) * view.s;
     ctx.drawImage(img, Math.round(sx * dpr) / dpr, Math.round(sy * dpr) / dpr, img.naturalWidth * k + 0.5 / dpr, img.naturalHeight * k + 0.5 / dpr);
     if (gridBox.checked) { ctx.strokeStyle = `hsl(${z * 40},90%,60%)`; ctx.strokeRect(sx, sy, w, w); }
     stats.drawn++;
@@ -355,7 +358,7 @@
       const t = tile(zz, ax, ay, false);
       if (t && t.state === "ok") {
         // Ne dessiner que la portion de l'ancêtre couvrant (z,x,y)
-        const sp = span(z), k = Math.pow(2, M.niveau_max - zz), n = M.cote_dalle_px / f;
+        const sp = span(z), k = Math.pow(2, NIV_MOSAIQUE - zz), n = M.cote_dalle_px / f;
         const ox = (x - ax * f) * n, oy = (y - ay * f) * n;
         const sx = (x * sp - view.cx) * view.s + W / 2, sy = (y * sp - view.cy) * view.s + H / 2, w = sp * view.s;
         ctx.drawImage(t.img, ox, oy, n, n, sx, sy, w + 0.5, w + 0.5);
@@ -375,7 +378,7 @@
     const [mw, mh] = M.taille_mosaique_px;
     ctx.fillRect((0 - view.cx) * view.s + W / 2, (0 - view.cy) * view.s + H / 2, mw * view.s, mh * view.s);
     // Niveau : plus détaillé dont 1 px de dalle >= ~1 px écran physique
-    const z = Math.max(M.niveau_min, Math.min(M.niveau_max, Math.ceil(M.niveau_max + Math.log2(view.s * dpr) - 0.25)));
+    const z = Math.max(M.niveau_min, Math.min(M.niveau_max, Math.ceil(NIV_MOSAIQUE + Math.log2(view.s * dpr) - 0.25)));
     const sp = span(z), [gw, gh] = M.grille_par_niveau[z];
     const x0 = Math.max(0, Math.floor((view.cx - W / 2 / view.s) / sp)), x1 = Math.min(gw - 1, Math.floor((view.cx + W / 2 / view.s) / sp));
     const y0 = Math.max(0, Math.floor((view.cy - H / 2 / view.s) / sp)), y1 = Math.min(gh - 1, Math.floor((view.cy + H / 2 / view.s) / sp));
@@ -482,6 +485,74 @@
       boite.checked = false;
       info.textContent = "indisponibles (" + e.message + ")";
       console.warn("vivants :", e);
+    }
+  }
+</script>
+<%# Les trains (diorama/trains.js : rames TER et TGV, un scénario de démonstration de nancy-3d qui tourne en boucle), seulement
+    avec ?trains=1, qui passe aussi le fond en jeu vidéo (le correctif d'occlusion des trains est celui de ce style). Une
+    toile à part, comme les vivants. ?trains-scenario=ligne_droite (défaut : gare) ; la vue se pose sur la scène. %>
+<script type="module">
+  const params = new URLSearchParams(location.search);
+  if (params.get("trains") === "1") {
+    const DOSSIER = <%= json_escape(@tuiles.trains.to_json).html_safe %>;
+    const PROPRIETE = <%= json_escape(@tuiles.url(DioramaTuiles::PROPRIETE).to_json).html_safe %>;
+    const SCENARIO = params.get("trains-scenario") || "gare";
+    const ligne = document.createElement("div");
+    ligne.innerHTML = '<label><input type="checkbox" id="trains" checked disabled> trains</label> · <span id="trains-info">chargement…</span>';
+    document.getElementById("hud").insertBefore(ligne, document.getElementById("err"));
+    const info = document.getElementById("trains-info"), boite = document.getElementById("trains");
+    const pret = () => new Promise(ok => { const t = setInterval(() => { if (window.__diorama) { clearInterval(t); ok(window.__diorama); } }, 100); });
+    try {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) throw new Error("animations réduites demandées par l'appareil");
+      const { Trains } = await import("diorama/trains");
+      const [D, manifeste] = await Promise.all([pret(), fetch(PROPRIETE + "/manifeste.json").then(r => r.json())]);
+      const trains = new Trains({
+        dossier: DOSSIER, scenario: SCENARIO, propriete: chemin => `${PROPRIETE}/${chemin}.png`,
+        dallesPropriete: new Set(manifeste.dalles["8"].map(([x, y]) => x + "/" + y)), style: () => "jeu-video-v2"
+      });
+      await trains.charger();
+      // la vue sur la scène (zone en px n8 : x, y, largeur, hauteur)
+      const [zx, zy, zw, zh] = trains.scenario.zone_n8;
+      D.view.cx = zx + zw / 2; D.view.cy = zy + zh / 2;
+      D.view.s = Math.min(window.innerWidth / zw, window.innerHeight / zh);
+      D.schedule();
+      const toile = document.createElement("canvas");
+      Object.assign(toile.style, { position: "fixed", left: "0", top: "0", pointerEvents: "none" });
+      toile.setAttribute("aria-hidden", "true");
+      document.getElementById("c").after(toile);
+      const ctx = toile.getContext("2d");
+      const duree = trains.scenario.duree_s;
+      let t0 = performance.now(), raf = 0;
+      const image = () => {
+        raf = requestAnimationFrame(image);
+        const dpr = window.devicePixelRatio || 1, v = D.view, W = window.innerWidth, H = window.innerHeight;
+        const Wd = Math.round(W * dpr), Hd = Math.round(H * dpr);
+        if (toile.width !== Wd || toile.height !== Hd) { toile.width = Wd; toile.height = Hd; toile.style.width = `${Wd / dpr}px`; toile.style.height = `${Hd / dpr}px`; }
+        ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, Wd, Hd); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const sc = { k: v.s, ox: W / 2 - v.cx * v.s, oy: H / 2 - v.cy * v.s,
+                     xmin: v.cx - W / 2 / v.s, xmax: v.cx + W / 2 / v.s, ymin: v.cy - H / 2 / v.s, ymax: v.cy + H / 2 / v.s };
+        const t = params.has("trains-t") ? parseFloat(params.get("trains-t")) : ((performance.now() - t0) / 1000) % duree;
+        const liste = [];
+        trains.poserDans(sc, t, liste);
+        liste.sort((a, b) => a.Y - b.Y);
+        for (const o of liste) o.peindre(ctx);
+      };
+      image();
+      boite.disabled = false;
+      boite.addEventListener("change", () => {
+        if (boite.checked) { t0 = performance.now(); image(); }
+        else { cancelAnimationFrame(raf); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, toile.width, toile.height); }
+      });
+      setInterval(() => {
+        const s = trains.stats;
+        info.textContent = !boite.checked ? "coupés" : `${SCENARIO} · ${Math.floor(trains.scene.t)} s / ${duree} s · ${s.rames} rames, ${s.caisses} caisses · ${s.js.toFixed(1)} ms` +
+          (s.gardeFou ? ` · garde-fou ${s.gardeFou}` : "");
+      }, 500);
+      window.__dioramaTrains = trains;
+    } catch (e) {
+      boite.checked = false;
+      info.textContent = "indisponibles (" + e.message + ")";
+      console.warn("trains :", e);
     }
   }
 </script>
