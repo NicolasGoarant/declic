@@ -32,7 +32,7 @@
           <% vedettes.each_with_index do |o, i| %>
             <% categorie = categorie_de(o) %>
             <div data-agenda-target="vedette" data-id="<%= o.id %>" data-categorie="<%= o.category %>"<%= " hidden" unless i.zero? %>>
-              <%= render "accueil/fiche_carte", lien: opportunity_path(o), photo: photo_opportunite(o), classe: "opp-carte--vedette",
+              <%= render "accueil/fiche_carte", lien: opportunity_path(o), photo: photo_opportunite(o, variante: :carte), classe: "opp-carte--vedette",
                          etiquette: { libelle: categorie.libelle, style: "background: #{categorie.couleur}; color: #{encre_sur(categorie.couleur)}" },
                          titre: o.title, commune: commune_de(o.city, o.location), date: date_courte(o),
                          extrait: excerpt_texte(o.description, longueur: 160) %>
@@ -49,7 +49,7 @@
                   <span class="agenda-titre"><%= o.title %></span>
                   <% if (commune = commune_de(o.city, o.location)) %><span class="agenda-lieu"><%= picto(:lieu, taille: 14) %><%= commune %></span><% end %>
                 </span>
-                <%= image_tag photo_opportunite(o), alt: "", class: "agenda-mini", width: 64, height: 64, loading: "lazy", decoding: "async" %>
+                <%= image_tag photo_opportunite(o, variante: :mini), alt: "", class: "agenda-mini", width: 64, height: 64, loading: "lazy", decoding: "async" %>
               <% end %>
             </li>
           <% end %>

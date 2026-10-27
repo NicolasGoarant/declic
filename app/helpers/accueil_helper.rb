@@ -99,9 +99,29 @@ module AccueilHelper
     nil
   end
 
+  # Variantes WebP des photos d'agenda : les originaux (PNG de 2 Mio) ne servent plus à la carte.
+  # `carte` = vedette (2:1, ≤ 1000 px de large pour un écran dense), `mini` = vignette de 64 px ×2.
+  VARIANTES_PHOTO = {
+    carte: { resize_to_limit: [ 1000, 1000 ], format: :webp, saver: { quality: 78 } },
+    mini: { resize_to_fill: [ 128, 128 ], format: :webp, saver: { quality: 75 } }
+  }.freeze
+
+  # libvips absent (poste de dev sans la bibliothèque) : on sert les originaux plutôt que des images cassées.
+  VIPS_DISPONIBLE = begin
+    require "vips"
+    true
+  rescue LoadError
+    false
+  end
+
   # Carte d'opportunité de l'accueil : jamais sans image (repli par catégorie).
-  def photo_opportunite(opportunite)
-    photo_couverture(opportunite) || asset_path("fallback-opportunity-#{opportunite.category}.jpg")
+  def photo_opportunite(opportunite, variante: nil)
+    photo = opportunite.couverture if VIPS_DISPONIBLE && variante
+    if photo&.variable?
+      url_for(photo.variant(VARIANTES_PHOTO.fetch(variante)))
+    else
+      photo_couverture(opportunite) || asset_path("fallback-opportunity-#{opportunite.category}.jpg")
+    end
   rescue StandardError
     asset_path("fallback-opportunity.jpg")
   end
