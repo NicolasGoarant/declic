@@ -571,7 +571,8 @@ export function uniformesEtat(etat, publies, { arbres = false, projection = null
 // dalle (coords → URL, le style actif ou son repli) ; propriete / masque / arbres (chemin → URL) ;
 // estCouverte, masqueListe, arbresListe, fenetresPeintes (coords → booléen) ; moment (nom du moment, pour
 // l'intensité des lampadaires) ; lampadaires (Promise de l'index de diorama/lampadaires, ou null) ;
-// options (options de couche Leaflet).
+// options (options de couche Leaflet) ; versSol (Promise d'une Map « dalle du niveau 8 → segments à remettre en sol », ou
+// null : le correctif de propriété du style, voir classesVersSol).
 export function creerCoucheAmbiance(L, opts) {
   const force = LAMPADAIRES.intensite[opts.moment] ?? 0
   const halo = haloMode()
@@ -587,7 +588,8 @@ export function creerCoucheAmbiance(L, opts) {
       const cle = `${opts.cle}|${chemin}`
       const gardee = cache.lire(cle, toile)
       if (gardee) { emission(cle).ok(gardee.emission ?? null); setTimeout(() => fini(null, toile), 0); return toile }
-      opts.uniformes.then((commun) => {
+      Promise.all([opts.uniformes, opts.versSol ?? null]).then(([commun, versSol]) => {
+        const segmentsDe = (a) => versSol?.get(a.chemin) ?? null
         let urlClasse = null, urlBas = null, mode = 2
         // Au-delà du niveau 8, propriété et masques viennent de la dalle d'origine, agrandie (versAnnexe).
         const dessous = { ...coords, y: coords.y + 1 }, dessus = { ...coords, y: coords.y - 1 }
@@ -604,11 +606,11 @@ export function creerCoucheAmbiance(L, opts) {
         // Masque des arbres : aux niveaux qu'il couvre (6 à 8, agrandi au-delà), une dalle non couverte n'a pas d'arbre.
         const arbres = commun?.saison[1] === 2 && commun.arbresPublies && coords.z >= 6
         return Promise.all([
-          commun, charger(opts.dalle(coords)), chargerAnnexe(urlClasse, annexe),
+          commun, charger(opts.dalle(coords)), chargerAnnexe(urlClasse, annexe, mode === 0 ? segmentsDe(annexe) : null),
           arbres && opts.arbresListe(annexe) ? chargerAnnexe(opts.arbres(annexe.chemin), annexe) : null,
           force > 0 ? opts.lampadaires : null,
-          force > 0 ? chargerAnnexe(urlBas, annexeBas) : null,
-          force > 0 ? chargerAnnexe(urlHaut, annexeHaut) : null,
+          force > 0 ? chargerAnnexe(urlBas, annexeBas, mode === 0 ? segmentsDe(annexeBas) : null) : null,
+          force > 0 ? chargerAnnexe(urlHaut, annexeHaut, mode === 0 ? segmentsDe(annexeHaut) : null) : null,
           force > 0 && opts.batiments && coords.z >= NIVEAU_ANNEXES ? chargerAnnexe(opts.batiments(annexe.chemin), annexe) : null
         ]).then(([commun, base, classe, imageArbres, lampadaires, classeBas, classeHaut, bat]) => {
           if (!base) { emission(cle).ok(null); fini(new Error("dalle absente"), toile); return }

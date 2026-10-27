@@ -35,6 +35,7 @@ class PagesController < ApplicationController
   def presse; end
   def sponsors; end
   def faq; end
+  def sources; end
   def contact; end
 
   # « Pourquoi Déclic ? » : même habillage que les fiches (layout « fiche », barre de /labo/accueil).

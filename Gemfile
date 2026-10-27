@@ -75,6 +75,7 @@ gem 'faraday'
 gem 'rss'           # parseur RSS/Atom de base (utilisé par feedjira aussi)
 gem 'feedjira', '~> 3.2'
 gem 'icalendar'
+gem 'rubyzip', '~> 3.0'   # extrait du GTFS SNCF (Trains::GtfsExtrait) : doit être en production, pas seulement avec selenium
 gem 'httparty'
 
 gem 'kramdown'

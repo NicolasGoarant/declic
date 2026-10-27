@@ -458,6 +458,7 @@ DEPENDENCIES
   rails (~> 7.2.2, >= 7.2.2.2)
   rss
   rubocop-rails-omakase
+  rubyzip (~> 3.0)
   selenium-webdriver
   sprockets-rails
   sqlite3 (~> 1.4)

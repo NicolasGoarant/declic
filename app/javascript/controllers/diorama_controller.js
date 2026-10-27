@@ -744,11 +744,25 @@ export default class extends Controller {
         arbresListe: (coords) => this.listee(this.dallesArbres, coords),
         fenetresPeintes: (coords) => LAMPADAIRES.fenetres.peintes.includes(this.styleDalle(coords)),
         moment: etat.moment,
+        versSol: this.style === "jeu-video-v2" ? this.abrisVersSol() : null,
         lampadaires: LAMPADAIRES.intensite[etat.moment] ? this.lampadaires() : null,
         options: this.optionsCouche
       })))
     }
     return this.couches[cle]
+  }
+
+  // Les abris de quai effacés du fond jeu-video-v2 mais encore « volume » dans la propriété (diorama/couches, classesVersSol) :
+  // la liste vient du correctif d'occlusion des trains (même fichier, dalles_vers_sol). Jamais d'échec : sans elle, la
+  // propriété brute. ?ambiance-abris=0 : propriété brute (témoin).
+  abrisVersSol() {
+    const t = this.tuilesValue
+    if (!t.disponibles?.trains || new URLSearchParams(window.location.search).get("ambiance-abris") === "0") return null
+    this.promesseAbris ||= fetch(`${t.trains}/occlusion-trains-jv2.json`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => (j?.style === "jeu-video-v2" && j.dalles_vers_sol ? new Map(Object.entries(j.dalles_vers_sol)) : null))
+      .catch(() => null)
+    return this.promesseAbris
   }
 
   // Les lampadaires (diorama/lampadaires), lus une fois, au premier moment éclairé ; null sans eux.
@@ -972,6 +986,20 @@ export default class extends Controller {
   // bateaux (440) et la météo (450) : sous les pins (600). Les sprites sont cuits en plein jour : hors du jour, la toile
   // est assombrie (TEINTES_VIVANTS). Lus une fois (15 Mio sur R2), après la pose de la carte ; rien si l'appareil
   // demande moins d'animations ou économise ses données. Crochet : ?vivants=0 ne les pose pas.
+  // Les vrais trains (relais Rails /trains/prochains.json) ; ?trains-reel=0 les coupe (boucle seule), ?trains-heure=HH:MM
+  // joue les horaires de cette heure (essais, ignoré en production)
+  relaisTrains() {
+    const q = new URLSearchParams(window.location.search)
+    if (q.get("trains-reel") === "0") return null
+    const m = (q.get("trains-heure") || "").match(/^(\d{1,2}):(\d{2})$/)
+    if (!m) return "/trains/prochains.json"
+    const debut = Date.now(), depart = Number(m[1]) * 3600 + Number(m[2]) * 60   // l'heure d'essai avance avec la page
+    return () => {
+      const s = (depart + Math.round((Date.now() - debut) / 1000)) % 86400, deux = (n) => String(n).padStart(2, "0")
+      return `/trains/prochains.json?a=${deux(Math.floor(s / 3600))}:${deux(Math.floor(s / 60) % 60)}:${deux(s % 60)}`
+    }
+  }
+
   majVivants(ambiance) {
     const t = this.tuilesValue
     const coupe = new URLSearchParams(window.location.search).get("vivants") === "0"
@@ -985,7 +1013,7 @@ export default class extends Controller {
       // vue ne recoupe pas le réseau ferré de la gare ; seulement sur jeu-video-v2. Crochet : ?trains=0 ne les pose pas.
       const trains = t.disponibles?.trains && new URLSearchParams(window.location.search).get("trains") !== "0"
         ? new Trains({ dossier: t.trains, scenarios: SCENARIOS_TRAINS, propriete, dallesPropriete: this.dallesPropriete[NIVEAU_REPERE],
-                       style: () => this.style })
+                       style: () => this.style, relais: this.relaisTrains() })
         : null
       this.vivants = new Vivants({
         dossier: t.vivants, propriete, trains,

@@ -19,9 +19,27 @@ export function versAnnexe(coords) {
   return { x, y, z, chemin: `${z}/${x}/${y}`, sx: (coords.x - x * k) * COTE / k, sy: (coords.y - y * k) * COTE / k, cote: COTE / k }
 }
 
-// L'image annexe de `annexe` (versAnnexe), agrandie à la dalle si besoin ; null si absente.
-export function chargerAnnexe(url, annexe) {
+// Remet en sol (classe 1) des pixels d'une carte de propriété du niveau 8 : segments [ligne, début, longueur]. Le style
+// jeu-video-v2 a effacé du fond des abris de quai que la propriété (calculée sur toits-v1) classe encore en volume : sans
+// ce correctif, l'ambiance leur déduit des façades et des lumières (des « tubes » posés sur les voies).
+export function classesVersSol(image, segments) {
+  const toile = document.createElement("canvas")
+  toile.width = image.width; toile.height = image.height
+  const ctx = toile.getContext("2d", { willReadFrequently: true })
+  ctx.drawImage(image, 0, 0)
+  const pixels = ctx.getImageData(0, 0, toile.width, toile.height), px = pixels.data
+  for (const [ligne, debut, n] of segments) {
+    for (let i = debut; i < debut + n; i++) { const q = 4 * (ligne * toile.width + i); px[q] = px[q + 1] = px[q + 2] = 1 }
+  }
+  ctx.putImageData(pixels, 0, 0)
+  return toile
+}
+
+// L'image annexe de `annexe` (versAnnexe), agrandie à la dalle si besoin ; null si absente. `segments` : pixels du niveau 8
+// à remettre en sol d'abord (classesVersSol).
+export function chargerAnnexe(url, annexe, segments = null) {
   return charger(url).then((image) => {
+    if (image && segments) image = classesVersSol(image, segments)
     if (!image || annexe.cote === COTE) return image
     const toile = document.createElement("canvas")
     toile.width = toile.height = COTE

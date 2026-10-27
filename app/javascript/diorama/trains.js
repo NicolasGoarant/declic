@@ -44,6 +44,17 @@ const RESEAU_N8 = [13300, 5800, 22700, 12400]   // emprise du réseau (px n8) : 
 const NIVEAU_MIN = 6                // comme les vivants : plus petit, les rames ne sont plus qu'un trait
 const STYLE_TRAINS = "jeu-video-v2" // la pose et le correctif d'occlusion valent pour ce fond seulement
 
+// TRAINS RÉELS (voir trains_reels.js) : tant que le relais annonce un vrai train, la scène est CELLE des horaires (rames
+// ajoutées à l'heure, scène préjouée de PREROLL_S pour que les trains déjà en route soient à leur place) ; sinon la boucle.
+// La boucle s'efface en fondu quand un vrai train est attendu dans AVANCE_REEL_S, et revient quand rien n'est attendu
+// dans HORIZON_BOUCLE_S.
+const PREROLL_S = 420
+const AVANCE_REEL_S = 6
+const HORIZON_BOUCLE_S = 180
+const PERIODE_RELAIS_MS = 60000
+const RATTRAPAGE_MAX_S = 5          // secondes de simulation rattrapées au plus par image
+const RETARD_REPRISE_S = 60         // plus de retard (onglet caché) : la scène est refaite à l'heure
+
 const estVolume = (c) => c === 2 || c === 4
 
 function lireJSON(u) {
@@ -334,6 +345,7 @@ export class Rame {
     this.departS = d.depart_s || 0
     this.sortie = d.sortie !== false
     this.attenteJusqua = null
+    this.retrait = d.retrait || 0; this.retraitT = null   // terminus : à la fin de l'arrêt, fondu de `retrait` s puis retrait par la scène
     this.etat = this.departS > 0 ? "attente départ" : "marche"
     this.refus = null; this.partages = []; this.autres = []; this.present = false; this.tEntree = 0
   }
@@ -410,6 +422,7 @@ export class Rame {
     if (this.etat === "attente départ") { if (t < this.departS) return; this.etat = "marche" }
     if (this.attenteJusqua !== null) {
       if (t < this.attenteJusqua) return
+      if (this.retrait) { this.retraitT ??= t; return }
       this.attenteJusqua = null; this.arrets.shift(); this.etat = "marche"
       reg.journal.push([t, this.nom, "départ de l'arrêt"])
     }
@@ -467,11 +480,27 @@ const ramesSeTouchent = (ca, cb) => ca.some((a) => cb.some((b) => quadsSeTouchen
 
 // ─── La scène : rames, cantonnement, horloge à pas fixe ───────────────────────────────────────────────────────
 export class Scene {
-  constructor(R, descriptions) {
-    this.R = R; this.dt = R.reg.pas_s; this.t = 0; this.reg = new Cantonnement(R); this.gardeFou = []
+  // dynamique : des rames s'ajoutent (`ajouter`) et s'en vont (sorties ou retirées) pendant que la scène avance
+  constructor(R, descriptions, { dynamique = false } = {}) {
+    this.R = R; this.dt = R.reg.pas_s; this.t = 0; this.reg = new Cantonnement(R); this.gardeFou = []; this.dynamique = dynamique
     this.rames = descriptions.map((d) => new Rame(R, d))
-    for (const r of this.rames) r.autres = this.rames.filter((o) => o !== r)
+    this.relier()
     for (const r of this.rames) { const motif = r.prendreInitial(this.reg); if (motif) this.reg.journal.push([0, r.nom, `entrée retardée : ${motif}`]); else r.tEntree = 0 }
+  }
+
+  relier() { for (const r of this.rames) r.autres = this.rames.filter((o) => o !== r) }
+
+  ajouter(d) {
+    const r = new Rame(this.R, d)
+    this.rames.push(r); this.relier()
+    return r
+  }
+
+  // La rame quitte la scène : ses cantons sont rendus
+  retirer(r) {
+    for (const c of r.tenus) this.reg.rendre(c, r.nom)
+    r.tenus = []; r.present = false; r.etat = "sortie"; r.prochain = r.cantons.length
+    this.reg.journal.push([this.t, r.nom, "retirée"])
   }
 
   pas() {
@@ -496,6 +525,11 @@ export class Scene {
         for (const r of [ici[i], ici[j]]) if (prec.has(r) && r.x !== prec.get(r)) { r.x = prec.get(r); r.v = 0; r.a = 0 }
       }
     }
+    if (this.dynamique) {
+      for (const r of this.rames) if (r.present && r.retraitT !== null && t >= r.retraitT + r.retrait) this.retirer(r)
+      const gardees = this.rames.filter((r) => r.etat !== "sortie")
+      if (gardees.length !== this.rames.length) { this.rames = gardees; this.relier() }
+    }
   }
 
   // avance jusqu'à l'instant t (s) par pas fixes
@@ -504,8 +538,8 @@ export class Scene {
   // Pour le dessin : avance jusqu'au premier pas qui DÉPASSE t, puis rend alpha ∈ [0, 1], la part du dernier pas écoulée à
   // l'instant t (les rames se posent à xPrec + alpha (x − xPrec)). Même trajectoire que avancerJusqua, vue une demi-seconde
   // en retard au plus.
-  jusqua(t) {
-    while (this.t < t - 1e-9) this.pas()
+  jusqua(t, avant = null) {
+    while (this.t < t - 1e-9) { avant?.(this.t + this.dt); this.pas() }
     return Math.max(0, Math.min(1, (t - (this.t - this.dt)) / this.dt))
   }
 }
@@ -515,23 +549,27 @@ export class Trains {
   // options : dossier (URL du jeu trains-v1), scenario (nom dans scenarios-trains.json), propriete, dallesPropriete
   //           (comme Vivants), style (() → nom du style affiché : correctif jv2 seulement pour son style)
   //           scenarios (en boucle, à la place de `scenario`, voir `poserEnBoucle`) : liste de noms joués l'un après l'autre
-  constructor({ dossier, scenario, scenarios = null, propriete, dallesPropriete, style = null }) {
+  //           relais (URL de /trains/prochains.json, ou fonction qui la rend) : les vrais trains de Nancy-Ville, sinon la boucle seule
+  constructor({ dossier, scenario, scenarios = null, propriete, dallesPropriete, style = null, relais = null }) {
     this.dossier = dossier.replace(/\/$/, "")
     this.nomScenario = scenario
     this.nomsBoucle = scenarios
     this.urlCode = propriete
     this.dallesCodes = dallesPropriete
     this.styleAffiche = style
+    this.urlRelais = relais
+    this.mode = "boucle"; this.decalage = 0; this.relaisOk = false
     this.codes = new Map()
     this.stats = { rames: 0, caisses: 0, gardeFou: 0, js: 0 }
   }
 
   async charger() {
     const u = (n) => `${this.dossier}/${n}`
-    const [R, modeles, sprites, atlas, reduitsS, reduitsA, scenarios, occlusion] = await Promise.all([
+    const [R, modeles, sprites, atlas, reduitsS, reduitsA, scenarios, occlusion, itineraires] = await Promise.all([
       lireJSON(u("reseau-trains.json")), lireJSON(u("modeles-trains.json")), lireJSON(u("sprites-trains.json")),
       lireImage(u("sprites-trains.png"), true), lireJSON(u("reduits/sprites.json")), lireImage(u("reduits/atlas.png"), true),
-      lireJSON(u("scenarios-trains.json")), lireJSON(u("occlusion-trains-jv2.json")).catch(() => null)
+      lireJSON(u("scenarios-trains.json")), lireJSON(u("occlusion-trains-jv2.json")).catch(() => null),
+      this.urlRelais ? lireJSON(u("itineraires-trains.json")).catch(() => null) : null
     ])
     this.R = new Reseau(R, modeles)
     this.sprites = sprites; this.atlas = atlas; this.reduits = { S: reduitsS, atlas: reduitsA }
@@ -540,7 +578,74 @@ export class Trains {
     this.rang = 0
     this.scenario = this.sequence[0]
     this.recommencer()
+    if (itineraires) {
+      const { Plan } = await import("diorama/trains_reels")
+      this.plan = new Plan(itineraires)
+      await this.interroger()
+      this.minuteur = setInterval(() => this.interroger(), PERIODE_RELAIS_MS)
+      document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - this.dernierRelais > PERIODE_RELAIS_MS / 2) this.interroger() })
+    }
     return this
+  }
+
+  // ─── Les vrais trains : relais Rails (jamais la SNCF), horloge du serveur ───────────────────────────────────────
+  monde() { return Date.now() / 1000 + this.decalage }
+
+  async interroger() {
+    if (document.hidden) return
+    try {
+      const t1 = Date.now()
+      const r = await fetch(typeof this.urlRelais === "function" ? this.urlRelais() : this.urlRelais, { cache: "no-store", signal: AbortSignal.timeout(6000) })
+      if (!r.ok) throw new Error(`relais : ${r.status}`)
+      const j = await r.json(), t2 = Date.now()
+      if (!Array.isArray(j.passages) || !Number.isFinite(j.maintenant)) throw new Error("réponse du relais inattendue")
+      this.decalage = j.maintenant - (t1 + t2) / 2000
+      this.dernierRelais = t2
+      this.plan.mettreAJour(j.passages, this.monde())
+      this.relaisOk = true
+    } catch (e) {
+      if (!this.relaisAverti) console.warn("trains (horaires) :", e)
+      this.relaisAverti = true
+    }
+  }
+
+  // La scène des horaires, préjouée jusqu'à maintenant (les rames déjà en route sont à leur place)
+  demarrerReel() {
+    const t0 = this.monde() - PREROLL_S
+    this.mode = "reel"; this.versReel = false
+    this.reel = { t0, scene: new Scene(this.R, [], { dynamique: true }), depuis: 0 }
+    this.plan.rearmer()
+    this.reel.scene.jusqua(PREROLL_S, (t) => this.lancer(t))
+  }
+
+  lancer(tScene) {
+    const rr = this.reel
+    for (const f of this.plan.dues(rr.t0 + tScene)) rr.scene.ajouter(this.plan.description(f, rr.t0))
+  }
+
+  versBoucle() {
+    this.mode = "boucle"; this.reel = null; this.versReel = false
+    this.rang = 0; this.scenario = this.sequence[0]; this.recommencer()
+    this.tScene = 0; this.fin = null; this.pause = 0
+  }
+
+  // Qui joue : les horaires tant qu'un vrai train est en scène ou attendu, sinon la boucle
+  aiguiller(maintenant) {
+    if (this.mode === "reel") {
+      if (!this.reel.scene.rames.length && !this.plan.aJouer(maintenant, HORIZON_BOUCLE_S)) this.versBoucle()
+    } else if (!this.versReel && this.plan.aJouer(maintenant, AVANCE_REEL_S)) {
+      this.versReel = true          // la boucle s'efface en fondu (`fin`), puis les horaires prennent la scène
+      this.fin ??= this.tScene || 0
+    }
+  }
+
+  poserReel(sc, delta, liste, maintenant) {
+    const rr = this.reel
+    rr.depuis += delta
+    const cible = maintenant - rr.t0
+    if (cible - rr.scene.t > RETARD_REPRISE_S) { this.demarrerReel(); return }
+    const alpha = rr.scene.jusqua(Math.min(cible, rr.scene.t + RATTRAPAGE_MAX_S), (t) => this.lancer(t))
+    this.poserScene(sc, rr.scene, alpha, liste, Math.min(1, rr.depuis / FONDU_FIN_S))
   }
 
   recommencer() { this.scene = new Scene(this.R, this.scenario.rames) }
@@ -665,16 +770,23 @@ export class Trains {
   // deux pas de simulation (0,5 s). `plafond` : t ne dépasse pas la durée écrite du scénario (la démo) ; la boucle de
   // l'accueil le lève pour jouer le scénario jusqu'à la sortie de la dernière rame.
   poserDans(sc, t, liste, plafond = true, gain = 1) {
-    const j0 = performance.now(), scene = this.scene
+    const scene = this.scene
     if (t < scene.t - scene.dt - 1e-9) this.recommencer()   // le temps est revenu en arrière (la scène a un pas d'avance)
-    const alpha = this.scene.jusqua(plafond ? Math.min(t, this.scenario.duree_s) : t), tRendu = this.scene.t - this.scene.dt + alpha * this.scene.dt
+    const alpha = this.scene.jusqua(plafond ? Math.min(t, this.scenario.duree_s) : t)
+    this.poserScene(sc, this.scene, alpha, liste, gain)
+  }
+
+  // Les caisses des rames présentes d'une scène (la boucle ou celle des horaires), alpha = part du dernier pas écoulée
+  poserScene(sc, scene, alpha, liste, gain) {
+    const j0 = performance.now(), tRendu = scene.t - scene.dt + alpha * scene.dt
     let n = 0, rames = 0
-    for (const r of this.scene.rames) {
+    for (const r of scene.rames) {
       if (!r.present) continue
       rames++
       const dedans = Math.min(1, Math.max(0, (tRendu - r.tEntree) / FONDU_ENTREE_S))
       const dehors = r.sortie ? Math.min(1, Math.max(0, (r.ch.longueur - r.xA(alpha)) / FONDU_SORTIE_M)) : 1
-      const fondu = dedans * dehors * gain
+      const efface = r.retraitT === null ? 1 : Math.max(0, 1 - (tRendu - r.retraitT) / r.retrait)
+      const fondu = dedans * dehors * efface * gain
       if (fondu <= 0.01) continue
       for (const c of r.caisses(alpha)) {
         if (c.X < sc.xmin - 60 || c.X > sc.xmax + 60 || c.Y < sc.ymin - 60 || c.Y > sc.ymax + 60) continue
@@ -684,7 +796,7 @@ export class Trains {
         n++
       }
     }
-    this.stats = { rames, caisses: n, gardeFou: this.scene.gardeFou.length, js: performance.now() - j0 }
+    this.stats = { rames, caisses: n, gardeFou: scene.gardeFou.length, js: performance.now() - j0, mode: this.mode }
   }
 
   // Plus rien à voir : aucune rame à entrer, et celles qui restent sont hors de ZONE_DECOR (ou sorties)
@@ -712,6 +824,9 @@ export class Trains {
       this.promesse ??= this.charger().catch((e) => { console.warn("trains :", e); this.echec = true })
       return
     }
+    if (this.relaisOk) this.aiguiller(this.monde())
+    if (this.mode === "reel") { this.poserReel(sc, delta, liste, this.monde()); return }
+    if (this.versReel && this.pause > 0) { this.demarrerReel(); return }
     if (this.pause > 0) {
       this.pause -= delta
       if (this.pause > 0) return
@@ -723,6 +838,7 @@ export class Trains {
     this.tScene = (this.tScene || 0) + delta
     const gain = this.fin == null ? 1 : Math.max(0, 1 - (this.tScene - this.fin) / FONDU_FIN_S)
     if (gain > 0) this.poserDans(sc, this.tScene, liste, false, gain)
+    else if (this.versReel) this.demarrerReel()
     else this.pause = PAUSE_S
     if (this.fin == null && (this.scene.t > DUREE_MAX_S || this.sceneFinie())) this.fin = this.tScene
   }
