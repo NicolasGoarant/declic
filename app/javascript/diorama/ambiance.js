@@ -200,6 +200,10 @@ const SOURCE_FS = [
   "    classe = (k == 1.0 || k == 3.0) ? 1.0 : ((k == 2.0 || k == 4.0) ? 2.0 : 0.0); toit = classe == 2.0 ? 1.0 : 0.0; }",
   "  else if (modeClasse == 1) { toit = texture2D(tClasse, uv).r; classe = toit > 0.5 ? 2.0 : 1.0; }",
   "  else { classe = 2.0; toit = -1.0; }",
+  // Feuillage au sol (niveau 8 : vert sur un pixel que la propriété donne au sol) : pelouse, ou tache verte que le fond
+  // peint sur une place minérale (esplanade près de la place Maginot). Il garde la classe 3 (l'hiver ne le jaunit pas),
+  // mais reçoit la lumière des places comme le pavé, sans la teinte des parcs là où elle tombe : plus de taches sombres.
+  "  float solPropre = modeClasse == 0 && classe == 1.0 ? 1.0 : 0.0;",
   "  if (classe > 0.0 && feuillage(o)) classe = 3.0;",
   "  float eauW = classe < 1.5 ? eau(o) : 0.0; // l'eau garde son bleu : ni or des lumières, ni brun du voile",
   // Poids de la lumière des rues/places au pied de CE pixel, calculé ICI (avant l'ombre) et réutilisé
@@ -208,8 +212,8 @@ const SOURCE_FS = [
   // en travers du cercle des teintes — visible comme une frange cyan/magenta aux bords des halos (v7b).
   "  vec3 lLum = vec3(0.0); float wLum = 0.0;",
   "  if (lumieres == 1) { lLum = lumiere(px);",
-  "    float solPre = toit < 0.0 || classe == 1.0 ? 1.0 : facade.w;",
-  "    float placePre = lLum.b * (classe == 3.0 ? 0.0 : 1.0);",
+  "    float solPre = toit < 0.0 || classe == 1.0 || solPropre > 0.5 ? 1.0 : facade.w;",
+  "    float placePre = lLum.b * (classe == 3.0 && solPropre < 0.5 ? 0.0 : 1.0);",
   "    wLum = (1.0 - (1.0 - lLum.r) * (1.0 - placePre)) * solPre * (1.0 - eauW); }",
   "  vec3 lab = versLab(o);",
   // 1. Saison.
@@ -259,7 +263,7 @@ const SOURCE_FS = [
   "    } else {",
   "      rgb = mix(rgb, voile.rgb, voile.a);",
   "    }",
-  "    if (classe == 3.0) rgb = mix(rgb, parcs.rgb * (0.75 + 0.5 * luma(o)), parcs.a); }",
+  "    if (classe == 3.0) rgb = mix(rgb, parcs.rgb * (0.75 + 0.5 * luma(o)), parcs.a * (1.0 - solPropre * clamp(wLum, 0.0, 1.0))); }",
   // 4. Lumières.
   "  if (lumieres == 1) {",
   "    float d = 0.0, h = facade.x / echelle;",
@@ -271,7 +275,7 @@ const SOURCE_FS = [
   "    bool tuile = k.y > 0.3 && k.x <= 32.0, ardoise = k.x >= 175.0 && k.x <= 260.0 && k.y < 0.35;",
   "    float fac = d > 0.0 && !tuile && !ardoise ? 1.0 : 0.0; // tuiles orangées et ardoises bleues : toit, pas de fenêtres",
   "    dbg.r = fac;",
-  "    float sol = toit < 0.0 || classe == 1.0 ? 1.0 : facade.w;",
+  "    float sol = toit < 0.0 || classe == 1.0 || solPropre > 0.5 ? 1.0 : facade.w;",
   // l, w : déjà calculés plus haut (lLum, wLum), avant l'ombre — voir le commentaire à leur déclaration.
   "    vec3 l = lLum; float w = wLum;",
   // v7b : la surface éclairée se déplace en Lab vers la couleur cible mesurée (cibleRue). a*/b* : mix
