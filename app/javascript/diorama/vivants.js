@@ -119,6 +119,25 @@ function lireImage(u, croise) {
   })
 }
 
+// Les dalles de codes sont lues par les bateaux et par les vivants : une seule requête et un seul décodage par dalle
+// (jusqu'ici chaque calque réclamait les siennes, quelque 250 requêtes de trop au premier affichage).
+const dallesLues = new Map()
+export function lireCodes(url) {
+  let promesse = dallesLues.get(url)
+  if (!promesse) {
+    promesse = lireImage(url, true).then((im) => {
+      const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height
+      const c = cv.getContext("2d", { willReadFrequently: true }); c.drawImage(im, 0, 0)
+      const px = c.getImageData(0, 0, im.width, im.height).data, a = new Uint8Array(im.width * im.height)
+      for (let q = 0; q < a.length; q++) a[q] = px[4 * q]
+      return { a, w: im.width }
+    })
+    promesse.catch(() => dallesLues.delete(url))
+    dallesLues.set(url, promesse)
+  }
+  return promesse
+}
+
 export class Vivants {
   // options : dossier (URL du jeu), propriete (chemin "8/x/y" → URL de la dalle de codes),
   //           dallesPropriete (Set("x/y") des dalles publiées au niveau 8 ; une absente vaut « dehors »),
@@ -127,8 +146,9 @@ export class Vivants {
   //           ou, sur une carte Leaflet : volet (() → l'élément qui reçoit la toile), placer (toile → la recale à
   //           l'origine de la vue, à chaque image) et cachee (() → vrai pendant une animation de zoom) ;
   //           style (() → nom du style affiché : le correctif des toits jv2 ne vaut que pour SON style) ;
-  //           horaire (vrai : effectifs selon l'heure de Nancy ; faux, le défaut : les effectifs validés)
-  constructor({ dossier, propriete, dallesPropriete, vue, ancre = null, volet = null, placer = null, cachee = null, style = null, horaire = false }) {
+  //           horaire (vrai : effectifs selon l'heure de Nancy ; faux, le défaut : les effectifs validés),
+  //           trains (un `Trains`, diorama/trains.js : ses caisses se peignent sur CETTE toile, triées avec les vivants)
+  constructor({ dossier, propriete, dallesPropriete, vue, ancre = null, volet = null, placer = null, cachee = null, style = null, horaire = false, trains = null }) {
     this.dossier = dossier.replace(/\/$/, "")
     this.urlCode = propriete
     this.dallesCodes = dallesPropriete
@@ -138,6 +158,7 @@ export class Vivants {
     this.placer = placer
     this.cachee = cachee
     this.styleAffiche = style
+    this.trains = trains
     this.codes = new Map()
     const params = new URLSearchParams(location.search)
     this.horlogeFigee = params.has("vivants-t") ? parseFloat(params.get("vivants-t")) : null
@@ -388,12 +409,8 @@ export class Vivants {
     const ent = { a: null }
     this.codes.set(cle, ent)
     if (!this.dallesCodes.has(`${tx}/${ty}`)) { ent.a = false; return }
-    lireImage(this.urlCode(`${NIVEAU_REPERE}/${tx}/${ty}`), true).then((im) => {
-      const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height
-      const c = cv.getContext("2d", { willReadFrequently: true }); c.drawImage(im, 0, 0)
-      const px = c.getImageData(0, 0, im.width, im.height).data, a = new Uint8Array(im.width * im.height)
-      for (let q = 0; q < a.length; q++) a[q] = px[4 * q]
-      ent.brut = a; ent.w = im.width; ent.cle = `${tx}/${ty}`
+    lireCodes(this.urlCode(`${NIVEAU_REPERE}/${tx}/${ty}`)).then(({ a, w }) => {
+      ent.brut = a; ent.w = w; ent.cle = `${tx}/${ty}`
       ent.a = this.codesDe(ent)
     }, () => { ent.a = false })
   }
@@ -413,6 +430,7 @@ export class Vivants {
   // Le style affiché a changé : les dalles déjà lues reprennent (ou quittent) le correctif.
   majStyle() {
     for (const ent of this.codes.values()) if (ent.brut) ent.a = this.codesDe(ent)
+    this.trains?.majStyle()
   }
 
   // -1 : pas encore lue (tenue pour du sol : on montre plutôt qu'on cache) ; 0 : dehors.
@@ -546,10 +564,14 @@ export class Vivants {
       this.majVus(sc)
       const t = this.horloge()
       this.calques.forEach((K, i) => { if (sc.niveau >= niveaux[i] - 1e-9) this.poserCalque(K, this.vus.listes[i], sc, t, liste) })
+      this.trains?.poserEnBoucle(sc, performance.now(), liste)
     }
     liste.sort((a, b) => a.Y - b.Y)
     const n = { pieton: 0, voiture: 0, velo: 0, bus: 0, trolleybus: 0 }
-    for (const o of liste) { this.peindre(ctx, sc, o); n[typeDe(o.M)]++ }
+    for (const o of liste) {
+      if (o.peindre) { o.peindre(ctx); continue }   // une caisse de train : se peint elle-même
+      this.peindre(ctx, sc, o); n[typeDe(o.M)]++
+    }
     this.stats = { pietons: n.pieton, voitures: n.voiture, velos: n.velo, bus: n.bus, trolleybus: n.trolleybus,
                    js: performance.now() - j0, niveau: sc.niveau, heure: this.facteurs ? this.heure : null }
   }

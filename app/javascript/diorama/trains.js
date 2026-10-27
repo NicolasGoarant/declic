@@ -28,6 +28,21 @@
 const NIVEAU_REPERE = 8
 const VOTE_PX = 7                   // nancy-3d, occlusion.py (pilote du 27/10)
 const KMH = 1 / 3.6
+// DÉCOR EN BOUCLE (page d'accueil) : les scénarios de démonstration se jouent l'un après l'autre jusqu'à la sortie de la
+// dernière rame, puis la scène repart du début. Une rame entre et sort en fondu (à la sortie : sur les FONDU_SORTIE_M
+// derniers mètres de la tête avant le bout du réseau), pour qu'aucune ne surgisse ni ne disparaisse d'un coup.
+const FONDU_ENTREE_S = 2
+const FONDU_SORTIE_M = 120
+const FONDU_FIN_S = 2               // fondu général des rames restantes quand la scène est finie
+const PAUSE_S = 3                   // scène vide entre deux scénarios
+// Un scénario est fini quand toutes les rames ont quitté le réseau OU sont sorties de ZONE_DECOR (px n8, ≈ la vue initiale
+// de l'accueil au niveau 6, autour de la gare) sans qu'aucune reste à entrer : sinon la scène resterait vide 2 à 3 minutes
+// pendant que les dernières rames finissent leur trajet loin de l'écran.
+const ZONE_DECOR = [14550, 8800, 19350, 12600]
+const DUREE_MAX_S = 900             // garde-fou : un scénario qui ne se vide pas est repris au bout de 15 min
+const RESEAU_N8 = [13300, 5800, 22700, 12400]   // emprise du réseau (px n8) : rien à lire ni à poser ailleurs
+const NIVEAU_MIN = 6                // comme les vivants : plus petit, les rames ne sont plus qu'un trait
+const STYLE_TRAINS = "jeu-video-v2" // la pose et le correctif d'occlusion valent pour ce fond seulement
 
 const estVolume = (c) => c === 2 || c === 4
 
@@ -310,6 +325,7 @@ export class Rame {
     this.R = R; this.nom = d.nom; this.type = d.type
     this.ch = new Chemin(R, d.morceaux)
     this.x = d.s_tete; this.v = d.v0 || 0; this.a = 0
+    this.xPrec = null   // x avant le dernier pas : l'image entre deux pas s'interpole (pas de 0,5 s = 2 positions par seconde sinon)
     this.L = R.longueurRame(d.type); this.m = R.reg.materiel[d.type]
     this.lim = new Limites(R, this.ch, d.type)
     this.cantons = decouper(R, this.ch)
@@ -319,7 +335,7 @@ export class Rame {
     this.sortie = d.sortie !== false
     this.attenteJusqua = null
     this.etat = this.departS > 0 ? "attente départ" : "marche"
-    this.refus = null; this.partages = []; this.autres = []; this.present = false
+    this.refus = null; this.partages = []; this.autres = []; this.present = false; this.tEntree = 0
   }
 
   finAutorisation() {
@@ -429,7 +445,9 @@ export class Rame {
     this.liberer(reg)
   }
 
-  caisses() { return this.R.poser(this.type, this.ch, this.x) }
+  // alpha = 1 : l'état du dernier pas ; sinon la position entre xPrec (alpha 0) et x (alpha 1)
+  xA(alpha) { return alpha < 1 && this.xPrec !== null ? this.xPrec + (this.x - this.xPrec) * alpha : this.x }
+  caisses(alpha = 1) { return this.R.poser(this.type, this.ch, this.xA(alpha)) }
 }
 
 // ─── Garde-fou : rectangles au sol (séparation des axes) ──────────────────────────────────────────────────────
@@ -453,7 +471,7 @@ export class Scene {
     this.R = R; this.dt = R.reg.pas_s; this.t = 0; this.reg = new Cantonnement(R); this.gardeFou = []
     this.rames = descriptions.map((d) => new Rame(R, d))
     for (const r of this.rames) r.autres = this.rames.filter((o) => o !== r)
-    for (const r of this.rames) { const motif = r.prendreInitial(this.reg); if (motif) this.reg.journal.push([0, r.nom, `entrée retardée : ${motif}`]) }
+    for (const r of this.rames) { const motif = r.prendreInitial(this.reg); if (motif) this.reg.journal.push([0, r.nom, `entrée retardée : ${motif}`]); else r.tEntree = 0 }
   }
 
   pas() {
@@ -462,12 +480,12 @@ export class Scene {
     for (const r of this.rames) {
       if (!r.present) {
         if (r.etat !== "sortie" && r.prendreInitial(this.reg) === null) {
-          r.demander(this.reg, t); r.v = Math.min(r.v, r.vitessePermise(r.finAutorisation()))
+          r.demander(this.reg, t); r.v = Math.min(r.v, r.vitessePermise(r.finAutorisation())); r.tEntree = t
           this.reg.journal.push([t, r.nom, "entre en scène"])
         }
         continue
       }
-      prec.set(r, r.x)
+      prec.set(r, r.x); r.xPrec = r.x
       r.pas(this.dt, t, this.reg)
     }
     const ici = this.rames.filter((r) => r.present), cais = new Map(ici.map((r) => [r, r.caisses()]))
@@ -482,15 +500,25 @@ export class Scene {
 
   // avance jusqu'à l'instant t (s) par pas fixes
   avancerJusqua(t) { while (this.t + this.dt <= t + 1e-9) this.pas() }
+
+  // Pour le dessin : avance jusqu'au premier pas qui DÉPASSE t, puis rend alpha ∈ [0, 1], la part du dernier pas écoulée à
+  // l'instant t (les rames se posent à xPrec + alpha (x − xPrec)). Même trajectoire que avancerJusqua, vue une demi-seconde
+  // en retard au plus.
+  jusqua(t) {
+    while (this.t < t - 1e-9) this.pas()
+    return Math.max(0, Math.min(1, (t - (this.t - this.dt)) / this.dt))
+  }
 }
 
 // ─── Le dessin ────────────────────────────────────────────────────────────────────────────────────────────────
 export class Trains {
   // options : dossier (URL du jeu trains-v1), scenario (nom dans scenarios-trains.json), propriete, dallesPropriete
   //           (comme Vivants), style (() → nom du style affiché : correctif jv2 seulement pour son style)
-  constructor({ dossier, scenario, propriete, dallesPropriete, style = null }) {
+  //           scenarios (en boucle, à la place de `scenario`, voir `poserEnBoucle`) : liste de noms joués l'un après l'autre
+  constructor({ dossier, scenario, scenarios = null, propriete, dallesPropriete, style = null }) {
     this.dossier = dossier.replace(/\/$/, "")
     this.nomScenario = scenario
+    this.nomsBoucle = scenarios
     this.urlCode = propriete
     this.dallesCodes = dallesPropriete
     this.styleAffiche = style
@@ -508,7 +536,9 @@ export class Trains {
     this.R = new Reseau(R, modeles)
     this.sprites = sprites; this.atlas = atlas; this.reduits = { S: reduitsS, atlas: reduitsA }
     this.occlusion = occlusion
-    this.scenario = scenarios.scenarios[this.nomScenario]
+    this.sequence = (this.nomsBoucle || [this.nomScenario]).map((n) => scenarios.scenarios[n])
+    this.rang = 0
+    this.scenario = this.sequence[0]
     this.recommencer()
     return this
   }
@@ -624,27 +654,76 @@ export class Trains {
       }
       ctx.clip()
     }
+    if (c.alpha < 1) ctx.globalAlpha = c.alpha
     ctx.drawImage(p.im, s[0], s[1], s[2], s[3], X - s[4] * f, Y - s[5] * f, s[2] * f, s[3] * f)
+    ctx.globalAlpha = 1
     if (col) ctx.restore()
   }
 
-  // Avance la scène à l'instant t (s, horloge de la page ; la scène reprend du début quand t revient en arrière) puis
-  // AJOUTE à `liste` les caisses vues, objets { Y (px CSS), peindre(ctx, sc) } triables avec ceux des vivants.
-  poserDans(sc, t, liste) {
-    const j0 = performance.now()
-    if (t < this.scene.t) this.recommencer()
-    this.scene.avancerJusqua(Math.min(t, this.scenario.duree_s))
+  // Avance la scène à l'instant t (s ; la scène reprend du début quand t revient en arrière) puis AJOUTE à `liste` les
+  // caisses vues, objets { Y (px CSS), peindre(ctx) } triables avec ceux des vivants. La position est interpolée entre
+  // deux pas de simulation (0,5 s). `plafond` : t ne dépasse pas la durée écrite du scénario (la démo) ; la boucle de
+  // l'accueil le lève pour jouer le scénario jusqu'à la sortie de la dernière rame.
+  poserDans(sc, t, liste, plafond = true, gain = 1) {
+    const j0 = performance.now(), scene = this.scene
+    if (t < scene.t - scene.dt - 1e-9) this.recommencer()   // le temps est revenu en arrière (la scène a un pas d'avance)
+    const alpha = this.scene.jusqua(plafond ? Math.min(t, this.scenario.duree_s) : t), tRendu = this.scene.t - this.scene.dt + alpha * this.scene.dt
     let n = 0, rames = 0
     for (const r of this.scene.rames) {
       if (!r.present) continue
       rames++
-      for (const c of r.caisses()) {
+      const dedans = Math.min(1, Math.max(0, (tRendu - r.tEntree) / FONDU_ENTREE_S))
+      const dehors = r.sortie ? Math.min(1, Math.max(0, (r.ch.longueur - r.xA(alpha)) / FONDU_SORTIE_M)) : 1
+      const fondu = dedans * dehors * gain
+      if (fondu <= 0.01) continue
+      for (const c of r.caisses(alpha)) {
         if (c.X < sc.xmin - 60 || c.X > sc.xmax + 60 || c.Y < sc.ymin - 60 || c.Y > sc.ymax + 60) continue
+        c.alpha = fondu
         // Y en px n8 comme les vivants (o.Y est en px CSS chez eux, de même ordre : le tri ne dépend que de l'ordre)
         liste.push({ Y: c.Y * sc.k + sc.oy, peindre: (ctx) => this.peindre(ctx, sc, c) })
         n++
       }
     }
     this.stats = { rames, caisses: n, gardeFou: this.scene.gardeFou.length, js: performance.now() - j0 }
+  }
+
+  // Plus rien à voir : aucune rame à entrer, et celles qui restent sont hors de ZONE_DECOR (ou sorties)
+  sceneFinie() {
+    for (const r of this.scene.rames) {
+      if (!r.present) { if (r.etat !== "sortie") return false; continue }
+      const [X, Y] = r.ch.point(r.x, "px")
+      if (X >= ZONE_DECOR[0] && X <= ZONE_DECOR[2] && Y >= ZONE_DECOR[1] && Y <= ZONE_DECOR[3]) return false
+    }
+    return true
+  }
+
+  // ─── Le décor en boucle (page d'accueil) ─────────────────────────────────────────────────────────────────────
+  // À appeler à chaque image de la toile des vivants, avec l'horloge de la page (ms) : les scénarios se jouent l'un après
+  // l'autre, chacun jusqu'à la sortie de sa dernière rame (ou DUREE_MAX_S), puis PAUSE_S de scène vide et le suivant.
+  // L'horloge propre des trains n'avance que de 0,25 s au plus par image : un onglet resté caché ne fait pas rejouer
+  // des minutes de simulation d'un coup. Rien tant que le fond n'est pas celui des trains, que la vue est petite ou
+  // qu'elle ne recoupe pas le réseau ; les données (9 Mio) ne se lisent qu'à la première vue du réseau.
+  poserEnBoucle(sc, ms, liste) {
+    const delta = this.dernierMs == null ? 0 : Math.min(Math.max(ms - this.dernierMs, 0), 250) / 1000
+    this.dernierMs = ms
+    if (this.echec || this.styleAffiche?.() !== STYLE_TRAINS || sc.niveau < NIVEAU_MIN - 1e-9) return
+    if (sc.xmax < RESEAU_N8[0] || sc.xmin > RESEAU_N8[2] || sc.ymax < RESEAU_N8[1] || sc.ymin > RESEAU_N8[3]) return
+    if (!this.R) {
+      this.promesse ??= this.charger().catch((e) => { console.warn("trains :", e); this.echec = true })
+      return
+    }
+    if (this.pause > 0) {
+      this.pause -= delta
+      if (this.pause > 0) return
+      this.pause = 0; this.fin = null
+      this.rang = (this.rang + 1) % this.sequence.length
+      this.scenario = this.sequence[this.rang]
+      this.recommencer(); this.tScene = 0
+    }
+    this.tScene = (this.tScene || 0) + delta
+    const gain = this.fin == null ? 1 : Math.max(0, 1 - (this.tScene - this.fin) / FONDU_FIN_S)
+    if (gain > 0) this.poserDans(sc, this.tScene, liste, false, gain)
+    else this.pause = PAUSE_S
+    if (this.fin == null && (this.scene.t > DUREE_MAX_S || this.sceneFinie())) this.fin = this.tScene
   }
 }

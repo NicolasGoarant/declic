@@ -39,12 +39,16 @@
 // Nancy) ; un bateau EN MARCHE est gardé si sa graine est sous le facteur (la file garde ses rangs). Les bateaux À QUAI
 // restent à toute heure : la nuit, le port ne s'anime plus mais reste visible.
 
-import { heureANancy, surCourbe } from "diorama/vivants"
+import { heureANancy, lireCodes, surCourbe } from "diorama/vivants"
 
 const NIVEAU_REPERE = 8
 // Dès ×0,25 (niveau 6, 26/10, Nicolas), comme vélos, voitures, bus et trolleybus (vivants.js) : aucun palier où les uns
 // se voient sans les autres. Jusqu'au 26/10 : niveau 7.
 const NIVEAU_MIN = 6
+// Le masque au sol (sillage sous les ponts et les arbres) ne se construit qu'à partir du niveau 7 : au niveau 6 il lisait
+// quelque 780 dalles de propriété pour des sillages de moins d'un pixel. Les coques, elles, restent masquées dès le niveau 6
+// (colonnes par colonne, `codeEn`, seules dalles lues celles qu'elles touchent).
+const NIVEAU_MASQUE = 7
 // Sous le niveau 7, toute coque est agrandie ×2 (les planchers de px des niveaux 7 à 9 ne s'y appliquent pas) : péniche
 // 19-32 px contre 34 px pour le trolleybus de 24 m (×2,5), barque 8-10 px contre 7 px pour la voiture et 10 px pour le
 // vélo. Avec la garde de berge à la tolérance en px du niveau 7, 71 % des bateaux en marche restent visibles au niveau 6
@@ -414,16 +418,12 @@ export class Mobiles {
     ent = { a: null }
     this.codes.set(cle, ent)
     if (this.dallesCodes && !this.dallesCodes.has(`${tx}/${ty}`)) { ent.a = false; ent.promesse = Promise.resolve(); return ent.promesse }
-    ent.promesse = lireImage(this.urlCode(`${NIVEAU_REPERE}/${tx}/${ty}`), true).then((im) => {
-      const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height
-      const c = cv.getContext("2d", { willReadFrequently: true }); c.drawImage(im, 0, 0)
-      const px = c.getImageData(0, 0, im.width, im.height).data, a = new Uint8Array(im.width * im.height)
-      for (let q = 0; q < a.length; q++) a[q] = px[4 * q]
-      ent.brut = a; ent.w = im.width
+    ent.promesse = lireCodes(this.urlCode(`${NIVEAU_REPERE}/${tx}/${ty}`)).then(({ a, w }) => {
+      ent.brut = a; ent.w = w
       const segs = this.occlusion?.dalles.get(`${tx}/${ty}`)
       if (segs) { // [ligne, début, longueur] : volume → sol posé (code 1)
         const c = a.slice()
-        for (const [y, x, n] of segs) c.fill(1, y * im.width + x, y * im.width + x + n)
+        for (const [y, x, n] of segs) c.fill(1, y * w + x, y * w + x + n)
         ent.corrige = c
       }
       ent.a = this.codesDe(ent)
@@ -460,7 +460,7 @@ export class Mobiles {
 
   // Le masque des volumes de la vue (élargi de MARGE_MASQUE), refait à chaque fin de déplacement.
   construireMasque() {
-    if (!this.toile || this.carte.getZoom() < NIVEAU_MIN) return
+    if (!this.toile || this.carte.getZoom() < NIVEAU_MASQUE) return
     const sc = this.cadre(), Wm = this.largeur + 2 * MARGE_MASQUE, Hm = this.hauteur + 2 * MARGE_MASQUE
     const nx0 = (-MARGE_MASQUE - sc.ox) / sc.k, ny0 = (-MARGE_MASQUE - sc.oy) / sc.k
     const promesses = []

@@ -102,7 +102,7 @@ class Story < ApplicationRecord
   def a_la_une? = tags.to_s.split(/[;,]/).any? { |t| t.strip.parameterize == ETIQUETTE_A_LA_UNE }
 
   def self.pour_la_une(limite = 3)
-    recentes = active.order(happened_on: :desc, created_at: :desc)
+    recentes = active.with_attached_image.with_attached_photos.order(happened_on: :desc, created_at: :desc)
     choisies = recentes.where("LOWER(tags) LIKE ?", "%la une%").select(&:a_la_une?).first(limite)
     choisies.presence || recentes.limit(limite).to_a
   end

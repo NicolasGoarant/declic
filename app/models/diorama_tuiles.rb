@@ -39,8 +39,9 @@ class DioramaTuiles
   # avec ?vivants=1 sur /labo/diorama.
   # vivants-v2 (publié le 21/10/2026) ajoute bus et trolleybus ; vivants-v1 reste sur R2. DIORAMA_VIVANTS_URL : essayer un autre dossier.
   VIVANTS = "vivants-v2".freeze
-  # Les trains (diorama/trains : rames TER et TGV sur le réseau ferré, scénarios de démonstration de nancy-3d) : seulement
-  # avec ?trains=1 sur /labo/diorama, sur le style jeu-video-v2. DIORAMA_TRAINS_URL : essayer un autre dossier.
+  # Les trains (diorama/trains : rames TER et TGV sur le réseau ferré, scénarios de démonstration de nancy-3d, joués en
+  # boucle comme décor) : par défaut sur la page d'accueil, avec les vivants et sur le style jeu-video-v2 ; avec ?trains=1
+  # sur /labo/diorama. DIORAMA_TRAINS_URL : essayer un autre dossier.
   TRAINS = "trains-v1".freeze
   # La nuit chaude (nancy-3d rapports/nuit-chaude-v1) : bâtiment par pixel au niveau 8 (batiments/8/{x}/{y}.png, le
   # tirage des fenêtres allumées par bâtiment) et flaques des lanternes Géonancy des places (flaques-places.json).
@@ -85,15 +86,17 @@ class DioramaTuiles
     bateaux = vrai && propriete && p.fetch("#{mobiles}/manifeste.json")
     vivants = vrai && propriete && p.fetch("#{self.vivants}/manifeste.json")
     nuit = vrai && p.fetch("#{self.nuit}/manifeste.json")
+    # les trains se posent par la carte de propriété (occlusion), comme les vivants dont ils partagent la toile
+    trains = vrai && propriete && p.fetch("#{self.trains}/manifeste.json")
     { vrai: vrai, styles: styles, blanche: blanche, ambiances: ambiances, arbres: arbres, lumieres: lumieres, mobiles: bateaux,
-      vivants: vivants, nuit: nuit }
+      vivants: vivants, nuit: nuit, trains: trains }
   end
 
   # Ce que reçoit le contrôleur Stimulus.
   def pour_js
     {
       base: base, styles: STYLES.keys, style_defaut: STYLE_DEFAUT, masque: MASQUE, propriete: PROPRIETE,
-      arbres: ARBRES, lumieres: lampadaires(presents), mobiles: mobiles, vivants: vivants, nuit: nuit,
+      arbres: ARBRES, lumieres: lampadaires(presents), mobiles: mobiles, vivants: vivants, trains: trains, nuit: nuit,
       ambiances: AMBIANCES.index_with { |nom| parametres_ambiance(nom) },
       disponibles: disponibles
     }
@@ -111,16 +114,16 @@ class DioramaTuiles
 
   def urls_a_sonder
     [ *STYLES.keys, MASQUE, PROPRIETE, ARBRES, *LAMPADAIRES.map(&:first) ].map { |dossier| url("#{dossier}/manifeste.json") } +
-      AMBIANCES.map { |nom| url(parametres_ambiance(nom)) } + [ "#{mobiles}/manifeste.json", "#{vivants}/manifeste.json", "#{nuit}/manifeste.json" ]
+      AMBIANCES.map { |nom| url(parametres_ambiance(nom)) } + [ "#{mobiles}/manifeste.json", "#{vivants}/manifeste.json", "#{nuit}/manifeste.json", "#{trains}/manifeste.json" ]
   end
 
   def presents
     VERROU.synchronize do
-      entree = CACHE[[ base, mobiles, vivants, nuit ]]
+      entree = CACHE[[ base, mobiles, vivants, nuit, trains ]]
       return entree[:resultat] if entree && entree[:le] > DUREE_CACHE.ago
     end
     resultat = urls_a_sonder.map { |u| Thread.new { [ u, @sonde.call(u) ] } }.to_h(&:value)
-    VERROU.synchronize { CACHE[[ base, mobiles, vivants, nuit ]] = { le: Time.current, resultat: resultat } }
+    VERROU.synchronize { CACHE[[ base, mobiles, vivants, nuit, trains ]] = { le: Time.current, resultat: resultat } }
     resultat
   end
 

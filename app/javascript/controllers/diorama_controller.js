@@ -18,6 +18,7 @@ import { meteoAuto, meteoGardee } from "diorama/meteo"
 import { Precipitations } from "diorama/precipitations"
 import { Mobiles } from "diorama/mobiles"
 import { Vivants } from "diorama/vivants"
+import { Trains } from "diorama/trains"
 import { chargerLampadaires, compterLampadaires } from "diorama/lampadaires"
 import { LAMPADAIRES, PINS } from "diorama/reglages"
 import { voletHalo, haloPermis, TiltShift } from "diorama/vue"
@@ -71,6 +72,8 @@ const RAYON_PROXIMITE_KM = 10 // filtre « À proximité » du volet (la liste O
 // Les vivants : leur volet (entre les bateaux, 440, et la météo, 450) et l'assombrissement de leur toile par moment
 // (leurs sprites sont cuits en plein jour ; les dalles, elles, reçoivent l'étalonnage de l'ambiance).
 const Z_VIVANTS = 445
+const SCENARIOS_TRAINS = ["gare", "ligne_droite"] // joués l'un après l'autre (diorama/trains, poserEnBoucle)
+const DELAI_FOND_NET_MS = 8000 // au plus, l'attente du fond net avant de poser bateaux, vivants et trains
 const TEINTES_VIVANTS = {
   aube: "brightness(0.85) saturate(0.85)", "heure-doree": "brightness(0.9) sepia(0.15)",
   "heure-bleue": "brightness(0.65) saturate(0.7)", nuit: "brightness(0.45) saturate(0.6)"
@@ -780,6 +783,19 @@ export default class extends Controller {
     return this.etalonnages[nom]
   }
 
+  // Les calques animés (bateaux, vivants, trains) lisent une trentaine de Mio et quelque 800 dalles de propriété : au premier
+  // affichage ils attendent que les dalles de la vue soient là (ou DELAI_FOND_NET_MS), pour ne pas leur disputer le réseau.
+  attendreFondNet(couche) {
+    if (this.promesseFondNet) return
+    let fin
+    this.promesseFondNet = new Promise((ok) => { fin = ok })
+    const minuteur = setTimeout(fin, DELAI_FOND_NET_MS)
+    couche.once("load", () => { clearTimeout(minuteur); fin() })
+    this.promesseFondNet.then(() => { this.fondNet = true; if (this.carte) this.majMeteo() })
+  }
+
+  fondEnAttente() { return Boolean(this.promesseFondNet) && !this.fondNet }
+
   // Maquette blanche et ambiance sont exclusives : la blanche l'emporte tant qu'elle est cochée.
   coucheCourante() {
     return this.rendu === "blanche" ? this.coucheBlanche() : this.coucheAmbiance(this.etat)
@@ -790,6 +806,7 @@ export default class extends Controller {
   // Le tilt-shift est posé une fois par carte du diorama, hors mini-carte ; ?tilt=0 le retire, ?halo=0 retire le halo.
   poserCoucheFond(nouvelle) {
     nouvelle.addTo(this.carte)
+    this.attendreFondNet(nouvelle)
     if (nouvelle.emission && haloPermis()) { voletHalo(this.carte); nouvelle.emission.addTo(this.carte) }
     if (this.coucheFond && this.coucheFond !== nouvelle) {
       this.carte.removeLayer(this.coucheFond)
@@ -936,7 +953,7 @@ export default class extends Controller {
   majMobiles(ambiance) {
     const t = this.tuilesValue
     const coupe = new URLSearchParams(window.location.search).get("mobiles") === "0"
-    const voulu = ambiance && !coupe && Boolean(t.disponibles?.mobiles) && Boolean(this.dallesPropriete)
+    const voulu = ambiance && !coupe && Boolean(t.disponibles?.mobiles) && Boolean(this.dallesPropriete) && !this.fondEnAttente()
     if (this.mobiles && (!voulu || this.mobiles.carte !== this.carte)) {
       this.mobiles.detruire()
       this.mobiles = null
@@ -959,12 +976,19 @@ export default class extends Controller {
     const t = this.tuilesValue
     const coupe = new URLSearchParams(window.location.search).get("vivants") === "0"
     const voulu = ambiance && !coupe && Boolean(t.disponibles?.vivants) && Boolean(this.dallesPropriete?.[NIVEAU_REPERE]) &&
-                  Vivants.permis() && !navigator.connection?.saveData
+                  Vivants.permis() && !navigator.connection?.saveData && !this.fondEnAttente()
     if (!voulu) { this.vivants?.arreter(); return }
     if (!this.vivants) {
       const carte = () => this.carte
+      const propriete = (chemin) => this.url(t.propriete, `${chemin}.png`)
+      // Les trains (diorama/trains) : un décor en boucle sur la toile des vivants, triés avec eux. Rien ne se lit tant que la
+      // vue ne recoupe pas le réseau ferré de la gare ; seulement sur jeu-video-v2. Crochet : ?trains=0 ne les pose pas.
+      const trains = t.disponibles?.trains && new URLSearchParams(window.location.search).get("trains") !== "0"
+        ? new Trains({ dossier: t.trains, scenarios: SCENARIOS_TRAINS, propriete, dallesPropriete: this.dallesPropriete[NIVEAU_REPERE],
+                       style: () => this.style })
+        : null
       this.vivants = new Vivants({
-        dossier: t.vivants, propriete: (chemin) => this.url(t.propriete, `${chemin}.png`),
+        dossier: t.vivants, propriete, trains,
         dallesPropriete: this.dallesPropriete[NIVEAU_REPERE], style: () => this.style, horaire: true,
         vue: () => {
           const c = carte().project(carte().getCenter(), NIVEAU_REPERE), z = carte().getSize()

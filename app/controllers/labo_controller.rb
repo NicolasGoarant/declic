@@ -1,5 +1,7 @@
 # Pages de test isolées, sans lien depuis la navigation publique.
 class LaboController < ApplicationController
+  DUREE_CHIFFRES = 2.minutes
+
   # L'accueil est la page racine du site : elle seule est indexable.
   before_action(except: :accueil) { response.set_header("X-Robots-Tag", "noindex, nofollow") }
 
@@ -25,7 +27,7 @@ class LaboController < ApplicationController
     # Agenda : de quoi remplir la vedette et quatre lignes pour chaque catégorie filtrée.
     @prochaines = Opportunity.active.prochaines.with_attached_photos.with_attached_image.limit(40)
     @une = Story.pour_la_une(1).first
-    @histoires_accueil = Story.active.where.not(id: @une&.id).order(happened_on: :desc, created_at: :desc).limit(2).with_attached_image
+    @histoires_accueil = Story.active.where.not(id: @une&.id).order(happened_on: :desc, created_at: :desc).limit(2).with_attached_image.with_attached_photos
     @chiffres = chiffres_impact
     @passages = PassagePresse.visibles
     render layout: "accueil"
@@ -60,6 +62,12 @@ class LaboController < ApplicationController
   # comptes utilisateurs, les « personnes engagées » sont celles que la base connaît par leur nom :
   # structures qui portent une opportunité et personnes des Belles Histoires.
   def chiffres_impact
+    # Quatre requêtes par visite pour des comptages qui bougent rarement : gardés DUREE_CHIFFRES (la base est loin du serveur,
+    # chaque requête coûte ~100 ms en production).
+    Rails.cache.fetch("accueil/chiffres-impact", expires_in: DUREE_CHIFFRES) { compter_impact }
+  end
+
+  def compter_impact
     noms = Opportunity.active.where.not(organization: [ nil, "" ]).distinct.pluck(:organization) +
            Story.active.pluck(:quote_author, :author_name).flatten
     # Initiatives, rencontres et histoires : publiées ET placées sur la carte, comme le badge des
