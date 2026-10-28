@@ -10,13 +10,13 @@ Détail ancien (fiches, bateaux, vivants, toits, accueil, géoloc…) : `git log
 - **R2 `trains-v1`** : `itineraires-trains.json` publié le 27/10 (29 itinéraires unitaires) via nancy-3d `publier-r2.py --jeu trains-v1` (source ajoutée à `JEUX`, non commitée) ; paquet régénéré par `exporter.py` (scenarios inchangés : seul le texte du journal varie).
 - **Correctif A (118f31a)** : `dalles_vers_sol` de `occlusion-trains-jv2.json` appliquées à la carte de classes de l'ambiance (niveau 8, `couches.js classesVersSol`, `ambiance.js versSol`, `diorama_controller abrisVersSol`, témoin `?ambiance-abris=0`). Gain net mais partiel : le résidu près des rails est du vrai bâti (prismes qui débordent) ; élargir la règle effacerait des façades. Niveaux 6-7 (masque du bâti) non traités.
 - **Défauts du 27/10** : (1) esplanade près de la place Maginot (dalle n8 66/38) — l'ambiance laisse le « feuillage au sol » (vert sur sol de la propriété) recevoir la lumière des places, sans teinte des parcs (37f48a7, eu) ; l'option B littérale (déclasser ce vert) jaunissait les pelouses en hiver. (2) lucarnes en double au n8 et en dessous (fond nancy-3d, pas les mâts) : greffe `v20-lucarnes-n8.py` (nancy-3d, non commité), 959 dalles n8→n0 publiées sur R2 + purge 6 origines ; « échelles » de lucarnes côté cour laissées de côté.
+- **Échelles de lucarnes côté cour (28/10, nancy-3d ee6cbb9)** : `V2_LUCARNES_RUE=1` (défaut, v01 + copie portée n9) ne garde sur les mansardes que les lucarnes côté rue (sonde 2 m au-delà de l'égout : hors bâti, < 15 m d'une voirie). 798 bâtiments ; 2 592 dalles n9→n0 publiées R2 + purge 6 origines. Deux-pans inchangés. `nuit-chaude-v1` non concernée.
 - Diorama en local : `http://localhost:3003` ou `:3000` (CORS R2), JAMAIS `127.0.0.1`. Purge Cloudflare des dalles R2 : une purge par variante Origin (mémoire `purge-cloudflare-origin`).
 
 ## Tests
 - `bin/rails test` : 135 verts (27/10). Système : `CHROME_NO_SANDBOX=1`, `SE_CHROMEDRIVER` vers chromedriver = Chrome ; `calques_test.rb:48`/`:112` échouent aussi sur main, `geoloc_auto_test`/`accueil_test.rb:49` intermittents.
 
 ## Reste à faire
-- Défaut visuel mineur connu (fond nancy-3d) : « échelles » verticales de lucarnes sur les brisis côté cour (ex. bâtiment au nord de la place Maginot, n8 67-68/39-40, aussi au n9). Chantier séparé : limiter `lucarnes()` (jeu-video-v2 `v01-batiments.py`) aux façades sur rue, ou ne pas en poser côté cour. `nuit-chaude-v1` `batiments/8` ne dépend pas des lucarnes (mosaïque toits-v1 + identifiants).
 - GTFS : aucun service Nancy le 31/10/2026 (trou de la source) → boucle ce jour-là ; surveiller le rafraîchissement hebdo de l'extrait.
 - Quai plausible choisi côté client (voie à quai non publiée) ; Intercités rendus en TER (pas de sprite).
 - Éventuel correctif B (propriété jeu-vidéo régénérée côté nancy-3d, R2 + purge par Origin) si des défauts de rectangles clairs reviennent, y compris aux niveaux 6-7.
