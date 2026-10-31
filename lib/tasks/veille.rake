@@ -100,6 +100,8 @@ namespace :veille do
     puts "  doublons / hors zone / passés : #{rapport.doublons} / #{rapport.hors_zone} / #{rapport.passes}"
     puts "  enrichis (IA)             : #{rapport.enrichis} (dont #{rapport.ecartes} écartés), erreurs IA #{rapport.erreurs_ia}"
     puts "  en attente d'enrichissement : #{rapport.restants}"
+    puts "  récits rédigés (IA)       : #{rapport.rediges} (dont #{rapport.redaction_bloquee} à vérifier), erreurs #{rapport.erreurs_redaction}, en attente #{rapport.a_rediger_restants}"
+    puts "  PLAFOND MENSUEL ATTEINT : plus aucun appel IA ce mois-ci" if rapport.plafond
     puts "  coût estimé               : #{format('%.4f', rapport.cout_usd)} USD"
     puts "  À relire : #{Rails.application.routes.url_helpers.admin_veille_root_path}"
   end

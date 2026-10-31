@@ -55,7 +55,8 @@ module Veille
     # Story#purge_veille_candidate_full_text efface le tampon à la création.
     def creer_histoire
       corps = @c.draft_body.presence ||
-              StoryDrafter.finaliser(@c.summary.to_s, source_label: @c.source_label, url: @c.url)
+              Redaction::Brouillon.finaliser(@c.summary.to_s, source_label: @c.source_label, url: @c.url,
+                                             accord_obtenu_at: @c.accord_obtenu_at)
       Story.create!(
         title: @c.title, chapo: @c.summary, body: corps, location: @c.commune, tags: tag_categorie,
         thematique: @c.declic_category, happened_on: @c.published_on, source_url: @c.url,

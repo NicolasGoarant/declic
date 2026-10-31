@@ -13,6 +13,9 @@ module Veille
     # Règle éditoriale : une opportunité invite à agir ; une belle histoire est un récit.
     ITEM_TYPES   = %w[opportunite belle_histoire].freeze
     RELIABILITY  = %w[haute moyenne basse].freeze
+    DRAFT_STATUSES = %w[aucun redige a_reprendre a_verifier].freeze
+    # Essais de rédaction automatique par candidat avant d'attendre la main d'un humain.
+    MAX_REDACTIONS_AUTO = 3
     ORIGINS = {
       "jeveuxaider"     => "JeVeuxAider",
       "agenda_nancy"    => "Agenda Grand Nancy",
@@ -52,6 +55,7 @@ module Veille
     validates :item_type,       inclusion: { in: ITEM_TYPES },  allow_nil: true
     validates :declic_category, inclusion: { in: ::Opportunity::CATEGORIES }, allow_nil: true
     validates :reliability,     inclusion: { in: RELIABILITY }, allow_nil: true
+    validates :draft_status,    inclusion: { in: DRAFT_STATUSES }
 
     before_validation :set_normalized_title
     validates :score, numericality: {
@@ -70,6 +74,13 @@ module Veille
     scope :collectes_depuis, ->(d) { d.present? ? where("veille_candidates.fetched_at >= ? OR veille_candidates.created_at >= ?", d, d) : all }
     # Ce qui attend encore un enrichissement IA : jamais passé par AiEnricher, pas déjà tranché.
     scope :a_enrichir, -> { where(enriched_at: nil, status: %w[pending]).where(discard_reason: nil) }
+    # Belles histoires enrichies dont le récit reste à rédiger : jamais tenté, ou tenté sur incident
+    # d'API (« à reprendre »), moins de MAX_REDACTIONS_AUTO fois. Un brouillon refusé par les
+    # contrôles (« à vérifier ») n'est pas relancé tout seul : il attend un humain.
+    scope :a_rediger, lambda {
+      where(item_type: "belle_histoire", status: %w[pending retenu], draft_status: %w[aucun a_reprendre], draft_body: [nil, ""])
+        .where(discard_reason: nil).where.not(summary: [nil, ""]).where("draft_attempts < ?", MAX_REDACTIONS_AUTO)
+    }
     # À relire par un humain : enrichi, non écarté. « À vérifier » en fait partie.
     scope :a_relire, -> { where(status: %w[pending a_verifier]).where(discard_reason: nil) }
 

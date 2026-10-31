@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_10_31_100000) do
+ActiveRecord::Schema[7.2].define(version: 2026_10_31_110000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -239,6 +239,12 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_31_100000) do
     t.datetime "fetched_at"
     t.datetime "enriched_at"
     t.integer "opportunity_id"
+    t.string "draft_status", default: "aucun", null: false
+    t.json "draft_manques"
+    t.json "draft_controles"
+    t.integer "draft_attempts", default: 0, null: false
+    t.datetime "accord_obtenu_at"
+    t.index ["draft_status"], name: "index_veille_candidates_on_draft_status"
     t.index ["normalized_title", "starts_on"], name: "index_veille_candidates_on_normalized_title_and_starts_on"
     t.index ["origin"], name: "index_veille_candidates_on_origin"
     t.index ["score"], name: "index_veille_candidates_on_score"
