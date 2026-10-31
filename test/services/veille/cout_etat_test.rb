@@ -95,6 +95,6 @@ class Veille::CoutEtatTest < ActiveSupport::TestCase
   end
 
   test "rake veille:rediger refuse une LIMITE invalide" do
-    assert_raises(SystemExit) { capture_io { sortie("veille:rediger", env: { "LIMITE" => "abc" }) } }
+    assert_raises(SystemExit) { sortie("veille:rediger", env: { "LIMITE" => "abc" }) }
   end
 end
