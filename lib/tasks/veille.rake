@@ -120,6 +120,45 @@ namespace :veille do
     end
   end
 
+  desc "Rattrapage : rédige le récit des belles histoires enrichies qui n'en ont pas — rake veille:rediger (LIMITE=n pour borner)"
+  task rediger: :environment do
+    limite = Integer(ENV["LIMITE"], exception: false) if ENV["LIMITE"].present?
+    abort "❌ LIMITE doit être un entier positif" if ENV["LIMITE"].present? && (limite.nil? || limite <= 0)
+
+    en_attente = Veille::Candidate.a_rediger.count
+    puts "→ #{en_attente} récit(s) à rédiger (modèle #{Veille::Redaction::Brouillon::MODEL}, plafond du mois : #{format('%.2f', Veille::Plafond.budget)} $)"
+    runner = limite ? Veille::Runner.new(connecteurs: [], max_rediges: limite) : Veille::Runner.new(connecteurs: [])
+    rapport = runner.rattraper_redactions
+    puts "  rédigés : #{rapport.rediges} (dont #{rapport.redaction_bloquee} à vérifier) · erreurs : #{rapport.erreurs_redaction} · restants : #{rapport.a_rediger_restants}"
+    puts "  coût estimé : #{format('%.4f', rapport.cout_usd)} USD"
+    puts "  PLAFOND MENSUEL ATTEINT : plus aucun appel IA ce mois-ci" if rapport.plafond
+    puts "  À relire : #{Rails.application.routes.url_helpers.admin_veille_root_path}"
+  end
+
+  desc "Dépense IA d'un mois d'après le journal — rake veille:cout[2026-11] (mois courant par défaut)"
+  task :cout, [:mois] => :environment do |_t, args|
+    jour =
+      if args[:mois].present?
+        begin
+          Date.strptime(args[:mois], "%Y-%m")
+        rescue Date::Error
+          abort "❌ Mois attendu au format AAAA-MM (ex. 2026-11), reçu : #{args[:mois]}"
+        end
+      else
+        Date.current
+      end
+
+    e = Veille::Cout.etat_du_mois(jour)
+    puts "── Dépense IA #{e.mois.strftime('%Y-%m')} ─────────────────────────────"
+    puts format("  %d appel(s) · %.4f $ sur un plafond de %.2f $ · reste %.2f $%s", e.appels, e.depense, e.budget, e.reste, e.atteint? ? " · PLAFOND ATTEINT" : "")
+    { "par passe" => e.par_passe, "par statut" => e.par_statut, "par modèle" => e.par_modele }.each do |titre, groupe|
+      next if groupe.empty?
+
+      puts "  #{titre} :"
+      groupe.sort_by { |_, v| -v[:cout] }.each { |cle, v| puts format("    %-28s %4d appel(s)  %9.4f $", cle, v[:appels], v[:cout]) }
+    end
+  end
+
   desc "Importe le repérage initial — rake veille:import_xlsx[docs/declic-reperage-v1-2026-10-13.xlsx]"
   task :import_xlsx, [:fichier] => :environment do |_t, args|
     fichier = args[:fichier].presence || "docs/declic-reperage-v1-2026-10-13.xlsx"

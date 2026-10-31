@@ -46,6 +46,17 @@ module Veille
       rapport
     end
 
+    # Rattrapage : rédige les récits en attente (belles histoires déjà enrichies) sans rien collecter
+    # ni enrichir. Mêmes plafonds et mêmes arrêts que l'exécution normale.
+    def rattraper_redactions
+      rapport = Rapport.new(sources: [], crees: 0, doublons: 0, hors_zone: 0, passes: 0,
+                            enrichis: 0, ecartes: 0, erreurs_ia: 0, cout_usd: 0.0, restants: 0, plafond: false,
+                            rediges: 0, redaction_bloquee: 0, erreurs_redaction: 0, a_rediger_restants: 0)
+      rediger(rapport)
+      journaliser(rapport)
+      rapport
+    end
+
     private
 
     def collecter(rapport)
