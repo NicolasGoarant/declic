@@ -30,7 +30,10 @@
 
 <% if @candidates.empty? %>
   <div class="vide">
-    <% if @status == "pending" %>
+    <% if @filtres.values.any?(&:present?) %>
+      <p><strong>Aucun candidat ne correspond à ces filtres.</strong></p>
+      <p class="small"><%= @counts[@status.to_sym] %> candidat(s) dans cet onglet sans filtre : « Réinitialiser » les affiche.</p>
+    <% elsif @status == "pending" %>
       <p><strong>Rien à relire.</strong></p>
       <p class="small">La file se remplit avec <code>rake veille:quotidien</code> et
          <code>rake veille:hebdomadaire</code> (Heroku Scheduler), ou
