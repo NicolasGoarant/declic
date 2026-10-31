@@ -1,0 +1,3 @@
+<% ::Veille::Etiquette::AVIS.each do |valeur, libelle| %>
+  <button type="submit" name="avis" value="<%= valeur %>" class="btn secondary" aria-pressed="<%= avis == valeur %>"><%= libelle %></button>
+<% end %>

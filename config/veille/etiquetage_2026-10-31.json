@@ -1,0 +1,572 @@
+[
+ {
+  "ref": "C10",
+  "titre": "Apéro-conférence : \"MOCHES ?\" au cinéma, ça donne quoi ?",
+  "source": "Agenda du Grand Nancy",
+  "commune": "",
+  "quand": "2026-11-03 → 2026-11-03",
+  "texte": "Apéro-conférence : \"MOCHES ?\" au cinéma, ça donne quoi ?. Conférence - Rencontre. Conférence - Rencontre, Débat. Aujourd'hui à 19h. Gratuit",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=022eb7c4-d37d-11f1-b017-e7d3696899ec",
+  "presse": false,
+  "v4": {
+   "decision": "Écarté",
+   "type": "Opportunité",
+   "famille": "hors_ligne",
+   "role": "spectateur",
+   "confiance": 70,
+   "motif": "Rôle spectateur : débat qui s'écoute plutôt qu'un vrai participant. Hors ligne car absence d'inscription ou d'action concrète mentionnée, et commune inconnue."
+  },
+  "groupe": "Écarté par la v4, écart probablement juste (contrôle)"
+ },
+ {
+  "ref": "C171",
+  "titre": "Pulnoy. Les bons moments du samedi",
+  "source": "Presse",
+  "commune": "Pulnoy",
+  "quand": "Mensuel",
+  "texte": null,
+  "lien": "https://www.estrepublicain.fr/culture-loisirs/2026/10/31/les-bons-moments-du-samedi",
+  "presse": true,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Opportunité",
+   "famille": "rencontre",
+   "role": "participant",
+   "confiance": 72,
+   "motif": null
+  },
+  "groupe": "Gardé par la v4, jugé douteux"
+ },
+ {
+  "ref": "C45",
+  "titre": "Montage vidéo",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Nancy",
+  "quand": "2026-11-18 → 2026-11-18",
+  "texte": "Montage vidéo. Activité - Animation. Activité - Animation. Lieu : Médiathèque Manufacture. Commune : Nancy. Aujourd'hui à 10h30. Gratuit. Sur réservation",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=5c72487c-97be-11f1-be2f-7775cdab10db",
+  "presse": false,
+  "v4": {
+   "decision": "Écarté",
+   "type": "Opportunité",
+   "famille": "hors_ligne",
+   "role": "spectateur",
+   "confiance": 35,
+   "motif": "Contenu trop lacunaire : impossible de savoir si c'est une initiation pratique (apprenant) ou une projection (spectateur). Classification par défaut comme spectateur avec hors_ligne true, mais la confiance est basse faute de détails."
+  },
+  "groupe": "Écarté par la v4, à relire"
+ },
+ {
+  "ref": "C77",
+  "titre": "Répétitions ouvertes",
+  "source": "Agenda du Grand Nancy",
+  "commune": "",
+  "quand": "2026-09-01 → 2026-12-04",
+  "texte": "Répétitions ouvertes. Activité - Animation. Théâtre. Jusqu'au 4 décembre 2026. Gratuit. Sur réservation",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=80e532b2-64da-11f1-a7de-033bec731cb0",
+  "presse": false,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Opportunité",
+   "famille": "rencontre",
+   "role": "participant",
+   "confiance": 55,
+   "motif": "Type et rôle semblent clairs (participation collaborative), mais l'absence de commune précise et le manque de détails sur le collectif ou la structure organisatrice baissent la confiance."
+  },
+  "groupe": "Gardé par la v4, jugé douteux"
+ },
+ {
+  "ref": "C58",
+  "titre": "Un parcours dans la précarité",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Nancy",
+  "quand": "2026-11-22 → 2026-11-22",
+  "texte": "Un parcours dans la précarité. Activité - Animation. Activité - Animation. Lieu : Médiathèque Manufacture. Commune : Nancy. Aujourd'hui à 15h. Gratuit",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=04f3f5c0-c24b-11f1-8481-c1e4834799a0",
+  "presse": false,
+  "v4": {
+   "decision": "Écarté",
+   "type": "Opportunité",
+   "famille": "hors_ligne",
+   "role": "spectateur",
+   "confiance": 45,
+   "motif": "Classification comme opportunité spectateur faute de détails sur la nature de l'activité, mais le titre suggère un récit sur la précarité. Confiance basse en raison de l'absence totale de contenu descriptif."
+  },
+  "groupe": "Écarté par la v4, à relire"
+ },
+ {
+  "ref": "C89",
+  "titre": "Atelier mensuel avec Alexandra Cismondi",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Nancy",
+  "quand": "2027-01-16 → 2027-01-17",
+  "texte": "Atelier mensuel avec Alexandra Cismondi. Activité - Animation. Théâtre, Atelier / jeux. Lieu : Théâtre de la Manufacture, CDN Nancy Lorraine. Commune : Nancy. Les 16 et 17 janvier 2027. Sur réservation",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=2a0ccde2-8447-11f1-8e1b-ebaddb1c196b",
+  "presse": false,
+  "v4": {
+   "decision": "Écarté",
+   "type": "Opportunité",
+   "famille": "hors_ligne",
+   "role": "spectateur",
+   "confiance": 72,
+   "motif": "Rôle spectateur sans cause explicite : description sommaire ne précise pas si participation active ou observation ; absence de détails sur le contenu et les objectifs d'apprentissage."
+  },
+  "groupe": "Écarté par la v4, à relire"
+ },
+ {
+  "ref": "C86",
+  "titre": "Marc Levy",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Nancy",
+  "quand": "2026-12-17 → 2026-12-17",
+  "texte": "Marc Levy. Conférence - Rencontre. Rencontre, Evénement. Lieu : Salle Poirel. Commune : Nancy. Aujourd'hui à 18h30. Gratuit",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=8dfbf00e-ac5a-11f1-a69c-b58ae7c788fd",
+  "presse": false,
+  "v4": {
+   "decision": "Écarté",
+   "type": "Opportunité",
+   "famille": "hors_ligne",
+   "role": "spectateur",
+   "confiance": 72,
+   "motif": "Conférence d'auteur sans cause explicite ni participation active : rôle spectateur qualifie le contenu comme hors ligne malgré l'étiquette 'rencontre'."
+  },
+  "groupe": "Écarté par la v4, écart probablement juste (contrôle)"
+ },
+ {
+  "ref": "C87",
+  "titre": "Les p'tites expériences -Mesure-moi si tu peux",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Jarville-la-Malgrange",
+  "quand": "2026-12-19 → 2026-12-31",
+  "texte": "Les p'tites expériences -Mesure-moi si tu peux. Activité - Animation. Atelier. Lieu : Le Féru des sciences. Commune : Jarville-la-Malgrange. Vacances de fin d'année. Gratuit. Sur réservation",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=cdf2beb8-cc2d-11ef-b0b9-6b0dd017c0e1",
+  "presse": false,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Opportunité",
+   "famille": "se_former",
+   "role": "apprenant",
+   "confiance": 78,
+   "motif": "Atelier d'initiation pratique où les enfants apprennent en faisant, mais le libellé reste vague sur le contenu exact et l'âge cible."
+  },
+  "groupe": "Gardé par la v4, jugé douteux"
+ },
+ {
+  "ref": "C70",
+  "titre": "Noël Vert",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Nancy",
+  "quand": "2026-11-28 → 2026-11-29",
+  "texte": "Noël Vert. Manifestation - Festival. Brocante / marché, Manifestation. Ce week-end. Gratuit",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=9dfa6062-cde8-11f1-87a5-efe95847f204",
+  "presse": false,
+  "v4": {
+   "decision": "Écarté",
+   "type": "Opportunité",
+   "famille": "hors_ligne",
+   "role": "spectateur",
+   "confiance": 35,
+   "motif": "Manque de détails sur la cause écologique explicite et le lieu précis. Classé spectateur-brocante-hors_ligne faute de descriptif sur la participation active."
+  },
+  "groupe": "Écarté par la v4, à relire"
+ },
+ {
+  "ref": "C52",
+  "titre": "Casse-noisette",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Villers-lès-Nancy",
+  "quand": "2026-11-21 → 2026-11-21",
+  "texte": "Casse-noisette. Activité - Animation. Atelier. Lieu : Jardin botanique Jean-Marie Pelt. Commune : Villers-lès-Nancy. Samedi 21 novembre. Sur réservation",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=afd30e90-a699-11f1-aed8-4fbbb5bbeabd",
+  "presse": false,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Opportunité",
+   "famille": "pratiquer",
+   "role": "apprenant",
+   "confiance": 45,
+   "motif": "L'intitulé et le contexte du jardin botanique suggèrent une initiation pratique à la récolte ou transformation des noisettes, mais le texte manque de détails sur ce qu'on apprendra concrètement."
+  },
+  "groupe": "Gardé par la v4, faux positif probable"
+ },
+ {
+  "ref": "C168",
+  "titre": "Jarville-la-Malgrange. Sous le préau de l’Atelier, un mur dédié aux graffeurs et à leurs œuvres",
+  "source": "Presse",
+  "commune": "Jarville-la-Malgrange",
+  "quand": "",
+  "texte": null,
+  "lien": "https://www.estrepublicain.fr/culture-loisirs/2026/10/31/sous-le-preau-de-l-atelier-un-mur-dedie-aux-graffeurs-et-a-leurs-oeuvres",
+  "presse": true,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Belle histoire",
+   "famille": "vocation",
+   "role": "lecteur",
+   "confiance": 45,
+   "motif": null
+  },
+  "groupe": "Gardé par la v4, jugé douteux"
+ },
+ {
+  "ref": "C170",
+  "titre": "Laneuveville-devant-Nancy. L’école d’haltérophilie est ouverte aux 8-15 ans",
+  "source": "Presse",
+  "commune": "Laneuveville-devant-Nancy",
+  "quand": "Ouvert depuis septembre, régulier",
+  "texte": null,
+  "lien": "https://www.estrepublicain.fr/societe/2026/10/31/l-ecole-d-halterophilie-est-ouverte-aux-8-15-ans",
+  "presse": true,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Opportunité",
+   "famille": "pratiquer",
+   "role": "apprenant",
+   "confiance": 72,
+   "motif": null
+  },
+  "groupe": "Gardé par la v4, faux positif probable"
+ },
+ {
+  "ref": "C92",
+  "titre": "Atelier en famille avec Simon Delattre",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Nancy",
+  "quand": "2027-01-30 → 2027-01-30",
+  "texte": "Atelier en famille avec Simon Delattre. Activité - Animation. Théâtre, Atelier / jeux, Jeune public. Lieu : Théâtre de la Manufacture, CDN Nancy Lorraine. Commune : Nancy. Aujourd'hui de 14h à 16h. Sur réservation",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=66c16a86-8447-11f1-afb1-635e8fa37a21",
+  "presse": false,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Opportunité",
+   "famille": "rencontre",
+   "role": "participant",
+   "confiance": 75,
+   "motif": "Atelier collaboratif ouvert aux familles avec un intervenant, donc rôle participant. Classement en rencontres car activité ludique collective, bien que le texte manque de détails sur le contenu et les objectifs pédagogiques."
+  },
+  "groupe": "Gardé par la v4, jugé douteux"
+ },
+ {
+  "ref": "C130",
+  "titre": "Nancy : le SMPS au chevet de la santé mentale des dirigeants hospitali ...",
+  "source": "Presse",
+  "commune": "Nancy",
+  "quand": "",
+  "texte": null,
+  "lien": "https://www.lagazettefrance.fr/article/nancy-le-smps-au-chevet-de-la-sante-mentale-des-dirigeants-hospitaliers",
+  "presse": true,
+  "v4": {
+   "decision": "Écarté",
+   "type": "Opportunité",
+   "famille": "hors_ligne",
+   "role": "spectateur",
+   "confiance": 72,
+   "motif": null
+  },
+  "groupe": "Écarté par la v4, écart probablement juste (contrôle)"
+ },
+ {
+  "ref": "C15",
+  "titre": "Tournage vidéo",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Nancy",
+  "quand": "2026-11-04 → 2026-11-04",
+  "texte": "Tournage vidéo. Activité - Animation. Activité - Animation. Lieu : Médiathèque Manufacture. Commune : Nancy. Aujourd'hui à 9h. Gratuit. Sur réservation",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=e043cda4-c182-11f1-b59f-e5528fedc2b3",
+  "presse": false,
+  "v4": {
+   "decision": "Écarté",
+   "type": "Opportunité",
+   "famille": "hors_ligne",
+   "role": "spectateur",
+   "confiance": 65,
+   "motif": "Rôle spectateur sans cause explicite identifiée, classé hors ligne malgré le lieu culturel; manque de contexte sur le contenu et l'objectif du tournage."
+  },
+  "groupe": "Écarté par la v4, à relire"
+ },
+ {
+  "ref": "C2",
+  "titre": "DÉCORATIONS EN VERRE FUSIONNÉ",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Villers-lès-Nancy",
+  "quand": "2026-10-30 → 2026-10-31",
+  "texte": "DÉCORATIONS EN VERRE FUSIONNÉ. Activité - Animation. Atelier. Lieu : Jardin botanique Jean-Marie Pelt. Commune : Villers-lès-Nancy. Les 30 et 31 octobre. Sur réservation",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=97bd5f58-c18e-11f1-9cb4-f911da621a07",
+  "presse": false,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Opportunité",
+   "famille": "pratiquer",
+   "role": "apprenant",
+   "confiance": 75,
+   "motif": "Atelier d'initiation pratique avec un savoir-faire ; rôle apprenant validé. Confiance modérée : titre laconique, pas de détails sur le contenu ou le public visé."
+  },
+  "groupe": "Gardé par la v4, jugé défendable (contrôle)"
+ },
+ {
+  "ref": "C169",
+  "titre": "Heillecourt. Deux générations réunies pour préparer les fêtes",
+  "source": "Presse",
+  "commune": "Heillecourt",
+  "quand": "",
+  "texte": null,
+  "lien": "https://www.estrepublicain.fr/societe/2026/10/31/deux-generations-reunies-pour-preparer-les-fetes",
+  "presse": true,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Belle histoire",
+   "famille": "hors_ligne",
+   "role": "lecteur",
+   "confiance": 35,
+   "motif": null
+  },
+  "groupe": "Gardé par la v4, faux positif probable"
+ },
+ {
+  "ref": "C76",
+  "titre": "Agissez pour votre quartier avec les Ateliers de Vie de Quartier",
+  "source": "Agenda du Grand Nancy",
+  "commune": "",
+  "quand": "2026-10-02 → 2026-12-04",
+  "texte": "Agissez pour votre quartier avec les Ateliers de Vie de Quartier. Citoyenneté. Atelier citoyen, Rencontre citoyenne. Jusqu'au 4 décembre 2026. Gratuit. Sur réservation",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=ddc36252-b655-11f1-bc82-819f827e41eb",
+  "presse": false,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Opportunité",
+   "famille": "rencontre",
+   "role": "participant",
+   "confiance": 72,
+   "motif": "Type opportunité avec rôle participant et famille rencontre confirmés par le caractère d'atelier citoyen et de rencontre. Confiance modérée : commune non précisée dans le texte, et manque de détails sur les activités exactes."
+  },
+  "groupe": "Gardé par la v4, jugé défendable (contrôle)"
+ },
+ {
+  "ref": "C166",
+  "titre": "Nancy. Rose Wild, l’artiste oubliée qu’on ressuscite dans la forêt du souvenir",
+  "source": "Presse",
+  "commune": "Nancy",
+  "quand": "",
+  "texte": null,
+  "lien": "https://www.estrepublicain.fr/culture-loisirs/2026/10/30/rose-wild-l-artiste-oubliee-qu-on-ressuscite-dans-la-foret-du-souvenir",
+  "presse": true,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Belle histoire",
+   "famille": "vocation",
+   "role": "lecteur",
+   "confiance": 52,
+   "motif": null
+  },
+  "groupe": "Gardé par la v4, jugé douteux"
+ },
+ {
+  "ref": "C102",
+  "titre": "Assemblee extraordinaire #2",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Nancy",
+  "quand": "2027-04-05 → 2027-04-05",
+  "texte": "Assemblee extraordinaire #2. Conférence - Rencontre. Conférence - Rencontre. Lieu : Théâtre de la Manufacture, CDN Nancy Lorraine. Commune : Nancy. Aujourd'hui à 19h. Gratuit. Sur réservation",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=4fd159e4-7b9b-11f1-9a6d-11eb00f28983",
+  "presse": false,
+  "v4": {
+   "decision": "Écarté",
+   "type": "Opportunité",
+   "famille": "hors_ligne",
+   "role": "spectateur",
+   "confiance": 75,
+   "motif": "Rôle de spectateur sans cause explicite associée ; événement de type conférence-rencontre sans indication d'échange collaboratif ou de participation active."
+  },
+  "groupe": "Écarté par la v4, à relire"
+ },
+ {
+  "ref": "C47",
+  "titre": "(Mois sans Tabac) Vapotage et substituts : Et si on faisait le tri ?",
+  "source": "Agenda du Grand Nancy",
+  "commune": "",
+  "quand": "2026-11-19 → 2026-11-19",
+  "texte": "(Mois sans Tabac) Vapotage et substituts : Et si on faisait le tri ?. Conférence - Rencontre. Santé. Aujourd'hui à 12h. Gratuit. Sur réservation",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=7fa35342-cbba-11f1-9433-17bc50a97f73",
+  "presse": false,
+  "v4": {
+   "decision": "Écarté",
+   "type": "Opportunité",
+   "famille": "hors_ligne",
+   "role": "spectateur",
+   "confiance": 75,
+   "motif": "Rôle spectateur sans cause explicite : conférence savante sur la santé. Pas de commune ni de lieu fournis. Zone inconnue."
+  },
+  "groupe": "Écarté par la v4, écart probablement juste (contrôle)"
+ },
+ {
+  "ref": "C27",
+  "titre": "Vide-grenier du Centre Social Beauregard",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Nancy",
+  "quand": "2026-11-08 → 2026-11-08",
+  "texte": "Vide-grenier du Centre Social Beauregard. Activité - Animation. Brocante / marché, Activité - Animation. Aujourd'hui de 10h à 17h. Gratuit",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=19b0ee4e-c941-11f1-b717-1fc4e939e913",
+  "presse": false,
+  "v4": {
+   "decision": "Écarté",
+   "type": "Opportunité",
+   "famille": "hors_ligne",
+   "role": "spectateur",
+   "confiance": 95,
+   "motif": "Vide-grenier sans cause explicite : rôle spectateur, famille hors_ligne."
+  },
+  "groupe": "Écarté par la v4, écart probablement juste (contrôle)"
+ },
+ {
+  "ref": "C84",
+  "titre": "Atelier mensuel avec Anne Barbot",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Nancy",
+  "quand": "2026-12-12 → 2026-12-13",
+  "texte": "Atelier mensuel avec Anne Barbot. Activité - Animation. Théâtre, Atelier / jeux. Lieu : Théâtre de la Manufacture, CDN Nancy Lorraine. Commune : Nancy. Les 12 et 13 décembre 2026. Sur réservation",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=063cb09e-8447-11f1-994b-c5e5135ab172",
+  "presse": false,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Opportunité",
+   "famille": "pratiquer",
+   "role": "apprenant",
+   "confiance": 65,
+   "motif": "Type opportunite car participation possible. Rôle apprenant ou participant incertain : le texte ne précise pas si c'est un atelier de pratique collaborative ou de formation. Confiance modérée faute de détails sur le contenu et les objectifs."
+  },
+  "groupe": "Gardé par la v4, jugé douteux"
+ },
+ {
+  "ref": "C176",
+  "titre": "Laxou. À 100 ans, Gilda Domange garde toutes ses cartes en main",
+  "source": "Presse",
+  "commune": "Laxou",
+  "quand": "",
+  "texte": null,
+  "lien": "https://www.estrepublicain.fr/societe/2026/10/31/a-100-ans-gilda-domange-garde-toutes-ses-cartes-en-main",
+  "presse": true,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Belle histoire",
+   "famille": "engagement",
+   "role": "lecteur",
+   "confiance": 45,
+   "motif": null
+  },
+  "groupe": "Gardé par la v4, faux positif probable"
+ },
+ {
+  "ref": "C99",
+  "titre": "Atelier mensuel avec Aurore Déon",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Nancy",
+  "quand": "2027-03-13 → 2027-03-14",
+  "texte": "Atelier mensuel avec Aurore Déon. Activité - Animation. Théâtre, Atelier / jeux. Lieu : Théâtre de la Manufacture, CDN Nancy Lorraine. Commune : Nancy. Les 13 et 14 mars 2027. Sur réservation",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=82dea7d8-8447-11f1-b7fb-0dec5e720826",
+  "presse": false,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Opportunité",
+   "famille": "pratiquer",
+   "role": "apprenant",
+   "confiance": 65,
+   "motif": "Atelier pratique avec un intervenant où on apprend des techniques théâtrales, mais le texte manque de détails sur les objectifs pédagogiques et le public visé."
+  },
+  "groupe": "Gardé par la v4, jugé douteux"
+ },
+ {
+  "ref": "C49",
+  "titre": "Transport et écologie : un débat électrique ?",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Nancy",
+  "quand": "2026-11-19 → 2026-11-19",
+  "texte": "Transport et écologie : un débat électrique ?. Conférence - Rencontre. Conférence - Rencontre. Lieu : Amphithéâtre Cuénot (Muséum-Aquarium de Nancy). Commune : Nancy. Jeudi 19 novembre 2026 - 18h30. Gratuit",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=9eb58e94-a65f-11ef-b9be-013ffaef34e0",
+  "presse": false,
+  "v4": {
+   "decision": "Écarté",
+   "type": "Opportunité",
+   "famille": "hors_ligne",
+   "role": "spectateur",
+   "confiance": 70,
+   "motif": "Rôle spectateur sans cause explicite ni appel à contribution déclaré : conférence savante sur un sujet général. Catégorisée écologiser plutôt que hors_ligne en raison du thème central."
+  },
+  "groupe": "Écarté par la v4, à relire"
+ },
+ {
+  "ref": "C160",
+  "titre": "Un Toit Partagé lance sa plateforme",
+  "source": "Presse",
+  "commune": "",
+  "quand": "Plateforme permanente",
+  "texte": null,
+  "lien": "https://www.lagazettefrance.fr/article/un-toit-partage-lance-sa-plateforme",
+  "presse": true,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Opportunité",
+   "famille": "lieu_collectif",
+   "role": "contributeur",
+   "confiance": 55,
+   "motif": null
+  },
+  "groupe": "Gardé par la v4, jugé défendable (contrôle)"
+ },
+ {
+  "ref": "C95",
+  "titre": "Atelier mensuel avec Adil Laboudi",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Nancy",
+  "quand": "2027-02-20 → 2027-02-21",
+  "texte": "Atelier mensuel avec Adil Laboudi. Activité - Animation. Théâtre, Atelier / jeux. Lieu : Théâtre de la Manufacture, CDN Nancy Lorraine. Commune : Nancy. Les 20 et 21 février 2027. Sur réservation",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=4fb8eb16-8447-11f1-a18b-d3b047936406",
+  "presse": false,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Opportunité",
+   "famille": "pratiquer",
+   "role": "apprenant",
+   "confiance": 55,
+   "motif": "Manque de détails sur le contenu et les objectifs de l'atelier ; nature pédagogique supposée mais rôle entre apprenant et participant incertain."
+  },
+  "groupe": "Gardé par la v4, jugé douteux"
+ },
+ {
+  "ref": "C71",
+  "titre": "Rencontrez les ambassadeurs de la prévention et du tri",
+  "source": "Agenda du Grand Nancy",
+  "commune": "",
+  "quand": "2026-11-28 → 2026-11-29",
+  "texte": "Rencontrez les ambassadeurs de la prévention et du tri. Activité - Animation. Activité - Animation. Novembre 2026. Gratuit",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=dab67e24-35c9-11ee-a790-db67e4a732b1",
+  "presse": false,
+  "v4": {
+   "decision": "Écarté",
+   "type": "Opportunité",
+   "famille": "hors_ligne",
+   "role": "spectateur",
+   "confiance": 45,
+   "motif": "Rôle spectateur sans engagement explicite malgré la thématique écologique ; animation minimaliste sans indication d'action concrète du public."
+  },
+  "groupe": "Écarté par la v4, à relire"
+ },
+ {
+  "ref": "C56",
+  "titre": "Atelier mensuel avec Marilyn Mattei",
+  "source": "Agenda du Grand Nancy",
+  "commune": "Nancy",
+  "quand": "2026-11-21 → 2026-11-22",
+  "texte": "Atelier mensuel avec Marilyn Mattei. Activité - Animation. Théâtre, Atelier / jeux. Lieu : Théâtre de la Manufacture, CDN Nancy Lorraine. Commune : Nancy. Les 21 et 22 novembre 2026. Sur réservation",
+  "lien": "https://www.nancy.fr/agenda/details-agenda?uuid=9eaffc7e-8446-11f1-bba3-4d6fb4a748a7",
+  "presse": false,
+  "v4": {
+   "decision": "Gardé",
+   "type": "Opportunité",
+   "famille": "rencontre",
+   "role": "participant",
+   "confiance": 72,
+   "motif": "Type opportunité confirmé par la possibilité d'y participer. Rôle participant inféré du format atelier collaboratif, mais manque de clarté sur le contenu exact et le type d'échange."
+  },
+  "groupe": "Gardé par la v4, jugé douteux"
+ }
+]

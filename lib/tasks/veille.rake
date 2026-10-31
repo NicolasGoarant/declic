@@ -131,6 +131,19 @@ namespace :veille do
     end
   end
 
+  desc "Réponses de l'étiquetage comparées à la décision du prompt v4"
+  task etiquetage: :environment do
+    c = Veille::Etiquetage.comparaison
+    c.lignes.each do |l|
+      cas, e = l.values_at(:cas, :etiquette)
+      accord = { true => "accord", false => "ÉCART", nil => "-" }.fetch(l[:accord])
+      puts format("%-5s %-8s v4 %-7s %-7s %s", cas.ref, e&.avis || "(vide)", cas.v4["decision"], accord, cas.titre.to_s.slice(0, 60))
+      puts "      commentaire : #{e.commentaire}" if e&.commentaire.present?
+      puts "      groupe : #{cas.groupe}" if l[:accord] == false
+    end
+    puts "Étiquetés #{c.etiquetes}, restants #{c.reste} · accord avec la v4 : #{c.accords} sur #{c.comparables} (hors douteux)"
+  end
+
   desc "Importe le repérage initial — rake veille:import_xlsx[docs/declic-reperage-v1-2026-10-13.xlsx]"
   task :import_xlsx, [:fichier] => :environment do |_t, args|
     fichier = args[:fichier].presence || "docs/declic-reperage-v1-2026-10-13.xlsx"
