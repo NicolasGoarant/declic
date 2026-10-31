@@ -95,11 +95,12 @@ class Veille::ConnectorsTest < ActiveSupport::TestCase
     </channel></rss>
   XML
 
-  test "presse : ne retient que « commune du Grand Nancy + sujet », via le flux seul" do
+  test "presse : retient tout article qui cite une commune du Grand Nancy, via le flux seul" do
     http = FakeHttp.new("https://presse.example/rss" => RSS_PRESSE)
     res = Veille::Connectors::Presse.new(flux: { "Presse test" => "https://presse.example/rss" }, http: http, today: TODAY).call
 
-    assert_equal ["https://presse.example/portrait-awa"], res.items.map(&:url)
+    assert_equal ["https://presse.example/portrait-awa", "https://presse.example/foot"], res.items.map(&:url),
+                 "le sujet est laissé à l'IA ; seul l'article sur Metz est hors zone"
     assert_equal ["https://presse.example/rss"], http.appels, "aucun article n'est visité"
     assert_equal "Laxou", res.items.first.commune
     assert_equal "moyenne", res.items.first.reliability
@@ -113,8 +114,24 @@ class Veille::ConnectorsTest < ActiveSupport::TestCase
                                          http: http, today: TODAY).call
 
     assert_equal :partiel, res.statut
-    assert_equal 1, res.items.size
+    assert_equal 2, res.items.size
     assert_match(/Fermée : refuse/, res.message)
+  end
+
+  test "presse : les flux de L'Est Républicain sont configurés" do
+    urls = Veille::Connectors::Presse::FLUX.values
+    assert_includes urls, "https://www.estrepublicain.fr/edition-nancy-et-agglomeration/rss"
+    assert_includes urls, "https://www.estrepublicain.fr/societe/rss"
+  end
+
+  test "presse : un article présent dans deux flux ne crée qu'un candidat" do
+    http = FakeHttp.new("https://a.example/rss" => RSS_PRESSE, "https://b.example/rss" => RSS_PRESSE)
+    res = Veille::Connectors::Presse.new(flux: { "A" => "https://a.example/rss", "B" => "https://b.example/rss" }, http: http, today: TODAY).call
+    assert_equal 4, res.items.size
+
+    bilan = Veille::RawIngester.new(today: TODAY).ingest(res.items)
+    assert_equal 2, bilan.crees.size
+    assert_equal 2, bilan.doublons
   end
 
   # --- Gazette -----------------------------------------------------------------

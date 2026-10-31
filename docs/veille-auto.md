@@ -15,7 +15,7 @@ Chaque appel IA est journalisé (`veille_appels_ia`) ; **plafond mensuel 15 $** 
 | 3 Formation | UIMM Lorraine répond (sitemap + pages) ; **formation.grandest.fr non branchée** (appli Angular, base d'API inconnue) | |
 | 4 Transentreprise | RSS `/rss/offre` répond ; 0 offre Nancy cette semaine | texte réduit à l'accroche |
 | 5 La Gazette France | répond (rubrique /meurthe-et-moselle) | |
-| 6 Presse | L'Est Républicain : flux ok ; **France 3 : refusé par robots.txt** | flux RSS seulement, aucun article visité ; alertes e-mail non implémentées |
+| 6 Presse | L'Est Républicain : 3 flux (général, édition de Nancy, Société) ok ; **France 3 : refusé par robots.txt** | flux RSS seulement, aucun article visité ; filtre sur la commune seule, le sujet est laissé à l'IA ; alertes e-mail non implémentées |
 
 `Veille::Http` lit le robots.txt de chaque hôte avant toute requête (Crawl-delay respecté, 1 s mini entre appels).
 

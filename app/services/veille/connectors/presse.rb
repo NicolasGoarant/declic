@@ -5,19 +5,16 @@ module Veille
     # Source 6 — flux RSS de la presse locale (hebdomadaire). Le flux n'est lu
     # que si son robots.txt l'autorise ; on ne visite AUCUN article : seuls
     # titre, chapeau, date et lien du flux sont gardés. Un article est retenu si
-    # son titre ou chapeau cite une commune du Grand Nancy.
-    #
-    # Les requêtes d'alerte (« Nancy portrait », « Vandœuvre reconversion »,
-    # « Grand Nancy association initiative ») se ramènent à un couple « commune du
-    # Grand Nancy + un mot de SUJETS » dans le titre ou le chapeau.
+    # son titre ou chapeau cite une commune du Grand Nancy ; la suite (type,
+    # mise hors ligne) revient à l'enrichissement IA. Un article présent dans
+    # plusieurs flux est dédoublonné par son URL à l'ingestion.
     class Presse < Base
       FLUX = {
         "L'Est Républicain"     => "https://www.estrepublicain.fr/rss",
+        "L'Est Républicain, édition de Nancy" => "https://www.estrepublicain.fr/edition-nancy-et-agglomeration/rss",
+        "L'Est Républicain, rubrique Société" => "https://www.estrepublicain.fr/societe/rss",
         "France 3 Grand Est"    => "https://france3-regions.francetvinfo.fr/grand-est/rss?r=grand-est"
       }.freeze
-
-      SUJETS = %w[portrait reconversion association initiative benevole engagement solidaire solidarite
-                  jardin partage reparation entrepreneur creatrice createur fondatrice fondateur].freeze
 
       def initialize(flux: FLUX, **opts)
         super(**opts)
@@ -63,16 +60,10 @@ module Veille
         lien = noeud.at_xpath("link")&.text.to_s.strip
         brut = "#{titre} #{chapeau}"
         commune = Veille::GrandNancy.trouver_dans(brut) or return nil
-        return nil unless correspond_a_une_alerte?(brut)
 
         Item.new(origin: origin, url: lien, title: titre, text: "#{nom_flux}. #{chapeau}",
                  published_on: parse_date(noeud.at_xpath("pubDate")&.text), commune: commune,
                  type_hint: nil, reliability: "moyenne")
-      end
-
-      def correspond_a_une_alerte?(texte)
-        norme = Veille::Text.normalize(texte)
-        SUJETS.any? { |s| norme.include?(s) }
       end
     end
   end
