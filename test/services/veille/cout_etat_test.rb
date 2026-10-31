@@ -77,7 +77,7 @@ class Veille::CoutEtatTest < ActiveSupport::TestCase
 
   test "Runner#rattraper_redactions rédige sans collecter ni enrichir" do
     a_enrichir = candidat(title: "Pas encore enrichi")
-    h = candidat(origin: "presse", item_type: "belle_histoire", commune: "Laxou", summary: "Un jardin naît.", enriched_at: Time.current, full_text: nil)
+    h = candidat(origin: "agenda_nancy", item_type: "belle_histoire", commune: "Laxou", summary: "Un jardin naît.", enriched_at: Time.current, full_text: nil)
     client = FakeAnthropicClient.new(text: { brouillon: RECIT, personne: "X", champs_manquants: [] }.to_json)
     rapport = Veille::Runner.new(connecteurs: [], redacteur: Veille::Redaction::Brouillon.new(client: client)).rattraper_redactions
 

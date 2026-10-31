@@ -96,10 +96,15 @@ Rails.application.routes.draw do
           post  :rediger # Redaction::Brouillon (Sonnet), réponse en Turbo Stream
           patch :enregistrer_brouillon # corrige le récit à la main et relance les contrôles
           patch :accord # accord de la personne obtenu / retiré
+          patch :completer # commune et résumé saisis à la main (article de presse retenu)
         end
       end
 
       resources :sources, except: :show
+
+      # Veille presse manuelle : titres et liens, sans stockage ni IA.
+      get  "presse",         to: "presse#index",   as: :presse
+      post "presse/retenir", to: "presse#retenir", as: :retenir_presse
     end
   end
 end

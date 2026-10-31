@@ -7,8 +7,7 @@ module Veille
   # appel IA.
   #
   # Le texte brut va dans full_text, le tampon de travail que Veille::Story
-  # efface à la création de la fiche (voir docs/veille.md) ; pour la presse, il
-  # ne contient que le chapeau du flux, jamais l'article.
+  # efface à la création de la fiche (voir docs/veille.md).
   class RawIngester
     Bilan = Struct.new(:crees, :doublons, :hors_zone, :passes, :invalides, keyword_init: true) do
       def self.vide = new(crees: [], doublons: 0, hors_zone: 0, passes: 0, invalides: 0)

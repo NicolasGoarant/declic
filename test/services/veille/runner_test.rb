@@ -58,8 +58,8 @@ class Veille::RunnerTest < ActiveSupport::TestCase
   end
 
   test "respecte l'ordre de priorité des sources" do
-    a = item(origin: "gazette", title: "Gazette", url: "https://exemple.fr/g")
-    b = item(origin: "jeveuxaider", title: "Mission", url: "https://exemple.fr/m")
+    a = item(origin: "transentreprise", title: "Reprise", url: "https://exemple.fr/g")
+    b = item(origin: "agenda_nancy", title: "Mission", url: "https://exemple.fr/m")
     enricher = FauxEnricher.new
     runner([FauxConnecteur.new("X", items: [a, b])], enricher: enricher, max: 1).run
 
@@ -134,7 +134,7 @@ class Veille::RunnerTest < ActiveSupport::TestCase
              "les gestes de la réparation. Autour de la machine à coudre, les conversations se nouent."
 
   def histoire_enrichie(**attrs)
-    candidat(**{ origin: "presse", item_type: "belle_histoire", commune: "Laxou", summary: "Une couturière rouvre un atelier à Laxou.",
+    candidat(**{ origin: "agenda_nancy", item_type: "belle_histoire", commune: "Laxou", summary: "Une couturière rouvre un atelier à Laxou.",
                enriched_at: Time.current, full_text: nil }.merge(attrs))
   end
 
@@ -250,5 +250,23 @@ class Veille::RunnerTest < ActiveSupport::TestCase
     lancer_rediger(redacteur(recit, usage: { "input_tokens" => 1_000_000, "output_tokens" => 0 }), logger: Logger.new(io))
     assert_match(/récits rédigés 1/, io.string)
     assert_match(/coût estimé 3\.0000 USD/, io.string)
+  end
+
+  test "la veille quotidienne ne lance ni la presse, ni la Gazette, ni JeVeuxAider" do
+    assert_equal [Veille::Connectors::AgendaNancy, Veille::Connectors::Transentreprise], Veille::Runner::QUOTIDIEN
+  end
+
+  test "un contenu de presse en base n'est ni enrichi ni rédigé automatiquement" do
+    a_classer = candidat(origin: "presse", title: "Presse à classer")
+    a_rediger = candidat(origin: "gazette", item_type: "belle_histoire", summary: "Un résumé.", enriched_at: Time.current)
+    sans_origine = candidat(origin: nil, title: "Import manuel")
+
+    assert_not_includes Veille::Candidate.a_enrichir, a_classer
+    assert_not_includes Veille::Candidate.a_rediger, a_rediger
+    assert_includes Veille::Candidate.a_enrichir, sans_origine
+
+    enricher = FauxEnricher.new
+    runner([], enricher: enricher).run
+    assert_equal ["Import manuel"], enricher.vus.map(&:title)
   end
 end

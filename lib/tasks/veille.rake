@@ -71,7 +71,7 @@ namespace :veille do
 end
 
 # --- Veille automatique -----------------------------------------------------
-# Heroku Scheduler : « rake veille:quotidien » chaque jour. Clés : ANTHROPIC_API_KEY, ENGAGEMENT_API_KEY.
+# Heroku Scheduler : « rake veille:quotidien » chaque jour. Clé : ANTHROPIC_API_KEY.
 namespace :veille do
   def afficher_rapport(rapport)
     puts "── Sources ─────────────────────────────────────────"
@@ -87,7 +87,7 @@ namespace :veille do
     puts "  À relire : #{Rails.application.routes.url_helpers.admin_veille_root_path}"
   end
 
-  desc "Veille quotidienne : sources 1 à 6, 30 éléments enrichis au plus"
+  desc "Veille quotidienne : agenda et Transentreprise, 30 éléments enrichis au plus"
   task quotidien: :environment do
     afficher_rapport(Veille::Runner.new(connecteurs: Veille::Runner::QUOTIDIEN).run)
   end

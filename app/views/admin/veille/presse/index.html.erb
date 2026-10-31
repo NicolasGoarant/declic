@@ -1,0 +1,34 @@
+<h1>Veille presse manuelle</h1>
+<p class="muted small">
+  Titres et liens lus à l'instant dans les flux RSS (environ 24 h d'articles). Rien n'est enregistré ni envoyé à l'IA.
+  Ouvre l'article avec ton abonnement ; « Retenir » crée un candidat, où tu colles le texte pour lancer la rédaction.
+</p>
+
+<% @lecture.erreurs.each do |nom, message| %>
+  <div class="flash alert"><%= nom %> : <%= message %></div>
+<% end %>
+
+<% if @lecture.liens.empty? %>
+  <div class="vide"><p>Aucun article à afficher pour le moment.</p></div>
+<% else %>
+  <table class="table">
+    <thead>
+      <tr><th style="width:62%">Article</th><th style="width:22%">Flux &amp; date</th><th style="width:16%">Décision</th></tr>
+    </thead>
+    <tbody>
+      <% @lecture.liens.each do |lien| %>
+        <tr>
+          <td><%= link_to lien.titre, lien.url, target: "_blank", rel: "noopener noreferrer" %> ↗</td>
+          <td class="small">
+            <%= lien.flux %>
+            <div class="muted"><%= lien.publie_le&.strftime("%d/%m/%Y %H:%M") || "—" %></div>
+          </td>
+          <td>
+            <%= button_to "Retenir", admin_veille_retenir_presse_path, method: :post, class: "btn secondary",
+                          params: { titre: lien.titre, url: lien.url, publie_le: lien.publie_le&.to_date&.iso8601 } %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>

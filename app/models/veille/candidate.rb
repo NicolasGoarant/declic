@@ -25,6 +25,9 @@ module Veille
       "import_xlsx"     => "Repérage initial"
     }.freeze
 
+    # Contenus de presse : jamais envoyés à l'IA sans le geste explicite d'un humain.
+    ORIGINES_PRESSE = %w[presse gazette].freeze
+
     # status est renseigné dès la création (défaut "pending"), donc requis.
     enum :status,   STATUSES.index_by(&:itself),   validate: true
 
@@ -68,13 +71,14 @@ module Veille
     scope :par_categorie, ->(c) { c.present? ? where(declic_category: c) : all }
     scope :par_origine,   ->(o) { o.present? ? where(origin: o) : all }
     scope :collectes_depuis, ->(d) { d.present? ? where("veille_candidates.fetched_at >= ? OR veille_candidates.created_at >= ?", d, d) : all }
+    scope :hors_presse, -> { where(origin: nil).or(where.not(origin: ORIGINES_PRESSE)) }
     # Ce qui attend encore un enrichissement IA : jamais passé par AiEnricher, pas déjà tranché.
-    scope :a_enrichir, -> { where(enriched_at: nil, status: %w[pending]).where(discard_reason: nil) }
+    scope :a_enrichir, -> { hors_presse.where(enriched_at: nil, status: %w[pending]).where(discard_reason: nil) }
     # Belles histoires enrichies dont le récit reste à rédiger : jamais tenté, ou tenté sur incident
     # d'API (« à reprendre »), moins de MAX_REDACTIONS_AUTO fois. Un brouillon refusé par les
     # contrôles (« à vérifier ») n'est pas relancé tout seul : il attend un humain.
     scope :a_rediger, lambda {
-      where(item_type: "belle_histoire", status: %w[pending retenu], draft_status: %w[aucun a_reprendre], draft_body: [nil, ""])
+      hors_presse.where(item_type: "belle_histoire", status: %w[pending retenu], draft_status: %w[aucun a_reprendre], draft_body: [nil, ""])
         .where(discard_reason: nil).where.not(summary: [nil, ""]).where("draft_attempts < ?", MAX_REDACTIONS_AUTO)
     }
     # À relire par un humain : enrichi, non écarté. « À vérifier » en fait partie.
@@ -99,6 +103,7 @@ module Veille
       scope.exists?
     end
 
+    def presse?         = ORIGINES_PRESSE.include?(origin)
     def opportunite?    = item_type == "opportunite"
     def histoire?       = item_type == "belle_histoire"
     def enriched?       = enriched_at.present?

@@ -2,68 +2,70 @@
 
 module Veille
   module Connectors
-    # Source 6 — flux RSS de la presse locale (quotidienne : chaque flux ne garde que 20 articles, soit quelques heures à un jour). Le flux n'est lu
-    # que si son robots.txt l'autorise ; on ne visite AUCUN article : seuls
-    # titre, chapeau, date et lien du flux sont gardés. Un article est retenu si
-    # son titre ou chapeau cite une commune du Grand Est ; la suite (type,
-    # mise hors ligne) revient à l'enrichissement IA. Un article présent dans
-    # plusieurs flux est dédoublonné par son URL à l'ingestion.
-    class Presse < Base
+    # Veille presse MANUELLE : liste le titre et le lien des articles du flux RSS,
+    # lus à l'ouverture de /admin/veille/presse. Volontairement hors du Runner et
+    # sans #call ni Veille::Item : les CGU de L'Est Républicain s'opposent à la
+    # fouille de textes. Rien n'est stocké, rien n'est envoyé à l'IA, et le chapeau
+    # (<description>) n'est jamais lu. Un article n'entre en base que par le geste
+    # « Retenir » de l'admin (Admin::Veille::PresseController).
+    class Presse
       FLUX = {
-        "L'Est Républicain"     => "https://www.estrepublicain.fr/rss",
+        "L'Est Républicain" => "https://www.estrepublicain.fr/rss",
         "L'Est Républicain, édition de Nancy" => "https://www.estrepublicain.fr/edition-nancy-et-agglomeration/rss",
-        "L'Est Républicain, rubrique Société" => "https://www.estrepublicain.fr/societe/rss",
-        "France 3 Grand Est"    => "https://france3-regions.francetvinfo.fr/grand-est/rss?r=grand-est"
+        "L'Est Républicain, rubrique Société" => "https://www.estrepublicain.fr/societe/rss"
       }.freeze
 
-      def initialize(flux: FLUX, **opts)
-        super(**opts)
+      Lien    = Struct.new(:titre, :url, :flux, :publie_le, keyword_init: true)
+      Lecture = Struct.new(:liens, :erreurs, keyword_init: true)
+
+      # Seuls les articles des journaux listés peuvent être retenus.
+      def self.lien_autorise?(url)
+        uri = URI.parse(url.to_s)
+        uri.is_a?(URI::HTTP) && FLUX.values.any? { |f| URI.parse(f).host == uri.host }
+      rescue URI::InvalidURIError
+        false
+      end
+
+      def initialize(flux: FLUX, http: Veille::Http.new)
         @flux = flux
+        @http = http
       end
 
-      def origin = "presse"
-
-      # Chaque flux est jugé à part : le refus de l'un (robots.txt) n'empêche pas
-      # de lire les autres. Statut :partiel si certains seulement répondent.
-      def call
-        @etat = {}
-        items = @flux.flat_map { |nom, url| lire_flux(nom, url) }
-        refuses = @etat.select { |_, (st, _)| st != :ok }
-        return super_resultat(items) if refuses.empty?
-
-        detail = @etat.map { |nom, (st, msg)| "#{nom} : #{st == :ok ? 'ok' : "#{st} (#{msg})"}" }.join(" ; ")
-        statut = refuses.size == @etat.size ? refuses.values.first.first : :partiel
-        Resultat.new(nom: nom, statut: statut, items: items, message: detail)
+      # Chaque flux est jugé à part : l'échec de l'un n'empêche pas de lire les autres.
+      def lister
+        erreurs = {}
+        liens = @flux.flat_map do |nom, url|
+          liens_de(nom, url)
+        rescue Veille::Http::Error => e
+          erreurs[nom] = e.message
+          []
+        end
+        tries = liens.uniq(&:url).sort_by { |l| l.publie_le || Time.at(0) }.reverse
+        Lecture.new(liens: tries, erreurs: erreurs)
       end
 
-      def collect = @flux.flat_map { |nom, url| lire_flux(nom, url) }
+      private
 
-      def lire_flux(nom, url)
-        items = Nokogiri::XML(http.get(url)).xpath("//item").filter_map { |n| item_pour(n, nom) }
-        @etat[nom] = [:ok, nil] if @etat
-        items
-      rescue Veille::Http::Refused => e
-        @etat[nom] = [:refuse, e.message] if @etat
-        []
-      rescue Veille::Http::Error => e
-        @etat[nom] = [:erreur, e.message] if @etat
-        []
+      def liens_de(nom, url)
+        Nokogiri::XML(@http.get(url)).xpath("//item").filter_map do |noeud|
+          titre = Veille::Text.plain(noeud.at_xpath("title")&.text)
+          lien  = noeud.at_xpath("link")&.text.to_s.strip
+          next if titre.blank? || !http?(lien)
+
+          Lien.new(titre: titre, url: lien, flux: nom, publie_le: date(noeud.at_xpath("pubDate")&.text))
+        end
       end
 
-      def super_resultat(items)
-        Resultat.new(nom: nom, statut: :ok, items: items, message: "#{items.size} élément(s) retenu(s)")
+      def http?(url)
+        URI.parse(url).is_a?(URI::HTTP)
+      rescue URI::InvalidURIError
+        false
       end
 
-      def item_pour(noeud, nom_flux)
-        titre = Veille::Text.plain(noeud.at_xpath("title")&.text)
-        chapeau = Veille::Text.plain(noeud.at_xpath("description")&.text).slice(0, 600)
-        lien = noeud.at_xpath("link")&.text.to_s.strip
-        brut = "#{titre} #{chapeau}"
-        commune = Veille::Territoire.trouver_dans(brut) or return nil
-
-        Item.new(origin: origin, url: lien, title: titre, text: "#{nom_flux}. #{chapeau}",
-                 published_on: parse_date(noeud.at_xpath("pubDate")&.text), commune: commune,
-                 type_hint: nil, reliability: "moyenne")
+      def date(valeur)
+        valeur.present? ? Time.zone.parse(valeur) : nil
+      rescue ArgumentError
+        nil
       end
     end
   end

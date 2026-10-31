@@ -10,18 +10,18 @@ Chaque appel IA est journalisé (`veille_appels_ia`) ; **plafond mensuel 15 $** 
 ## Sources (état au 13/10/2026)
 | Source | État | Note |
 |---|---|---|
-| 1 JeVeuxAider / API Engagement | **clé requise** : `ENGAGEMENT_API_KEY` (401 sans) | `EngagementApi` existant, 15 km autour de Nancy, régime « Ouvert toute l'année » sans date. Non testée en réel. |
+| 1 JeVeuxAider / API Engagement | **Retirée de `QUOTIDIEN`** (31/10) : piste abandonnée | Connecteur conservé, non lancé. |
 | 2 Agenda Grand Nancy | répond | JSON `agenda-integration.grandnancy.eu/api/vdn/events` (celui de nancy.fr/agenda). Rubriques gardées : Conférence-Rencontre, Citoyenneté, Festival, Animation. |
 | 3 Formation | **Retirée du pipeline** (31/10) : le catalogue UIMM Lorraine noyait la file, une fiche par diplôme. formation.grandest.fr non branchée (appli Angular, base d'API inconnue) | |
 | 4 Transentreprise | RSS `/rss/offre` répond ; 0 offre Nancy cette semaine | texte réduit à l'accroche |
-| 5 La Gazette France | répond (rubrique /meurthe-et-moselle) | |
-| 6 Presse | L'Est Républicain : 3 flux (général, édition de Nancy, Société) ok ; **France 3 : refusé par robots.txt** | flux RSS seulement, aucun article visité ; filtre sur la commune seule, le sujet est laissé à l'IA ; alertes e-mail non implémentées |
+| 5 La Gazette France | **Retirée de `QUOTIDIEN`** (31/10) : contenu de presse lu et envoyé à l'IA sans geste humain | Connecteur conservé, non lancé. |
+| 6 Presse | **Veille manuelle** (31/10) : les CGU de L'Est Républicain s'opposent à la fouille de textes | `/admin/veille/presse` lit les flux à l'affichage : titre et lien seulement, ni stockage, ni chapeau, ni IA. « Retenir » crée un candidat que les passes automatiques ignorent (`Candidate.hors_presse`). |
 
 `Veille::Http` lit le robots.txt de chaque hôte avant toute requête (Crawl-delay respecté, 1 s mini entre appels).
 
 ## Heroku Scheduler
-- `rake veille:quotidien` (daily), presse comprise : chaque flux ne garde que 20 articles.
-- Variables : `ANTHROPIC_API_KEY`, `ENGAGEMENT_API_KEY`, `VEILLE_BUDGET_USD_MOIS` (facultative, 15 par défaut).
+- `rake veille:quotidien` (daily) : agenda et Transentreprise.
+- Variables : `ANTHROPIC_API_KEY`, `VEILLE_BUDGET_USD_MOIS` (facultative, 15 par défaut).
 - Rattrapage des récits : `rake veille:rediger` (`LIMITE=n`). Dépense d'un mois : `rake veille:cout[AAAA-MM]`.
 - Import initial : placer `docs/declic-reperage-v1-2026-10-13.xlsx` puis `rake veille:import_xlsx` (statut « à vérifier », sans IA).
 

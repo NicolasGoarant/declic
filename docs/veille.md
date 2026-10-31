@@ -175,7 +175,7 @@ réponse de balises Markdown.
 la règle éditoriale), catégorie, commune, date ou régime, résumé reformulé en
 deux phrases (au plus 15 mots consécutifs repris de la source). Écarte ce qui est hors ligne, hors
 périmètre (`Veille::Territoire` : Grand Est pour une histoire, Meurthe-et-Moselle pour une
-opportunité) ou passé. Les sources officielles (JeVeuxAider, agenda, Transentreprise) sont
+opportunité) ou passé. Les sources officielles (agenda, Transentreprise) sont
 toujours des opportunités.
 
 ### `Veille::Redaction::Brouillon` — rédaction du récit
@@ -332,8 +332,8 @@ test intégré à Faraday, les passes IA via une doublure de client
 ## Ce qui n'existe pas encore
 
 - **Pas de texte d'article en automatique.** Le récit automatique part du résumé et du
-  chapeau (la presse n'est lue que par flux RSS) : il reste court et factuel. Pour un récit plus
-  riche, l'admin colle le texte de l'article.
+  chapeau : il reste court et factuel. La presse n'y passe jamais (voir `Veille::Connectors::Presse`) :
+  pour un article de presse, l'admin le retient dans `/admin/veille/presse`, puis colle son texte.
 - **Pas de traitement par lots depuis l'écran.** Chaque rédaction manuelle est synchrone et unitaire.
 - Le récit de la fiche créée n'est qu'une amorce, à développer dans `/admin/stories`.
 - Les trois idées de sources à reprendre (JSON-LD `Event`, CCI et Lorr'Up, dates françaises) sont

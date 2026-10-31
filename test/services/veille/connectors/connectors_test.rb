@@ -117,54 +117,45 @@ class Veille::ConnectorsTest < ActiveSupport::TestCase
     </channel></rss>
   XML
 
-  test "presse : un article sur une commune du Grand Est hors Métropole est retenu" do
-    rss = "<rss><channel><item><title>Elle ouvre sa boutique à Épinal</title><description>Récit.</description><link>https://presse.example/e</link></item></channel></rss>"
-    http = FakeHttp.new("https://presse.example/rss" => rss)
-    res = Veille::Connectors::Presse.new(flux: { "Presse test" => "https://presse.example/rss" }, http: http, today: TODAY).call
-    assert_equal ["Épinal"], res.items.map(&:commune)
-  end
-
-  test "presse : retient tout article qui cite une commune du Grand Est, via le flux seul" do
+  test "presse : ne rend que titre, lien, flux et date, sans filtre ni visite d'article" do
     http = FakeHttp.new("https://presse.example/rss" => RSS_PRESSE)
-    res = Veille::Connectors::Presse.new(flux: { "Presse test" => "https://presse.example/rss" }, http: http, today: TODAY).call
+    lecture = Veille::Connectors::Presse.new(flux: { "Presse test" => "https://presse.example/rss" }, http: http).lister
 
-    assert_equal ["https://presse.example/portrait-awa", "https://presse.example/foot"], res.items.map(&:url),
-                 "le sujet est laissé à l'IA ; seul l'article sur Besançon est hors zone"
+    assert_equal 3, lecture.liens.size, "aucun tri par commune ni par sujet"
+    assert_equal "https://presse.example/portrait-awa", lecture.liens.first.url
+    assert_equal %i[titre url flux publie_le], lecture.liens.first.members
     assert_equal ["https://presse.example/rss"], http.appels, "aucun article n'est visité"
-    assert_equal "Laxou", res.items.first.commune
-    assert_equal "moyenne", res.items.first.reliability
-    assert_nil res.items.first.type_hint, "le type est laissé à l'IA"
+    assert lecture.liens.none? { |l| l.to_a.join.include?("Reportage") }, "le chapeau n'est jamais lu"
   end
 
-  test "presse : un flux refusé n'empêche pas de lire l'autre (statut partiel)" do
-    http = FakeHttp.new("https://presse.example/rss" => RSS_PRESSE,
-                        "https://refuse.example/rss" => Veille::Http::Refused.new("robots.txt interdit /rss"))
-    res = Veille::Connectors::Presse.new(flux: { "Ouverte" => "https://presse.example/rss", "Fermée" => "https://refuse.example/rss" },
-                                         http: http, today: TODAY).call
-
-    assert_equal :partiel, res.statut
-    assert_equal 2, res.items.size
-    assert_match(/Fermée : refuse/, res.message)
+  test "presse : ne stocke rien et ne s'ingère pas" do
+    http = FakeHttp.new("https://presse.example/rss" => RSS_PRESSE)
+    assert_no_difference("Veille::Candidate.count") do
+      Veille::Connectors::Presse.new(flux: { "T" => "https://presse.example/rss" }, http: http).lister
+    end
+    assert_not_respond_to Veille::Connectors::Presse.new, :call
+    assert_not_includes Veille::Runner::QUOTIDIEN, Veille::Connectors::Presse
   end
 
-  test "presse : lue chaque jour avec les autres sources" do
-    assert_includes Veille::Runner::QUOTIDIEN, Veille::Connectors::Presse
+  test "presse : un flux refusé n'empêche pas de lire l'autre, et un même lien n'apparaît qu'une fois" do
+    http = FakeHttp.new("https://a.example/rss" => RSS_PRESSE, "https://b.example/rss" => RSS_PRESSE,
+                        "https://refuse.example/rss" => Veille::Http::Refused.new("robots.txt interdit"))
+    lecture = Veille::Connectors::Presse.new(flux: { "A" => "https://a.example/rss", "B" => "https://b.example/rss",
+                                                     "Fermé" => "https://refuse.example/rss" }, http: http).lister
+    assert_equal 3, lecture.liens.size
+    assert_match(/robots/, lecture.erreurs["Fermé"])
   end
 
-  test "presse : les flux de L'Est Républicain sont configurés" do
-    urls = Veille::Connectors::Presse::FLUX.values
-    assert_includes urls, "https://www.estrepublicain.fr/edition-nancy-et-agglomeration/rss"
-    assert_includes urls, "https://www.estrepublicain.fr/societe/rss"
+  test "presse : un lien qui n'est pas http est ignoré" do
+    rss = "<rss><channel><item><title>Piège</title><link>javascript:alert(1)</link></item></channel></rss>"
+    http = FakeHttp.new("https://presse.example/rss" => rss)
+    assert_empty Veille::Connectors::Presse.new(flux: { "T" => "https://presse.example/rss" }, http: http).lister.liens
   end
 
-  test "presse : un article présent dans deux flux ne crée qu'un candidat" do
-    http = FakeHttp.new("https://a.example/rss" => RSS_PRESSE, "https://b.example/rss" => RSS_PRESSE)
-    res = Veille::Connectors::Presse.new(flux: { "A" => "https://a.example/rss", "B" => "https://b.example/rss" }, http: http, today: TODAY).call
-    assert_equal 4, res.items.size
-
-    bilan = Veille::RawIngester.new(today: TODAY).ingest(res.items)
-    assert_equal 2, bilan.crees.size
-    assert_equal 2, bilan.doublons
+  test "presse : seuls les journaux listés peuvent être retenus" do
+    assert Veille::Connectors::Presse.lien_autorise?("https://www.estrepublicain.fr/societe/article")
+    assert_not Veille::Connectors::Presse.lien_autorise?("https://ailleurs.example/article")
+    assert_not Veille::Connectors::Presse.lien_autorise?("javascript:alert(1)")
   end
 
   # --- Gazette -----------------------------------------------------------------

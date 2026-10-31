@@ -42,6 +42,17 @@
       <dd><span class="badge"><%= @candidate.status %></span></dd>
     </dl>
 
+    <% if @candidate.presse? && @candidate.enriched_at.nil? %>
+      <h2 style="margin-top:20px">Pour créer la fiche</h2>
+      <%= form_with url: completer_admin_veille_candidate_path(@candidate), method: :patch do |f| %>
+        <%= f.label :commune, "Commune" %>
+        <%= f.text_field :commune, value: @candidate.commune %>
+        <%= f.label :summary, "Résumé (tes mots)" %>
+        <%= f.text_area :summary, value: @candidate.summary %>
+        <p><%= f.submit "Enregistrer", class: "btn secondary" %></p>
+      <% end %>
+    <% end %>
+
     <% appels = @candidate.appels_ia.order(:created_at) %>
     <% if appels.any? %>
       <h2 style="margin-top:20px">Appels IA</h2>

@@ -98,6 +98,13 @@ module Admin
         repondre_brouillon
       end
 
+      # Article de presse retenu à la main : l'IA ne l'a pas classé, la commune et le
+      # résumé que demande « Valider » sont saisis ici.
+      def completer
+        @candidate.update!(params.permit(:commune, :summary))
+        redirect_to admin_veille_candidate_path(@candidate), status: :see_other, notice: "Commune et résumé enregistrés."
+      end
+
       private
 
       def date_filtre(valeur)

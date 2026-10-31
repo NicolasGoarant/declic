@@ -70,6 +70,8 @@
       <span class="muted">—</span>
       <%= link_to "Relecture", admin_veille_candidates_path,
                   class: ("on" if controller_name == "candidates") %>
+      <%= link_to "Presse", admin_veille_presse_path,
+                  class: ("on" if controller_name == "presse") %>
       <%= link_to "Sources", admin_veille_sources_path,
                   class: ("on" if controller_name == "sources") %>
       <span class="muted">|</span>
