@@ -52,10 +52,10 @@ class DioramaTuilesTest < ActiveSupport::TestCase
   test "les cartes d'ambiance d'un style exigent leurs deux manifestes, sinon rien ne change" do
     socle = %w[jeu-video-v2/manifeste.json masque-bati/manifeste.json propriete-toits-v1/manifeste.json]
     assert_empty tuiles(socle).pour_js[:cartes_ambiance]
-    assert_empty tuiles(socle + %w[propriete-jv2-v1/manifeste.json]).pour_js[:cartes_ambiance]
-    assert_empty tuiles(socle + %w[masque-bati-jv2-v1/manifeste.json]).pour_js[:cartes_ambiance]
-    t = tuiles(socle + %w[propriete-jv2-v1/manifeste.json masque-bati-jv2-v1/manifeste.json]).pour_js
-    assert_equal({ "jeu-video-v2" => { propriete: "propriete-jv2-v1", masque: "masque-bati-jv2-v1" } }, t[:cartes_ambiance])
+    assert_empty tuiles(socle + %w[propriete-jv2-v2/manifeste.json]).pour_js[:cartes_ambiance]
+    assert_empty tuiles(socle + %w[masque-bati-jv2-v2/manifeste.json]).pour_js[:cartes_ambiance]
+    t = tuiles(socle + %w[propriete-jv2-v2/manifeste.json masque-bati-jv2-v2/manifeste.json]).pour_js
+    assert_equal({ "jeu-video-v2" => { propriete: "propriete-jv2-v2", masque: "masque-bati-jv2-v2" } }, t[:cartes_ambiance])
     assert_equal %w[masque-bati propriete-toits-v1], t.values_at(:masque, :propriete)   # bateaux, vivants, trains : inchangés
   end
 
@@ -93,8 +93,8 @@ class DioramaTuilesTest < ActiveSupport::TestCase
 
   test "une surcouche n'est annoncée au navigateur que si son manifeste répond" do
     assert_empty tuiles(%w[jeu-video-v2/manifeste.json]).pour_js[:surcouches]
-    t = tuiles(%w[jeu-video-v2/manifeste.json jeu-video-v2-coupes1/manifeste.json])
-    assert_equal({ "jeu-video-v2" => "jeu-video-v2-coupes1" }, t.pour_js[:surcouches])
+    t = tuiles(%w[jeu-video-v2/manifeste.json jeu-video-v2-bornes1/manifeste.json])
+    assert_equal({ "jeu-video-v2" => "jeu-video-v2-bornes1" }, t.pour_js[:surcouches])
     assert_equal %w[jeu-video-v2], t.disponibles[:styles]
   end
 
