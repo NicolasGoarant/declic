@@ -63,7 +63,6 @@ module Veille
 
     # La file de tri : ce que l'admin doit trancher, le plus prometteur d'abord.
     scope :file_de_tri, -> { pending.order(Arel.sql("score DESC NULLS LAST"), created_at: :desc) }
-    scope :qualifies,   -> { where.not(qualified_at: nil) }
 
     scope :par_type,      ->(t) { t.present? ? where(item_type: t) : all }
     scope :par_categorie, ->(c) { c.present? ? where(declic_category: c) : all }
@@ -100,7 +99,6 @@ module Veille
       scope.exists?
     end
 
-    def qualified? = qualified_at.present?
     def opportunite?    = item_type == "opportunite"
     def histoire?       = item_type == "belle_histoire"
     def enriched?       = enriched_at.present?

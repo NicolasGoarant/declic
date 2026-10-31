@@ -33,7 +33,7 @@ module Veille
         date_fin:   { type: "string" },
         regime:     { type: "string" },
         resume:     { type: "string" },
-        confiance:  { type: "integer", minimum: 0, maximum: 100 },
+        confiance:  { type: "integer" }, # 0-100 : bornée par #apply (l'API refuse minimum/maximum)
         motif:      { type: "string" }
       },
       required: %w[type categorie commune date_debut date_fin regime resume confiance motif],
@@ -108,7 +108,7 @@ module Veille
         schedule_text: (debut || fin ? nil : (result["regime"].presence || candidate.schedule_text)),
         score: Integer(result["confiance"], exception: false)&.clamp(0, 100),
         reason: result["motif"].to_s.strip.presence,
-        qualified_at: Time.current, enriched_at: Time.current
+        enriched_at: Time.current
       }
       resume = result["resume"].to_s.squish
       if self.class.copie_excessive?(resume, candidate.full_text.to_s + " " + candidate.title.to_s)

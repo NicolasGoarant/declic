@@ -49,7 +49,9 @@ module Veille
         n['’]h[ée]sitez\s+pas|pour\s+(?:s['’]inscrire|participer|nous\s+rejoindre|en\s+savoir\s+plus))\b
       /xi
 
-      URL       = %r{https?://|\bwww\.|\b[\w-]+\.(?:fr|com|org|eu|net|asso)\b}i
+      # Domaine nu : seulement s'il commence par une minuscule (« atelier-laxou.fr »). Une marque
+      # écrite avec majuscule (« Booking.com », « Ouest-France.fr ») est un nom, pas une adresse.
+      URL       = %r{https?://|\bwww\.|(?-i:\b[a-z][\w-]*)\.(?:fr|com|org|eu|net|asso)\b}i
       EMAIL     = /[\w.+-]+@[\w-]+\.\w+/
       TELEPHONE = /(?<!\d)(?:\+33\s?|0)[1-9](?:[\s.\-]?\d{2}){4}(?!\d)/
 

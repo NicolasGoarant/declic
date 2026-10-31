@@ -32,6 +32,7 @@ class Veille::Redaction::ControlesTest < ActiveSupport::TestCase
     "appel : découvrez"        => ["Découvrez son parcours unique.", "appel_a_agir"],
     "contact : url"            => ["Tout est sur https://atelier-laxou.fr pour les curieux.", "contact"],
     "contact : domaine nu"     => ["Le site atelier-laxou.fr raconte tout.", "contact"],
+    "contact : domaine nu en minuscules" => ["Rendez-vous sur booking.com pour la suite.", "contact"],
     "contact : e-mail"         => ["Écrire à nadia@atelier.fr pour la voir.", "contact"],
     "contact : téléphone"      => ["Son numéro est le 03 83 12 34 56 depuis toujours.", "contact"],
     "citation inventée"        => ["Elle répète : « Chaque vélo mérite une seconde vie ».", "citation_absente"],
@@ -47,6 +48,10 @@ class Veille::Redaction::ControlesTest < ActiveSupport::TestCase
   test "bloquant : copie de plus de 15 mots d'affilée" do
     source = "Dans le quartier des Provinces à Laxou une équipe de bénévoles passionnés remet chaque semaine en état des dizaines de vieux vélos abandonnés"
     assert_includes codes(source, source: source), "copie_excessive"
+  end
+
+  test "une marque avec majuscule (Booking.com) n'est pas une adresse web" do
+    refute_includes codes("La Métropole a fait condamner Booking.com devant le tribunal.", source: "Booking.com a été condamné."), "contact"
   end
 
   test "un récit propre ne déclenche aucun bloquant" do

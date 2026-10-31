@@ -21,7 +21,6 @@ module Veille
       assert c.valid?
       assert_equal "pending", c.status
       assert_nil c.score
-      assert_not c.qualified?
     end
 
     test "l'url est obligatoire et unique" do

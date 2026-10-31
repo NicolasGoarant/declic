@@ -34,8 +34,7 @@ module Admin
           excerpt:   "Trente familles cultivent 800 m².",
           full_text: "Le texte intégral de l'article.",
           score:     87,
-          reason:    "Personne nommée et initiative concrète.",
-          qualified_at: Time.current
+          reason:    "Personne nommée et initiative concrète."
         }.merge(attrs))
       end
 

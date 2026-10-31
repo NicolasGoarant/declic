@@ -112,4 +112,21 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
     assert_raises(AnthropicClient::ConnectionError) { Veille::AiEnricher.new(client: client).enrich(c) }
     assert_not c.reload.enriched?
   end
+
+  # Découvert contre la vraie API (31/10) : le format structuré refuse ces mots-clés, ce que
+  # la doublure du client ne peut pas voir. Tous les schémas de la veille sont vérifiés.
+  test "aucun schéma de réponse n'utilise les mots-clés que l'API refuse (minimum, maximum…)" do
+    interdits = %w[minimum maximum minLength maxLength minItems maxItems pattern format multipleOf]
+    cherche = lambda do |noeud, chemin|
+      case noeud
+      when Hash
+        noeud.flat_map { |k, v| (interdits.include?(k.to_s) && chemin.last != "properties" ? [(chemin + [k]).join(".")] : []) + cherche.(v, chemin + [k.to_s]) }
+      when Array then noeud.flat_map { |v| cherche.(v, chemin) }
+      else []
+      end
+    end
+    { "AiEnricher" => Veille::AiEnricher::SCHEMA, "Brouillon" => Veille::Redaction::Brouillon::SCHEMA }.each do |nom, schema|
+      assert_empty cherche.(schema, []), "#{nom} : mots-clés de schéma non pris en charge"
+    end
+  end
 end
