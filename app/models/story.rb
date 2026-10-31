@@ -25,6 +25,8 @@ class Story < ApplicationRecord
   # Nouvelles fiches seulement : ne rend invalide aucune histoire existante.
   validates :location, presence: true, on: :create
   validate :points_forts_limites
+  validate :accord_avant_mise_en_ligne
+  before_save :actualiser_mention_accord, if: :will_save_change_to_accord_obtenu_at?
   validates :thematique, inclusion: { in: Opportunity::CATEGORIES }, allow_blank: true
 
   # « Ce qu'il faut retenir » : au plus 3 points {icone, titre, texte} (voir PointsForts).
@@ -146,6 +148,16 @@ class Story < ApplicationRecord
     count
   end
 
+  # Fiche issue de la veille : l'accord de la personne conditionne la mise en ligne.
+  def accord_requis? = veille_candidate_id.present?
+
+  # Case à cocher de l'admin : cocher date l'accord (sans écraser une date existante), décocher l'efface.
+  def accord_obtenu = accord_obtenu_at.present?
+
+  def accord_obtenu=(valeur)
+    self.accord_obtenu_at = ActiveModel::Type::Boolean.new.cast(valeur) ? (accord_obtenu_at || Time.current) : nil
+  end
+
   private
 
   def purge_veille_candidate_full_text
@@ -172,5 +184,23 @@ class Story < ApplicationRecord
 
   def set_default_active
     self.is_active = false if is_active.nil?
+  end
+
+  # Une fiche issue de la veille raconte une personne réelle : elle ne se met pas en ligne sans son
+  # accord. Contrôlé quand la fiche passe en ligne (création ou bascule), pour ne rendre invalide
+  # aucune fiche déjà publiée ; les fiches saisies à la main n'en dépendent pas.
+  def accord_avant_mise_en_ligne
+    return unless is_active && accord_requis? && accord_obtenu_at.blank?
+    return unless new_record? || will_save_change_to_is_active?
+
+    errors.add(:base, "L'accord de la personne n'est pas obtenu : la fiche ne peut pas être mise en ligne.")
+  end
+
+  # La ligne « Accord de la personne » du récit suit la colonne.
+  def actualiser_mention_accord
+    return if body.blank?
+
+    mention = accord_obtenu_at ? "obtenu le #{accord_obtenu_at.to_date.strftime('%d/%m/%Y')}" : "à obtenir"
+    self.body = body.sub(/^Accord de la personne : .*$/, "Accord de la personne : #{mention}")
   end
 end

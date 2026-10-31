@@ -26,6 +26,8 @@ module Veille
       manques << "le résumé reformulé" if @c.summary.blank?
       raise Incomplet, "Il manque #{manques.to_sentence} : complète l'élément (ou écarte-le)." if manques.any?
 
+      raise Incomplet, "Le brouillon du récit a des points bloquants : corrige-les ou réécris-le." if @c.histoire? && @c.draft_status == "a_verifier"
+
       fiche = @c.histoire? ? creer_histoire : creer_opportunite
       @c.update!(status: "publie")
       fiche
@@ -60,7 +62,8 @@ module Veille
       Story.create!(
         title: @c.title, chapo: @c.summary, body: corps, location: @c.commune, tags: tag_categorie,
         thematique: @c.declic_category, happened_on: @c.published_on, source_url: @c.url,
-        source_name: @c.source_label, source_published_on: @c.published_on, veille_candidate: @c
+        source_name: @c.source_label, source_published_on: @c.published_on, veille_candidate: @c,
+        accord_obtenu_at: @c.accord_obtenu_at
       )
     end
 

@@ -19,18 +19,21 @@
       <dt>Publié le</dt>
       <dd><%= @candidate.published_on&.strftime("%d/%m/%Y") || "—" %></dd>
 
-      <dt>Qualification</dt>
+      <dt>Classement</dt>
       <dd>
-        <% if @candidate.qualified? %>
-          <span class="score <%= @candidate.score.to_i >= 75 ? 'haut' : @candidate.score.to_i >= 40 ? 'moyen' : 'bas' %>">
-            <%= @candidate.score %>
-          </span>
-          <span class="badge"><%= @candidate.category == "belle_histoire" ? "belle histoire" : "autre" %></span>
-          <div class="small muted" style="margin-top:4px"><%= @candidate.reason %></div>
+        <% if @candidate.item_type %>
+          <span class="badge"><%= @candidate.histoire? ? "Belle Histoire" : "Opportunité" %></span>
+          <span class="small"><%= @candidate.categorie_label %> · <%= @candidate.commune.presence || "commune ?" %></span>
+          <% if @candidate.score %><span class="small muted">· confiance IA <%= @candidate.score %></span><% end %>
         <% else %>
-          <span class="muted">non qualifié</span>
+          <span class="muted">non classé</span>
+          <% if @candidate.score %><span class="small muted">· score <%= @candidate.score %></span><% end %>
         <% end %>
+        <div class="small muted" style="margin-top:4px"><%= @candidate.reason %></div>
       </dd>
+
+      <dt>Résumé reformulé</dt>
+      <dd class="small"><%= @candidate.summary.presence || "—" %></dd>
 
       <dt>Chapeau relevé</dt>
       <dd class="small"><%= @candidate.excerpt.presence || "—" %></dd>
@@ -38,6 +41,21 @@
       <dt>Statut</dt>
       <dd><span class="badge"><%= @candidate.status %></span></dd>
     </dl>
+
+    <% appels = @candidate.appels_ia.order(:created_at) %>
+    <% if appels.any? %>
+      <h2 style="margin-top:20px">Appels IA</h2>
+      <table class="small" style="width:100%">
+        <% appels.each do |a| %>
+          <tr>
+            <td><%= l(a.created_at, format: :short) %></td>
+            <td><%= a.passe %></td>
+            <td><span class="badge <%= a.statut == 'ok' ? 'ok' : 'no' %>"><%= a.statut.tr('_', ' ') %></span></td>
+            <td style="text-align:right"><%= format("%.4f", a.cout_usd) %> $</td>
+          </tr>
+        <% end %>
+      </table>
+    <% end %>
   </div>
 
   <%# ---------- COLONNE DROITE : le texte puis le brouillon ---------- %>
@@ -46,18 +64,18 @@
 
     <%= form_with url: rediger_admin_veille_candidate_path(@candidate), method: :post do |f| %>
       <%= f.text_area :full_text, value: @candidate.full_text, class: "grand",
-                      placeholder: "Colle ici le texte de l'article, puis clique sur Rédiger." %>
+                      placeholder: "Facultatif : colle ici le texte de l'article pour un récit plus riche. Sans texte, le récit part du résumé et du chapeau." %>
       <p class="small muted">
         Tampon de travail. Il est effacé automatiquement dès que la fiche est créée —
         Déclic ne constitue pas de base dérivée d'articles de presse.
-        Au-delà de <%= number_with_delimiter(::Veille::Drafter::MAX_FULL_TEXT_CHARS) %> caractères, le texte est tronqué.
+        Au-delà de <%= number_with_delimiter(::Veille::Redaction::Brouillon::MAX_TEXTE) %> caractères, le texte est tronqué.
       </p>
-      <p><%= f.submit "Rédiger", class: "btn", data: { turbo_submits_with: "Rédaction en cours…" } %></p>
+      <p><%= f.submit(@candidate.draft_body.present? ? "Rédiger à nouveau" : "Rédiger", class: "btn", data: { turbo_submits_with: "Rédaction en cours…" }) %></p>
     <% end %>
 
-    <%# Cible des Turbo Streams de la passe B. %>
+    <%# Cible des Turbo Streams du récit. %>
     <div id="brouillon">
-      <%= render "brouillon", candidate: @candidate, draft: @draft, error: @error %>
+      <%= render "brouillon", candidate: @candidate, error: @error, info: @info %>
     </div>
   </div>
 </div>

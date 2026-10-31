@@ -84,6 +84,9 @@ module Veille
     # À relire par un humain : enrichi, non écarté. « À vérifier » en fait partie.
     scope :a_relire, -> { where(status: %w[pending a_verifier]).where(discard_reason: nil) }
 
+    def cout_ia = appels_ia.sum(:cout_usd).to_f
+    def accord_obtenu? = accord_obtenu_at.present?
+
     def self.origine_label(origine) = ORIGINS.fetch(origine.to_s, origine.to_s.humanize)
 
     # Dédoublonnage : même URL, ou même titre normalisé avec la même date de début.

@@ -23,6 +23,9 @@
     <% end %>
     <div style="margin-top:4px"><%= candidate.categorie_label || (candidate.category == "belle_histoire" ? "belle histoire" : "—") %></div>
     <div class="muted"><%= candidate.commune.presence || "commune ?" %></div>
+    <% if candidate.histoire? && candidate.draft_status != "aucun" %>
+      <div style="margin-top:4px"><span class="badge <%= candidate.draft_status == 'redige' ? 'ok' : 'no' %>">récit <%= { "redige" => "rédigé", "a_verifier" => "à vérifier", "a_reprendre" => "à reprendre" }[candidate.draft_status] %></span></div>
+    <% end %>
   </td>
 
   <td class="small">
@@ -41,7 +44,10 @@
   <td>
     <div class="actions">
       <% if candidate.pending? || candidate.a_verifier? || candidate.retenu? %>
-        <% if candidate.item_type.present? && (candidate.pending? || candidate.a_verifier?) %>
+        <% if candidate.histoire? && candidate.item_type.present? && (candidate.pending? || candidate.a_verifier?) %>
+          <%# Un récit se relit avant d'être validé : l'écran du candidat montre le brouillon et ses contrôles. %>
+          <%= link_to "Relire le récit →", admin_veille_candidate_path(candidate), class: "btn" %>
+        <% elsif candidate.item_type.present? && (candidate.pending? || candidate.a_verifier?) %>
           <%= button_to "Valider", valider_admin_veille_candidate_path(candidate), method: :post, class: "btn",
                         form: { data: { turbo_confirm: "Créer un brouillon (hors ligne) à partir de cet élément ?" } } %>
         <% elsif candidate.pending? %>

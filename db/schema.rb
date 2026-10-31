@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_10_31_110000) do
+ActiveRecord::Schema[7.2].define(version: 2026_10_31_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -181,6 +181,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_31_110000) do
     t.json "photos_order"
     t.string "thematique"
     t.integer "veille_candidate_id"
+    t.datetime "accord_obtenu_at"
     t.index ["veille_candidate_id"], name: "index_stories_on_veille_candidate_id"
   end
 

@@ -29,9 +29,7 @@ module Admin
         @counts = compteurs
       end
 
-      def show
-        @draft = nil
-      end
+      def show; end
 
       def retenir = trancher("retenu", "Candidat retenu.")
 
@@ -53,32 +51,50 @@ module Admin
                       alert: "Création impossible : #{e.record.errors.full_messages.to_sentence}"
       end
 
-      # Passe B. Tourne dans la requête web, en synchrone : voir
-      # Veille::Drafter pour le budget de temps sous les 30 s d'Heroku.
+      # Rédige (ou rédige à nouveau) le récit. Sans texte collé : à partir du résumé et du
+      # chapeau ; avec : à partir de l'article. Tourne dans la requête web, en synchrone :
+      # profil :web du Brouillon (budget de 30 s d'Heroku). Le brouillon est enregistré,
+      # contrôlé et relu ici ; aucune fiche n'est créée (c'est le rôle de « Valider »).
       def rediger
-        @candidate.update!(full_text: params[:full_text])
-        @draft = ::Veille::Drafter.new.draft(@candidate)
-        render :rediger
-      rescue ArgumentError, ::Veille::AiPass::ParseError, AnthropicClient::Error => e
+        colle = params[:full_text].to_s.strip
+        @candidate.update!(full_text: colle) if colle.present?
+        ::Veille::Redaction::Brouillon.new(profil: :web).draft(@candidate, texte: colle.presence || @candidate.full_text.presence)
+        repondre_brouillon
+      rescue ArgumentError, ::Veille::AiPass::ParseError, AnthropicClient::Error, ::Veille::Plafond::Depasse => e
         @error = message_pour(e)
         Rails.logger.error("[Veille] rédaction candidat ##{@candidate.id} : #{e.class} #{e.message}")
-        render :rediger, status: :unprocessable_entity
+        repondre_brouillon(status: :unprocessable_entity)
       end
 
-      # Crée la fiche en brouillon (is_active=false via Story). Le callback
-      # Story#purge_veille_candidate_full_text efface full_text au passage.
-      def publier
-        story = build_story
-
-        if story.save
-          @candidate.update!(status: "publie")
-          redirect_to admin_veille_candidates_path,
-                      notice: "Fiche créée en brouillon : #{story.title}"
-        else
-          @draft = draft_params.to_h
-          @error = "Création impossible : #{story.errors.full_messages.join(', ')}"
-          render :show, status: :unprocessable_entity
+      # Récit corrigé à la main : les mentions (source, accord) sont reposées par le code, puis les
+      # contrôles repassent sur le texte corrigé.
+      def enregistrer_brouillon
+        recit = params[:recit].to_s.strip
+        if recit.blank?
+          @error = "Le récit est vide."
+          return repondre_brouillon(status: :unprocessable_entity)
         end
+
+        source = ::Veille::Redaction::Brouillon.source_pour(@candidate, texte: @candidate.full_text.presence)
+        controles = ::Veille::Redaction::Controles.verifier(recit, source: source, manques: @candidate.draft_manques)
+        @candidate.update!(draft_body: ::Veille::Redaction::Brouillon.recomposer(@candidate, recit),
+                           draft_controles: controles.as_json, draft_status: controles.bloque? ? "a_verifier" : "redige")
+        @info = controles.bloque? ? "Récit enregistré, mais des points bloquants restent à corriger." : "Récit enregistré, contrôles passés."
+        repondre_brouillon
+      end
+
+      # Accord de la personne racontée : daté ici, reporté dans la mention du récit, puis dans la fiche
+      # à sa création. Sans lui, la fiche ne peut pas être mise en ligne.
+      def accord
+        obtenu = ActiveModel::Type::Boolean.new.cast(params[:obtenu])
+        @candidate.accord_obtenu_at = obtenu ? (@candidate.accord_obtenu_at || Time.current) : nil
+        if @candidate.draft_body.present?
+          recit = ::Veille::Redaction::Brouillon.sans_mentions(@candidate.draft_body)
+          @candidate.draft_body = ::Veille::Redaction::Brouillon.recomposer(@candidate, recit)
+        end
+        @candidate.save!
+        @info = obtenu ? "Accord de la personne enregistré." : "Accord de la personne retiré."
+        repondre_brouillon
       end
 
       private
@@ -104,38 +120,23 @@ module Admin
         end
       end
 
-      def build_story
-        d = draft_params
-
-        ::Story.new(
-          title:            d[:titre].presence || @candidate.title,
-          chapo:            d[:resume],
-          body:             corps_initial(d),
-          location:         d[:commune].presence,
-          tags:             d[:theme].presence,
-          happened_on:      @candidate.published_on,
-          source_url:       @candidate.url,
-          source_name:      @candidate.source_label,
-          veille_candidate: @candidate
-          # is_active reste false : Story#set_default_active.
-        )
-      end
-
-      # Le résumé sert d'amorce au récit, que l'éditeur développera avant
-      # d'activer la fiche. Le lien vers la source d'origine est posé dès
-      # maintenant pour ne pas risquer de l'oublier.
-      def corps_initial(d)
-        [d[:resume], "[Source originale](#{@candidate.url})"].compact_blank.join("\n\n")
-      end
-
-      def draft_params
-        params.fetch(:draft, {}).permit(:titre, :personne, :commune, :resume, :theme)
+      # Le panneau du brouillon se met à jour sans recharger la page (Turbo Stream).
+      def repondre_brouillon(status: :ok)
+        respond_to do |format|
+          format.turbo_stream { render :rediger, status: status }
+          format.html do
+            flash[status == :ok ? :notice : :alert] = @error || @info || "Récit à jour."
+            redirect_to admin_veille_candidate_path(@candidate)
+          end
+        end
       end
 
       def message_pour(error)
         case error
         when ArgumentError
-          "Colle d'abord le texte de l'article dans la zone de gauche."
+          "Rien à rédiger : colle le texte de l'article dans la zone de droite (ce candidat n'a pas de résumé)."
+        when ::Veille::Plafond::Depasse
+          error.message
         when AnthropicClient::ConnectionError
           "L'API Anthropic n'a pas répondu à temps. Réessaie."
         when AnthropicClient::RateLimitError

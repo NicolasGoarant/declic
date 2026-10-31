@@ -76,6 +76,16 @@ module Veille
         TXT
       end
 
+      MENTIONS = /\n*Source : .*\nAccord de la personne : .*\z/
+
+      # Le récit seul, sans les mentions que le code ajoute (c'est ce que le relecteur édite).
+      def self.sans_mentions(corps) = corps.to_s.sub(MENTIONS, "").strip
+
+      # Recompose le corps enregistré : récit (éventuellement corrigé à la main) + mentions à jour.
+      def self.recomposer(candidate, recit)
+        finaliser(recit, source_label: candidate.source_label, url: candidate.url, accord_obtenu_at: candidate.accord_obtenu_at)
+      end
+
       # Ce que le modèle reçoit ; c'est aussi la référence des contrôles (citations,
       # chiffres, copie). Pur.
       def self.source_pour(candidate, texte: nil)

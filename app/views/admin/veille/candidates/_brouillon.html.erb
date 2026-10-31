@@ -1,45 +1,80 @@
+<%# Panneau du récit : brouillon éditable, contrôles, manques, accord, coût. Remplacé par Turbo Stream. %>
+<% controles = ::Veille::Redaction::Controles::Resultat.depuis_json(candidate.draft_controles) %>
+<% manques = Array(candidate.draft_manques) %>
+
 <% if error.present? %>
   <div class="flash alert"><%= error %></div>
 <% end %>
+<% if info.present? %>
+  <div class="flash notice"><%= info %></div>
+<% end %>
 
-<% if draft.present? %>
+<% if candidate.draft_body.present? %>
   <hr style="margin:20px 0;border:0;border-top:1px solid #e5e7eb">
-  <h2>Brouillon</h2>
+  <h2>Récit</h2>
 
-  <% manquants = Array(draft["champs_manquants"]) %>
-  <% if manquants.any? %>
+  <p>
+    <% classe = { "redige" => "ok", "a_verifier" => "no" }.fetch(candidate.draft_status, "") %>
+    <span class="badge <%= classe %>"><%= { "redige" => "rédigé", "a_verifier" => "à vérifier", "a_reprendre" => "à reprendre", "aucun" => "—" }.fetch(candidate.draft_status) %></span>
+    <span class="small muted" style="margin-left:8px">
+      Coût IA de ce candidat : <%= format("%.4f", candidate.cout_ia) %> $ (<%= candidate.appels_ia.count %> appel(s))
+    </span>
+  </p>
+
+  <% if manques.any? %>
     <div class="manquants">
-      <strong>Le modèle signale des informations absentes de l'article :</strong>
-      <ul><% manquants.each do |champ| %><li><%= champ %></li><% end %></ul>
-      Vérifie-les à la source avant publication. Elles n'ont volontairement pas été devinées.
+      <strong>Le modèle signale des informations absentes de la source :</strong>
+      <ul><% manques.each do |champ| %><li><%= champ %></li><% end %></ul>
+      Vérifie-les à la source avant de valider. Elles n'ont volontairement pas été devinées.
     </div>
   <% end %>
 
-  <%= form_with url: publier_admin_veille_candidate_path(candidate), method: :post, scope: :draft do |f| %>
-    <label>Titre</label>
-    <%= f.text_field :titre, value: draft["titre"] %>
+  <% if controles.bloquants.any? %>
+    <div class="flash alert">
+      <strong>Points bloquants (le récit ne peut pas être validé tel quel) :</strong>
+      <ul style="margin:6px 0 0;padding-left:20px">
+        <% controles.bloquants.each do |c| %><li><%= c.message %></li><% end %>
+      </ul>
+    </div>
+  <% end %>
+  <% if controles.avertissements.reject { |a| a.code == "champs_manquants" }.any? %>
+    <div class="small muted">
+      <% controles.avertissements.reject { |a| a.code == "champs_manquants" }.each do |a| %><div>⚠ <%= a.message %></div><% end %>
+    </div>
+  <% end %>
+  <% if controles.propre? && manques.empty? %>
+    <div class="small" style="color:#166534">✓ Contrôles passés : ni horaire, ni appel à l'action, ni contact, ni citation ou chiffre étranger à la source.</div>
+  <% end %>
 
-    <label>Personne ou collectif</label>
-    <%= f.text_field :personne, value: draft["personne"] %>
+  <%= form_with url: enregistrer_brouillon_admin_veille_candidate_path(candidate), method: :patch do |f| %>
+    <label for="recit">Récit (modifiable)</label>
+    <%= f.text_area :recit, id: "recit", value: ::Veille::Redaction::Brouillon.sans_mentions(candidate.draft_body), rows: 9 %>
+    <p class="small muted">Les mentions « Source » et « Accord de la personne » sont ajoutées par le code : elles ne se modifient pas ici.</p>
+    <p><%= f.submit "Enregistrer et recontrôler", class: "btn secondary" %></p>
+  <% end %>
 
-    <label>Commune</label>
-    <%= f.text_field :commune, value: draft["commune"] %>
+  <%= form_with url: accord_admin_veille_candidate_path(candidate), method: :patch do |f| %>
+    <label class="small" style="display:flex;gap:8px;align-items:center">
+      <%= check_box_tag :obtenu, "1", candidate.accord_obtenu?, id: "accord_obtenu" %>
+      <span>
+        Accord de la personne obtenu<%= " le #{l(candidate.accord_obtenu_at.to_date)}" if candidate.accord_obtenu_at %>
+      </span>
+    </label>
+    <p class="small muted">Sans cet accord, la fiche créée ne pourra pas être mise en ligne.</p>
+    <p><%= f.submit "Enregistrer l'accord", class: "btn secondary" %></p>
+  <% end %>
 
-    <label>Thème</label>
-    <%= f.text_field :theme, value: draft["theme"] %>
-
-    <label>Résumé — reformulation intégrale, trois phrases</label>
-    <%= f.text_area :resume, value: draft["resume"] %>
-
-    <p class="small muted">
-      Relis avant de publier. La fiche est créée en brouillon (inactive) et
-      <code>full_text</code> est effacé au passage.
-    </p>
-
-    <p><%= f.submit "Publier", class: "btn" %></p>
+  <% if candidate.pending? || candidate.retenu? || candidate.a_verifier? %>
+    <%= button_to "Valider : créer la fiche hors ligne", valider_admin_veille_candidate_path(candidate), method: :post,
+                  class: "btn", disabled: controles.bloque?,
+                  form: { data: { turbo_confirm: "Créer un brouillon de fiche (hors ligne) à partir de ce récit ?" } } %>
   <% end %>
 <% elsif error.blank? %>
   <p class="muted small" style="margin-top:20px">
-    Le brouillon apparaîtra ici après la rédaction.
+    <% if candidate.draft_status == "a_reprendre" %>
+      La dernière rédaction a échoué (<%= candidate.draft_attempts %> essai(s)) : clique sur Rédiger pour réessayer.
+    <% else %>
+      Le récit apparaîtra ici après la rédaction.
+    <% end %>
   </p>
 <% end %>

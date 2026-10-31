@@ -1,5 +1,6 @@
 require "test_helper"
 require "minitest/mock"
+require_relative "../../../services/veille/fake_anthropic_client"
 
 module Admin
   module Veille
@@ -39,22 +40,24 @@ module Admin
         }.merge(attrs))
       end
 
-      # Doublure de Veille::Drafter.
-      class FakeDrafter
-        BROUILLON = {
-          "titre" => "Le jardin qui a remplacé le parking",
-          "personne" => "Sylvie Mangin",
-          "commune" => "Laxou",
-          "resume" => "Une phrase. Deux phrases. Trois phrases.",
-          "theme" => "jardin partagé",
-          "champs_manquants" => ["date exacte d'ouverture"]
-        }.freeze
+      RECIT = "Elle a rouvert la porte d'un ancien atelier de couture, au cœur du quartier, après des années de silence. " \
+              "Depuis, des voisins viennent y apprendre les gestes de la réparation, ceux que leurs grands-mères connaissaient. " \
+              "Chacun repart avec un vêtement remis en état et le sentiment d'avoir retrouvé un savoir-faire. " \
+              "Autour de la machine à coudre, les conversations se nouent et le quartier se redécouvre."
 
-        def initialize(raise_with: nil) = @raise_with = raise_with
-        def draft(_candidate)
-          raise @raise_with if @raise_with
-          BROUILLON
-        end
+      # Substitue au Brouillon web un vrai Brouillon branché sur un faux client Anthropic.
+      def avec_ia(text: nil, raise_with: nil, usage: { "input_tokens" => 500, "output_tokens" => 300 })
+        text ||= { brouillon: RECIT, personne: "Sylvie Mangin", champs_manquants: ["date exacte d'ouverture"] }.to_json
+        client = FakeAnthropicClient.new(text: text, raise_with: raise_with, usage: usage)
+        brouillon = ::Veille::Redaction::Brouillon.new(client: client, profil: :web)
+        ::Veille::Redaction::Brouillon.stub(:new, brouillon) { yield client }
+      end
+
+      def turbo = auth.merge("Accept" => "text/vnd.turbo-stream.html")
+
+      def histoire(**attrs)
+        candidat(**{ item_type: "belle_histoire", origin: "presse", commune: "Laxou", summary: "Un jardin partagé naît à Laxou.",
+                   status: "retenu", published_on: Date.new(2026, 3, 14) }.merge(attrs))
       end
 
       # ----------------------------------------------------------------
@@ -171,94 +174,191 @@ module Admin
       end
 
       # ----------------------------------------------------------------
-      # rediger — passe B
+      # rediger — Redaction::Brouillon
       # ----------------------------------------------------------------
-      test "Rédiger renvoie le brouillon dans un formulaire éditable par Turbo Stream" do
-        c = candidat(status: "retenu")
+      test "Rédiger enregistre le récit, le contrôle et le renvoie éditable par Turbo Stream" do
+        c = histoire
 
-        ::Veille::Drafter.stub(:new, FakeDrafter.new) do
-          post rediger_admin_veille_candidate_path(c),
-               params:  { full_text: "Le texte collé par l'admin." },
-               headers: auth.merge("Accept" => "text/vnd.turbo-stream.html")
+        avec_ia do
+          post rediger_admin_veille_candidate_path(c), params: { full_text: "Le texte collé par l'admin." }, headers: turbo
         end
 
         assert_response :success
         assert_match %r{<turbo-stream action="update" target="brouillon">}, response.body
-        assert_match "Le jardin qui a remplacé le parking", response.body
-        assert_match "Sylvie Mangin", response.body
-        assert_match %r{name="draft\[resume\]"}, response.body
+        assert_match "Elle a rouvert la porte", texte
+        assert_match %r{<textarea[^>]+name="recit"}, response.body
         assert_match "date exacte d'ouverture", texte, "les champs manquants sont signalés"
-        assert_equal "Le texte collé par l'admin.", c.reload.full_text
+        assert_match "Accord de la personne obtenu", texte
+        assert_match "Coût IA de ce candidat", texte
+        c.reload
+        assert_equal "Le texte collé par l'admin.", c.full_text
+        assert_equal "redige", c.draft_status
+        assert_includes c.draft_body, "Accord de la personne : à obtenir"
+        assert_equal 1, c.appels_ia.count
+      end
+
+      test "sans texte collé, Rédiger part du résumé" do
+        c = histoire(full_text: nil)
+        avec_ia do |client|
+          post rediger_admin_veille_candidate_path(c), headers: turbo
+          assert_includes client.user_content, "Résumé : Un jardin partagé naît à Laxou."
+        end
+        assert_response :success
+      end
+
+      test "un brouillon refusé par les contrôles est montré avec ses points bloquants, et Valider est désactivé" do
+        c = histoire
+        mauvais = { brouillon: "Venez à 20h30 au jardin partagé.", personne: "X", champs_manquants: [] }.to_json
+
+        avec_ia(text: mauvais) { post rediger_admin_veille_candidate_path(c), params: { full_text: "t" }, headers: turbo }
+
+        assert_response :success
+        assert_match "Points bloquants", texte
+        assert_match "Un horaire figure", texte
+        assert_match %r{<button[^>]+disabled[^>]*>Valider}, response.body
+        assert_equal "a_verifier", c.reload.draft_status
       end
 
       test "une panne API affiche un message et laisse le candidat intact" do
-        c = candidat(status: "retenu")
-        panne = FakeDrafter.new(raise_with: AnthropicClient::ConnectionError.new("timeout"))
+        c = histoire
 
-        ::Veille::Drafter.stub(:new, panne) do
-          post rediger_admin_veille_candidate_path(c),
-               params:  { full_text: "Texte." },
-               headers: auth.merge("Accept" => "text/vnd.turbo-stream.html")
+        avec_ia(raise_with: AnthropicClient::ConnectionError.new("timeout")) do
+          post rediger_admin_veille_candidate_path(c), params: { full_text: "Texte." }, headers: turbo
         end
 
         assert_response :unprocessable_entity
         assert_match "n'a pas répondu à temps", texte
         assert_equal "retenu", c.reload.status
+        assert_equal "a_reprendre", c.draft_status
       end
 
       test "une réponse illisible affiche un message dédié" do
-        c = candidat(status: "retenu")
-        cassee = FakeDrafter.new(raise_with: ::Veille::AiPass::ParseError.new("pas de JSON"))
-
-        ::Veille::Drafter.stub(:new, cassee) do
-          post rediger_admin_veille_candidate_path(c),
-               params:  { full_text: "Texte." },
-               headers: auth.merge("Accept" => "text/vnd.turbo-stream.html")
-        end
+        c = histoire
+        avec_ia(text: "désolé") { post rediger_admin_veille_candidate_path(c), params: { full_text: "Texte." }, headers: turbo }
 
         assert_response :unprocessable_entity
         assert_match "réponse inexploitable", texte
       end
 
+      test "plafond mensuel atteint : message explicite, aucun appel" do
+        ::Veille::AppelIa.create!(passe: "redaction", modele: "m", statut: "ok", cout_usd: 15)
+        c = histoire
+
+        avec_ia do |client|
+          post rediger_admin_veille_candidate_path(c), params: { full_text: "Texte." }, headers: turbo
+          assert_empty client.calls
+        end
+
+        assert_response :unprocessable_entity
+        assert_match "Plafond mensuel atteint", texte
+      end
+
+      test "rien à rédiger sans résumé ni texte" do
+        c = histoire(summary: nil, full_text: nil)
+        avec_ia { post rediger_admin_veille_candidate_path(c), headers: turbo }
+        assert_response :unprocessable_entity
+        assert_match "Rien à rédiger", texte
+      end
+
       # ----------------------------------------------------------------
-      # publier — création de la fiche et purge du tampon
+      # enregistrer_brouillon et accord
       # ----------------------------------------------------------------
-      test "Publier crée la fiche en brouillon, la relie au candidat et vide full_text" do
-        c = candidat(status: "retenu", published_on: Date.new(2026, 3, 14))
+      test "enregistrer_brouillon recontrôle le récit corrigé et repose les mentions" do
+        c = histoire(draft_body: "Ancien.\n\nSource : X — u\nAccord de la personne : à obtenir", draft_status: "a_verifier")
+
+        patch enregistrer_brouillon_admin_veille_candidate_path(c), params: { recit: RECIT }, headers: turbo
+
+        assert_response :success
+        c.reload
+        assert_equal "redige", c.draft_status
+        assert_equal RECIT, ::Veille::Redaction::Brouillon.sans_mentions(c.draft_body)
+        assert_match(/Source : .* — #{Regexp.escape(c.url)}\nAccord de la personne : à obtenir\z/, c.draft_body)
+      end
+
+      test "enregistrer_brouillon signale un récit corrigé qui enfreint la règle" do
+        c = histoire(draft_body: "Récit.\n\nSource : X — u\nAccord de la personne : à obtenir")
+
+        patch enregistrer_brouillon_admin_veille_candidate_path(c), params: { recit: "Inscrivez-vous au 03 83 12 34 56." }, headers: turbo
+
+        assert_equal "a_verifier", c.reload.draft_status
+        assert_includes c.draft_controles["bloquants"].map { |b| b["code"] }, "appel_a_agir"
+        assert_includes c.draft_controles["bloquants"].map { |b| b["code"] }, "contact"
+      end
+
+      test "enregistrer_brouillon refuse un récit vide" do
+        c = histoire(draft_body: "Récit.\n\nSource : X — u\nAccord de la personne : à obtenir")
+        patch enregistrer_brouillon_admin_veille_candidate_path(c), params: { recit: "  " }, headers: turbo
+        assert_response :unprocessable_entity
+        assert_includes c.reload.draft_body, "Récit."
+      end
+
+      test "accord : daté, reporté dans la mention du récit, et retirable" do
+        c = histoire(draft_body: "Récit.\n\nSource : X — u\nAccord de la personne : à obtenir")
+
+        patch accord_admin_veille_candidate_path(c), params: { obtenu: "1" }, headers: turbo
+        assert_response :success
+        c.reload
+        assert_not_nil c.accord_obtenu_at
+        assert_match(/Accord de la personne : obtenu le \d{2}\/\d{2}\/\d{4}\z/, c.draft_body)
+
+        patch accord_admin_veille_candidate_path(c), params: { obtenu: "0" }, headers: turbo
+        c.reload
+        assert_nil c.accord_obtenu_at
+        assert_match(/Accord de la personne : à obtenir\z/, c.draft_body)
+      end
+
+      # ----------------------------------------------------------------
+      # Valider — seul chemin vers une Story
+      # ----------------------------------------------------------------
+      test "publier n'existe plus : Valider est le seul chemin vers une Story" do
+        assert_raises(NoMethodError) { publier_admin_veille_candidate_path(1) }
+        assert_not_includes ::Admin::Veille::CandidatesController.action_methods, "publier"
+      end
+
+      test "Valider crée la Story inactive avec le récit relu, la date d'accord et la purge du tampon" do
+        c = histoire(full_text: "Tampon.", commune: "Laxou", draft_status: "redige", accord_obtenu_at: Time.zone.local(2026, 11, 3),
+                     draft_body: "#{RECIT}\n\nSource : Presse — u\nAccord de la personne : obtenu le 03/11/2026")
         Geocoder::Lookup::Test.add_stub("Laxou", [{ "latitude" => 48.6936, "longitude" => 6.1496, "address" => "Laxou" }])
 
         assert_difference -> { Story.count }, 1 do
-          post publier_admin_veille_candidate_path(c),
-               params:  { draft: FakeDrafter::BROUILLON.slice("titre", "personne", "commune", "resume", "theme") },
-               headers: auth
+          post valider_admin_veille_candidate_path(c), headers: auth
         end
 
-        story = Story.find_by(veille_candidate_id: c.id)
-        assert_redirected_to admin_veille_candidates_path
-
-        assert_equal "Le jardin qui a remplacé le parking", story.title
-        assert_equal "Une phrase. Deux phrases. Trois phrases.", story.chapo
-        assert_equal "Laxou", story.location
-        assert_equal "jardin partagé", story.tags
-        assert_equal Date.new(2026, 3, 14), story.happened_on
+        story = Story.find_by!(veille_candidate_id: c.id)
+        assert_not story.is_active
+        assert_equal Time.zone.local(2026, 11, 3), story.accord_obtenu_at
+        assert_includes story.body, "Elle a rouvert la porte"
         assert_equal c.url, story.source_url
-        assert_not story.is_active, "la fiche est relue avant mise en ligne"
-        assert_match "[Source originale](#{c.url})", story.body
-
-        c.reload
-        assert_nil c.full_text, "le tampon est effacé dès la création de la fiche"
+        assert_nil c.reload.full_text
         assert_equal "publie", c.status
       end
 
-      test "un titre vide dans le formulaire retombe sur celui du candidat" do
-        c = candidat(status: "retenu")
-        Geocoder::Lookup::Test.add_stub("Nancy", [{ "latitude" => 48.6937, "longitude" => 6.1834, "address" => "Nancy" }])
+      test "Valider refuse un récit dont les contrôles sont bloquants" do
+        c = histoire(draft_status: "a_verifier", draft_body: "Venez !\n\nSource : X — u\nAccord de la personne : à obtenir")
+        assert_no_difference -> { Story.count } do
+          post valider_admin_veille_candidate_path(c), headers: auth
+        end
+        assert_match "points bloquants", flash[:alert]
+        assert_equal "retenu", c.reload.status
+      end
 
-        post publier_admin_veille_candidate_path(c),
-             params:  { draft: { titre: "", commune: "Nancy", resume: "Un résumé." } },
-             headers: auth
+      test "l'écran du candidat montre le brouillon automatique (jusque-là invisible)" do
+        c = histoire(draft_status: "redige", draft_manques: ["commune"],
+                     draft_body: "Un récit lisible.\n\nSource : X — u\nAccord de la personne : à obtenir")
+        get admin_veille_candidate_path(c), headers: auth
+        assert_match "Un récit lisible.", texte
+        assert_match "commune", texte
+        assert_match %r{class="manquants"}, response.body
+      end
 
-        assert_equal c.title, Story.find_by(veille_candidate_id: c.id).title
+      test "la file renvoie vers l'écran de relecture pour une belle histoire, et garde Valider pour une opportunité" do
+        h = histoire(status: "pending", title: "Histoire en file")
+        o = candidat(item_type: "opportunite", status: "pending", title: "Opportunité en file", summary: "R.", commune: "Nancy")
+
+        get admin_veille_candidates_path, headers: auth
+        assert_match "Relire le récit", texte
+        assert_match %r{action="#{Regexp.escape(valider_admin_veille_candidate_path(o))}"}, response.body
+        assert_no_match %r{action="#{Regexp.escape(valider_admin_veille_candidate_path(h))}"}, response.body
       end
     end
   end

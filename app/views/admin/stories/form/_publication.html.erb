@@ -9,6 +9,16 @@
     </label>
   </div>
 
+  <% if @story.accord_requis? %>
+    <div class="field">
+      <label class="checkbox-field">
+        <%= f.check_box :accord_obtenu, checked: @story.accord_obtenu %>
+        <span>🤝 Accord de la personne obtenu<%= " (le #{l(@story.accord_obtenu_at.to_date)})" if @story.accord_obtenu_at %></span>
+      </label>
+      <div class="field-hint">Fiche issue de la veille : elle ne peut pas être publiée sans cet accord.</div>
+    </div>
+  <% end %>
+
   <div class="form-row">
     <div class="field">
       <%= f.label :author_name, "Proposée par (nom)", class: "field-label" %>

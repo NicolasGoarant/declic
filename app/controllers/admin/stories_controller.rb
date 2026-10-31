@@ -93,7 +93,7 @@ class Admin::StoriesController < Admin::BaseController
     if @story.update(is_active: !@story.is_active)
       flash[:notice] = "Story #{@story.is_active ? 'activée' : 'désactivée'} : #{@story.title}"
     else
-      flash[:alert] = "Impossible de mettre à jour la story."
+      flash[:alert] = "Impossible de mettre à jour la story : #{@story.errors.full_messages.to_sentence}"
     end
     redirect_to admin_stories_path(request.query_parameters)
   end
@@ -117,8 +117,10 @@ class Admin::StoriesController < Admin::BaseController
         "Supprimées : #{count}"
       when "activate"
         if Story.column_names.include?("is_active")
-          scope.update_all(is_active: true)
-          "Activées : #{scope.count}"
+          # Fiche par fiche : update_all contournerait la règle de l'accord de la personne.
+          activees, refusees = scope.to_a.partition { |story| story.update(is_active: true) }
+          refus = refusees.any? ? " ; non activées (accord de la personne non obtenu) : #{refusees.map(&:title).to_sentence}" : ""
+          "Activées : #{activees.size}#{refus}"
         else
           "Action 'activate' indisponible (colonne is_active absente)."
         end
@@ -181,7 +183,7 @@ class Admin::StoriesController < Admin::BaseController
       :slug, :tags, :active, :is_active, :published,
       :venue_name, :discover_url, :quote, :quote_author, :thematique,
       :contact_info,
-      :author_name, :author_email, :phone, :address, :city, :postal_code,
+      :accord_obtenu, :author_name, :author_email, :phone, :address, :city, :postal_code,
       points_forts_saisie: [ :icone, :titre, :texte ]
     )
   end
