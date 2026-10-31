@@ -10,7 +10,7 @@ class Veille::EtiquetageTest < ActiveSupport::TestCase
   test "aucun contenu de presse dans le jeu : ni chapeau ni motif tiré du chapeau" do
     presse = Veille::Etiquetage.cas.select { |c| c.lien.match?(/estrepublicain|lagazettefrance/) }
     assert_equal 8, presse.size
-    assert presse.all? { |c| c.presse && c.texte.nil? && c.v4["motif"].nil? }
+    assert presse.all? { |c| c.presse && c.texte.nil? && c.quand.empty? && c.v4["motif"].nil? }
     assert Veille::Etiquetage.cas.reject(&:presse).all? { |c| c.texte.present? }
   end
 
