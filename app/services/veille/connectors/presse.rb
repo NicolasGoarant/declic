@@ -5,7 +5,7 @@ module Veille
     # Source 6 — flux RSS de la presse locale (quotidienne : chaque flux ne garde que 20 articles, soit quelques heures à un jour). Le flux n'est lu
     # que si son robots.txt l'autorise ; on ne visite AUCUN article : seuls
     # titre, chapeau, date et lien du flux sont gardés. Un article est retenu si
-    # son titre ou chapeau cite une commune du Grand Nancy ; la suite (type,
+    # son titre ou chapeau cite une commune du Grand Est ; la suite (type,
     # mise hors ligne) revient à l'enrichissement IA. Un article présent dans
     # plusieurs flux est dédoublonné par son URL à l'ingestion.
     class Presse < Base
@@ -59,7 +59,7 @@ module Veille
         chapeau = Veille::Text.plain(noeud.at_xpath("description")&.text).slice(0, 600)
         lien = noeud.at_xpath("link")&.text.to_s.strip
         brut = "#{titre} #{chapeau}"
-        commune = Veille::GrandNancy.trouver_dans(brut) or return nil
+        commune = Veille::Territoire.trouver_dans(brut) or return nil
 
         Item.new(origin: origin, url: lien, title: titre, text: "#{nom_flux}. #{chapeau}",
                  published_on: parse_date(noeud.at_xpath("pubDate")&.text), commune: commune,

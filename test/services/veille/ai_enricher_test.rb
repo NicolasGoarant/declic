@@ -27,9 +27,16 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
     assert_not_includes Veille::Candidate.a_rediger, c
   end
 
-  test "hors_ligne est sans effet sur une opportunité" do
-    c, = enrich(candidat, hors_ligne: true)
-    assert_not_equal "ecarte", c.status
+  test "une opportunité hors ligne éditoriale est écartée" do
+    c, = enrich(candidat, hors_ligne: true, motif: "Simple visite guidée.")
+    assert_equal "ecarte", c.status
+    assert_match "Simple visite guidée.", c.discard_reason
+  end
+
+  test "une source officielle hors ligne est écartée, même typée opportunité de force" do
+    c, = enrich(candidat(origin: "agenda_nancy", item_type: "opportunite"), type: "belle_histoire", hors_ligne: true)
+    assert_equal "opportunite", c.item_type
+    assert_equal "ecarte", c.status
   end
 
   test "le prompt porte la règle éditoriale, le texte et la limite de citation" do
@@ -90,10 +97,41 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
     assert_equal "rencontres", c.declic_category
   end
 
-  test "écarte ce qui est hors Grand Nancy" do
-    c, = enrich(candidat(commune: nil), commune: "Toul")
+  test "une opportunité en Meurthe-et-Moselle est gardée, hors du département elle est écartée" do
+    c, = enrich(candidat(commune: nil), type: "opportunite", commune: "Toul")
+    assert_equal "pending", c.status
+    assert_equal "Toul", c.commune
+
+    c, = enrich(candidat(commune: nil), type: "opportunite", commune: "Metz")
     assert_equal "ecarte", c.status
-    assert_match(/Hors Grand Nancy/, c.discard_reason)
+    assert_match(/Hors Meurthe-et-Moselle/, c.discard_reason)
+  end
+
+  test "une belle histoire est gardée dans tout le Grand Est, écartée au-delà" do
+    c, = enrich(candidat(origin: "presse", commune: nil), type: "belle_histoire", categorie: nil, commune: "Épinal")
+    assert_equal "pending", c.status
+
+    c, = enrich(candidat(origin: "presse", commune: nil), type: "belle_histoire", categorie: nil, commune: "Besançon")
+    assert_equal "ecarte", c.status
+    assert_match(/Hors Grand Est/, c.discard_reason)
+  end
+
+  test "quand le modèle renvoie une commune vide, le code la cherche dans le titre puis le texte" do
+    c, = enrich(candidat(origin: "presse", commune: nil, title: "Elle ouvre sa boutique à Saint-Dié-des-Vosges", full_text: "Récit."),
+                type: "belle_histoire", categorie: nil, commune: "")
+    assert_equal "pending", c.status
+    assert_equal "Saint-Dié-des-Vosges", c.commune
+
+    c, = enrich(candidat(origin: "presse", commune: nil, title: "Une reconversion", full_text: "Installée à Toul depuis un an."),
+                type: "opportunite", commune: "")
+    assert_equal "pending", c.status
+    assert_equal "Toul", c.commune
+  end
+
+  test "écarte ce qui n'a aucune commune repérable" do
+    c, = enrich(candidat(origin: "presse", commune: nil, title: "Une reconversion", full_text: "Sans aucun lieu."), commune: "")
+    assert_equal "ecarte", c.status
+    assert_match(/commune introuvable/, c.discard_reason)
   end
 
   test "écarte un événement passé" do

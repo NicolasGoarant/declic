@@ -3,7 +3,7 @@
 module Veille
   # Stocke chaque élément brut collecté : source, URL, date de collecte, texte
   # récupéré. Dédoublonne (même URL, ou même titre normalisé à la même date),
-  # écarte d'emblée ce qui est hors Grand Nancy ou déjà passé. Ne fait aucun
+  # écarte d'emblée ce qui est hors périmètre (Veille::Territoire) ou déjà passé. Ne fait aucun
   # appel IA.
   #
   # Le texte brut va dans full_text, le tampon de travail que Veille::Story
@@ -28,7 +28,7 @@ module Veille
     private
 
     def ingest_one(item, bilan)
-      if item.commune.present? && !Veille::GrandNancy.inclut?(item.commune)
+      if item.commune.present? && !Veille::Territoire.admis?(item.commune, item.type_hint)
         bilan.hors_zone += 1
       elsif (item.ends_on || item.starts_on)&.<(@today)
         bilan.passes += 1
@@ -36,7 +36,7 @@ module Veille
         bilan.doublons += 1
       else
         candidat = Veille::Candidate.new(item.to_candidate_attributes(now: @now))
-        candidat.commune = Veille::GrandNancy.canonique(item.commune) || item.commune
+        candidat.commune = Veille::Territoire.canonique(item.commune) || item.commune
         if candidat.save
           bilan.crees << candidat
         else

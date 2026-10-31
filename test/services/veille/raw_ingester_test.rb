@@ -29,9 +29,9 @@ class Veille::RawIngesterTest < ActiveSupport::TestCase
     assert_equal 1, bilan.crees.size
   end
 
-  test "écarte d'emblée le hors Grand Nancy et le passé, sans les stocker" do
+  test "écarte d'emblée une opportunité hors Meurthe-et-Moselle et le passé, sans les stocker" do
     bilan = @ing.ingest([
-      item(commune: "Toul", title: "Loin"),
+      item(commune: "Metz", type_hint: "opportunite", title: "Loin"),
       item(commune: "Nancy", title: "Hier", starts_on: Date.new(2026, 10, 1), ends_on: Date.new(2026, 10, 2)),
       item(commune: "Nancy", title: "En cours", starts_on: Date.new(2026, 10, 1), ends_on: Date.new(2026, 11, 2))
     ])
@@ -39,6 +39,17 @@ class Veille::RawIngesterTest < ActiveSupport::TestCase
     assert_equal 1, bilan.hors_zone
     assert_equal 1, bilan.passes
     assert_equal ["En cours"], bilan.crees.map(&:title)
+  end
+
+  test "sans type connu, le périmètre est le Grand Est : l'enrichissement tranchera" do
+    bilan = @ing.ingest([
+      item(commune: "Metz", type_hint: nil, title: "En Moselle"),
+      item(commune: "Toul", type_hint: "opportunite", title: "Dans le département"),
+      item(commune: "Besançon", type_hint: nil, title: "Hors région")
+    ])
+
+    assert_equal 1, bilan.hors_zone
+    assert_equal ["En Moselle", "Dans le département"], bilan.crees.map(&:title)
   end
 
   test "une commune absente n'écarte pas l'élément : l'enrichissement tranchera" do

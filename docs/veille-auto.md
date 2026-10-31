@@ -3,7 +3,7 @@
 Branche `veille-auto` (depuis `main` + `veille-belles-histoires`). Écran : `/admin/veille`. Rien n'est publié sans clic « Valider », et le brouillon créé est inactif.
 
 ## Chaîne
-`rake veille:quotidien` → `Veille::Runner` → connecteurs (`app/services/veille/connectors/`) → `RawIngester` (dédoublonnage URL ou titre normalisé + date ; hors Grand Nancy et passé écartés) → `AiEnricher` (Haiku, 30 éléments max par exécution) → **étape « rédiger »** : `Redaction::Brouillon` (Sonnet, belles histoires, ~120 mots, 30 max, reprenable : 3 essais par candidat, arrêt après 3 erreurs d'affilée) → `Redaction::Controles` (horaires, appels à l'action, contacts, citations et chiffres étrangers à la source, copie) → relecture admin (récit éditable, accord de la personne) → `Validation` (Opportunity ou Story inactive, seul chemin). Une `Story` issue de la veille ne se met pas en ligne sans l'accord de la personne.
+`rake veille:quotidien` → `Veille::Runner` → connecteurs (`app/services/veille/connectors/`) → `RawIngester` (dédoublonnage URL ou titre normalisé + date ; hors périmètre et passé écartés) → `AiEnricher` (Haiku, 30 éléments max par exécution) → **étape « rédiger »** : `Redaction::Brouillon` (Sonnet, belles histoires, ~120 mots, 30 max, reprenable : 3 essais par candidat, arrêt après 3 erreurs d'affilée) → `Redaction::Controles` (horaires, appels à l'action, contacts, citations et chiffres étrangers à la source, copie) → relecture admin (récit éditable, accord de la personne) → `Validation` (Opportunity ou Story inactive, seul chemin). Une `Story` issue de la veille ne se met pas en ligne sans l'accord de la personne.
 
 Chaque appel IA est journalisé (`veille_appels_ia`) ; **plafond mensuel 15 $** (`VEILLE_BUDGET_USD_MOIS`), vérifié avant chaque envoi. Détail : `docs/veille.md`.
 
@@ -12,7 +12,7 @@ Chaque appel IA est journalisé (`veille_appels_ia`) ; **plafond mensuel 15 $** 
 |---|---|---|
 | 1 JeVeuxAider / API Engagement | **clé requise** : `ENGAGEMENT_API_KEY` (401 sans) | `EngagementApi` existant, 15 km autour de Nancy, régime « Ouvert toute l'année » sans date. Non testée en réel. |
 | 2 Agenda Grand Nancy | répond | JSON `agenda-integration.grandnancy.eu/api/vdn/events` (celui de nancy.fr/agenda). Rubriques gardées : Conférence-Rencontre, Citoyenneté, Festival, Animation. |
-| 3 Formation | UIMM Lorraine répond (sitemap + pages) ; **formation.grandest.fr non branchée** (appli Angular, base d'API inconnue) | |
+| 3 Formation | **Retirée du pipeline** (31/10) : le catalogue UIMM Lorraine noyait la file, une fiche par diplôme. formation.grandest.fr non branchée (appli Angular, base d'API inconnue) | |
 | 4 Transentreprise | RSS `/rss/offre` répond ; 0 offre Nancy cette semaine | texte réduit à l'accroche |
 | 5 La Gazette France | répond (rubrique /meurthe-et-moselle) | |
 | 6 Presse | L'Est Républicain : 3 flux (général, édition de Nancy, Société) ok ; **France 3 : refusé par robots.txt** | flux RSS seulement, aucun article visité ; filtre sur la commune seule, le sujet est laissé à l'IA ; alertes e-mail non implémentées |

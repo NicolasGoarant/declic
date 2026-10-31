@@ -4,7 +4,7 @@ module Veille
   # Propose, pour un élément brut : son type (opportunité ou belle histoire, selon
   # la règle éditoriale), sa catégorie Déclic, sa commune du Grand Nancy, sa date
   # ou son régime, et un résumé reformulé en deux phrases. Écarte (sans publier
-  # quoi que ce soit) ce qui est hors Grand Nancy ou passé.
+  # quoi que ce soit) ce qui est hors ligne, hors périmètre (Veille::Territoire) ou passé.
   #
   # Haiku suffit : tâche de classification sur un texte court, en lot.
   class AiEnricher < AiPass
@@ -19,7 +19,7 @@ module Veille
     # Citation maximale autorisée dans un résumé, en mots.
     MAX_CITATION = 15
     # Sources officielles : ce qu'elles publient invite par nature à agir.
-    SOURCES_OPPORTUNITES = %w[jeveuxaider agenda_nancy formation transentreprise].freeze
+    SOURCES_OPPORTUNITES = %w[jeveuxaider agenda_nancy transentreprise].freeze
 
     CATEGORIES = ::Opportunity::CATEGORIES
 
@@ -105,7 +105,7 @@ module Veille
       type = "opportunite" if SOURCES_OPPORTUNITES.include?(candidate.origin) && candidate.item_type != "belle_histoire"
       type = candidate.item_type.presence || "opportunite" unless Veille::Candidate::ITEM_TYPES.include?(type)
 
-      commune = Veille::GrandNancy.canonique(result["commune"]) || Veille::GrandNancy.canonique(candidate.commune)
+      commune = localiser(candidate, result)
       debut   = parse_date(result["date_debut"]) || candidate.starts_on
       fin     = parse_date(result["date_fin"])   || candidate.ends_on
 
@@ -126,11 +126,12 @@ module Veille
         attrs[:summary] = resume.presence
       end
 
-      if type == "belle_histoire" && result["hors_ligne"] == true
-        attrs[:discard_reason] = "Hors ligne éditoriale : #{attrs[:reason] || 'pas un récit inspirant'}".squish
+      if result["hors_ligne"] == true
+        attrs[:discard_reason] = "Hors ligne éditoriale : #{attrs[:reason] || 'hors de la ligne de Déclic'}".squish
         attrs[:status] = "ecarte"
-      elsif commune.nil?
-        attrs[:discard_reason] = "Hors Grand Nancy ou commune introuvable"
+      elsif commune.nil? || !Veille::Territoire.admis?(commune, type)
+        perimetre = type == "opportunite" ? "Meurthe-et-Moselle" : "Grand Est"
+        attrs[:discard_reason] = "Hors #{perimetre} ou commune introuvable"
         attrs[:status] = "ecarte"
       elsif (fin || debut)&.<(today)
         attrs[:discard_reason] = "Événement passé"
@@ -146,6 +147,15 @@ module Veille
     end
 
     private
+
+    # Le prompt demande une commune vide hors du Grand Nancy : le code la cherche
+    # alors lui-même, dans le titre d'abord, le texte ensuite.
+    def localiser(candidate, result)
+      Veille::Territoire.canonique(result["commune"]) ||
+        Veille::Territoire.canonique(candidate.commune) ||
+        Veille::Territoire.trouver_dans(candidate.title) ||
+        Veille::Territoire.trouver_dans(candidate.full_text.presence || candidate.excerpt)
+    end
 
     # Seules les opportunités ont une catégorie : une belle histoire se suffit à elle-même.
     def categorie_pour(type, candidate, result)

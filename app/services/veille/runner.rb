@@ -13,10 +13,10 @@ module Veille
     # panne) : inutile d'essuyer 30 refus et de remplir les logs.
     ERREURS_CONSECUTIVES_MAX = 3
 
-    QUOTIDIEN   = [Connectors::Engagement, Connectors::AgendaNancy, Connectors::FormationLorraine,
+    QUOTIDIEN   = [Connectors::Engagement, Connectors::AgendaNancy,
                    Connectors::Transentreprise, Connectors::GazetteFrance, Connectors::Presse].freeze
     # Ordre de priorité du cahier des charges, pour répartir les 30 appels.
-    PRIORITE = %w[jeveuxaider agenda_nancy formation transentreprise gazette presse].freeze
+    PRIORITE = %w[jeveuxaider agenda_nancy transentreprise gazette presse].freeze
 
     Rapport = Struct.new(:sources, :crees, :doublons, :hors_zone, :passes, :enrichis, :ecartes, :erreurs_ia,
                          :cout_usd, :restants, :plafond, :rediges, :redaction_bloquee, :erreurs_redaction,

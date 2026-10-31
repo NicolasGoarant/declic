@@ -5,7 +5,7 @@ module Veille
     # Source 5 — La Gazette France, rubrique Meurthe-et-Moselle (robots.txt :
     # tout permis sauf pages paginées et recherche). On lit la page de rubrique,
     # puis chaque article (titre et chapeau en métadonnées, pas de texte intégral
-    # conservé) ; on garde ceux qui citent une commune du Grand Nancy.
+    # conservé) ; on garde ceux qui citent une commune du Grand Est.
     class GazetteFrance < Base
       RUBRIQUE = "https://www.lagazettefrance.fr/meurthe-et-moselle"
       MAX      = 30
@@ -20,7 +20,7 @@ module Veille
 
       def item_pour(url)
         page = Veille::PageFetcher.extract(http.get(url), url: url)
-        commune = Veille::GrandNancy.trouver_dans("#{page[:title]} #{page[:excerpt]}")
+        commune = Veille::Territoire.trouver_dans("#{page[:title]} #{page[:excerpt]}")
         return nil unless commune
 
         Item.new(origin: origin, url: url, title: page[:title], text: page[:excerpt].to_s,

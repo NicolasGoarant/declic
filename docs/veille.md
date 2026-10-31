@@ -49,7 +49,7 @@ Couverture : `test/models/story_test.rb`.
 connecteurs (rake veille:quotidien)                     rake veille:import (liste d'URL)
         |                                                      |
         v                                                      v
-   RawIngester : dédoublonne, écarte hors Grand Nancy / passé    PageFetcher
+   RawIngester : dédoublonne, écarte hors périmètre / passé    PageFetcher
         \______________________  ________________________________/
                                v
                   Veille::Candidate (status: pending)
@@ -172,9 +172,10 @@ réponse de balises Markdown.
 ### `Veille::AiEnricher` — classement
 
 `claude-haiku-4-5-20251001`. Pour un élément brut : type (opportunité ou belle histoire, selon
-la règle éditoriale), catégorie, commune du Grand Nancy, date ou régime, résumé reformulé en
-deux phrases (au plus 15 mots consécutifs repris de la source). Écarte ce qui est hors Grand
-Nancy ou passé. Les sources officielles (JeVeuxAider, agenda, formation, Transentreprise) sont
+la règle éditoriale), catégorie, commune, date ou régime, résumé reformulé en
+deux phrases (au plus 15 mots consécutifs repris de la source). Écarte ce qui est hors ligne, hors
+périmètre (`Veille::Territoire` : Grand Est pour une histoire, Meurthe-et-Moselle pour une
+opportunité) ou passé. Les sources officielles (JeVeuxAider, agenda, Transentreprise) sont
 toujours des opportunités.
 
 ### `Veille::Redaction::Brouillon` — rédaction du récit

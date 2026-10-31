@@ -33,7 +33,7 @@ module Veille
         return nil if fin && fin < today
 
         ville = ev.dig("place", "city", "name")
-        return nil if ville.present? && !Veille::GrandNancy.inclut?(ville)
+        return nil if ville.present? && !Veille::Territoire.meurthe_et_moselle?(ville)
 
         lieu = ev.dig("place", "name")
         texte = [ev["name"], rubrique, Array(ev["subCategories"]).map { |s| s["name"] }.join(", "),

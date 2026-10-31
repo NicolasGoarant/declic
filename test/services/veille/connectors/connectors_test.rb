@@ -9,14 +9,21 @@ class Veille::ConnectorsTest < ActiveSupport::TestCase
   def fixture(nom) = File.read(Rails.root.join("test/fixtures/files/veille", nom))
 
   # --- Agenda du Grand Nancy ---------------------------------------------------
-  test "agenda : garde les rubriques utiles, écarte spectacles, hors zone et passé" do
+  test "agenda : un événement hors Meurthe-et-Moselle est écarté" do
+    ev = { "name" => "À Metz", "mainCategory" => { "name" => "Citoyenneté" }, "uuid" => "x",
+           "startDate" => "2026-11-02", "place" => { "city" => { "name" => "Metz" } } }
+    assert_nil Veille::Connectors::AgendaNancy.new(http: FakeHttp.new, today: TODAY).item_pour(ev)
+  end
+
+  test "agenda : garde les rubriques utiles, écarte spectacles et passé" do
     http = FakeHttp.new("https://agenda-integration.grandnancy.eu/api/vdn/events" => fixture("agenda_extrait.json"))
     res = Veille::Connectors::AgendaNancy.new(http: http, today: TODAY).call
 
     assert_equal :ok, res.statut
-    assert_equal ["Les Rêveurs, film d'Isabelle Carré", "Don de sang festif"], res.items.map(&:title)
+    assert_equal ["Les Rêveurs, film d'Isabelle Carré", "Don de sang festif", "Rencontre à Toul"], res.items.map(&:title),
+                 "Toul est en Meurthe-et-Moselle : l'événement reste dans le périmètre"
 
-    don = res.items.last
+    don = res.items.find { |i| i.title == "Don de sang festif" }
     assert_equal "benevolat", don.category_hint, "« Citoyenneté » mène à S'engager"
     assert_equal "opportunite", don.type_hint
     assert_equal "Nancy", don.commune
@@ -73,7 +80,21 @@ class Veille::ConnectorsTest < ActiveSupport::TestCase
     </channel></rss>
   XML
 
-  test "transentreprise : ne garde que l'arrondissement de Nancy, texte réduit à l'accroche" do
+  test "transentreprise : garde la Meurthe-et-Moselle, commune tirée de l'annonce ou de l'arrondissement" do
+    rss = <<~XML
+      <rss><channel>
+        <item><title>Garage à Baccarat</title><description>x</description>
+          <link>https://www.transentreprise.com/offres/fiche/A/garage/grand-est/meurthe-et-moselle/arr-de-luneville</link></item>
+        <item><title>Bar-tabac</title><description>x</description>
+          <link>https://www.transentreprise.com/offres/fiche/B/bar/grand-est/meurthe-et-moselle/arr-de-toul</link></item>
+      </channel></rss>
+    XML
+    http = FakeHttp.new("https://www.transentreprise.com/rss/offre" => rss)
+    res = Veille::Connectors::Transentreprise.new(http: http, today: TODAY).call
+    assert_equal %w[Baccarat Toul], res.items.map(&:commune)
+  end
+
+  test "transentreprise : écarte les autres départements, texte réduit à l'accroche" do
     http = FakeHttp.new("https://www.transentreprise.com/rss/offre" => RSS_TE)
     res = Veille::Connectors::Transentreprise.new(http: http, today: TODAY).call
 
@@ -83,6 +104,7 @@ class Veille::ConnectorsTest < ActiveSupport::TestCase
     assert_equal "entreprendre", offre.category_hint
     assert_equal "Belle affaire établie", offre.text
     assert_includes offre.url, "nancy-et-arrondissement"
+    assert_equal "Nancy", offre.commune
   end
 
   # --- Presse ------------------------------------------------------------------
@@ -91,16 +113,23 @@ class Veille::ConnectorsTest < ActiveSupport::TestCase
       <item><title>Portrait : à Laxou, Awa a relancé la cantine solidaire</title><description>Une initiative de quartier.</description>
         <link>https://presse.example/portrait-awa</link><pubDate>Mon, 12 Oct 2026 08:00:00 +0200</pubDate></item>
       <item><title>Football : le SLUC s'incline à Nancy</title><description>Match nul.</description><link>https://presse.example/foot</link></item>
-      <item><title>Portrait d'un boulanger de Metz</title><description>Reportage.</description><link>https://presse.example/metz</link></item>
+      <item><title>Portrait d'un boulanger de Besançon</title><description>Reportage.</description><link>https://presse.example/besancon</link></item>
     </channel></rss>
   XML
 
-  test "presse : retient tout article qui cite une commune du Grand Nancy, via le flux seul" do
+  test "presse : un article sur une commune du Grand Est hors Métropole est retenu" do
+    rss = "<rss><channel><item><title>Elle ouvre sa boutique à Épinal</title><description>Récit.</description><link>https://presse.example/e</link></item></channel></rss>"
+    http = FakeHttp.new("https://presse.example/rss" => rss)
+    res = Veille::Connectors::Presse.new(flux: { "Presse test" => "https://presse.example/rss" }, http: http, today: TODAY).call
+    assert_equal ["Épinal"], res.items.map(&:commune)
+  end
+
+  test "presse : retient tout article qui cite une commune du Grand Est, via le flux seul" do
     http = FakeHttp.new("https://presse.example/rss" => RSS_PRESSE)
     res = Veille::Connectors::Presse.new(flux: { "Presse test" => "https://presse.example/rss" }, http: http, today: TODAY).call
 
     assert_equal ["https://presse.example/portrait-awa", "https://presse.example/foot"], res.items.map(&:url),
-                 "le sujet est laissé à l'IA ; seul l'article sur Metz est hors zone"
+                 "le sujet est laissé à l'IA ; seul l'article sur Besançon est hors zone"
     assert_equal ["https://presse.example/rss"], http.appels, "aucun article n'est visité"
     assert_equal "Laxou", res.items.first.commune
     assert_equal "moyenne", res.items.first.reliability
@@ -139,13 +168,13 @@ class Veille::ConnectorsTest < ActiveSupport::TestCase
   end
 
   # --- Gazette -----------------------------------------------------------------
-  test "gazette : lit la rubrique puis les articles qui citent une commune du Grand Nancy" do
+  test "gazette : lit la rubrique puis les articles qui citent une commune du Grand Est" do
     rubrique = '<a href="/article/a-nancy">a</a><a href="/article/ailleurs">b</a><a href="/article/a-nancy">dup</a>'
     page = ->(titre) { %(<html><head><meta property="og:title" content="#{titre}"><meta property="og:description" content="Un chapeau."></head></html>) }
     http = FakeHttp.new(
       "https://www.lagazettefrance.fr/meurthe-et-moselle" => rubrique,
       "https://www.lagazettefrance.fr/article/a-nancy" => page.("Un forum de l'emploi à Nancy"),
-      "https://www.lagazettefrance.fr/article/ailleurs" => page.("Une usine à Épinal")
+      "https://www.lagazettefrance.fr/article/ailleurs" => page.("Une usine à Besançon")
     )
     res = Veille::Connectors::GazetteFrance.new(http: http, today: TODAY).call
 
@@ -165,26 +194,5 @@ class Veille::ConnectorsTest < ActiveSupport::TestCase
     http = FakeHttp.new("https://www.transentreprise.com/rss/offre" => Veille::Http::Error.new("HTTP 503"))
     res = Veille::Connectors::Transentreprise.new(http: http, today: TODAY).call
     assert_equal :erreur, res.statut
-  end
-
-  # --- Formation ---------------------------------------------------------------
-  test "formation : visite les pages de formation qui citent le Grand Nancy" do
-    sitemap = <<~XML
-      <urlset><url><loc>https://www.formation-industries-lorraine.com/formation-soudeur</loc></url>
-      <url><loc>https://www.formation-industries-lorraine.com/mentions-legales</loc></url>
-      <url><loc>https://www.formation-industries-lorraine.com/formation-metz</loc></url></urlset>
-    XML
-    page = ->(titre, corps) { "<html><head><title>#{titre}</title></head><body><main>#{corps}</main></body></html>" }
-    http = FakeHttp.new(
-      "https://www.formation-industries-lorraine.com/sitemap.xml" => sitemap,
-      "https://www.formation-industries-lorraine.com/formation-soudeur" => page.("Soudeur", "Formation au centre de Maxéville, rentrée 2027."),
-      "https://www.formation-industries-lorraine.com/formation-metz" => page.("Fraiseur", "Centre de Metz.")
-    )
-    res = Veille::Connectors::FormationLorraine.new(http: http, today: TODAY).call
-
-    assert_equal ["Soudeur"], res.items.map(&:title)
-    assert_equal "Maxéville", res.items.first.commune
-    assert_equal "formation", res.items.first.category_hint
-    assert_not_includes http.appels, "https://www.formation-industries-lorraine.com/mentions-legales"
   end
 end
