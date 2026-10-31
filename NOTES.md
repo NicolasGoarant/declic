@@ -13,10 +13,12 @@ Détail ancien (fiches, bateaux, vivants, toits, accueil, géoloc…) : `git log
 - **Extension aux deux-pans SUSPENDUE (28/10)** : rangées ≥ 4 (157 bâtiments, ~90 échelles réelles), code prêt (`V2_LUCARNES_RUE_DP`), rien publié. Bloquée par la suppression le 28/10 à 12:20 des dossiers de rendu nancy-3d : **reconstruction du pipeline n8/n9 en cours**, plan `nancy-3d/docs/plan-reconstruction-2026-10-28.md` (96d8b25). R2 et prod intacts.
 - Diorama en local : `http://localhost:3003` ou `:3000` (CORS R2), JAMAIS `127.0.0.1`. Purge Cloudflare des dalles R2 : une purge par variante Origin (mémoire `purge-cloudflare-origin`).
 - **Belles Histoires sans thématique (31/10, f533503, v11 eu)** : plus de catégorie dans le code public ; bloc « Des opportunités pour avoir ton déclic » en proximité seule ; plus de filtre ni de tri sur `/labo/belles-histoires`. Vérifié en prod : 51 fiches sur 51 avec 3 opportunités. **Suite prévue : supprimer la colonne `stories.thematique`** (vide sur les 51, migration à la main), après adaptation de `veille-auto` (faite : 06fa3da) et vérification.
+- **Mini-carte des fiches réparée (31/10, 5a9d8f1 + 77a30f9, v13 eu)** : `.pin-vol` dans le modèle, `--taille-icone`/`--pin-pied` aussi sur `.fch-carte`. Vérifié en prod : histoire, opportunité, hors diorama, mobile.
 ## Tests
 - `bin/rails test` : 136 verts (31/10). Système : `CHROME_NO_SANDBOX=1`, `SE_CHROMEDRIVER` vers chromedriver = Chrome ; `calques_test.rb:48`/`:112` échouent aussi sur main, `geoloc_auto_test`/`accueil_test.rb:49` intermittents.
 ## Reste à faire
-- **Mini-carte des fiches cassée en prod** (antérieur au 31/10) : `iconePin` plante sur `.pin-vol`, absent du modèle de `fiches/_carte.html.erb`, aucun pin ni tuile. `veille-auto` : 157 blocs de conflit avec `main` (44 fichiers), historiques divergés depuis avril.
+- **3 images 404 de `/labo/belles-histoires`** (Story 631, 634, 635) : `image_url` pointe vers des blobs supprimés de la base ; fichiers probablement encore dans S3 (objets sans blob de janvier). Correction en attente de validation des images par Nicolas.
+- `veille-auto` : 157 blocs de conflit avec `main` (44 fichiers), historiques divergés depuis avril. Review app : Scheduler `bin/rake veille:quotidien` à 05:00 UTC, dyno Basic (première passe à vérifier le 01/11).
 - GTFS : aucun service Nancy le 31/10/2026 (trou de la source) → boucle ce jour-là ; surveiller le rafraîchissement hebdo de l'extrait.
 - Quai plausible choisi côté client (voie à quai non publiée) ; Intercités rendus en TER (pas de sprite).
 - Éventuel correctif B (propriété jeu-vidéo régénérée côté nancy-3d, R2 + purge par Origin) si des défauts de rectangles clairs reviennent, y compris aux niveaux 6-7.
