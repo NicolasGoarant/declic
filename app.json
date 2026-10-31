@@ -48,6 +48,12 @@
     },
     "SMTP_PORT": {
       "value": "25"
+    },
+    "AWS_BUCKET": {
+      "value": "review-app-sans-stockage"
+    },
+    "AWS_REGION": {
+      "value": "eu-west-3"
     }
   },
   "scripts": {
