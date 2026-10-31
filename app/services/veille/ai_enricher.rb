@@ -130,15 +130,9 @@ module Veille
       candidate.update!(attrs)
     end
 
-    # Vrai si `resume` reprend plus de MAX_CITATION mots consécutifs de `source`
-    # (comparaison sans accents ni ponctuation).
+    # Vrai si `resume` reprend plus de MAX_CITATION mots consécutifs de `source`.
     def self.copie_excessive?(resume, source, max: MAX_CITATION)
-      r = Veille::Text.normalize(resume).split
-      s = Veille::Text.normalize(source).split
-      return false if r.size <= max || s.size <= max
-
-      fenetres = s.each_cons(max + 1).to_set
-      r.each_cons(max + 1).any? { |f| fenetres.include?(f) }
+      Veille::Text.copie_excessive?(resume, source, max: max)
     end
 
     private

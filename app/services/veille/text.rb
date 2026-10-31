@@ -18,5 +18,19 @@ module Veille
     end
 
     def words(texte) = texte.to_s.scan(/[[:alnum:]'’\-]+/)
+
+    # Citation maximale tolérée d'une source, en mots consécutifs.
+    MAX_CITATION = 15
+
+    # Vrai si `texte` reprend plus de `max` mots consécutifs de `source`
+    # (comparaison sans accents ni ponctuation).
+    def copie_excessive?(texte, source, max: MAX_CITATION)
+      r = normalize(texte).split
+      s = normalize(source).split
+      return false if r.size <= max || s.size <= max
+
+      fenetres = s.each_cons(max + 1).to_set
+      r.each_cons(max + 1).any? { |f| fenetres.include?(f) }
+    end
   end
 end
