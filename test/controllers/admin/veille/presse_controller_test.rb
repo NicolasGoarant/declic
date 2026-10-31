@@ -14,6 +14,7 @@ module Admin
       setup do
         @user_avant, @pass_avant = ENV["ADMIN_USERNAME"], ENV["ADMIN_PASSWORD"]
         ENV["ADMIN_USERNAME"], ENV["ADMIN_PASSWORD"] = "veille-test", "secret-de-test"
+        Geocoder::Lookup::Test.add_stub("Nancy", [{ "latitude" => 48.6937, "longitude" => 6.1834, "address" => "Nancy" }])
         @lien = ::Veille::Connectors::Presse::Lien.new(titre: "Nancy. Un article", url: URL, flux: "L'Est Républicain",
                                                        publie_le: Time.zone.local(2026, 10, 31, 8))
       end
