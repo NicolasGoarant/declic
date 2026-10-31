@@ -49,6 +49,16 @@ class DioramaTuilesTest < ActiveSupport::TestCase
     assert_equal "lumieres-nuit/lanternes.json", t.pour_js[:lumieres]
   end
 
+  test "les cartes d'ambiance d'un style exigent leurs deux manifestes, sinon rien ne change" do
+    socle = %w[jeu-video-v2/manifeste.json masque-bati/manifeste.json propriete-toits-v1/manifeste.json]
+    assert_empty tuiles(socle).pour_js[:cartes_ambiance]
+    assert_empty tuiles(socle + %w[propriete-jv2-v1/manifeste.json]).pour_js[:cartes_ambiance]
+    assert_empty tuiles(socle + %w[masque-bati-jv2-v1/manifeste.json]).pour_js[:cartes_ambiance]
+    t = tuiles(socle + %w[propriete-jv2-v1/manifeste.json masque-bati-jv2-v1/manifeste.json]).pour_js
+    assert_equal({ "jeu-video-v2" => { propriete: "propriete-jv2-v1", masque: "masque-bati-jv2-v1" } }, t[:cartes_ambiance])
+    assert_equal %w[masque-bati propriete-toits-v1], t.values_at(:masque, :propriete)   # bateaux, vivants, trains : inchangés
+  end
+
   test "les bateaux demandent leur manifeste ET la carte de propriété, qui les masque" do
     refute tuiles(%w[toits-v1/manifeste.json mobiles-v6/manifeste.json]).disponibles[:mobiles]
     t = tuiles(%w[toits-v1/manifeste.json propriete-toits-v1/manifeste.json mobiles-v6/manifeste.json])

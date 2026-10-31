@@ -750,14 +750,16 @@ export default class extends Controller {
     if (cle === `${NEUTRE.moment}|${NEUTRE.saison}|${NEUTRE.meteo}`) return this.coucheVraie()
     const t = this.tuilesValue
     if (!this.couches[cle]) {
+      // Les cartes propres au style s'il en a, sinon celles de toits-v1 (DioramaTuiles::CARTES_AMBIANCE). La couche ne survit pas à un changement de style.
+      const cartes = t.cartes_ambiance?.[this.style] ?? t
       const publies = Promise.all(PUBLIEES.map((nom) => Object.values(etat).includes(nom) ? this.etalonnage(nom) : null))
         .then((jsons) => Object.fromEntries(PUBLIEES.map((nom, i) => [nom, jsons[i]])))
       this.couches[cle] = this.surveillerEchecs(this.decouper(creerCoucheAmbiance(this.L, {
         cle: `${this.style}|${cle}`, // le cache des dalles calculées est commun à tous les styles
         uniformes: publies.then((p) => uniformesEtat(etat, p, { arbres: Boolean(this.dallesArbres), projection: this.projection })),
         dalle: this.urlDalle,
-        propriete: (chemin) => this.url(t.propriete, `${chemin}.png`),
-        masque: (chemin) => this.url(t.masque, `${chemin}.png`),
+        propriete: (chemin) => this.url(cartes.propriete, `${chemin}.png`),
+        masque: (chemin) => this.url(cartes.masque, `${chemin}.png`),
         arbres: (chemin) => this.url(t.arbres, `${chemin}.png`),
         // nuit-chaude-v1 : bâtiment par pixel (niveau 8), pour tirer les fenêtres allumées par bâtiment
         batiments: t.nuit && t.disponibles?.nuit ? (chemin) => `${t.nuit}/batiments/${chemin}.png` : null,

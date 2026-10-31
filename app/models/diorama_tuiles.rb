@@ -29,6 +29,12 @@ class DioramaTuiles
   SURCOUCHES = { "jeu-video-v2" => "jeu-video-v2-coupes1" }.freeze
   MASQUE = "masque-bati".freeze             # {z}/{x}/{y}.png, niveaux 6 à 8, centre-ville
   PROPRIETE = "propriete-toits-v1".freeze   # 8/{x}/{y}.png (pas de dossier dalles/)
+  # Les deux cartes ci-dessus décrivent le dessin de toits-v1. Là où un style dessine un volume sur ce que toits-v1 laissait au sol,
+  # l'ambiance posait l'ombre de contact et la lumière des rues sur un toit : les taches du grand toit à l'accueil. Ces cartes-ci sont
+  # lues par la seule ambiance, à ce style ; bateaux, vivants, trains et maquette blanche gardent les leurs. Tant que l'un des deux
+  # manifestes ne répond pas, rien ne change ; retirer la ligne rend l'ancien rendu.
+  # nancy-3d rapports/jeu-video-v2/propriete-jv2.
+  CARTES_AMBIANCE = { "jeu-video-v2" => { propriete: "propriete-jv2-v1", masque: "masque-bati-jv2-v1" } }.freeze
   AMBIANCES_DOSSIER = "ambiances".freeze    # {nom}-actuelle.json (format nancy-3d/ambiance)
   AMBIANCES = %w[heure-bleue automne hiver].freeze
   ARBRES = "masque-arbres".freeze           # {z}/{x}/{y}.png, niveaux 6 à 8, blanc = feuillage (automne)
@@ -101,6 +107,7 @@ class DioramaTuiles
   def pour_js
     {
       base: base, styles: STYLES.keys, style_defaut: STYLE_DEFAUT, surcouches: surcouches, masque: MASQUE, propriete: PROPRIETE,
+      cartes_ambiance: cartes_ambiance,
       arbres: ARBRES, lumieres: lampadaires(presents), mobiles: mobiles, vivants: vivants, trains: trains, nuit: nuit,
       ambiances: AMBIANCES.index_with { |nom| parametres_ambiance(nom) },
       disponibles: disponibles
@@ -114,6 +121,11 @@ class DioramaTuiles
   # Les surcouches publiées, par style : le navigateur ne lit le manifeste que de celles-ci (pas de 404 en console).
   def surcouches = SURCOUCHES.select { |_, dossier| presents.fetch(url("#{dossier}/manifeste.json")) }
 
+  # Les cartes d'ambiance propres à un style, si TOUTES sont publiées : une propriété neuve sur un masque ancien changerait de lecture entre les zooms.
+  def cartes_ambiance
+    CARTES_AMBIANCE.select { |_, cartes| cartes.values.all? { |dossier| presents.fetch(url("#{dossier}/manifeste.json")) } }
+  end
+
   # Chemin du fichier de lampadaires publié (le premier de LAMPADAIRES), ou nil.
   def lampadaires(p)
     dossier, fichier = LAMPADAIRES.find { |d, _| p.fetch(url("#{d}/manifeste.json")) }
@@ -121,7 +133,7 @@ class DioramaTuiles
   end
 
   def urls_a_sonder
-    [ *STYLES.keys, *SURCOUCHES.values, MASQUE, PROPRIETE, ARBRES, *LAMPADAIRES.map(&:first) ].map { |dossier| url("#{dossier}/manifeste.json") } +
+    [ *STYLES.keys, *SURCOUCHES.values, *CARTES_AMBIANCE.values.flat_map(&:values), MASQUE, PROPRIETE, ARBRES, *LAMPADAIRES.map(&:first) ].map { |dossier| url("#{dossier}/manifeste.json") } +
       AMBIANCES.map { |nom| url(parametres_ambiance(nom)) } + [ "#{mobiles}/manifeste.json", "#{vivants}/manifeste.json", "#{nuit}/manifeste.json", "#{trains}/manifeste.json" ]
   end
 
