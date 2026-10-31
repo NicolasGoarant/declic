@@ -13,6 +13,25 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
     [candidate.reload, client]
   end
 
+  test "le prompt porte les exclusions : nomination, actualité juridique, fait divers" do
+    system = Veille::AiEnricher.prompt_for(title: "T", text: "x")[:system]
+    assert_match "nomination", system
+    assert_match "condamnations", system
+    assert_match "faits divers", system
+  end
+
+  test "une belle histoire hors ligne éditoriale est écartée et ne sera pas rédigée" do
+    c, = enrich(candidat(origin: "presse"), type: "belle_histoire", categorie: "formation", hors_ligne: true, motif: "Simple nomination.")
+    assert_equal "ecarte", c.status
+    assert_match "Simple nomination.", c.discard_reason
+    assert_not_includes Veille::Candidate.a_rediger, c
+  end
+
+  test "hors_ligne est sans effet sur une opportunité" do
+    c, = enrich(candidat, hors_ligne: true)
+    assert_not_equal "ecarte", c.status
+  end
+
   test "le prompt porte la règle éditoriale, le texte et la limite de citation" do
     params = Veille::AiEnricher.prompt_for(title: "Atelier", text: "Texte " * 2000, origin: "jeveuxaider", commune: "Laxou")
 

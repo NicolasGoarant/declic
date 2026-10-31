@@ -50,6 +50,8 @@ module Veille
 
         REFORMULATION INTÉGRALE : écris à neuf, avec tes propres mots. Aucune phrase ni tournure de la source ne se retrouve telle quelle, pas même une formule courte ou une image du journaliste. Tu ne gardes que les faits : qui, quoi, où, quand. Les noms propres, lieux, dates et chiffres se reprennent tels quels.
 
+        RIEN QUI NE SOIT DANS LA SOURCE : n'invente aucun détail, aucune circonstance, aucun motif, aucune cause, aucune conséquence ni aucune tournure factuelle qui ne figure pas dans la source. Pas de généralités de remplissage (« illustre les mutations du tissu local », « ouvre un nouveau chapitre », « un phénomène suivi de près »), pas d'interprétation, pas de contexte puisé dans tes connaissances. Rédige uniquement à partir de ce qui est donné, quitte à un texte nettement plus court et plus sobre que #{MOTS_VISES} mots : un texte court et exact vaut mieux qu'un texte long et brodé.
+
         CE QUE TU NE FAIS JAMAIS : combler un trou par déduction. Pas de citation inventée, pas de chiffre, de nom ou de détail absents de la source. Si la commune n'est pas dite, tu ne la devines pas ; si personne n'est clairement nommé, tu n'attribues l'initiative à personne. Chaque information absente ou incertaine se déclare dans champs_manquants : le remplir n'est pas un échec, une fiche honnêtement lacunaire vaut mieux qu'une fiche complète et fausse. Ni morale, ni emphase, ni commentaire sur la source.
 
         Ton sobre et chaleureux, factuel, sans pathos ni emoji.

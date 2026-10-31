@@ -26,6 +26,12 @@ class Veille::Redaction::BrouillonTest < ActiveSupport::TestCase
 
   def client(**opts) = FakeAnthropicClient.new(text: reponse, usage: { "input_tokens" => 400, "output_tokens" => 200 }, **opts)
 
+  test "le prompt interdit tout détail absent de la source" do
+    system = Veille::Redaction::Brouillon::SYSTEM_PROMPT
+    assert_match "RIEN QUI NE SOIT DANS LA SOURCE", system
+    assert_match "quitte à un texte nettement plus court", system
+  end
+
   test "le prompt porte la règle éditoriale : environ 120 mots, ni horaires ni appel à l'action, reformulation, rien d'inventé" do
     params = B.prompt_for(histoire)
     assert_match "120 mots", params[:system]

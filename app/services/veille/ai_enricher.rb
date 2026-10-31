@@ -13,7 +13,7 @@ module Veille
     TIMEOUT      = 30
     OPEN_TIMEOUT = 5
     RETRIES      = 1
-    MAX_TOKENS   = 700
+    MAX_TOKENS   = 1000
     # Plafond de texte envoyé : borne le coût, et une fiche d'agenda ou une annonce n'en demande pas plus.
     MAX_TEXTE    = 3_000
     # Citation maximale autorisée dans un résumé, en mots.
@@ -33,10 +33,11 @@ module Veille
         date_fin:   { type: "string" },
         regime:     { type: "string" },
         resume:     { type: "string" },
+        hors_ligne: { type: "boolean" },
         confiance:  { type: "integer" }, # 0-100 : bornée par #apply (l'API refuse minimum/maximum)
         motif:      { type: "string" }
       },
-      required: %w[type categorie commune date_debut date_fin regime resume confiance motif],
+      required: %w[type categorie commune date_debut date_fin regime resume hors_ligne confiance motif],
       additionalProperties: false
     }.freeze
 
@@ -46,6 +47,15 @@ module Veille
       RÈGLE ÉDITORIALE — le critère qui décide du type :
       - « opportunite » : le contenu invite à agir (s'inscrire, venir, candidater, rejoindre, reprendre une activité). Il a une date, des horaires, ou un régime permanent (« ouvert toute l'année »), et un moyen d'agir.
       - « belle_histoire » : un récit inspirant sur une personne ou un collectif, SANS horaires ni appel à l'action directe. Un article qui raconte un parcours est une belle histoire ; une annonce d'événement n'en est jamais une.
+
+      HORS LIGNE ÉDITORIALE (hors_ligne = true) — pour un contenu qui n'est PAS une opportunité, tu mets hors_ligne à true s'il n'est pas un récit inspirant au sens de la règle ci-dessus, sans hésiter, quel que soit l'intérêt du sujet et même si une personne y est nommée à Nancy :
+      - les faits divers (accidents, délits, disparitions, incendies) et l'actualité juridique ou contentieuse (procès, condamnations, recours, décisions de justice) ;
+      - les résultats sportifs et comptes rendus de match ;
+      - les comptes rendus de conseil municipal, communautaire ou départemental ;
+      - les annonces institutionnelles : inaugurations, budgets, communiqués, calendriers de travaux, campagnes de communication ;
+      - une simple nomination, prise de poste ou mutation professionnelle, sans dimension inspirante particulière (parcours singulier, initiative, engagement) ;
+      - plus largement tout fait qui n'est pas un récit inspirant : une personne ou un collectif, une initiative ou une trajectoire concrète, racontée.
+      Dans le doute, hors_ligne = true : la file est relue à la main, un faux négatif coûte moins cher qu'un faux positif. Pour une opportunité, hors_ligne est toujours false. Le motif dit ce qui a fait écarter le contenu.
 
       CATÉGORIES (clé à renvoyer) : ecologiser (environnement, nature, énergie, réemploi), entreprendre (création, reprise, cession d'entreprise, emploi indépendant), rencontres (événements, conférences, échanges, vie de quartier), formation (se former, métiers, apprentissage), benevolat (s'engager, bénévolat, solidarité). Pour une belle histoire, choisis la catégorie dont elle est la plus proche.
 
@@ -119,7 +129,10 @@ module Veille
         attrs[:summary] = resume.presence
       end
 
-      if commune.nil?
+      if type == "belle_histoire" && result["hors_ligne"] == true
+        attrs[:discard_reason] = "Hors ligne éditoriale : #{attrs[:reason] || 'pas un récit inspirant'}".squish
+        attrs[:status] = "ecarte"
+      elsif commune.nil?
         attrs[:discard_reason] = "Hors Grand Nancy ou commune introuvable"
         attrs[:status] = "ecarte"
       elsif (fin || debut)&.<(today)
