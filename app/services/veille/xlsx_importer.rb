@@ -82,7 +82,7 @@ module Veille
 
       Candidate.create!(
         origin: "import_xlsx", url: v[:url], title: v[:title].slice(0, 250), excerpt: v[:summary], summary: v[:summary],
-        item_type: type, declic_category: categorie(v[:category]), commune: GrandNancy.canonique(v[:commune]) || v[:commune],
+        item_type: type, declic_category: (categorie(v[:category]) unless type == "belle_histoire"), commune: GrandNancy.canonique(v[:commune]) || v[:commune],
         starts_on: date, schedule_text: (date ? nil : v[:date]), reliability: "basse",
         status: "a_verifier", fetched_at: @now, reason: "Repérage initial : à vérifier"
       )

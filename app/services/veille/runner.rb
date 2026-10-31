@@ -3,7 +3,7 @@
 module Veille
   # Une exécution de la veille : collecte (connecteurs), stockage brut
   # (RawIngester), puis enrichissement IA plafonné. Appelé par les tâches
-  # rake veille:quotidien (sources 1 à 5) et veille:hebdomadaire (presse).
+  # rake veille:quotidien (sources 1 à 6, presse comprise).
   #
   # Rien n'est publié : tout aboutit dans la file de relecture /admin/veille.
   class Runner
@@ -14,8 +14,7 @@ module Veille
     ERREURS_CONSECUTIVES_MAX = 3
 
     QUOTIDIEN   = [Connectors::Engagement, Connectors::AgendaNancy, Connectors::FormationLorraine,
-                   Connectors::Transentreprise, Connectors::GazetteFrance].freeze
-    HEBDOMADAIRE = [Connectors::Presse].freeze
+                   Connectors::Transentreprise, Connectors::GazetteFrance, Connectors::Presse].freeze
     # Ordre de priorité du cahier des charges, pour répartir les 30 appels.
     PRIORITE = %w[jeveuxaider agenda_nancy formation transentreprise gazette presse].freeze
 

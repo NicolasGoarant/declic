@@ -46,7 +46,7 @@ Couverture : `test/models/story_test.rb`.
 ## Le flux, de bout en bout
 
 ```
-connecteurs (rake veille:quotidien / hebdomadaire)      rake veille:import (liste d'URL)
+connecteurs (rake veille:quotidien)                     rake veille:import (liste d'URL)
         |                                                      |
         v                                                      v
    RawIngester : dédoublonne, écarte hors Grand Nancy / passé    PageFetcher

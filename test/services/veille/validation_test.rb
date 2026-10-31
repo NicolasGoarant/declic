@@ -38,7 +38,7 @@ class Veille::ValidationTest < ActiveSupport::TestCase
   end
 
   test "une belle histoire validée devient une Story inactive avec le brouillon" do
-    c = candidat(origin: "presse", item_type: "belle_histoire", declic_category: "entreprendre", commune: "Laxou",
+    c = candidat(origin: "presse", item_type: "belle_histoire", commune: "Laxou",
                  summary: "Un résumé.", draft_body: "Un récit.\n\nSource : Presse locale\nAccord de la personne : à obtenir")
 
     story = Veille::Validation.new(c).call
@@ -47,6 +47,8 @@ class Veille::ValidationTest < ActiveSupport::TestCase
     assert_not story.is_active
     assert_includes story.body, "Accord de la personne : à obtenir"
     assert_equal "Laxou", story.location
+    assert_nil story.thematique
+    assert_nil story.tags, "aucune étiquette de catégorie"
     assert_equal c.url, story.source_url
     assert_nil c.reload.full_text
     assert_equal "publie", c.status

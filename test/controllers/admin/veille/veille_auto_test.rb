@@ -42,7 +42,7 @@ module Admin
 
       test "filtre par type, catégorie et source" do
         enrichi(title: "Opp formation", origin: "formation")
-        enrichi(title: "Histoire écolo", item_type: "belle_histoire", declic_category: "ecologiser", origin: "presse")
+        enrichi(title: "Histoire écolo", item_type: "belle_histoire", declic_category: nil, origin: "presse")
 
         get "/admin/veille", params: { type: "belle_histoire" }, headers: auth
         assert_includes texte, "Histoire écolo"
@@ -55,6 +55,24 @@ module Admin
         get "/admin/veille", params: { origine: "presse" }, headers: auth
         assert_includes texte, "Histoire écolo"
         assert_not_includes texte, "Opp formation"
+      end
+
+      test "une belle histoire n'affiche ni catégorie ni filtre de catégorie" do
+        histoire = enrichi(title: "Histoire", item_type: "belle_histoire", declic_category: nil, origin: "presse")
+        enrichi(title: "Opp", origin: "formation")
+
+        get "/admin/veille", params: { type: "belle_histoire", categorie: "formation" }, headers: auth
+        assert_includes texte, "Histoire", "un filtre de catégorie resté dans l'URL est ignoré"
+        assert_select "select[name=categorie]", count: 0
+        assert_select "th", text: /Thématique|thématique/, count: 0
+        assert_not_includes texte, "Thématique"
+
+        get "/admin/veille", params: { type: "opportunite" }, headers: auth
+        assert_select "select[name=categorie]", count: 1
+
+        get "/admin/veille/candidates/#{histoire.id}", headers: auth
+        assert_response :success
+        assert_not_includes texte, "Thématique"
       end
 
       test "filtre par date de collecte" do

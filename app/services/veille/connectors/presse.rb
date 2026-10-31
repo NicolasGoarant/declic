@@ -2,7 +2,7 @@
 
 module Veille
   module Connectors
-    # Source 6 — flux RSS de la presse locale (hebdomadaire). Le flux n'est lu
+    # Source 6 — flux RSS de la presse locale (quotidienne : chaque flux ne garde que 20 articles, soit quelques heures à un jour). Le flux n'est lu
     # que si son robots.txt l'autorise ; on ne visite AUCUN article : seuls
     # titre, chapeau, date et lien du flux sont gardés. Un article est retenu si
     # son titre ou chapeau cite une commune du Grand Nancy ; la suite (type,

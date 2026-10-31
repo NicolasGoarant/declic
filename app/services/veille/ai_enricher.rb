@@ -27,7 +27,8 @@ module Veille
       type: "object",
       properties: {
         type:       { type: "string", enum: Veille::Candidate::ITEM_TYPES },
-        categorie:  { type: "string", enum: CATEGORIES },
+        # null pour une belle histoire : seules les opportunités ont une catégorie.
+        categorie:  { anyOf: [{ type: "string", enum: CATEGORIES }, { type: "null" }] },
         commune:    { type: "string" },
         date_debut: { type: "string" },
         date_fin:   { type: "string" },
@@ -57,7 +58,7 @@ module Veille
       - plus largement tout fait qui n'est pas un récit inspirant : une personne ou un collectif, une initiative ou une trajectoire concrète, racontée.
       Dans le doute, hors_ligne = true : la file est relue à la main, un faux négatif coûte moins cher qu'un faux positif. Pour une opportunité, hors_ligne est toujours false. Le motif dit ce qui a fait écarter le contenu.
 
-      CATÉGORIES (clé à renvoyer) : ecologiser (environnement, nature, énergie, réemploi), entreprendre (création, reprise, cession d'entreprise, emploi indépendant), rencontres (événements, conférences, échanges, vie de quartier), formation (se former, métiers, apprentissage), benevolat (s'engager, bénévolat, solidarité). Pour une belle histoire, choisis la catégorie dont elle est la plus proche.
+      CATÉGORIES (opportunités seulement ; pour une belle histoire, categorie vaut null. Clé à renvoyer) : ecologiser (environnement, nature, énergie, réemploi), entreprendre (création, reprise, cession d'entreprise, emploi indépendant), rencontres (événements, conférences, échanges, vie de quartier), formation (se former, métiers, apprentissage), benevolat (s'engager, bénévolat, solidarité). Pour une belle histoire, choisis la catégorie dont elle est la plus proche.
 
       COMMUNE : la commune d'ancrage, parmi celles du Grand Nancy, telle que le texte la donne. Chaîne vide si le texte ne la donne pas ou si le lieu est hors du Grand Nancy. Tu ne la devines pas depuis le nom de la source.
 
@@ -65,7 +66,7 @@ module Veille
 
       RÉSUMÉ : exactement deux phrases, en français, reformulées avec tes propres mots. Tu ne recopies pas le texte source : au plus 15 mots consécutifs identiques à la source, et seulement pour une citation indispensable. Ni emoji, ni emphase, ni formule d'accroche. Les noms propres, lieux, dates et chiffres se reprennent tels quels.
 
-      confiance (0-100) : ta certitude sur le type, la catégorie et la commune ENSEMBLE. motif : une phrase qui dit ce qui t'a fait trancher, ou ce qui manque.
+      confiance (0-100) : ta certitude sur le type, la catégorie (s'il y en a une) et la commune ENSEMBLE. motif : une phrase qui dit ce qui t'a fait trancher, ou ce qui manque.
 
       Réponds UNIQUEMENT par l'objet JSON demandé.
     TXT
@@ -107,13 +108,9 @@ module Veille
       commune = Veille::GrandNancy.canonique(result["commune"]) || Veille::GrandNancy.canonique(candidate.commune)
       debut   = parse_date(result["date_debut"]) || candidate.starts_on
       fin     = parse_date(result["date_fin"])   || candidate.ends_on
-      categorie = result["categorie"].to_s
-      categorie = candidate.declic_category.presence || "rencontres" unless CATEGORIES.include?(categorie)
-      categorie = candidate.declic_category if candidate.declic_category.present? && type == "opportunite" &&
-                                               SOURCES_OPPORTUNITES.include?(candidate.origin)
 
       attrs = {
-        item_type: type, declic_category: categorie, commune: commune || candidate.commune,
+        item_type: type, declic_category: categorie_pour(type, candidate, result), commune: commune || candidate.commune,
         starts_on: debut, ends_on: fin,
         schedule_text: (debut || fin ? nil : (result["regime"].presence || candidate.schedule_text)),
         score: Integer(result["confiance"], exception: false)&.clamp(0, 100),
@@ -149,6 +146,15 @@ module Veille
     end
 
     private
+
+    # Seules les opportunités ont une catégorie : une belle histoire se suffit à elle-même.
+    def categorie_pour(type, candidate, result)
+      return nil if type == "belle_histoire"
+      return candidate.declic_category if candidate.declic_category.present? && SOURCES_OPPORTUNITES.include?(candidate.origin)
+
+      categorie = result["categorie"].to_s
+      CATEGORIES.include?(categorie) ? categorie : candidate.declic_category.presence || "rencontres"
+    end
 
     def parse_date(valeur)
       valeur.to_s.strip.empty? ? nil : Date.iso8601(valeur.to_s.strip)

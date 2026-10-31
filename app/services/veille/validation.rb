@@ -60,13 +60,11 @@ module Veille
               Redaction::Brouillon.finaliser(@c.summary.to_s, source_label: @c.source_label, url: @c.url,
                                              accord_obtenu_at: @c.accord_obtenu_at)
       Story.create!(
-        title: @c.title, chapo: @c.summary, body: corps, location: @c.commune, tags: tag_categorie,
-        thematique: @c.declic_category, happened_on: @c.published_on, source_url: @c.url,
+        title: @c.title, chapo: @c.summary, body: corps, location: @c.commune,
+        happened_on: @c.published_on, source_url: @c.url,
         source_name: @c.source_label, source_published_on: @c.published_on, veille_candidate: @c,
         accord_obtenu_at: @c.accord_obtenu_at
       )
     end
-
-    def tag_categorie = Categorie.trouver(@c.declic_category)&.libelle
   end
 end

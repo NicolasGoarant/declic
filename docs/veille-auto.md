@@ -3,7 +3,7 @@
 Branche `veille-auto` (depuis `main` + `veille-belles-histoires`). Écran : `/admin/veille`. Rien n'est publié sans clic « Valider », et le brouillon créé est inactif.
 
 ## Chaîne
-`rake veille:quotidien` / `veille:hebdomadaire` → `Veille::Runner` → connecteurs (`app/services/veille/connectors/`) → `RawIngester` (dédoublonnage URL ou titre normalisé + date ; hors Grand Nancy et passé écartés) → `AiEnricher` (Haiku, 30 éléments max par exécution) → **étape « rédiger »** : `Redaction::Brouillon` (Sonnet, belles histoires, ~120 mots, 30 max, reprenable : 3 essais par candidat, arrêt après 3 erreurs d'affilée) → `Redaction::Controles` (horaires, appels à l'action, contacts, citations et chiffres étrangers à la source, copie) → relecture admin (récit éditable, accord de la personne) → `Validation` (Opportunity ou Story inactive, seul chemin). Une `Story` issue de la veille ne se met pas en ligne sans l'accord de la personne.
+`rake veille:quotidien` → `Veille::Runner` → connecteurs (`app/services/veille/connectors/`) → `RawIngester` (dédoublonnage URL ou titre normalisé + date ; hors Grand Nancy et passé écartés) → `AiEnricher` (Haiku, 30 éléments max par exécution) → **étape « rédiger »** : `Redaction::Brouillon` (Sonnet, belles histoires, ~120 mots, 30 max, reprenable : 3 essais par candidat, arrêt après 3 erreurs d'affilée) → `Redaction::Controles` (horaires, appels à l'action, contacts, citations et chiffres étrangers à la source, copie) → relecture admin (récit éditable, accord de la personne) → `Validation` (Opportunity ou Story inactive, seul chemin). Une `Story` issue de la veille ne se met pas en ligne sans l'accord de la personne.
 
 Chaque appel IA est journalisé (`veille_appels_ia`) ; **plafond mensuel 15 $** (`VEILLE_BUDGET_USD_MOIS`), vérifié avant chaque envoi. Détail : `docs/veille.md`.
 
@@ -20,7 +20,7 @@ Chaque appel IA est journalisé (`veille_appels_ia`) ; **plafond mensuel 15 $** 
 `Veille::Http` lit le robots.txt de chaque hôte avant toute requête (Crawl-delay respecté, 1 s mini entre appels).
 
 ## Heroku Scheduler
-- `rake veille:quotidien` (daily). `rake veille:hebdomadaire` (daily aussi : ne travaille que le lundi, `FORCE=1` pour forcer).
+- `rake veille:quotidien` (daily), presse comprise : chaque flux ne garde que 20 articles.
 - Variables : `ANTHROPIC_API_KEY`, `ENGAGEMENT_API_KEY`, `VEILLE_BUDGET_USD_MOIS` (facultative, 15 par défaut).
 - Rattrapage des récits : `rake veille:rediger` (`LIMITE=n`). Dépense d'un mois : `rake veille:cout[AAAA-MM]`.
 - Import initial : placer `docs/declic-reperage-v1-2026-10-13.xlsx` puis `rake veille:import_xlsx` (statut « à vérifier », sans IA).

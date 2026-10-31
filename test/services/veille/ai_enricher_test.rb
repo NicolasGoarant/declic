@@ -21,7 +21,7 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
   end
 
   test "une belle histoire hors ligne éditoriale est écartée et ne sera pas rédigée" do
-    c, = enrich(candidat(origin: "presse"), type: "belle_histoire", categorie: "formation", hors_ligne: true, motif: "Simple nomination.")
+    c, = enrich(candidat(origin: "presse"), type: "belle_histoire", categorie: nil, hors_ligne: true, motif: "Simple nomination.")
     assert_equal "ecarte", c.status
     assert_match "Simple nomination.", c.discard_reason
     assert_not_includes Veille::Candidate.a_rediger, c
@@ -62,8 +62,25 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
   end
 
   test "une belle histoire est reconnue (source de presse)" do
-    c, = enrich(candidat(origin: "presse"), type: "belle_histoire", categorie: "entreprendre")
+    c, = enrich(candidat(origin: "presse"), type: "belle_histoire", categorie: nil)
     assert_equal "belle_histoire", c.item_type
+    assert_nil c.declic_category
+  end
+
+  test "une belle histoire n'a pas de catégorie, même si le modèle ou le candidat en porte une" do
+    c, = enrich(candidat(origin: "presse", declic_category: "formation"), type: "belle_histoire", categorie: "entreprendre")
+    assert_nil c.reload.declic_category
+  end
+
+  test "une opportunité dont le modèle ne donne pas de catégorie retombe sur « rencontres »" do
+    c, = enrich(candidat(origin: "presse"), type: "opportunite", categorie: nil)
+    assert_equal "rencontres", c.reload.declic_category
+  end
+
+  test "le schéma accepte une catégorie nulle, et seulement les cinq catégories sinon" do
+    variantes = Veille::AiEnricher::SCHEMA[:properties][:categorie][:anyOf]
+    assert_includes variantes, { type: "null" }
+    assert_equal Opportunity::CATEGORIES, variantes.first[:enum]
   end
 
   test "une source officielle reste une opportunité, quoi qu'en dise le modèle" do

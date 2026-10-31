@@ -71,9 +71,7 @@ namespace :veille do
 end
 
 # --- Veille automatique -----------------------------------------------------
-# Heroku Scheduler : « rake veille:quotidien » chaque jour ; « rake veille:hebdomadaire »
-# chaque jour aussi (le Scheduler n'a pas de cadence hebdomadaire) : la tâche ne
-# travaille que le lundi, sauf FORCE=1. Clés : ANTHROPIC_API_KEY, ENGAGEMENT_API_KEY.
+# Heroku Scheduler : « rake veille:quotidien » chaque jour. Clés : ANTHROPIC_API_KEY, ENGAGEMENT_API_KEY.
 namespace :veille do
   def afficher_rapport(rapport)
     puts "── Sources ─────────────────────────────────────────"
@@ -89,18 +87,9 @@ namespace :veille do
     puts "  À relire : #{Rails.application.routes.url_helpers.admin_veille_root_path}"
   end
 
-  desc "Veille quotidienne : sources 1 à 5, 30 éléments enrichis au plus"
+  desc "Veille quotidienne : sources 1 à 6, 30 éléments enrichis au plus"
   task quotidien: :environment do
     afficher_rapport(Veille::Runner.new(connecteurs: Veille::Runner::QUOTIDIEN).run)
-  end
-
-  desc "Veille hebdomadaire : alertes de presse (le lundi, sauf FORCE=1)"
-  task hebdomadaire: :environment do
-    if Date.current.monday? || ENV["FORCE"] == "1"
-      afficher_rapport(Veille::Runner.new(connecteurs: Veille::Runner::HEBDOMADAIRE).run)
-    else
-      puts "Pas lundi : rien à faire (FORCE=1 pour forcer)."
-    end
   end
 
   desc "Rattrapage : rédige le récit des belles histoires enrichies qui n'en ont pas — rake veille:rediger (LIMITE=n pour borner)"

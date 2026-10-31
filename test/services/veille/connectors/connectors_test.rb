@@ -118,6 +118,10 @@ class Veille::ConnectorsTest < ActiveSupport::TestCase
     assert_match(/Fermée : refuse/, res.message)
   end
 
+  test "presse : lue chaque jour avec les autres sources" do
+    assert_includes Veille::Runner::QUOTIDIEN, Veille::Connectors::Presse
+  end
+
   test "presse : les flux de L'Est Républicain sont configurés" do
     urls = Veille::Connectors::Presse::FLUX.values
     assert_includes urls, "https://www.estrepublicain.fr/edition-nancy-et-agglomeration/rss"

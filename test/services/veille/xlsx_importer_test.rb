@@ -13,6 +13,10 @@ class Veille::XlsxImporterTest < ActiveSupport::TestCase
     assert_equal 3, bilan.crees
     assert_equal 1, bilan.ignores, "la ligne sans lien n'est pas devinée"
 
+    histoires = Veille::Candidate.where(item_type: "belle_histoire")
+    assert histoires.exists?, "le fichier de test contient une belle histoire"
+    assert_empty histoires.where.not(declic_category: nil), "une belle histoire n'a pas de catégorie"
+
     velos = Veille::Candidate.find_by!(url: "https://exemple.fr/velos")
     assert_equal "a_verifier", velos.status
     assert_equal "opportunite", velos.item_type

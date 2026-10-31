@@ -15,6 +15,7 @@ module Admin
       def index
         @status = params[:status].presence_in(::Veille::Candidate::STATUSES) || "pending"
         @filtres = params.permit(:type, :categorie, :origine, :depuis).to_h.symbolize_keys
+        @filtres.delete(:categorie) if @filtres[:type] == "belle_histoire" # une histoire n'a pas de catégorie
 
         base =
           if @status == "pending"
