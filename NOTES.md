@@ -17,8 +17,8 @@ Détail ancien (fiches, bateaux, vivants, toits, accueil, géoloc…) : `git log
 ## Tests
 - `bin/rails test` : 136 verts (31/10). Système : `CHROME_NO_SANDBOX=1`, `SE_CHROMEDRIVER` vers chromedriver = Chrome ; `calques_test.rb:48`/`:112` échouent aussi sur main, `geoloc_auto_test`/`accueil_test.rb:49` intermittents.
 ## Reste à faire
-- **3 images 404 de `/labo/belles-histoires`** (Story 631, 634, 635) : `image_url` pointe vers des blobs supprimés de la base ; fichiers probablement encore dans S3 (objets sans blob de janvier). Correction en attente de validation des images par Nicolas.
-- `veille-auto` : 157 blocs de conflit avec `main` (44 fichiers), historiques divergés depuis avril. Review app : Scheduler `bin/rake veille:quotidien` à 05:00 UTC, dyno Basic (première passe à vérifier le 01/11).
+- **Images Belles Histoires (31/10)** : Ahmad 631 rattachée ; Sven 635 sans photo (image IA retirée, blob 894 conservé) ; Nooki 634 : 3 photos de `Nooki.docx`, **droits presse à trancher**. Étiquetage : `docs/analyse-corpus/etiquetage-candidats-2026-10-31.xlsx` à remplir avant décision sur le prompt v4 (`analyse-2026-10-31.md`, en attente).
+- `veille-auto` (1ef27f2, review app v12) : périmètre `Veille::Territoire` (histoires Grand Est, opportunités Meurthe-et-Moselle), `hors_ligne` des opportunités, UIMM retiré. Prompt inchangé, donc effet partiel. 157 blocs de conflit avec `main` (44 fichiers), historiques divergés. Scheduler `bin/rake veille:quotidien` 05:00 UTC (première passe et coût à vérifier le 01/11).
 - GTFS : aucun service Nancy le 31/10/2026 (trou de la source) → boucle ce jour-là ; surveiller le rafraîchissement hebdo de l'extrait.
 - Quai plausible choisi côté client (voie à quai non publiée) ; Intercités rendus en TER (pas de sprite).
 - Éventuel correctif B (propriété jeu-vidéo régénérée côté nancy-3d, R2 + purge par Origin) si des défauts de rectangles clairs reviennent, y compris aux niveaux 6-7.
