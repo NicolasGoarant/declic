@@ -1,0 +1,56 @@
+{
+  "name": "declic-veille-review",
+  "description": "Review App temporaire pour consulter /admin/veille (ne pas utiliser en production).",
+  "stack": "heroku-24",
+  "buildpacks": [
+    {
+      "url": "heroku/ruby"
+    }
+  ],
+  "addons": [
+    {
+      "plan": "heroku-postgresql:essential-0"
+    }
+  ],
+  "env": {
+    "RAILS_ENV": {
+      "value": "production"
+    },
+    "RACK_ENV": {
+      "value": "production"
+    },
+    "RAILS_SERVE_STATIC_FILES": {
+      "value": "true"
+    },
+    "RAILS_LOG_TO_STDOUT": {
+      "value": "true"
+    },
+    "LANG": {
+      "value": "fr_FR.UTF-8"
+    },
+    "SECRET_KEY_BASE": {
+      "generator": "secret"
+    },
+    "ADMIN_USERNAME": {
+      "value": "veille"
+    },
+    "ADMIN_PASSWORD": {
+      "generator": "secret"
+    },
+    "VEILLE_BUDGET_USD_MOIS": {
+      "value": "15"
+    },
+    "ANTHROPIC_API_KEY": {
+      "required": true
+    },
+    "SMTP_ADDRESS": {
+      "value": "localhost"
+    },
+    "SMTP_PORT": {
+      "value": "25"
+    }
+  },
+  "scripts": {
+    "postdeploy": "bin/rails db:schema:load"
+  }
+}
