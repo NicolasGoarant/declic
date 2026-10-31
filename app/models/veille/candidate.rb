@@ -2,12 +2,11 @@ module Veille
   # Un article repéré, en attente de tri puis de réécriture.
   #
   # Cycle de vie :
-  #   pending  → créé par rake veille:import, qualifié par Veille::Qualifier
+  #   pending  → collecté (connecteurs, rake veille:import ou import xlsx), classé par Veille::AiEnricher
   #   retenu   → validé à la main dans /admin/veille
   #   ecarte   → rejeté à la main
   #   publie   → une Story a été créée à partir de ce candidat
   class Candidate < ApplicationRecord
-    CATEGORIES = %w[belle_histoire autre].freeze
     STATUSES   = %w[pending a_verifier retenu ecarte publie].freeze
 
     # Règle éditoriale : une opportunité invite à agir ; une belle histoire est un récit.
@@ -26,9 +25,7 @@ module Veille
       "import_xlsx"     => "Repérage initial"
     }.freeze
 
-    # category reste nil tant que la passe A n'a pas tourné : allow_nil.
     # status est renseigné dès la création (défaut "pending"), donc requis.
-    enum :category, CATEGORIES.index_by(&:itself), validate: { allow_nil: true }
     enum :status,   STATUSES.index_by(&:itself),   validate: true
 
     belongs_to :source,

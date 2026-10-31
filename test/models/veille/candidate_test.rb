@@ -10,11 +10,16 @@ module Veille
       assert_equal "veille_candidates", Veille::Candidate.table_name
     end
 
-    test "naît en attente, sans catégorie ni score" do
+    test "la colonne category (passe Qualifier) n'existe plus" do
+      assert_not_includes Veille::Candidate.column_names, "category"
+      assert_not Veille::Candidate.const_defined?(:CATEGORIES, false)
+      assert_not Veille.const_defined?(:Qualifier)
+    end
+
+    test "naît en attente, sans score" do
       c = build
       assert c.valid?
       assert_equal "pending", c.status
-      assert_nil c.category
       assert_nil c.score
       assert_not c.qualified?
     end
@@ -36,11 +41,10 @@ module Veille
       assert_not build(score: 101).valid?
     end
 
-    test "n'accepte que les catégories et statuts prévus" do
-      assert_equal %w[belle_histoire autre], Veille::Candidate::CATEGORIES
+    test "n'accepte que les statuts prévus" do
       assert_equal %w[pending a_verifier retenu ecarte publie], Veille::Candidate::STATUSES
 
-      assert_not build(category: "faits_divers").valid?
+      assert_not Veille::Candidate.new(url: "https://x.fr/1", item_type: "fait_divers").valid?
       assert_not build(status: "brouillon").valid?
     end
 

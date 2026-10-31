@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Veille
-  # Base commune aux deux passes IA.
+  # Base commune aux passes IA (AiEnricher, Redaction::Brouillon).
   #
   # Le découpage est repris de l'AiEnricher de la branche ingestion-ia, qui
   # avait la bonne idée : deux méthodes de classe pures, testables sans
@@ -9,7 +9,7 @@ module Veille
   #
   #   .prompt_for(...)   → hash de paramètres de requête (pur)
   #   .parse_response(t) → hash structuré (pur)
-  #   #call / #qualify / #draft → orchestration synchrone
+  #   #enrich / #draft → orchestration synchrone
   class AiPass
     class ParseError < StandardError; end
 

@@ -97,7 +97,7 @@ class StoryTest < ActiveSupport::TestCase
   end
 
   test "la purge conserve tout le reste du candidat" do
-    c = candidat(excerpt: "Le chapeau", score: 88, category: "belle_histoire", reason: "Motif")
+    c = candidat(excerpt: "Le chapeau", score: 88, reason: "Motif")
     url_avant = c.url
 
     Story.create!(title: "T", location: "Nancy", latitude: 48.69, longitude: 6.18, veille_candidate: c)
@@ -105,7 +105,6 @@ class StoryTest < ActiveSupport::TestCase
 
     assert_equal "Le chapeau", c.excerpt
     assert_equal 88, c.score
-    assert_equal "belle_histoire", c.category
     assert_equal "Motif", c.reason
     assert_equal url_avant, c.url, "le lien vers la source est ce qu'on garde"
   end

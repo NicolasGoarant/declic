@@ -107,7 +107,7 @@ module Veille
         starts_on: debut, ends_on: fin,
         schedule_text: (debut || fin ? nil : (result["regime"].presence || candidate.schedule_text)),
         score: Integer(result["confiance"], exception: false)&.clamp(0, 100),
-        reason: result["motif"].to_s.strip.presence, category: (type == "belle_histoire" ? "belle_histoire" : "autre"),
+        reason: result["motif"].to_s.strip.presence,
         qualified_at: Time.current, enriched_at: Time.current
       }
       resume = result["resume"].to_s.squish

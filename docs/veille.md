@@ -46,44 +46,41 @@ Couverture : `test/models/story_test.rb`.
 ## Le flux, de bout en bout
 
 ```
-fichier d'URL          rake veille:import
-      |                        |
-      |  une URL par ligne     |  PageFetcher : Open Graph -> JSON-LD -> <title>
-      v                        v
-                        Veille::Candidate (status: pending)
-                               |
-                               |  PASSE A - Veille::Qualifier (Haiku)
-                               |  sur title + excerpt SEULEMENT
+connecteurs (rake veille:quotidien / hebdomadaire)      rake veille:import (liste d'URL)
+        |                                                      |
+        v                                                      v
+   RawIngester : dédoublonne, écarte hors Grand Nancy / passé    PageFetcher
+        \______________________  ________________________________/
                                v
-                        category . score . reason . qualified_at
+                  Veille::Candidate (status: pending)
                                |
-                  /admin/veille - file par score decroissant
+                               |  Veille::AiEnricher (Haiku, 30 par exécution)
+                               |  type (opportunité / belle histoire), catégorie,
+                               |  commune, date ou régime, résumé reformulé
+                               v
+              belle histoire ?  --- non ---> opportunité : relecture, « Valider »
                                |
-                     Retenir --+-- Ecarter
-                        |             `--> status: ecarte
-                        v
-                  status: retenu
-                        |
-                        |  l'admin colle le texte de l'article
-                        v
-                    full_text
-                        |
-                        |  PASSE B - Veille::Drafter (Sonnet)
-                        |  tronque a 12 000 caracteres
-                        v
-        { titre, personne, commune, resume, theme, champs_manquants }
-                        |
-                        |  formulaire editable, relu a la main
-                        v
-                   Publier --> Story (is_active: false)
-                                  |
-                                  `--> full_text = nil   <-- la regle
-                                       status: publie
+                               |  Veille::Redaction::Brouillon (Sonnet)
+                               |  étape séparée du Runner : « rediger »
+                               |  (ou bouton « Rédiger » de l'écran, avec texte collé)
+                               v
+        Redaction::Controles : horaires, appels à l'action, contacts,
+        citations / chiffres absents de la source, copie
+                               |
+        draft_status : redige | a_verifier (bloquant) | a_reprendre (incident API)
+                               |
+          /admin/veille/:id : récit éditable, contrôles, manques,
+          case « accord obtenu », coût IA du candidat
+                               |
+                      « Valider » (Veille::Validation, seul chemin)
+                               v
+                  Story (is_active: false) --> full_text = nil
+                               |
+        mise en ligne depuis /admin/stories : refusée sans l'accord de la personne
 ```
 
-Aucun collecteur automatique n'existe à ce stade. **L'entrée se fait
-uniquement par une liste d'URL fournie à la main**, pour permettre de régler
-les prompts sur du réel avant de brancher la moindre collecte.
+Chaque appel à l'API est inscrit dans le journal `veille_appels_ia` ; le plafond
+mensuel (15 $ par défaut) est vérifié avant chaque envoi.
 
 ---
 
@@ -111,23 +108,39 @@ table sert de référentiel et de rattachement.
 | Colonne | Détail |
 |---|---|
 | `veille_source_id` | facultatif ; `nullify` à la suppression de la source |
-| `title`, `excerpt`, `published_on` | extraits par `PageFetcher` |
+| `title`, `excerpt`, `published_on` | extraits par le connecteur ou `PageFetcher` |
 | `url` | obligatoire, **unique et indexée** — c'est la clé de dédoublonnage |
+| `origin`, `reliability` | source de la collecte et fiabilité (haute / moyenne / basse) |
+| `item_type` | `opportunite` ou `belle_histoire`, posé par `AiEnricher` (règle éditoriale) |
+| `declic_category`, `commune`, `starts_on`, `ends_on`, `schedule_text` | proposés par `AiEnricher` |
+| `summary` | résumé reformulé, deux phrases |
 | `full_text` | le tampon. Voir la règle ci-dessus |
-| `category` | `belle_histoire` ou `autre` ; `nil` avant qualification |
-| `score` | 0 à 100 ; `nil` avant qualification. **Indexé** |
-| `reason` | une phrase, écrite par la passe A |
-| `status` | `pending` -> `retenu` / `ecarte` -> `publie`. **Indexé** |
-| `qualified_at` | horodatage de la passe A |
+| `score`, `reason` | confiance de l'IA (0-100, **indexé**) et son motif |
+| `status` | `pending` / `a_verifier` -> `retenu` / `ecarte` -> `publie`. **Indexé** |
+| `draft_body` | récit rédigé, avec les mentions « Source » et « Accord de la personne » |
+| `draft_status` | `aucun`, `redige`, `a_reprendre` (incident d'API), `a_verifier` (contrôle bloquant) |
+| `draft_manques`, `draft_controles` | informations absentes de la source ; résultat de `Redaction::Controles` |
+| `draft_attempts` | essais de la veille automatique (3 au plus) |
+| `accord_obtenu_at` | accord de la personne racontée |
 
-Scope principal : `file_de_tri` — les `pending`, meilleur score d'abord, les
-non qualifiés en dernier.
+Scopes : `file_de_tri` (les `pending`, meilleur score d'abord), `a_enrichir`, `a_rediger`.
+Il n'y a plus de colonne `category` (passe « Qualifier » retirée) : le type est `item_type`.
+
+### `Veille::AppelIa` — table `veille_appels_ia`
+
+Une ligne par appel à l'API : `candidate_id` (conservé, mis à `nil`, si le candidat est supprimé),
+`passe` (`enrichissement` / `redaction`), `modele`, `statut` (`ok`, `erreur_api`, `illisible`,
+`refuse_controle`, `plafond`), tokens, `cout_usd` estimé (`Veille::Cout`), durée. Écrite par
+`AiPass#run`, jamais à la main.
 
 ### `Story`
 
 Le modèle de la rubrique **existait déjà** (`/stories`, `/admin/stories`) et
-portait déjà `source_url` et `source_name`. Seul `veille_candidate_id` a été
-ajouté. Supprimer un candidat ne détruit pas la fiche publiée : `nullify`.
+portait déjà `source_url` et `source_name`. Ont été ajoutés `veille_candidate_id` et
+`accord_obtenu_at`. **Une fiche issue de la veille ne peut pas être mise en ligne tant que
+l'accord de la personne n'est pas obtenu** (contrôlé à la création et à la bascule en ligne ;
+les fiches saisies à la main et les fiches déjà publiées ne sont pas concernées). La case se
+coche sur l'écran de la veille, ou dans le formulaire d'édition de la fiche. Supprimer un candidat ne détruit pas la fiche publiée : `nullify`.
 
 ---
 
@@ -156,47 +169,43 @@ Le JSON strict est obtenu par le format structuré
 un repêchage par expression régulière au cas où le modèle enroberait sa
 réponse de balises Markdown.
 
-### `Veille::Qualifier` — passe A
+### `Veille::AiEnricher` — classement
 
-`claude-haiku-4-5-20251001`, sur **`title` + `excerpt` uniquement**. Le texte
-intégral n'est jamais envoyé au tri. Rend et persiste :
+`claude-haiku-4-5-20251001`. Pour un élément brut : type (opportunité ou belle histoire, selon
+la règle éditoriale), catégorie, commune du Grand Nancy, date ou régime, résumé reformulé en
+deux phrases (au plus 15 mots consécutifs repris de la source). Écarte ce qui est hors Grand
+Nancy ou passé. Les sources officielles (JeVeuxAider, agenda, formation, Transentreprise) sont
+toujours des opportunités.
 
-```json
-{ "category": "belle_histoire" | "autre", "score": 0-100, "reason": "une phrase" }
-```
+### `Veille::Redaction::Brouillon` — rédaction du récit
 
-Les critères du prompt système : une belle histoire met en scène **une
-personne nommée ou un petit collectif identifié**, raconte **une trajectoire
-ou une initiative concrète**, et **s'ancre dans le Grand Nancy ou en
-Meurthe-et-Moselle**. Le score reflète la force de ces trois éléments réunis.
+`claude-sonnet-5`. Remplace l'ancien `StoryDrafter` (automatique) et l'ancien `Drafter` (manuel).
+Un seul prompt qui porte la règle éditoriale : récit d'environ 120 mots, **ni horaires ni appel à
+l'action**, reformulation intégrale, rien d'inventé, `champs_manquants` plutôt que de combler par
+déduction. Rend `{ brouillon, personne, champs_manquants }`.
 
-Reçoivent `autre` sans hésiter, quel que soit leur intérêt : faits divers,
-résultats sportifs, comptes rendus de conseil municipal, annonces
-institutionnelles.
+- **Automatique** (`Runner#rediger`, ou `rake veille:rediger`) : à partir du titre, du résumé et du
+  chapeau, jamais du texte intégral.
+- **Manuel** (bouton « Rédiger » de l'écran, `profil: :web`) : à partir du texte collé, tronqué à
+  12 000 caractères.
 
-En cas d'échec, le candidat reste en base sans qualification — il est
-repassable.
+Le code, pas le modèle, ajoute « Source : … — URL » et « Accord de la personne : à obtenir »
+(ou « obtenu le … »). Le brouillon est enregistré dans `draft_body` avec ses manques, le résultat
+des contrôles et un statut ; il ne crée aucune fiche.
 
-### `Veille::Drafter` — passe B
+### `Veille::Redaction::Controles` — la règle, vérifiée en code
 
-`claude-sonnet-5`, sur `full_text`. Rend :
+Fonction pure. **Bloquants** : horaires et récurrences (« tous les mardis »), appels à l'action,
+contacts (URL, e-mail, téléphone), citations et chiffres absents de la source, copie de plus de
+15 mots d'affilée. **Avertissements** : longueur hors de 90 à 160 mots, champs manquants. Un
+bloquant met le brouillon « à vérifier » : `Validation` le refuse tant qu'il n'est pas corrigé
+(l'écran relance les contrôles à chaque enregistrement).
 
-```json
-{ "titre": "…", "personne": "…", "commune": "…",
-  "resume": "trois phrases", "theme": "…", "champs_manquants": ["…"] }
-```
+### `Veille::Plafond` et le journal
 
-Contrainte centrale du prompt système : **le résumé est une reformulation
-intégrale, dans un vocabulaire et une syntaxe propres. Aucune phrase ni
-tournure de l'article d'origine n'y figure.** Seuls les faits sont repris —
-noms, lieux, dates, chiffres.
-
-Le modèle **renseigne `champs_manquants` plutôt que de combler par
-déduction**. Une fiche honnêtement lacunaire vaut mieux qu'une fiche complète
-et fausse. Les champs signalés apparaissent en jaune dans le formulaire.
-
-`#draft` **ne persiste rien** : le brouillon repart vers un formulaire relu à
-la main.
+Budget mensuel d'après `veille_appels_ia`, réglable par `VEILLE_BUDGET_USD_MOIS` (15 $ par
+défaut). Atteint, plus aucun appel ne part : `Veille::Plafond::Depasse`, journalisé, et le
+`Runner` s'arrête. `rake veille:cout[AAAA-MM]` donne l'état d'un mois.
 
 ### `Veille::PageFetcher`
 
@@ -218,25 +227,19 @@ contenu non-HTML rejeté.
 
 ## Le budget de temps
 
-Aucun worker dyno sur ce projet : **la rédaction se fait dans la requête
-web, en synchrone**. Le timeout Heroku est de 30 secondes.
+Aucun worker dyno sur ce projet : **la rédaction demandée depuis l'écran se fait dans la
+requête web, en synchrone**. Le timeout Heroku est de 30 secondes.
 
 | | `open_timeout` | `timeout` | `retries` | pire cas |
 |---|---|---|---|---|
-| `Veille::Qualifier` | 5 s | 20 s | 1 | tâche rake, hors contrainte |
-| `Veille::Drafter` | 5 s | 22 s | **0** | **27 s** |
+| `Redaction::Brouillon`, profil `:web` (écran) | 5 s | 22 s | **0** | **27 s** |
+| `Redaction::Brouillon`, profil `:lot` (rake) | 5 s | 40 s | 1 | hors contrainte |
+| `Veille::AiEnricher` (rake) | 5 s | 30 s | 1 | hors contrainte |
 
-`retries: 0` sur la passe B n'est pas un détail : un seul retour en arrière
-doublerait le temps de réponse et ferait sauter les 30 secondes. Le plafond
-de **12 000 caractères** sur `full_text` sert le même objectif, et borne le
-coût par appel. La troncature est journalisée :
-
-```
-[Veille::Drafter] full_text tronqué pour le candidat #42 : 30000 -> 12000 caractères
-```
-
-Si vous touchez à `TIMEOUT`, `OPEN_TIMEOUT` ou `RETRIES`, gardez leur somme
-sous 30 s. Un test le vérifie (`test/services/veille/drafter_test.rb`).
+`retries: 0` sur le profil web n'est pas un détail : un seul retour en arrière doublerait le
+temps de réponse et ferait sauter les 30 secondes. Le plafond de 12 000 caractères sur le texte
+collé sert le même objectif, et borne le coût par appel ; la troncature est journalisée. Un test
+vérifie que 5 + 22 reste sous 30.
 
 ---
 
@@ -257,33 +260,39 @@ https://nancy.fr/actualites/…
 bin/rails "veille:import[reperages.txt]"
 ```
 
-Pour chaque URL : récupération de la page, extraction des métadonnées,
-création du candidat, puis qualification. **Une seconde entre deux
-requêtes**, et un User-Agent qui identifie Déclic :
+Pour chaque URL : récupération de la page, extraction des métadonnées, création du candidat.
+**Une seconde entre deux requêtes**, et un User-Agent qui identifie Déclic :
 
 ```
 DeclicVeille/1.0 (+https://declic.site)
 ```
 
-Les URL déjà en base sont ignorées. Bilan en fin de tâche : candidats créés,
-qualifiés en `belle_histoire`, qualifiés en `autre`, déjà connus, et le
-détail des échecs le cas échéant.
+Le classement (opportunité ou belle histoire) et la rédaction se font ensuite, à la prochaine
+`rake veille:quotidien`.
 
-### Trancher, rédiger, publier
+### Rattrapage et dépense
 
-`/admin/veille` — la file des candidats en attente, meilleur score d'abord.
-Chaque ligne affiche titre, chapeau, source, date, score et motif, avec le
-lien vers l'article qui s'ouvre dans un onglet.
+```bash
+bin/rails veille:rediger            # rédige les récits en attente (LIMITE=n pour borner)
+bin/rails "veille:cout[2026-11]"    # dépense du mois d'après le journal (mois courant par défaut)
+```
 
-- **Retenir** / **Écarter** : la ligne disparaît de la file sans
-  rechargement (Turbo Stream).
-- Onglet **Retenus** -> **Rédiger** ouvre l'écran à deux colonnes.
-- À gauche l'article et ses métadonnées, à droite la zone où coller le texte.
-- **Rédiger** appelle Sonnet ; le brouillon revient sans rechargement dans un
-  formulaire éditable. Relisez-le, en particulier les champs signalés comme
-  manquants.
-- **Publier** crée la fiche en brouillon (`is_active: false`) et vide
-  `full_text`. La fiche se termine ensuite dans `/admin/stories`.
+### Relire, corriger, valider
+
+`/admin/veille` — la file des candidats. Une opportunité se valide d'un clic. Une belle histoire
+renvoie vers son écran (`Relire le récit →`), à deux colonnes :
+
+- À gauche, la source, le classement, le résumé reformulé, et l'historique des appels IA du
+  candidat avec leur coût.
+- À droite, la zone (facultative) où coller le texte de l'article, puis le **récit** : modifiable,
+  avec ses points bloquants, les informations manquantes en jaune, et la case **accord de la
+  personne obtenu**.
+- **Rédiger** (ou **Rédiger à nouveau**) appelle Sonnet ; **Enregistrer et recontrôler** relance les
+  contrôles sur le texte corrigé ; **Valider** crée la fiche hors ligne.
+
+**Valider** (`Veille::Validation`) est le seul chemin vers une `Story` : brouillon inactif, lien vers
+la source, `full_text` effacé, date d'accord reportée. Elle refuse un récit aux contrôles bloquants.
+La mise en ligne se fait ensuite depuis `/admin/stories`, et n'aboutit qu'avec l'accord obtenu.
 
 ### Sources
 
@@ -296,7 +305,8 @@ candidats et les détache simplement.
 
 | Variable | Rôle |
 |---|---|
-| `ANTHROPIC_API_KEY` | obligatoire pour les deux passes |
+| `ANTHROPIC_API_KEY` | obligatoire pour le classement et la rédaction |
+| `VEILLE_BUDGET_USD_MOIS` | plafond mensuel de l'API, en dollars (15 par défaut) |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | authentification admin (HTTP Basic) |
 
 `ANTHROPIC_MODEL` n'est **pas** utilisé par la veille : chaque passe choisit
@@ -307,22 +317,23 @@ son modèle explicitement.
 ## Tests
 
 ```bash
-bin/rails test test/models/veille test/models/story_test.rb \
-               test/services test/controllers/admin/veille
+bin/rails test
 ```
 
 Tous les appels API sont bouchonnés — aucun test ne consomme de tokens et
 aucun ne touche le réseau. `AnthropicClient` est testé via l'adaptateur de
-test intégré à Faraday, les deux passes via une doublure de client, et
-l'interface admin en test d'intégration avec `Veille::Drafter` bouchonné.
+test intégré à Faraday, les passes IA via une doublure de client
+(`FakeAnthropicClient`), et l'interface admin en test d'intégration avec un
+`Redaction::Brouillon` branché sur cette doublure.
 
 ---
 
 ## Ce qui n'existe pas encore
 
-- **Aucun collecteur.** `Veille::Source#last_collected_at` et le booléen
-  `active` sont là pour le jour où il y en aura un.
-- **Aucun traitement par lots.** Chaque appel est synchrone et unitaire.
-- Le `body` de la fiche publiée n'est qu'une amorce : le résumé de trois
-  phrases plus le lien vers la source. Le récit se développe ensuite dans
-  `/admin/stories`.
+- **Pas de texte d'article en automatique.** Le récit automatique part du résumé et du
+  chapeau (la presse n'est lue que par flux RSS) : il reste court et factuel. Pour un récit plus
+  riche, l'admin colle le texte de l'article.
+- **Pas de traitement par lots depuis l'écran.** Chaque rédaction manuelle est synchrone et unitaire.
+- Le récit de la fiche créée n'est qu'une amorce, à développer dans `/admin/stories`.
+- Les trois idées de sources à reprendre (JSON-LD `Event`, CCI et Lorr'Up, dates françaises) sont
+  décrites dans `docs/veille-auto.md`.

@@ -33,7 +33,6 @@ module Admin
           title:     "Le jardin partagé de Laxou",
           excerpt:   "Trente familles cultivent 800 m².",
           full_text: "Le texte intégral de l'article.",
-          category:  "belle_histoire",
           score:     87,
           reason:    "Personne nommée et initiative concrète.",
           qualified_at: Time.current

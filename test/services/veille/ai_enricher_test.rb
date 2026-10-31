@@ -45,7 +45,6 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
   test "une belle histoire est reconnue (source de presse)" do
     c, = enrich(candidat(origin: "presse"), type: "belle_histoire", categorie: "entreprendre")
     assert_equal "belle_histoire", c.item_type
-    assert_equal "belle_histoire", c.category
   end
 
   test "une source officielle reste une opportunité, quoi qu'en dise le modèle" do
