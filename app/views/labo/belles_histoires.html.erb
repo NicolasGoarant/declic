@@ -3,8 +3,7 @@
     dessus en desktop ; sur mobile, recadrée sur la jeune femme puis texte en dessous. Sources haute
     définition dans docs/maquettes/entetes-sources/ (hors build, >1 Mo).
     Règle éditoriale (NOTES.md) : une Belle Histoire est un récit — aucun horaire, aucun bouton d'action
-    sur les cartes. Filtre par thématique : valeurs réelles de la colonne `thematique` (Story), pas
-    celles, fictives, de la maquette. %>
+    sur les cartes. Pas de filtre par catégorie : une Belle Histoire n'en a pas. %>
 <% histoires = @histoires.map { |s| histoire_pour_carte(s) } %>
 <% histoires_carte = histoires.select { |h| h[:latitude] && h[:longitude] } %>
 <% content_for :title, "Les Belles Histoires — Déclic" %>
@@ -48,8 +47,6 @@
     <h2>La carte des déclics</h2>
   </section>
 
-  <%= render "labo/filtre_categories", titre: "Thématique" %>
-
   <div class="lb-explorer">
     <div class="lb-carte-bloc">
       <%= render "accueil/carte", disponibles: @tuiles.disponibles, localiser: true %>
@@ -68,8 +65,6 @@
           <button type="button" class="lb-pille" aria-pressed="false" data-explorateur-target="proximitePille" data-action="explorateur#basculerProximite">À proximité</button>
           <button type="button" class="lb-pille" aria-pressed="true" data-explorateur-target="triPille" data-valeur="recentes"
                   data-action="explorateur#choisirTri" data-explorateur-valeur-param="recentes">Récentes</button>
-          <button type="button" class="lb-pille" aria-pressed="false" data-explorateur-target="triPille" data-valeur="thematique"
-                  data-action="explorateur#choisirTri" data-explorateur-valeur-param="thematique">Par thématique</button>
         </div>
 
         <div class="lb-rayon" data-explorateur-target="rayonBloc" hidden>
@@ -98,7 +93,6 @@
         <div class="fiche-bandeau">
           <img class="fiche-photo" data-photo alt="" hidden>
           <img class="fiche-picto-seul" data-picto alt="" hidden>
-          <span class="lb-carte-etiquette" data-categorie></span>
         </div>
         <div class="lb-carte-corps">
           <h3><a data-titre class="lb-carte-titre"></a></h3>

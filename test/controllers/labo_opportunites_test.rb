@@ -64,7 +64,7 @@ class LaboOpportunitesTest < ActionDispatch::IntegrationTest
   test "règle éditoriale : aucune Belle Histoire sur cette page" do
     opportunite("Une opportunité")
     Story.create!(title: "Une histoire", is_active: true, latitude: 48.69, longitude: 6.18,
-                  thematique: "benevolat", location: "Nancy")
+                  location: "Nancy")
     visiter
     assert_equal [ "Une opportunité" ], points_json.map { |p| p["titre"] }
   end

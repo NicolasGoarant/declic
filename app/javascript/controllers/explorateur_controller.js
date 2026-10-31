@@ -169,9 +169,6 @@ export default class extends Controller {
     if (t === "date") {
       return [...liste].sort((a, b) => new Date(a.debut || 8640000000000000) - new Date(b.debut || 8640000000000000))
     }
-    if (t === "thematique") {
-      return [...liste].sort((a, b) => (a.categorie_libelle || "").localeCompare(b.categorie_libelle || "", "fr"))
-    }
     // recentes (par défaut) : les fiches les plus récemment publiées d'abord.
     return [...liste].sort((a, b) => new Date(b.cree_le || 0) - new Date(a.cree_le || 0))
   }

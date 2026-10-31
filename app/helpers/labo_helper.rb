@@ -4,7 +4,7 @@
 # que de reformater les dates ou les lieux une deuxième fois.
 module LaboHelper
   # Les 5 catégories réelles (Opportunity::CATEGORIES), sans la pseudo-catégorie « histoires » qui
-  # ne sert qu'au diorama de /labo/accueil : le filtre de ces deux pages n'en a pas besoin.
+  # ne sert qu'au diorama : le filtre de /labo/opportunites n'en a pas besoin.
   def categories_reelles
     Categorie::TOUTES.reject { |c| c.cle == Categorie::HISTOIRES }
   end
@@ -24,14 +24,11 @@ module LaboHelper
   end
 
   def histoire_pour_carte(s)
-    cat = Categorie.trouver(s.categorie_opportunite)
+    cat = Categorie.trouver(Categorie::HISTOIRES)
     {
-      id: "s#{s.id}", titre: s.title, categorie: s.categorie_opportunite,
-      # Le pin montre toujours l'étincelle « Belles Histoires » (comme /labo/accueil), même si le
-      # filtre porte sur la thématique réelle (diorama_controller#iconePin).
-      icone_categorie: Categorie::HISTOIRES,
-      categorie_libelle: cat&.libelle, categorie_couleur: cat&.couleur,
-      categorie_icone: cat && image_path("#{cat.icone}.png"), categorie_icone2x: cat && image_path("#{cat.icone}@2x.png"),
+      id: "s#{s.id}", titre: s.title, categorie: cat.cle,
+      categorie_couleur: cat.couleur,
+      categorie_icone: image_path("#{cat.icone}.png"), categorie_icone2x: image_path("#{cat.icone}@2x.png"),
       commune: commune_de(s.city, s.location), latitude: s.latitude.to_f, longitude: s.longitude.to_f,
       citation: s.quote.presence, date_affichee: mois_annee(s.source_published_on),
       photo: photo_de(s), url: story_path(s), cree_le: (s.source_published_on || s.created_at).to_time.iso8601

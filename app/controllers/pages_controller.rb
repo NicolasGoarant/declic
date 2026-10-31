@@ -75,10 +75,9 @@ class PagesController < ApplicationController
     end
   end
 
-  # Photo de couverture d'une opportunité active (puis d'une histoire) de la catégorie, ou nil.
+  # Photo de couverture d'une opportunité active de la catégorie, ou nil.
   def photo_de_categorie(cle)
-    fiche = Opportunity.active.where(category: cle).joins(:image_attachment).order(updated_at: :desc).first ||
-            Story.active.joins(:image_attachment).order(updated_at: :desc).limit(50).find { |s| s.categorie_opportunite == cle }
+    fiche = Opportunity.active.where(category: cle).joins(:image_attachment).order(updated_at: :desc).first
     fiche && { src: url_for(fiche.image), alt: fiche.title }
   end
 

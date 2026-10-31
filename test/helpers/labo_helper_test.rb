@@ -33,15 +33,15 @@ class LaboHelperTest < ActionView::TestCase
     assert_equal "Ouvert toute l'année", opportunite_pour_carte(o)[:date_affichee]
   end
 
-  test "histoire_pour_carte porte toujours icone_categorie=histoires (étincelle sur le pin), même filtrée par thématique" do
-    s = Story.new(id: 7, title: "Le déclic de Camille", thematique: "ecologiser", quote: "J'ai osé.",
+  test "histoire_pour_carte porte la catégorie « histoires » (étincelle sur le pin), quelles que soient ses étiquettes" do
+    s = Story.new(id: 7, title: "Le déclic de Camille", tags: "ecologiser", quote: "J'ai osé.",
                    city: "Nancy", location: "Nancy", latitude: 48.69, longitude: 6.18,
                    source_published_on: Date.new(2026, 2, 1), created_at: Time.zone.now)
     point = histoire_pour_carte(s)
 
     assert_equal "s7", point[:id]
-    assert_equal "ecologiser", point[:categorie] # sert au filtre par thématique et à la carte
-    assert_equal Categorie::HISTOIRES, point[:icone_categorie] # sert uniquement au pictogramme du pin
+    assert_equal Categorie::HISTOIRES, point[:categorie] # sert au pictogramme du pin
+    assert_not point.key?(:categorie_libelle) # aucune étiquette de catégorie sur la carte
     assert_equal "J'ai osé.", point[:citation]
     assert_equal "Février 2026", point[:date_affichee]
   end

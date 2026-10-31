@@ -1093,9 +1093,7 @@ export default class extends Controller {
   }
 
   iconePin(p) {
-    // p.icone_categorie : dessine l'icône d'une autre catégorie que celle qui filtre (ex. Belles
-    // Histoires filtrées par thématique mais toujours affichées avec l'étincelle « histoires »).
-    const cat = this.categorie(p.icone_categorie || p.categorie)
+    const cat = this.categorie(p.categorie)
     const pin = this.modelePinTarget.content.firstElementChild.cloneNode(true)
     pin.style.setProperty("--c", cat.couleur)
     pin.dataset.id = p.id

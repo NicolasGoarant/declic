@@ -19,7 +19,6 @@ class Story < ApplicationRecord
   # Nouvelles fiches seulement : ne rend invalide aucune histoire existante.
   validates :location, presence: true, on: :create
   validate :points_forts_limites
-  validates :thematique, inclusion: { in: Opportunity::CATEGORIES }, allow_blank: true
 
   # « Ce qu'il faut retenir » : au plus 3 points {icone, titre, texte} (voir PointsForts).
   def points_forts_liste = PointsForts.normaliser(points_forts)
@@ -35,29 +34,13 @@ class Story < ApplicationRecord
     self.points_forts = PointsForts.normaliser(blocs).first(PointsForts::MAX)
   end
 
-  # Catégorie d'opportunité de l'histoire : la thématique choisie dans l'admin, sinon celle que
-  # portent ses étiquettes (clé ou libellé : « ecologiser », « Écologiser »…), sinon nil.
-  def categorie_opportunite
-    return thematique if thematique.present? && Opportunity::CATEGORIES.include?(thematique)
-
-    etiquettes = tags.to_s.split(/[;,]/).map { |t| t.strip.parameterize }
-    Opportunity::CATEGORIES.find do |cle|
-      etiquettes.include?(cle) || etiquettes.include?(Categorie.trouver(cle).libelle.parameterize)
-    end
-  end
-
-  # « Des opportunités pour avoir ton déclic » : actives et pas terminées, de la catégorie de
-  # l'histoire (thématique, puis étiquettes), complétées par les plus proches géographiquement.
+  # « Des opportunités pour avoir ton déclic » : actives et pas terminées, les plus proches
+  # géographiquement de l'histoire. Une Belle Histoire n'a pas de catégorie.
   def opportunites_proches(limite = 3)
     base = Opportunity.active.actuelles
-    choix = categorie_opportunite ? base.where(category: categorie_opportunite).limit(limite).to_a : []
-    return choix if choix.size >= limite
+    return base.limit(limite).to_a unless latitude.present? && longitude.present?
 
-    reste = base.where.not(id: choix.map(&:id))
-    if latitude.present? && longitude.present?
-      reste = reste.with_coords.to_a.sort_by { |o| (o.latitude.to_f - latitude)**2 + ((o.longitude.to_f - longitude) * Math.cos(latitude * Math::PI / 180))**2 }
-    end
-    choix + reste.first(limite - choix.size)
+    base.with_coords.to_a.sort_by { |o| (o.latitude.to_f - latitude)**2 + ((o.longitude.to_f - longitude) * Math.cos(latitude * Math::PI / 180))**2 }.first(limite)
   end
 
   # « D'autres belles histoires ».
