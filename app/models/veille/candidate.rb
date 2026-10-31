@@ -42,6 +42,12 @@ module Veille
 
     belongs_to :opportunity, optional: true, inverse_of: :veille_candidate
 
+    has_many :appels_ia,
+             class_name:  "Veille::AppelIa",
+             foreign_key: :candidate_id,
+             inverse_of:  :candidate,
+             dependent:   :nullify
+
     validates :url, presence: true, uniqueness: true
     validates :item_type,       inclusion: { in: ITEM_TYPES },  allow_nil: true
     validates :declic_category, inclusion: { in: ::Opportunity::CATEGORIES }, allow_nil: true

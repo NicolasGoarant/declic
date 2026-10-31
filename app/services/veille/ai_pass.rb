@@ -51,11 +51,47 @@ module Veille
       )
     end
 
-    # Envoie la requête et rend le hash parsé.
-    def run(params)
-      response = client.messages(**params)
+    # Envoie la requête et rend le hash parsé. Chaque appel est journalisé
+    # (Veille::AppelIa) avec sa consommation et son coût estimé, qu'il réussisse
+    # ou non ; le plafond mensuel est vérifié avant tout envoi.
+    def run(params, candidate: nil)
+      verifier_plafond(candidate)
+      debut = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      begin
+        response = client.messages(**params)
+      rescue AnthropicClient::Error => e
+        journaliser(candidate, "erreur_api", debut, erreur: "#{e.class.name.demodulize} : #{e.message.slice(0, 300)}")
+        raise
+      end
       @usage = response["usage"]
-      self.class.parse_response(AnthropicClient.extract_text(response))
+      begin
+        parsed = self.class.parse_response(AnthropicClient.extract_text(response))
+      rescue ParseError => e
+        journaliser(candidate, "illisible", debut, usage: @usage, erreur: e.message.slice(0, 300))
+        raise
+      end
+      @appel = journaliser(candidate, "ok", debut, usage: @usage)
+      parsed
+    end
+
+    # Dernier appel journalisé (pour que l'appelant requalifie son statut, par
+    # exemple « refuse_controle » si les contrôles rejettent le brouillon).
+    attr_reader :appel
+
+    def verifier_plafond(candidate)
+      Veille::Plafond.verifier!
+    rescue Veille::Plafond::Depasse => e
+      journaliser(candidate, "plafond", Process.clock_gettime(Process::CLOCK_MONOTONIC), erreur: e.message)
+      raise
+    end
+
+    def journaliser(candidate, statut, debut, usage: nil, erreur: nil)
+      Veille::AppelIa.create!(
+        candidate: candidate, passe: self.class::PASSE, modele: self.class::MODEL, statut: statut,
+        input_tokens: usage.to_h["input_tokens"].to_i, output_tokens: usage.to_h["output_tokens"].to_i,
+        cout_usd: Veille::Cout.estimer(self.class::MODEL, usage), erreur: erreur,
+        duree_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - debut) * 1000).round
+      )
     end
 
     def self.json_schema_params(system:, user:, schema:, max_tokens:)

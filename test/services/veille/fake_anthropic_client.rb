@@ -4,7 +4,8 @@
 class FakeAnthropicClient
   attr_reader :calls
 
-  def initialize(text: nil, raise_with: nil)
+  def initialize(text: nil, raise_with: nil, usage: nil)
+    @usage      = usage
     @text       = text
     @raise_with = raise_with
     @calls      = []
@@ -14,7 +15,9 @@ class FakeAnthropicClient
     @calls << kwargs
     raise @raise_with if @raise_with
 
-    { "content" => [{ "type" => "text", "text" => @text }] }
+    reponse = { "content" => [{ "type" => "text", "text" => @text }] }
+    reponse["usage"] = @usage if @usage
+    reponse
   end
 
   def last          = @calls.last

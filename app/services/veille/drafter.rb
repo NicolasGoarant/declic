@@ -11,6 +11,7 @@ module Veille
   # l'admin relit et corrige dans un formulaire avant publication.
   class Drafter < AiPass
     MODEL        = "claude-sonnet-5"
+    PASSE        = "redaction"
     TIMEOUT      = 22
     OPEN_TIMEOUT = 5
     # Zéro retry : sur le chemin web un second essai ferait sauter les 30 s.
@@ -114,7 +115,7 @@ module Veille
         title:        candidate.title,
         url:          candidate.url,
         published_on: candidate.published_on
-      ))
+      ), candidate: candidate)
 
       normalize(result)
     end

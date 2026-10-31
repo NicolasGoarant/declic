@@ -19,7 +19,7 @@ module Veille
     PRIORITE = %w[jeveuxaider agenda_nancy formation transentreprise gazette presse].freeze
 
     Rapport = Struct.new(:sources, :crees, :doublons, :hors_zone, :passes, :enrichis, :ecartes, :erreurs_ia,
-                         :cout_usd, :restants, keyword_init: true)
+                         :cout_usd, :restants, :plafond, keyword_init: true)
 
     def initialize(connecteurs: QUOTIDIEN, ingester: RawIngester.new, enricher: nil, drafter: nil,
                    max: MAX_ENRICHIS, logger: Rails.logger, http: nil)
@@ -34,7 +34,7 @@ module Veille
 
     def run
       rapport = Rapport.new(sources: [], crees: 0, doublons: 0, hors_zone: 0, passes: 0,
-                            enrichis: 0, ecartes: 0, erreurs_ia: 0, cout_usd: 0.0, restants: 0)
+                            enrichis: 0, ecartes: 0, erreurs_ia: 0, cout_usd: 0.0, restants: 0, plafond: false)
       collecter(rapport)
       enrichir(rapport)
       journaliser(rapport)
@@ -67,6 +67,10 @@ module Veille
       file.first(@max).each do |candidat|
         enrichir_un(candidat, rapport)
         d_affilee = 0
+      rescue Veille::Plafond::Depasse => e
+        @log.error("[Veille] enrichissement arrêté : #{e.message}")
+        rapport.plafond = true
+        break
       rescue AnthropicClient::AuthenticationError => e
         @log.error("[Veille] enrichissement arrêté : #{e.message}")
         rapport.erreurs_ia += 1
@@ -102,7 +106,7 @@ module Veille
       etat = r.sources.map { |s| "#{s.nom}=#{s.statut}" }.join(" ")
       @log.info("[Veille] bilan — nouveaux #{r.crees}, doublons #{r.doublons}, hors zone #{r.hors_zone}, " \
                 "passés #{r.passes}, enrichis #{r.enrichis}, écartés #{r.ecartes}, erreurs IA #{r.erreurs_ia}, " \
-                "en attente d'enrichissement #{r.restants} · coût estimé #{format('%.4f', r.cout_usd)} USD · #{etat}")
+                "en attente d'enrichissement #{r.restants}#{' · PLAFOND MENSUEL ATTEINT' if r.plafond} · coût estimé #{format('%.4f', r.cout_usd)} USD · #{etat}")
     end
   end
 end

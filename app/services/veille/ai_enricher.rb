@@ -9,6 +9,7 @@ module Veille
   # Haiku suffit : tâche de classification sur un texte court, en lot.
   class AiEnricher < AiPass
     MODEL        = "claude-haiku-4-5-20251001"
+    PASSE        = "enrichissement"
     TIMEOUT      = 30
     OPEN_TIMEOUT = 5
     RETRIES      = 1
@@ -81,7 +82,7 @@ module Veille
         title: candidate.title, text: candidate.full_text.presence || candidate.excerpt, origin: candidate.origin,
         commune: candidate.commune, starts_on: candidate.starts_on, ends_on: candidate.ends_on,
         schedule_text: candidate.schedule_text
-      ))
+      ), candidate: candidate)
       apply(candidate, result, today: today)
       candidate
     end

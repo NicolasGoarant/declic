@@ -7,6 +7,7 @@ module Veille
   # « Accord de la personne : à obtenir » : rien ne se publie sans cet accord.
   class StoryDrafter < AiPass
     MODEL        = "claude-sonnet-5"
+    PASSE        = "redaction"
     TIMEOUT      = 40
     OPEN_TIMEOUT = 5
     RETRIES      = 1
@@ -48,7 +49,7 @@ module Veille
     def draft(candidate)
       raise ArgumentError, "résumé manquant : rien à rédiger" if candidate.summary.blank?
 
-      result = run(self.class.prompt_for(title: candidate.title, summary: candidate.summary, commune: candidate.commune))
+      result = run(self.class.prompt_for(title: candidate.title, summary: candidate.summary, commune: candidate.commune), candidate: candidate)
       candidate.update!(draft_body: self.class.finaliser(result["brouillon"], source_label: candidate.source_label, url: candidate.url))
       candidate
     end

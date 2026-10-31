@@ -8,6 +8,7 @@ module Veille
   # est seulement de dire si le sujet mérite qu'on aille plus loin.
   class Qualifier < AiPass
     MODEL        = "claude-haiku-4-5-20251001"
+    PASSE        = "enrichissement"
     TIMEOUT      = 20
     OPEN_TIMEOUT = 5
     # La qualification tourne en tâche rake, jamais dans la requête web :
@@ -83,7 +84,7 @@ module Veille
         excerpt:      candidate.excerpt,
         source_name:  candidate.source_label,
         published_on: candidate.published_on
-      ))
+      ), candidate: candidate)
 
       candidate.update!(
         category:     normalize_category(result["category"]),
