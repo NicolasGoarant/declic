@@ -22,7 +22,7 @@ class LaboController < ApplicationController
     # Les blocs sous la carte (maquette docs/maquettes/maquette-accueil-2026-09-30.png).
     @temoignages = temoignages_accueil
     # Agenda : de quoi remplir la vedette et quatre lignes pour chaque catégorie filtrée.
-    @prochaines = Opportunity.active.prochaines.with_attached_photos.with_attached_image.limit(40)
+    @prochaines = Opportunity.active.sans_familles_masquees.prochaines.with_attached_photos.with_attached_image.limit(40)
     @une = Story.pour_la_une(1).first
     @histoires_accueil = Story.active.where.not(id: @une&.id).order(happened_on: :desc, created_at: :desc).limit(2).with_attached_image
     @chiffres = chiffres_impact

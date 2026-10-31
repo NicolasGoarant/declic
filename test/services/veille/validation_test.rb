@@ -30,6 +30,14 @@ class Veille::ValidationTest < ActiveSupport::TestCase
     assert_nil c.full_text, "le texte brut est effacé une fois la fiche créée"
   end
 
+  test "la famille passe du candidat à la fiche, sauf hors_ligne" do
+    c = candidat(item_type: "opportunite", commune: "Nancy", summary: "Une phrase. Une autre.", famille: "petite_manifestation")
+    assert_equal "petite_manifestation", Veille::Validation.new(c).call.famille
+
+    c = candidat(item_type: "opportunite", commune: "Nancy", summary: "Une phrase. Une autre.", famille: "hors_ligne")
+    assert_nil Veille::Validation.new(c).call.famille
+  end
+
   test "une mission sans date garde son régime" do
     c = candidat(item_type: "opportunite", declic_category: "benevolat", commune: "Nancy", summary: "Aider.", schedule_text: "Ouvert toute l'année")
     opp = Veille::Validation.new(c).call

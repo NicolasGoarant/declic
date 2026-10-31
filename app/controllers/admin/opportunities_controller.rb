@@ -105,7 +105,7 @@ class Admin::OpportunitiesController < Admin::BaseController
   def opportunity_params
     params.require(:opportunity).permit(
       # Identité
-      :title, :category, :organization, :organization_logo, :is_active,
+      :title, :category, :famille, :organization, :organization_logo, :is_active,
 
       # Dates & horaires (les chaînes start_date / end_date sont écrites par le pont du modèle)
       :starts_on, :ends_on, :start_time, :end_time, :schedule_text, :time_commitment,

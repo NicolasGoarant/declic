@@ -12,7 +12,7 @@ module LaboHelper
   def opportunite_pour_carte(o)
     cat = Categorie.trouver(o.category)
     {
-      id: "o#{o.id}", titre: o.title, categorie: o.category,
+      id: "o#{o.id}", titre: o.title, categorie: o.category, masquable: o.famille_masquable,
       categorie_libelle: cat&.libelle, categorie_couleur: cat&.couleur,
       categorie_icone: cat && image_path("#{cat.icone}.png"), categorie_icone2x: cat && image_path("#{cat.icone}@2x.png"),
       commune: commune_de(o.city, o.location), latitude: o.latitude.to_f, longitude: o.longitude.to_f,

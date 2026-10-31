@@ -62,6 +62,7 @@ const NEUTRE = { moment: "jour", saison: "printemps-ete", meteo: "clair" }
 const FICHES_MAX = 24
 const HISTOIRES = "histoires" // Categorie::HISTOIRES : les Belles Histoires
 const CLE_FAVORIS = "declic:favoris"
+const CLE_FAMILLES = "declic:familles-affichees" // même clé que explorateur_controller.js
 const ETROIT = "(max-width: 699.98px)"
 
 // Texte noir ou blanc selon la clarté de la couleur de catégorie (luminance relative WCAG).
@@ -76,7 +77,7 @@ export default class extends Controller {
   static values = { points: Array, categories: Array, tuiles: Object, developpement: Boolean, mini: Boolean }
   static targets = [
     "carte", "alerte", "voletTitre", "poigneeTitre", "compteur", "fiches", "vide", "stats",
-    "modeleFiche", "modelePin", "modelePopup", "categorie", "toutes", "recherche",
+    "modeleFiche", "modelePin", "modelePopup", "categorie", "toutes", "recherche", "famille",
     "boutonCalques", "panneauCalques", "voileCalques", "choixFond", "rubriqueAmbiance", "choixAuto",
     "choixReglage", "choixBlanche", "ambianceAuto", "rubriqueStyle", "choixStyle"
   ]
@@ -87,7 +88,8 @@ export default class extends Controller {
     if (this.miniValue) { this.demarrerMini(); return }
     window.addEventListener("declic:position", this.surPositionAuto)
     if (window.declicPosition) this.surPositionAuto()
-    this.filtre = { categories: new Set(), favoris: false, texte: "" }
+    this.filtre = { categories: new Set(), favoris: false, texte: "", familles: this.lireFamilles() }
+    this.majBasculesFamilles()
     this.favoris = this.lireFavoris()
     this.selection = null
     this.points = this.pointsValue.map((p) => ({ ...p, debut: lireDate(p.debut), fin: lireDate(p.fin) }))
@@ -1136,6 +1138,7 @@ export default class extends Controller {
   passe(p) {
     const f = this.filtre
     if (f.categories.size && !f.categories.has(p.categorie)) return false
+    if (!this.familleAffichee(p)) return false
     if (f.favoris && !this.favoris.has(p.id)) return false
     if (f.texte && !this.correspond(p, f.texte)) return false
     return true
@@ -1178,6 +1181,26 @@ export default class extends Controller {
     this.categorieTargets.forEach((b) => b.setAttribute("aria-pressed", String(c.has(b.dataset.cle))))
     if (this.hasToutesTarget) this.toutesTarget.setAttribute("aria-pressed", String(c.size === 0))
     this.appliquerFiltres()
+  }
+
+  // ─── Familles masquées par défaut (Brocantes, foires et fêtes ; Conférences et visites) ──
+  familleAffichee(p) { return !p.masquable || this.filtre.familles.has(p.masquable) }
+
+  basculerFamille({ params: { cle } }) {
+    const f = this.filtre.familles
+    f.has(cle) ? f.delete(cle) : f.add(cle)
+    try { localStorage.setItem(CLE_FAMILLES, JSON.stringify([...f])) } catch { /* navigation privée : le choix vaut pour la page */ }
+    this.majBasculesFamilles()
+    this.majCompteurs()
+    this.appliquerFiltres()
+  }
+
+  majBasculesFamilles() {
+    this.familleTargets.forEach((b) => b.setAttribute("aria-pressed", String(this.filtre.familles.has(b.dataset.cle))))
+  }
+
+  lireFamilles() {
+    try { return new Set(JSON.parse(localStorage.getItem(CLE_FAMILLES) || "[]")) } catch { return new Set() }
   }
 
   // Pastille « Toutes » (pages Opportunités / Belles Histoires) : efface la sélection.
@@ -1237,7 +1260,7 @@ export default class extends Controller {
   majCompteurs() {
     const liste = this.poses || this.points
     const comptes = {}
-    liste.forEach((p) => { comptes[p.categorie] = (comptes[p.categorie] || 0) + 1 })
+    liste.filter((p) => this.familleAffichee(p)).forEach((p) => { comptes[p.categorie] = (comptes[p.categorie] || 0) + 1 })
     this.categorieTargets.forEach((b) => {
       const n = comptes[b.dataset.cle] || 0
       b.querySelector("[data-compte]").textContent = n

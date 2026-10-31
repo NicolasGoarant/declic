@@ -6,6 +6,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 const CLE_FAVORIS = "declic:favoris" // même clé que diorama_controller.js et fiche_controller.js
+const CLE_FAMILLES = "declic:familles-affichees" // même clé que diorama_controller.js
 const JOUR_MS = 24 * 60 * 60 * 1000
 
 export default class extends Controller {
@@ -22,7 +23,7 @@ export default class extends Controller {
       this.panneauTarget.removeAttribute("open")
     }
     this.filtre = {
-      categories: new Set(), texte: "", semaine: false, nouveautes: false, proximite: false,
+      categories: new Set(), familles: this.lireFamilles(), texte: "", semaine: false, nouveautes: false, proximite: false,
       rayon: this.hasRayonTarget ? Number(this.rayonTarget.value) : 25,
       tri: this.hasTriTarget ? this.triTarget.value : "recentes"
     }
@@ -60,6 +61,17 @@ export default class extends Controller {
   toutesCategories() {
     this.filtre.categories.clear()
     this.rendre()
+  }
+
+  // ─── Familles masquées par défaut : mêmes boutons et même mémoire que diorama#basculerFamille ───
+  basculerFamille({ params: { cle } }) {
+    const f = this.filtre.familles
+    f.has(cle) ? f.delete(cle) : f.add(cle)
+    this.rendre()
+  }
+
+  lireFamilles() {
+    try { return new Set(JSON.parse(localStorage.getItem(CLE_FAMILLES) || "[]")) } catch { return new Set() }
   }
 
   // ─── Pastilles rapides (Opportunités : « Cette semaine », « Nouveautés ») ────────────────
@@ -138,6 +150,7 @@ export default class extends Controller {
   passe(p) {
     const f = this.filtre
     if (f.categories.size && !f.categories.has(p.categorie)) return false
+    if (p.masquable && !f.familles.has(p.masquable)) return false
     if (f.texte) {
       const cible = `${p.titre} ${p.commune ?? ""} ${p.extrait ?? ""}`.toLowerCase()
       if (!cible.includes(f.texte)) return false

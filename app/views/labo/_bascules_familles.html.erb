@@ -1,0 +1,12 @@
+<%# Familles masquées par défaut sur la carte : le visiteur les affiche ici, son choix reste sur l'appareil.
+    Passer explorateur: true là où la grille de fiches accompagne la carte. %>
+<div class="bascules-familles" role="group" aria-label="Afficher aussi">
+  <span class="bascules-familles-titre">Afficher aussi</span>
+  <% Opportunity::FAMILLES_MASQUEES.each do |cle| %>
+    <button type="button" class="bascule-famille" aria-pressed="false" data-cle="<%= cle %>" data-diorama-target="famille"
+            data-action="diorama#basculerFamille<%= " explorateur#basculerFamille" if local_assigns[:explorateur] %>"
+            data-diorama-cle-param="<%= cle %>" data-explorateur-cle-param="<%= cle %>">
+      <%= Opportunity::FAMILLES.fetch(cle) %>
+    </button>
+  <% end %>
+</div>

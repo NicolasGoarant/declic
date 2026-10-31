@@ -13,6 +13,7 @@
     <%= picto(:chevron, taille: 22, class: "acc-poignee-chevron") %>
   </button>
   <div class="acc-volet-panneau" id="acc-volet-panneau" data-sheet-target="panneau">
+    <%= render "labo/bascules_familles" if local_assigns[:bascules] %>
     <div class="acc-volet-tete">
       <h2 id="acc-volet-titre" data-diorama-target="voletTitre">Au centre de la vue</h2>
       <a href="#carte" class="acc-lien-violet" data-action="diorama#voirTout">

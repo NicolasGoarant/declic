@@ -42,7 +42,7 @@
       <dd><span class="badge"><%= @candidate.status %></span></dd>
     </dl>
 
-    <% if @candidate.presse? && @candidate.enriched_at.nil? %>
+    <% if (@candidate.presse? && @candidate.enriched_at.nil?) || @candidate.a_localiser? %>
       <h2 style="margin-top:20px">Pour créer la fiche</h2>
       <%= form_with url: completer_admin_veille_candidate_path(@candidate), method: :patch do |f| %>
         <%= f.label :commune, "Commune" %>

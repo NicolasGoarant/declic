@@ -49,6 +49,16 @@ class LaboOpportunitesTest < ActionDispatch::IntegrationTest
     assert_kind_of Float, points_json.first["latitude"]
   end
 
+  test "la famille masquable accompagne le point, et les bascules sont sur la page" do
+    opportunite("Vide-grenier", famille: "petite_manifestation")
+    opportunite("Atelier", famille: "pratiquer")
+    visiter
+
+    assert_equal({ "Vide-grenier" => "petite_manifestation", "Atelier" => nil }, points_json.to_h { |p| [p["titre"], p["masquable"]] })
+    assert_select "button.bascule-famille", text: /Brocantes, foires et fêtes/
+    assert_select "button.bascule-famille[aria-pressed=false]", 2
+  end
+
   test "une opportunité inactive n'apparaît pas" do
     opportunite("Cachée", is_active: false)
     visiter

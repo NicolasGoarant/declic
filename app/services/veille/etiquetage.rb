@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Veille
-  # Le jeu figé des 30 cas à étiqueter pour calibrer le prompt v4 (tiré au sort le 31/10/2026).
+  # Le jeu figé des 30 cas à étiqueter pour calibrer le prompt v4 (choisis le 31/10/2026 : douteux, à relire et contrôles, pas un tirage au hasard).
   # Il vit dans un fichier et non dans veille_candidates : plusieurs de ces candidats n'existent
   # plus en base. Pour la presse, seuls le titre et le lien sont repris, jamais le chapeau.
   module Etiquetage

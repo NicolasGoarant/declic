@@ -8,10 +8,13 @@
                 class: "btn #{'secondary' unless @status == statut}",
                 style: "margin-right:6px" %>
   <% end %>
+  <%= link_to "À localiser (#{@counts[:a_localiser]})", admin_veille_candidates_path(status: "pending", a_localiser: 1),
+              class: "btn #{'secondary' unless @filtres[:a_localiser].present?}", style: "margin-right:6px" %>
 </p>
 
 <%= form_with url: admin_veille_candidates_path, method: :get, class: "filtres", data: { turbo: false } do |f| %>
   <%= hidden_field_tag :status, @status %>
+  <%= hidden_field_tag :a_localiser, 1 if @filtres[:a_localiser].present? %>
   <label>Type
     <%= select_tag :type, options_for_select([["Tous", ""], ["Opportunités", "opportunite"], ["Belles Histoires", "belle_histoire"]], @filtres[:type]) %>
   </label>

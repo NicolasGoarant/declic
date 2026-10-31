@@ -14,7 +14,7 @@ module Admin
       # les pending.
       def index
         @status = params[:status].presence_in(::Veille::Candidate::STATUSES) || "pending"
-        @filtres = params.permit(:type, :categorie, :origine, :depuis).to_h.symbolize_keys
+        @filtres = params.permit(:type, :categorie, :origine, :depuis, :a_localiser).to_h.symbolize_keys
         @filtres.delete(:categorie) if @filtres[:type] == "belle_histoire" # une histoire n'a pas de catégorie
 
         base =
@@ -26,6 +26,7 @@ module Admin
         @candidates = base.par_type(@filtres[:type]).par_categorie(@filtres[:categorie])
                           .par_origine(@filtres[:origine]).collectes_depuis(date_filtre(@filtres[:depuis]))
                           .includes(:source, :story, :opportunity)
+        @candidates = @candidates.a_localiser if @filtres[:a_localiser].present?
 
         @counts = compteurs
       end
@@ -98,8 +99,8 @@ module Admin
         repondre_brouillon
       end
 
-      # Article de presse retenu à la main : l'IA ne l'a pas classé, la commune et le
-      # résumé que demande « Valider » sont saisis ici.
+      # Article de presse retenu à la main (l'IA ne l'a pas classé) ou élément à localiser : la
+      # commune et le résumé que demande « Valider » sont saisis ici.
       def completer
         @candidate.update!(params.permit(:commune, :summary))
         redirect_to admin_veille_candidate_path(@candidate), status: :see_other, notice: "Commune et résumé enregistrés."
@@ -160,6 +161,7 @@ module Admin
         {
           pending: ::Veille::Candidate.pending.count,
           a_verifier: ::Veille::Candidate.a_verifier.count,
+          a_localiser: ::Veille::Candidate.a_localiser.count,
           retenu:  ::Veille::Candidate.retenu.count,
           ecarte:  ::Veille::Candidate.ecarte.count,
           publie:  ::Veille::Candidate.publie.count

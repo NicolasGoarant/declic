@@ -2,9 +2,10 @@
 
 module Veille
   # Propose, pour un élément brut : son type (opportunité ou belle histoire, selon
-  # la règle éditoriale), sa catégorie Déclic, sa commune du Grand Nancy, sa date
+  # la règle éditoriale), sa famille (dont le code déduit la catégorie Déclic), sa commune, sa date
   # ou son régime, et un résumé reformulé en deux phrases. Écarte (sans publier
-  # quoi que ce soit) ce qui est hors ligne, hors périmètre (Veille::Territoire) ou passé.
+  # quoi que ce soit) ce qui est hors ligne, hors périmètre (Veille::Territoire) ou passé ;
+  # ce qui n'a aucune commune reste à localiser.
   #
   # Haiku suffit : tâche de classification sur un texte court, en lot.
   class AiEnricher < AiPass
@@ -21,52 +22,112 @@ module Veille
     # Sources officielles : ce qu'elles publient invite par nature à agir.
     SOURCES_OPPORTUNITES = %w[jeveuxaider agenda_nancy transentreprise].freeze
 
-    CATEGORIES = ::Opportunity::CATEGORIES
+    # La catégorie reste celle de ces sources ; les autres la tirent de la famille.
+    SOURCES_CATEGORIE_FIXE = %w[jeveuxaider transentreprise].freeze
+
+    FAMILLES_HISTOIRE    = %w[reconversion creation resilience engagement vocation portrait].freeze
+    FAMILLES_OPPORTUNITE = ::Opportunity::FAMILLES.keys.freeze
+    HORS_LIGNE           = "hors_ligne"
+    # Catégorie (donc couleur du pin) déduite par le code, pour qu'elle ne contredise jamais la famille.
+    CATEGORIE_PAR_FAMILLE = {
+      "s_engager" => "benevolat", "evenement_solidaire" => "benevolat", "agir_ecologie" => "ecologiser",
+      "entreprendre" => "entreprendre", "se_former" => "formation", "pratiquer" => "rencontres",
+      "rencontre" => "rencontres", "decouvrir" => "rencontres", "lieu_collectif" => "rencontres",
+      "petite_manifestation" => "rencontres"
+    }.freeze
+    # Rubrique de l'Agenda Grand Nancy : signal sûr, indépendant du modèle.
+    RUBRIQUE_BROCANTE = /\bbrocante\b/i
 
     SCHEMA = {
       type: "object",
       properties: {
-        type:       { type: "string", enum: Veille::Candidate::ITEM_TYPES },
-        # null pour une belle histoire : seules les opportunités ont une catégorie.
-        categorie:  { anyOf: [{ type: "string", enum: CATEGORIES }, { type: "null" }] },
-        commune:    { type: "string" },
-        date_debut: { type: "string" },
-        date_fin:   { type: "string" },
-        regime:     { type: "string" },
-        resume:     { type: "string" },
-        hors_ligne: { type: "boolean" },
-        confiance:  { type: "integer" }, # 0-100 : bornée par #apply (l'API refuse minimum/maximum)
-        motif:      { type: "string" }
+        type:        { type: "string", enum: Veille::Candidate::ITEM_TYPES },
+        role_public: { type: "string", enum: %w[contributeur apprenant participant spectateur lecteur] },
+        famille:     { type: "string", enum: FAMILLES_HISTOIRE + FAMILLES_OPPORTUNITE + [HORS_LIGNE] },
+        zone:        { type: "string", enum: %w[grand_nancy bassin_nancy grand_est ailleurs inconnue] },
+        commune:     { type: "string" },
+        date_debut:  { type: "string" },
+        date_fin:    { type: "string" },
+        regime:      { type: "string" },
+        resume:      { type: "string" },
+        hors_ligne:  { type: "boolean" },
+        confiance:   { type: "integer" }, # 0-100 : bornée par #apply (l'API refuse minimum/maximum)
+        motif:       { type: "string" }
       },
-      required: %w[type categorie commune date_debut date_fin regime resume hors_ligne confiance motif],
+      required: %w[type role_public famille zone commune date_debut date_fin regime resume hors_ligne confiance motif],
       additionalProperties: false
     }.freeze
 
     SYSTEM_PROMPT = <<~TXT.freeze
-      Tu es assistant éditorial de Déclic, plateforme d'engagement citoyen du Grand Nancy. On te donne un élément repéré sur une source publique (mission de bénévolat, événement d'agenda, formation, annonce de cession d'entreprise, article de presse). Tu le classes et tu le résumes. Un humain relira tout.
+      Tu es assistant éditorial de Déclic, plateforme du Grand Nancy dont la promesse est « Change ta vie, en quelques clics » : aider chacun à s'engager, entreprendre, se former, écologiser, rencontrer d'autres gens, et s'inspirer de ceux qui ont franchi le pas. On te donne un élément repéré sur une source publique. Tu le classes et tu le résumes. Un humain relira tout.
 
-      RÈGLE ÉDITORIALE — le critère qui décide du type :
-      - « opportunite » : le contenu invite à agir (s'inscrire, venir, candidater, rejoindre, reprendre une activité). Il a une date, des horaires, ou un régime permanent (« ouvert toute l'année »), et un moyen d'agir.
-      - « belle_histoire » : un récit inspirant sur une personne ou un collectif, SANS horaires ni appel à l'action directe. Un article qui raconte un parcours est une belle histoire ; une annonce d'événement n'en est jamais une.
+      PRINCIPE : tu décris plus que tu n'élimines. Un événement local ouvert au public reste dans la base, même si l'on y vient surtout pour écouter ou flâner : sa famille dit ce qu'il est, et l'humain décide de ce qu'il affiche. Hors ligne reste l'exception, réservée à la liste ci-dessous.
 
-      HORS LIGNE ÉDITORIALE (hors_ligne = true) — pour un contenu qui n'est PAS une opportunité, tu mets hors_ligne à true s'il n'est pas un récit inspirant au sens de la règle ci-dessus, sans hésiter, quel que soit l'intérêt du sujet et même si une personne y est nommée à Nancy :
-      - les faits divers (accidents, délits, disparitions, incendies) et l'actualité juridique ou contentieuse (procès, condamnations, recours, décisions de justice) ;
-      - les résultats sportifs et comptes rendus de match ;
-      - les comptes rendus de conseil municipal, communautaire ou départemental ;
-      - les annonces institutionnelles : inaugurations, budgets, communiqués, calendriers de travaux, campagnes de communication ;
-      - une simple nomination, prise de poste ou mutation professionnelle, sans dimension inspirante particulière (parcours singulier, initiative, engagement) ;
-      - plus largement tout fait qui n'est pas un récit inspirant : une personne ou un collectif, une initiative ou une trajectoire concrète, racontée.
-      Dans le doute, hors_ligne = true : la file est relue à la main, un faux négatif coûte moins cher qu'un faux positif. Pour une opportunité, hors_ligne est toujours false. Le motif dit ce qui a fait écarter le contenu.
+      TYPE
+      - « belle_histoire » : un récit centré sur une personne, un duo ou un collectif nommés et vivants aujourd'hui : d'où ils viennent, ce qui les a décidés, l'épreuve traversée, ce qu'ils ont construit, ou une vie qui inspire. Un texte qui raconte ce qu'une personne nommée a lancé ou créé, sans date ni rendez-vous, est une belle histoire. Si le texte raconte surtout une personne, un gala ou un appel aux dons mentionnés en passant ne change pas le type.
+      - « opportunite » : le lecteur peut y aller ou agir lui-même : donner de son temps, participer, candidater, reprendre, apprendre, rejoindre, assister. Date, régime permanent ou lieu ouvert, peu importe. Une annonce d'événement n'est jamais une belle histoire : dès que le texte donne une date, un lieu ou une réservation, ou que sa rubrique est « Conférence - Rencontre », c'est une opportunité, même si le titre nomme une personne.
 
-      CATÉGORIES (opportunités seulement ; pour une belle histoire, categorie vaut null. Clé à renvoyer) : ecologiser (environnement, nature, énergie, réemploi), entreprendre (création, reprise, cession d'entreprise, emploi indépendant), rencontres (événements, conférences, échanges, vie de quartier), formation (se former, métiers, apprentissage), benevolat (s'engager, bénévolat, solidarité). Pour une belle histoire, choisis la catégorie dont elle est la plus proche.
+      ROLE_PUBLIC (décide d'abord du type, puis du rôle) :
+      Pour une belle histoire, le rôle vaut toujours « lecteur ».
+      Pour une opportunité, que fait concrètement le lecteur s'il y répond ?
+      - contributeur : il donne du temps, de l'argent, des objets ; il répare, il reprend, il candidate, il rejoint durablement un collectif ; il participe à un événement dont la recette ou l'action sert explicitement une cause
+      - apprenant : il repart avec un savoir-faire ou une compétence qu'il a pratiqués
+      - participant : il échange et construit quelque chose avec les autres présents (fresque, débat citoyen, assemblée, café des langues, meetup)
+      - spectateur : il écoute, regarde, visite, achète ou flâne
+      Le rôle décrit l'élément : il n'entraîne jamais à lui seul la mise hors ligne.
 
-      COMMUNE : la commune d'ancrage, parmi celles du Grand Nancy, telle que le texte la donne. Chaîne vide si le texte ne la donne pas ou si le lieu est hors du Grand Nancy. Tu ne la devines pas depuis le nom de la source.
+      FAMILLE (obligatoire, une seule)
+      Pour une belle histoire :
+      - reconversion : quitter un métier ou une vie pour une autre
+      - creation : créer un commerce, une entreprise, une start-up ou une innovation locale, en expliquant d'où elle vient et quel problème elle résout
+      - resilience : se reconstruire après la maladie, le handicap, l'exil, une faillite
+      - engagement : agir pour les autres ou pour l'environnement, à titre associatif ou collectif
+      - vocation : un parcours d'artisan, d'artiste, de chef, porté par une passion
+      - portrait : une personne attachante racontée pour sa vie ou son âge, sans rupture ni création (une centenaire, un bénévole de toujours)
+      Pour une opportunité :
+      - s_engager : bénévolat, don, collecte, chantier, mission, rejoindre une association
+      - agir_ecologie : réparer, réemployer, composter, AMAP, jardin partagé, Repair Café, atelier vélo, sensibilisation au tri
+      - entreprendre : reprise ou cession d'entreprise, concours, financement, incubateur, accompagnement, appel à projets
+      - se_former : formation à visée professionnelle ou linguistique pour adultes, dans la durée (cursus, certification, reconversion, GRETA, cours de langue suivis)
+      - pratiquer : activité ponctuelle ou de loisir où l'on fait soi-même, pour adultes, familles ou enfants (atelier d'une journée ou d'un week-end, initiation, stage de découverte, cours de pratique de loisir)
+      - lieu_collectif : lieu à rejoindre durablement (MJC, maison de quartier, studio associatif, collectif, réseau)
+      - evenement_solidaire : la participation finance ou sert explicitement une cause
+      - rencontre : on échange avec les autres présents (rôle participant)
+      - decouvrir : conférence, débat, rencontre d'auteur, projection-débat, répétition ouverte, visite guidée, exposition commentée ou médiation : on écoute et on apprend quelque chose
+      - petite_manifestation : vide-grenier, brocante, marché, foire, salon, bourse aux objets, loto, fête ou soirée festive, sans cause explicite ni enjeu d'engagement. Le titre ou la rubrique doit le dire : cette famille ne sert jamais de solution de repli pour un texte qu'on ne comprend pas.
+      Pour un contenu hors ligne : hors_ligne.
+
+      SE_FORMER OU PRATIQUER : regarde d'abord la nature, puis la durée. Visée professionnelle, langue suivie, certification, reconversion : se_former. Loisir, découverte, enfants ou familles, une séance, une journée, un week-end, cours de loisir même étalés sur plusieurs mois : pratiquer, même si l'activité s'appelle atelier, cours, stage ou formation et même si l'on y apprend quelque chose. Une rubrique « Atelier » n'est jamais se_former. Une série d'ateliers de même intitulé reçoit la même famille à chaque date.
+
+      TEXTE MAIGRE : un titre et une rubrique suffisent. Un intitulé « Atelier », une rubrique « Atelier / jeux », une activité en médiathèque ou en ludothèque désignent une activité où l'on participe : pratiquer si l'on fait soi-même, decouvrir si l'on écoute. Sans aucun indice : decouvrir. Tu ne mets jamais hors ligne faute de détails : garde, choisis la famille la plus probable d'après le titre et la rubrique, et baisse la confiance sous 50.
+
+      HORS LIGNE (hors_ligne = true, famille = « hors_ligne »)
+      Pour tous les contenus :
+      - faits divers, actualité judiciaire, résultats sportifs, comptes rendus de conseils, mouvements sociaux, annonces institutionnelles, travaux, carnet (mariages, décès, anniversaires), santé grand public sans événement, événement annulé.
+      - simple nomination sans parcours ni initiative.
+      Pour un récit :
+      - aucune personne ou collectif nommé (« quatre adolescents », « des bénévoles » ne suffisent pas), ou le texte rend compte d'une animation ponctuelle sans raconter personne ;
+      - rien dont le lecteur puisse s'inspirer : l'élément ne montre aucune démarche d'une personne vivante ;
+      - le sujet est une institution, ou une personne morte ou d'une époque passée, même redécouverte ou honorée aujourd'hui. Ce n'est jamais un portrait.
+      Le portrait d'une jeune entreprise locale reste valable s'il dit d'où elle vient et quel problème elle résout. Un récit n'a pas à proposer d'action : c'est la démarche racontée qui compte. On n'écarte jamais un récit parce qu'il n'appelle à aucune action, parce qu'il se passe hors du Grand Nancy, parce qu'il parle d'un commerce ou parce qu'il donne peu de détails.
+      Pour une opportunité :
+      - spectacle, concert, récital ou film sans échange ni cause explicite ;
+      - événement réservé à une profession ou à des cadres (congrès, colloque de directeurs, réunion de branche) ;
+      - lancement d'un service ou d'une plateforme en ligne sans lieu ni action locale dans le texte, même si le texte est tronqué ;
+      - section, école ou cours d'un club sportif, même ouverts à de nouveaux membres ;
+      - fiche de catalogue d'un organisme de formation : une fiche par diplôme, titre ou stage (bac pro, BTS, licence, titre professionnel, habilitation électrique, logiciel), destinée aux élèves en filière ou aux salariés envoyés par leur entreprise. Reste valable une offre présentée comme une porte d'entrée pour un adulte qui veut changer de voie.
+      - aucune action possible : le texte rend compte d'une actualité (lancement, bilan, succès passé) sans rien que le lecteur puisse faire. Une date et un lieu suffisent, car y aller est une action, même pour écouter. Une activité régulière ouverte au public suffit aussi, même sans date ni contact. Un texte d'agenda n'entre donc jamais dans ce cas.
+      Tout événement au profit d'une cause reste valable, même si l'on y écoute ou l'on y dîne : rôle contributeur, famille evenement_solidaire. Un vide-grenier au profit d'une cause est un evenement_solidaire ; sans cause, c'est une petite_manifestation, jamais hors ligne.
+
+      ZONE (lieu d'ancrage réel, pas celui de la source) : grand_nancy (les 20 communes de la Métropole), bassin_nancy (reste de la Meurthe-et-Moselle : Toul, Lunéville, Pont-à-Mousson, Pompey…), grand_est (reste de la Lorraine et du Grand Est : Metz, Épinal, Bar-le-Duc, Strasbourg…), ailleurs, inconnue. La zone décrit ; elle n'écarte rien.
+
+      COMMUNE : la commune d'ancrage telle que le texte la donne, dans ou hors du Grand Nancy. Chaîne vide si le texte ne la donne pas. Tu ne la devines pas depuis le nom de la source.
 
       DATES : date_debut et date_fin au format AAAA-MM-JJ, uniquement si le texte les donne. Pas de date : chaînes vides, et « regime » dit en quelques mots le régime (« Ouvert toute l'année », « Sur rendez-vous »…) ; sinon regime est vide.
 
-      RÉSUMÉ : exactement deux phrases, en français, reformulées avec tes propres mots. Tu ne recopies pas le texte source : au plus 15 mots consécutifs identiques à la source, et seulement pour une citation indispensable. Ni emoji, ni emphase, ni formule d'accroche. Les noms propres, lieux, dates et chiffres se reprennent tels quels.
+      RÉSUMÉ : exactement deux phrases, en français, reformulées avec tes propres mots. Au plus 15 mots consécutifs identiques à la source. Ni emoji, ni emphase, ni formule d'accroche. Les noms propres, lieux, dates et chiffres se reprennent tels quels.
 
-      confiance (0-100) : ta certitude sur le type, la catégorie (s'il y en a une) et la commune ENSEMBLE. motif : une phrase qui dit ce qui t'a fait trancher, ou ce qui manque.
+      confiance (0-100) : ta certitude sur le type, la famille et la zone ensemble. motif : une phrase qui dit ce qui t'a fait trancher, ou ce qui manque.
 
       Réponds UNIQUEMENT par l'objet JSON demandé.
     TXT
@@ -106,11 +167,13 @@ module Veille
       type = candidate.item_type.presence || "opportunite" unless Veille::Candidate::ITEM_TYPES.include?(type)
 
       commune = localiser(candidate, result)
+      famille = famille_pour(type, candidate, result)
       debut   = parse_date(result["date_debut"]) || candidate.starts_on
       fin     = parse_date(result["date_fin"])   || candidate.ends_on
 
       attrs = {
-        item_type: type, declic_category: categorie_pour(type, candidate, result), commune: commune || candidate.commune,
+        item_type: type, famille: famille, role_public: result["role_public"].presence, zone: result["zone"].presence,
+        declic_category: categorie_pour(type, candidate, famille), commune: commune || candidate.commune,
         starts_on: debut, ends_on: fin,
         schedule_text: (debut || fin ? nil : (result["regime"].presence || candidate.schedule_text)),
         score: Integer(result["confiance"], exception: false)&.clamp(0, 100),
@@ -126,17 +189,18 @@ module Veille
         attrs[:summary] = resume.presence
       end
 
-      if result["hors_ligne"] == true
+      if famille == HORS_LIGNE
         attrs[:discard_reason] = "Hors ligne éditoriale : #{attrs[:reason] || 'hors de la ligne de Déclic'}".squish
         attrs[:status] = "ecarte"
-      elsif commune.nil? || !Veille::Territoire.admis?(commune, type)
+      elsif commune ? !Veille::Territoire.admis?(commune, type) : commune_nommee?(candidate, result)
         perimetre = type == "opportunite" ? "Meurthe-et-Moselle" : "Grand Est"
-        attrs[:discard_reason] = "Hors #{perimetre} ou commune introuvable"
+        attrs[:discard_reason] = "Hors #{perimetre}"
         attrs[:status] = "ecarte"
       elsif (fin || debut)&.<(today)
         attrs[:discard_reason] = "Événement passé"
         attrs[:status] = "ecarte"
       end
+      # Sans aucune commune, l'élément reste dans la file, à localiser (Candidate.a_localiser).
 
       candidate.update!(attrs)
     end
@@ -148,8 +212,8 @@ module Veille
 
     private
 
-    # Le prompt demande une commune vide hors du Grand Nancy : le code la cherche
-    # alors lui-même, dans le titre d'abord, le texte ensuite.
+    # Si le modèle ne donne pas de commune reconnue, le code la cherche lui-même,
+    # dans le titre d'abord, le texte ensuite.
     def localiser(candidate, result)
       Veille::Territoire.canonique(result["commune"]) ||
         Veille::Territoire.canonique(candidate.commune) ||
@@ -157,13 +221,31 @@ module Veille
         Veille::Territoire.trouver_dans(candidate.full_text.presence || candidate.excerpt)
     end
 
-    # Seules les opportunités ont une catégorie : une belle histoire se suffit à elle-même.
-    def categorie_pour(type, candidate, result)
-      return nil if type == "belle_histoire"
-      return candidate.declic_category if candidate.declic_category.present? && SOURCES_OPPORTUNITES.include?(candidate.origin)
+    # Une commune a été nommée, mais elle n'est pas dans le Grand Est : ce n'est pas un élément à localiser.
+    def commune_nommee?(candidate, result)
+      result["commune"].to_s.strip.present? || candidate.commune.present?
+    end
 
-      categorie = result["categorie"].to_s
-      CATEGORIES.include?(categorie) ? categorie : candidate.declic_category.presence || "rencontres"
+    def famille_pour(type, candidate, result)
+      famille = result["famille"].to_s
+      return HORS_LIGNE if result["hors_ligne"] == true || famille == HORS_LIGNE
+      return famille if type == "belle_histoire" && FAMILLES_HISTOIRE.include?(famille)
+      return nil if type == "belle_histoire"
+      return "petite_manifestation" if famille != "evenement_solidaire" && brocante_d_agenda?(candidate)
+
+      famille if FAMILLES_OPPORTUNITE.include?(famille)
+    end
+
+    def brocante_d_agenda?(candidate)
+      candidate.origin == "agenda_nancy" && candidate.full_text.to_s.match?(RUBRIQUE_BROCANTE)
+    end
+
+    # Seules les opportunités ont une catégorie : une belle histoire se suffit à elle-même.
+    def categorie_pour(type, candidate, famille)
+      return nil if type == "belle_histoire"
+      return candidate.declic_category if SOURCES_CATEGORIE_FIXE.include?(candidate.origin) && candidate.declic_category.present?
+
+      CATEGORIE_PAR_FAMILLE[famille] || candidate.declic_category.presence || "rencontres"
     end
 
     def parse_date(valeur)

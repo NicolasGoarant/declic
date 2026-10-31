@@ -42,7 +42,7 @@ module Veille
           location: @c.commune, city: @c.commune, starts_on: @c.starts_on, ends_on: @c.ends_on,
           schedule_text: @c.schedule_text, source: "veille", external_id: Digest::SHA1.hexdigest(@c.url),
           source_name: @c.source_label, source_url: @c.url, cta_button_text: LIEN_TEXTE, cta_button_url: @c.url,
-          is_active: false
+          famille: (@c.famille if Opportunity::FAMILLES.key?(@c.famille)), is_active: false
         )
         @c.update!(opportunity: opp)
         @c.update_columns(full_text: nil, updated_at: Time.current) # même règle que pour les histoires

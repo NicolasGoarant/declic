@@ -14,6 +14,10 @@
               [ "Entreprendre", "entreprendre" ], [ "Écologiser", "ecologiser" ] ],
             { include_blank: "(choisir)" }, { class: "field-input" } %>
     </div>
+    <div class="field">
+      <%= f.label :famille, "Famille", class: "field-label" %>
+      <%= f.select :famille, Opportunity::FAMILLES.invert.to_a, { include_blank: "(aucune)" }, { class: "field-input" } %>
+    </div>
   </div>
 
   <div class="form-row">

@@ -32,8 +32,18 @@ class Opportunity < ApplicationRecord
 
   # --- Scopes / constantes ---
   CATEGORIES = %w[benevolat formation rencontres entreprendre ecologiser].freeze
+  # Ce qu'est la fiche, indépendamment de sa catégorie (qui porte la couleur du pin). Remplie par la veille.
+  FAMILLES = {
+    "s_engager" => "S'engager", "agir_ecologie" => "Agir pour l'écologie", "entreprendre" => "Entreprendre",
+    "se_former" => "Se former", "pratiquer" => "Pratiquer", "lieu_collectif" => "Lieu collectif",
+    "evenement_solidaire" => "Événement solidaire", "rencontre" => "Rencontre",
+    "decouvrir" => "Conférences et visites", "petite_manifestation" => "Brocantes, foires et fêtes"
+  }.freeze
+  # Masquées par défaut sur la carte, jamais retirées de la base : la fiche reste en ligne et le visiteur peut les afficher.
+  FAMILLES_MASQUEES = %w[petite_manifestation decouvrir].freeze
   scope :active,      -> { where(is_active: true) }
   scope :with_coords, -> { where.not(latitude: nil, longitude: nil) }
+  scope :sans_familles_masquees, -> { where("opportunities.famille IS NULL OR opportunities.famille NOT IN (?)", FAMILLES_MASQUEES) }
 
   # Pas terminées : à venir, en cours ou permanentes (même règle que passee?). Les datées
   # d'abord, par date de début, puis les permanentes.
@@ -46,6 +56,9 @@ class Opportunity < ApplicationRecord
 
   # Les prochaines opportunités datées (à venir ou en cours), par date : jamais les permanentes.
   scope :prochaines, -> { actuelles.where("COALESCE(opportunities.starts_on, opportunities.ends_on) IS NOT NULL") }
+
+  # La famille que le visiteur peut afficher ou masquer sur la carte, s'il y en a une.
+  def famille_masquable = (famille if FAMILLES_MASQUEES.include?(famille))
 
   # « Opportunités similaires » de la fiche : même catégorie, actives, pas terminées.
   def similaires(limite = 3)
@@ -68,6 +81,8 @@ class Opportunity < ApplicationRecord
   validates :title,       presence: true, length: { maximum: 160 }
   validates :description, presence: true
   validates :category,    presence: true, inclusion: { in: CATEGORIES }
+  normalizes :famille, with: ->(valeur) { valeur.presence }
+  validates :famille,     inclusion: { in: FAMILLES.keys }, allow_nil: true
 
   validates :website,
            allow_blank: true,

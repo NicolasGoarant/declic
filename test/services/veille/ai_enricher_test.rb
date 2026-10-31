@@ -16,7 +16,7 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
   test "le prompt porte les exclusions : nomination, actualité juridique, fait divers" do
     system = Veille::AiEnricher.prompt_for(title: "T", text: "x")[:system]
     assert_match "nomination", system
-    assert_match "condamnations", system
+    assert_match "actualité judiciaire", system
     assert_match "faits divers", system
   end
 
@@ -42,14 +42,14 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
   test "le prompt porte la règle éditoriale, le texte et la limite de citation" do
     params = Veille::AiEnricher.prompt_for(title: "Atelier", text: "Texte " * 2000, origin: "jeveuxaider", commune: "Laxou")
 
-    assert_match "SANS horaires ni appel à l'action", params[:system]
+    assert_match "Un récit n'a pas à proposer d'action", params[:system]
     assert_match "15 mots", params[:system]
     assert_match "Commune indiquée par la source : Laxou", params[:messages].first[:content]
     assert_operator params[:messages].first[:content].length, :<, 3_300, "le texte envoyé est plafonné"
   end
 
   test "classe une opportunité avec sa catégorie, sa commune et ses dates" do
-    c, = enrich(candidat(origin: "presse"), type: "opportunite", categorie: "formation", commune: "Laxou",
+    c, = enrich(candidat(origin: "presse"), type: "opportunite", famille: "se_former", commune: "Laxou",
                           date_debut: "2026-12-05", date_fin: "2026-12-06")
 
     assert_equal "opportunite", c.item_type
@@ -84,10 +84,10 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
     assert_equal "rencontres", c.reload.declic_category
   end
 
-  test "le schéma accepte une catégorie nulle, et seulement les cinq catégories sinon" do
-    variantes = Veille::AiEnricher::SCHEMA[:properties][:categorie][:anyOf]
-    assert_includes variantes, { type: "null" }
-    assert_equal Opportunity::CATEGORIES, variantes.first[:enum]
+  test "le schéma ne demande plus la catégorie, et chaque famille d'opportunité mène à une catégorie" do
+    assert_nil Veille::AiEnricher::SCHEMA[:properties][:categorie]
+    assert_equal Opportunity::FAMILLES.keys.sort, Veille::AiEnricher::CATEGORIE_PAR_FAMILLE.keys.sort
+    assert_empty Veille::AiEnricher::CATEGORIE_PAR_FAMILLE.values - Opportunity::CATEGORIES
   end
 
   test "une source officielle reste une opportunité, quoi qu'en dise le modèle" do
@@ -128,10 +128,81 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
     assert_equal "Toul", c.commune
   end
 
-  test "écarte ce qui n'a aucune commune repérable" do
-    c, = enrich(candidat(origin: "presse", commune: nil, title: "Une reconversion", full_text: "Sans aucun lieu."), commune: "")
+  test "sans aucune commune repérable, l'élément reste à localiser au lieu d'être écarté" do
+    c, = enrich(candidat(origin: "presse", commune: nil, title: "Une reconversion", full_text: "Sans aucun lieu."),
+                commune: "", famille: "petite_manifestation")
+    assert_equal "pending", c.status
+    assert_nil c.discard_reason
+    assert_equal "petite_manifestation", c.famille, "l'étiquette est gardée : la fiche restera masquable"
+    assert c.a_localiser?
+    assert_includes Veille::Candidate.a_localiser, c
+  end
+
+  test "une histoire à localiser n'est pas rédigée tant que la commune manque" do
+    c, = enrich(candidat(origin: "agenda_nancy", commune: nil, title: "Un récit", full_text: "Sans aucun lieu."),
+                type: "belle_histoire", commune: "")
+    c.update!(item_type: "belle_histoire")
+    assert_not_includes Veille::Candidate.a_rediger, c
+  end
+
+  test "une commune nommée hors du périmètre reste écartée" do
+    c, = enrich(candidat(commune: nil, title: "Un atelier", full_text: "Un texte."), commune: "Besançon")
     assert_equal "ecarte", c.status
-    assert_match(/commune introuvable/, c.discard_reason)
+    assert_match(/Hors Meurthe-et-Moselle/, c.discard_reason)
+  end
+
+  test "une date passée écarte aussi un élément sans commune" do
+    c, = enrich(candidat(commune: nil, title: "Un atelier", full_text: "Un texte."), commune: "", date_debut: "2020-01-01")
+    assert_equal "ecarte", c.status
+    assert_equal "Événement passé", c.discard_reason
+  end
+
+  test "la catégorie se déduit de la famille" do
+    { "se_former" => "formation", "pratiquer" => "rencontres", "agir_ecologie" => "ecologiser",
+      "s_engager" => "benevolat", "evenement_solidaire" => "benevolat", "entreprendre" => "entreprendre",
+      "decouvrir" => "rencontres", "petite_manifestation" => "rencontres" }.each do |famille, categorie|
+      c, = enrich(candidat(origin: "agenda_nancy", declic_category: "formation"), famille: famille)
+      assert_equal categorie, c.declic_category, famille
+      assert_equal famille, c.famille
+    end
+  end
+
+  test "transentreprise garde sa catégorie, quelle que soit la famille" do
+    c, = enrich(candidat(origin: "transentreprise", declic_category: "entreprendre"), famille: "pratiquer")
+    assert_equal "entreprendre", c.declic_category
+  end
+
+  test "hors_ligne et famille hors_ligne écartent de la même façon" do
+    [{ hors_ligne: true, famille: "decouvrir" }, { hors_ligne: false, famille: "hors_ligne" }].each do |reponse|
+      c, = enrich(candidat, **reponse)
+      assert_equal "ecarte", c.status
+      assert_equal "hors_ligne", c.famille
+    end
+  end
+
+  test "une famille de récit sur une opportunité forcée n'est pas gardée" do
+    c, = enrich(candidat(origin: "agenda_nancy", item_type: "opportunite"), type: "belle_histoire", famille: "portrait")
+    assert_equal "opportunite", c.item_type
+    assert_nil c.famille
+  end
+
+  test "la rubrique Brocante de l'agenda vaut petite manifestation, sauf au profit d'une cause" do
+    texte = "Noël Vert. Brocante / marché. Lieu : Nancy."
+    c, = enrich(candidat(origin: "agenda_nancy", full_text: texte), famille: "decouvrir")
+    assert_equal "petite_manifestation", c.famille
+    c, = enrich(candidat(origin: "agenda_nancy", full_text: texte), famille: "evenement_solidaire")
+    assert_equal "evenement_solidaire", c.famille
+  end
+
+  test "le rôle et la zone sont gardés" do
+    c, = enrich(candidat, role_public: "spectateur", zone: "grand_nancy", famille: "decouvrir")
+    assert_equal "spectateur", c.role_public
+    assert_equal "grand_nancy", c.zone
+  end
+
+  test "un spectateur n'est plus écarté pour ce seul rôle" do
+    c, = enrich(candidat, role_public: "spectateur", famille: "decouvrir")
+    assert_equal "pending", c.status
   end
 
   test "écarte un événement passé" do

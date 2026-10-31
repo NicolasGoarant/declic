@@ -79,13 +79,19 @@ module Veille
     # contrôles (« à vérifier ») n'est pas relancé tout seul : il attend un humain.
     scope :a_rediger, lambda {
       hors_presse.where(item_type: "belle_histoire", status: %w[pending retenu], draft_status: %w[aucun a_reprendre], draft_body: [nil, ""])
-        .where(discard_reason: nil).where.not(summary: [nil, ""]).where("draft_attempts < ?", MAX_REDACTIONS_AUTO)
+        .where(discard_reason: nil).where.not(summary: [nil, ""]).where.not(commune: [nil, ""])
+        .where("draft_attempts < ?", MAX_REDACTIONS_AUTO)
     }
+    # Classés par l'IA, sans commune repérée : ils attendent qu'un humain les situe. Pas de récit
+    # rédigé d'ici là (a_rediger), et « Valider » refuse tant que la commune manque.
+    scope :a_localiser, -> { where(status: %w[pending a_verifier], commune: [nil, ""]).where.not(enriched_at: nil) }
     # À relire par un humain : enrichi, non écarté. « À vérifier » en fait partie.
     scope :a_relire, -> { where(status: %w[pending a_verifier]).where(discard_reason: nil) }
 
     def cout_ia = appels_ia.sum(:cout_usd).to_f
     def accord_obtenu? = accord_obtenu_at.present?
+
+    def a_localiser? = commune.blank? && enriched_at.present? && (pending? || a_verifier?)
 
     def self.origine_label(origine) = ORIGINS.fetch(origine.to_s, origine.to_s.humanize)
 
