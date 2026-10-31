@@ -55,14 +55,16 @@ module Veille
     # commencer par une majuscule. À une même position, le nom le plus long l'emporte,
     # pour que « Villers-lès-Nancy » ne soit pas lu « Villers ».
     def trouver_dans(texte)
-      mots = texte.to_s.scan(/[[:alnum:]]+/)
+      texte = texte.to_s
+      mots = texte.to_enum(:scan, /[[:alnum:]]+/).map { Regexp.last_match }
       mots.each_index do |i|
-        next unless mots[i].match?(/\A[[:upper:]]/)
+        next unless mots[i][0].match?(/\A[[:upper:]]/)
 
         MAX_MOTS.downto(1) do |n|
           next if i + n > mots.size
+          next if texte[mots[i + n - 1].end(0)] == "-" # « Dampierre-sur-Salon » n'est pas Dampierre
 
-          trouve = reperer(Veille::Text.normalize(mots[i, n].join(" ")))
+          trouve = reperer(Veille::Text.normalize(mots[i, n].map { |m| m[0] }.join(" ")))
           return trouve if trouve
         end
       end

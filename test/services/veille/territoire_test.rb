@@ -34,6 +34,7 @@ class Veille::TerritoireTest < ActiveSupport::TestCase
     assert_nil T.trouver_dans("Son salon a ouvert. Salon du livre. Grand bonheur.")
     assert_nil T.trouver_dans("elle part de toul")
     assert_nil T.trouver_dans("Le chemin de sa vie")
+    assert_nil T.trouver_dans("Une quête à Dampierre-sur-Salon")
     assert_nil T.trouver_dans("Le dispositif Nancyen de mobilité")
     assert_nil T.trouver_dans("")
     assert_nil T.trouver_dans(nil)
