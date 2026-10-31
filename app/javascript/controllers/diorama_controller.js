@@ -220,6 +220,21 @@ export default class extends Controller {
     const reponse = await fetch(`${this.tuilesValue.base}/${style}/manifeste.json`)
     if (!reponse.ok) throw new Error(`manifeste HTTP ${reponse.status}`)
     this.manifestes[style] = await reponse.json()
+    await this.chargerSurcouche(style)
+  }
+
+  // Les dalles refaites de ce style (voir DioramaTuiles::SURCOUCHES) : illisible, on reste sur les dalles du style.
+  async chargerSurcouche(style) {
+    const dossier = this.tuilesValue.surcouches?.[style]
+    if (!dossier) return
+    try {
+      const reponse = await fetch(this.url(dossier, "manifeste.json"))
+      if (!reponse.ok) throw new Error(`manifeste HTTP ${reponse.status}`)
+      this.surcouches ??= {}
+      this.surcouches[style] = { dossier, dalles: this.indexerDalles(await reponse.json()) }
+    } catch (erreur) {
+      console.warn(`diorama : surcouche ${dossier} illisible`, erreur)
+    }
   }
 
   // Pixel du point dans la mosaïque (niveau 8), ou null hors couverture : hors de la mosaïque, sur
@@ -665,7 +680,13 @@ export default class extends Controller {
   // L'URL de la dalle « vraie » (webp) à une position, dans le style qui la couvre. Sans style
   // couvrant (estCouverte a déjà renvoyé false), on retombe sur le style actif pour ne pas passer
   // une URL invalide à Leaflet ; la dalle vide ainsi obtenue n'est de toute façon jamais demandée.
-  urlDalle = (coords) => this.url(this.styleDalle(coords) ?? this.style, `${coords.z}/${coords.x}/${coords.y}.webp`)
+  // Une dalle refaite se lit dans la surcouche de ce style.
+  urlDalle = (coords) => {
+    const style = this.styleDalle(coords) ?? this.style
+    const surcouche = this.surcouches?.[style]
+    const dossier = surcouche?.dalles[coords.z]?.has(`${coords.x}/${coords.y}`) ? surcouche.dossier : style
+    return this.url(dossier, `${coords.z}/${coords.x}/${coords.y}.webp`)
+  }
 
   // Repère un pan de pyramide qu'aucun style (actif ou repli) ne comble : après
   // ECHECS_CONSECUTIFS_TRACE échecs de suite sur des dalles pourtant couvertes (donc réellement

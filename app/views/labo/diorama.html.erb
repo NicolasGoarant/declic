@@ -297,7 +297,10 @@
 <script>
 (() => {
   // ?trains=1 : le style jeu vidéo (celui des trains et de leur correctif d'occlusion) ; sinon toits-v1, comme toujours
-  const BASE = "https://tuiles-declic.mist-media.eu/" + (new URLSearchParams(location.search).get("trains") === "1" ? "jeu-video-v2" : "toits-v1") + "/";
+  const JEU_VIDEO = new URLSearchParams(location.search).get("trains") === "1";
+  const BASE = "https://tuiles-declic.mist-media.eu/" + (JEU_VIDEO ? "jeu-video-v2" : "toits-v1") + "/";
+  // Les dalles refaites du style jeu vidéo se lisent dans sa surcouche (DioramaTuiles::SURCOUCHES) ; absente, elle ne change rien
+  const SURCOUCHE = "https://tuiles-declic.mist-media.eu/" + <%= json_escape(DioramaTuiles::SURCOUCHES["jeu-video-v2"].to_json).html_safe %> + "/";
   // La vue compte en px de la mosaïque du NIVEAU 8 (taille_mosaique_px), quel que soit le niveau max du lot (9 en jeu vidéo)
   const NIV_MOSAIQUE = 8;
   const canvas = document.getElementById("c");
@@ -329,7 +332,8 @@
       t.img.onload = () => { t.state = "ok"; stats.pending--; schedule(); };
       t.img.onerror = () => { t.state = "empty"; stats.pending--; schedule(); };
       stats.pending++;
-      t.img.src = M.modele_url_dalle.replace("{z}", z).replace("{x}", x).replace("{y}", y);
+      const modele = M._refaites?.[z]?.has(x + "," + y) ? M._modele_refaites : M.modele_url_dalle;
+      t.img.src = modele.replace("{z}", z).replace("{x}", x).replace("{y}", y);
       cache.set(k, t);
     }
     return t;
@@ -436,10 +440,12 @@
   gridBox.addEventListener("change", schedule);
   window.addEventListener("resize", resize);
 
-  fetch(BASE + "manifeste.json").then(r => { if (!r.ok) throw new Error("manifeste HTTP " + r.status); return r.json(); }).then(m => {
+  const indexer = dalles => Object.fromEntries(Object.entries(dalles).map(([z, l]) => [z, new Set(l.map(([x, y]) => x + "," + y))]));
+  const refaites = JEU_VIDEO ? fetch(SURCOUCHE + "manifeste.json").then(r => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null);
+  Promise.all([fetch(BASE + "manifeste.json").then(r => { if (!r.ok) throw new Error("manifeste HTTP " + r.status); return r.json(); }), refaites]).then(([m, s]) => {
     M = m;
-    M._set = {};
-    for (const z in m.dalles) M._set[z] = new Set(m.dalles[z].map(([x, y]) => x + "," + y));
+    M._set = indexer(m.dalles);
+    if (s) { M._refaites = indexer(s.dalles); M._modele_refaites = s.modele_url_dalle; }
     document.getElementById("attr").textContent = m.attributions.join(" · ");
     view.cx = m.taille_mosaique_px[0] / 2; view.cy = m.taille_mosaique_px[1] / 2;
     resize(); // fixe W/H avant minScale()

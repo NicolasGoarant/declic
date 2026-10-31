@@ -81,6 +81,13 @@ class DioramaTuilesTest < ActiveSupport::TestCase
     assert_equal "http://localhost:8778", DioramaTuiles.new(base: base, trains: "http://localhost:8778/", sonde: ->(_) { false }).trains
   end
 
+  test "une surcouche n'est annoncée au navigateur que si son manifeste répond" do
+    assert_empty tuiles(%w[jeu-video-v2/manifeste.json]).pour_js[:surcouches]
+    t = tuiles(%w[jeu-video-v2/manifeste.json jeu-video-v2-coupes1/manifeste.json])
+    assert_equal({ "jeu-video-v2" => "jeu-video-v2-coupes1" }, t.pour_js[:surcouches])
+    assert_equal %w[jeu-video-v2], t.disponibles[:styles]
+  end
+
   test "les vivants se lisent dans vivants-v2 sous la base, ou à DIORAMA_VIVANTS_URL" do
     base = "https://tuiles.test/#{SecureRandom.hex(4)}"
     assert_equal "#{base}/vivants-v2", DioramaTuiles.new(base: base, vivants: nil, sonde: ->(_) { false }).vivants
