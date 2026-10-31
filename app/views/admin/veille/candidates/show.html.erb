@@ -23,7 +23,7 @@
       <dd>
         <% if @candidate.item_type %>
           <span class="badge"><%= @candidate.histoire? ? "Belle Histoire" : "Opportunité" %></span>
-          <span class="small"><%= @candidate.categorie_label %> · <%= @candidate.commune.presence || "commune ?" %></span>
+          <span class="small"><%= "Thématique : " if @candidate.histoire? %><%= @candidate.categorie_label %> · <%= @candidate.commune.presence || "commune ?" %></span>
           <% if @candidate.score %><span class="small muted">· confiance IA <%= @candidate.score %></span><% end %>
         <% else %>
           <span class="muted">non classé</span>

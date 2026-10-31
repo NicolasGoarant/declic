@@ -15,7 +15,7 @@
   <label>Type
     <%= select_tag :type, options_for_select([["Tous", ""], ["Opportunités", "opportunite"], ["Belles Histoires", "belle_histoire"]], @filtres[:type]) %>
   </label>
-  <label>Catégorie
+  <label><%= @filtres[:type] == "belle_histoire" ? "Thématique" : "Catégorie" %>
     <%= select_tag :categorie, options_for_select([["Toutes", ""]] + Categorie::TOUTES.reject { |c| c.cle == Categorie::HISTOIRES }.map { |c| [c.libelle, c.cle] }, @filtres[:categorie]) %>
   </label>
   <label>Source
@@ -47,7 +47,7 @@
     <thead>
       <tr>
         <th style="width:42%">Élément</th>
-        <th style="width:15%">Type &amp; catégorie</th>
+        <th style="width:15%">Type &amp; <%= { "belle_histoire" => "thématique", "opportunite" => "catégorie" }.fetch(@filtres[:type], "catégorie / thématique") %></th>
         <th style="width:13%">Source &amp; quand</th>
         <th style="width:8%">Fiabilité</th>
         <th style="width:22%">Décision</th>

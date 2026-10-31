@@ -21,7 +21,7 @@
     <% else %>
       <span class="muted">non classé</span>
     <% end %>
-    <div style="margin-top:4px"><%= candidate.categorie_label || "—" %></div>
+    <div style="margin-top:4px"><%= "Thématique : " if candidate.histoire? %><%= candidate.categorie_label || "—" %></div>
     <div class="muted"><%= candidate.commune.presence || "commune ?" %></div>
     <% if candidate.histoire? && candidate.draft_status != "aucun" %>
       <div style="margin-top:4px"><span class="badge <%= candidate.draft_status == 'redige' ? 'ok' : 'no' %>">récit <%= { "redige" => "rédigé", "a_verifier" => "à vérifier", "a_reprendre" => "à reprendre" }[candidate.draft_status] %></span></div>
