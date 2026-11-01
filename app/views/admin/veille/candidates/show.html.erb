@@ -42,21 +42,28 @@
       <dd><span class="badge"><%= @candidate.status %></span></dd>
     </dl>
 
-    <% resume_manquant = @candidate.enriched? && @candidate.summary.blank? && (@candidate.pending? || @candidate.a_verifier?) %>
-    <% if (@candidate.presse? && @candidate.enriched_at.nil?) || @candidate.a_localiser? || resume_manquant %>
-      <h2 style="margin-top:20px">Pour créer la fiche</h2>
+    <% modifiable = !@candidate.publie? && !@candidate.ecarte? && (@candidate.item_type.present? || @candidate.presse?) %>
+    <% if modifiable %>
+      <h2 style="margin-top:20px">Modifier avant de valider</h2>
       <% if @candidate.a_localiser? %>
         <p class="small muted"><%= @candidate.histoire? ? "La commune enregistrée, le récit pourra être rédigé puis publié." : "Dès que la commune est enregistrée, la fiche est publiée en ligne." %></p>
       <% end %>
       <%= form_with url: completer_admin_veille_candidate_path(@candidate), method: :patch do |f| %>
+        <%= f.label :title, "Titre" %>
+        <%= f.text_field :title, value: @candidate.title %>
         <%= f.label :commune, "Commune" %>
         <%= f.text_field :commune, value: @candidate.commune %>
         <%= f.label :adresse, "Adresse (facultatif)" %>
         <%= f.text_field :adresse, value: @candidate.adresse, placeholder: "12 rue Saint-Dizier" %>
         <p class="small muted">Avec l'adresse, le repère se pose sur la carte à l'endroit exact ; sinon, au centre de la commune.</p>
-        <%= f.label :summary, "Résumé (tes mots)" %>
+        <% unless @candidate.histoire? %>
+          <%= f.label :schedule_text, "Horaires / périodicité (facultatif)" %>
+          <%= f.text_field :schedule_text, value: @candidate.schedule_text %>
+        <% end %>
+        <%= f.label :summary, @candidate.histoire? ? "Chapeau (tes mots)" : "Texte de la fiche (tes mots)" %>
         <%= f.text_area :summary, value: @candidate.summary %>
-        <p><%= f.submit @candidate.a_localiser? && @candidate.opportunite? ? "Localiser et publier" : "Enregistrer", class: "btn secondary" %></p>
+        <% if @candidate.histoire? %><p class="small muted">Le corps du récit se corrige plus bas, dans le brouillon.</p><% end %>
+        <p><%= f.submit @candidate.a_localiser? && @candidate.opportunite? ? "Localiser et publier" : "Enregistrer et actualiser l'aperçu", class: "btn secondary" %></p>
       <% end %>
     <% end %>
 
@@ -97,3 +104,27 @@
     </div>
   </div>
 </div>
+
+<%# ---------- APERÇU : la fiche publique telle que « Valider » la publierait ---------- %>
+<% unless @candidate.publie? || @candidate.ecarte? %>
+  <div class="card" style="margin-top:20px" id="apercu">
+    <h2>Aperçu avant publication</h2>
+    <% if (manque = @candidate.manque_pour_apercu) %>
+      <p class="small muted">Pas encore d'aperçu : <%= manque %>.</p>
+    <% else %>
+      <p class="small muted">
+        Rendu de la vraie page publique (<%= @candidate.histoire? ? "Belle Histoire" : "Opportunité" %>, catégorie « <%= @candidate.histoire? ? "Belles Histoires" : (@candidate.categorie_label || "Rencontres") %> »<%= ", famille « #{Opportunity::FAMILLES[@candidate.famille]} »" if @candidate.opportunite? && Opportunity::FAMILLES.key?(@candidate.famille) %>),
+        sans rien enregistrer. Lieu : <strong><%= [ @candidate.adresse.presence, @candidate.commune ].compact.join(", ") %></strong> ;
+        repère sur la carte à l'adresse précise si elle est trouvée, sinon au centre de la commune à la publication.
+      </p>
+      <iframe src="<%= apercu_admin_veille_candidate_path(@candidate) %>" title="Aperçu de la fiche"
+              style="width:100%;height:900px;border:1px solid #e5e7eb;border-radius:8px" loading="lazy"></iframe>
+      <% if @candidate.opportunite? && (@candidate.pending? || @candidate.a_verifier? || @candidate.retenu?) && !@candidate.a_localiser? %>
+        <%= button_to "Valider et publier", valider_admin_veille_candidate_path(@candidate), method: :post, class: "btn",
+                      form: { data: { turbo_confirm: "Créer la fiche et la publier en ligne ?" } } %>
+      <% elsif @candidate.histoire? %>
+        <p class="small muted">Le bouton « Valider et publier » du récit est dans le brouillon, à droite.</p>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

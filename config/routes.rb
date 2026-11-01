@@ -96,6 +96,7 @@ Rails.application.routes.draw do
           post  :rediger # Redaction::Brouillon (Sonnet), réponse en Turbo Stream
           patch :enregistrer_brouillon # corrige le récit à la main et relance les contrôles
           patch :accord # accord de la personne obtenu / retiré
+          get   :apercu # rendu de la fiche publique telle que « Valider » la publierait, sans rien enregistrer
           patch :completer # commune et résumé saisis à la main (article de presse retenu)
         end
       end

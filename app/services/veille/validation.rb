@@ -39,6 +39,20 @@ module Veille
       end
     end
 
+    # La fiche telle qu'elle serait publiée, SANS rien enregistrer ni géocoder (pas d'appel Nominatim) :
+    # mêmes attributs que `call`, donc même rendu dans les vues publiques. Position : l'adresse précise
+    # si l'API Adresse la trouve ; sinon aucune (à la publication, le centre de la commune).
+    # L'id 0 et le slug ne servent qu'à fabriquer les liens de la vue.
+    def apercu
+      @point = AdresseBan.localiser(@c.adresse, @c.commune)
+      fiche = @c.histoire? ? Story.new(attributs_histoire.except(:veille_candidate)) : Opportunity.new(attributs_opportunite)
+      fiche.id = 0
+      fiche.created_at = fiche.updated_at = Time.current
+      fiche.slug = fiche.title.to_s.parameterize.presence || "apercu"
+      fiche.readonly!
+      fiche
+    end
+
     private
 
     def verifier_recit
@@ -47,15 +61,28 @@ module Veille
       raise Incomplet, "L'accord de la personne n'est pas obtenu : la fiche ne peut pas être publiée." unless @c.accord_obtenu?
     end
 
+    def attributs_opportunite
+      {
+        title: @c.title, description: description_opportunite, category: @c.declic_category.presence || "rencontres",
+        **lieu, city: @c.commune, starts_on: @c.starts_on, ends_on: @c.ends_on,
+        schedule_text: @c.schedule_text, source: "veille", external_id: Digest::SHA1.hexdigest(@c.url),
+        source_name: @c.source_label, source_url: @c.url, cta_button_text: LIEN_TEXTE, cta_button_url: @c.url,
+        famille: (@c.famille if Opportunity::FAMILLES.key?(@c.famille)), is_active: true
+      }
+    end
+
+    def attributs_histoire
+      {
+        title: @c.title, chapo: @c.summary, body: @c.draft_body, **lieu,
+        happened_on: @c.published_on, source_url: @c.url,
+        source_name: @c.source_label, source_published_on: @c.published_on, veille_candidate: @c,
+        accord_obtenu_at: @c.accord_obtenu_at, is_active: true
+      }
+    end
+
     def creer_opportunite
       Opportunity.transaction do
-        opp = Opportunity.create!(
-          title: @c.title, description: description_opportunite, category: @c.declic_category.presence || "rencontres",
-          **lieu, city: @c.commune, starts_on: @c.starts_on, ends_on: @c.ends_on,
-          schedule_text: @c.schedule_text, source: "veille", external_id: Digest::SHA1.hexdigest(@c.url),
-          source_name: @c.source_label, source_url: @c.url, cta_button_text: LIEN_TEXTE, cta_button_url: @c.url,
-          famille: (@c.famille if Opportunity::FAMILLES.key?(@c.famille)), is_active: true
-        )
+        opp = Opportunity.create!(attributs_opportunite)
         @c.update!(opportunity: opp)
         @c.update_columns(full_text: nil, updated_at: Time.current) # même règle que pour les histoires
         opp
@@ -77,12 +104,7 @@ module Veille
 
     # Story#purge_veille_candidate_full_text efface le tampon à la création.
     def creer_histoire
-      Story.create!(
-        title: @c.title, chapo: @c.summary, body: @c.draft_body, **lieu,
-        happened_on: @c.published_on, source_url: @c.url,
-        source_name: @c.source_label, source_published_on: @c.published_on, veille_candidate: @c,
-        accord_obtenu_at: @c.accord_obtenu_at, is_active: true
-      )
+      Story.create!(attributs_histoire)
     end
   end
 end

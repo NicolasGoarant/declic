@@ -111,6 +111,15 @@ module Veille
     end
 
     def presse?         = ORIGINES_PRESSE.include?(origin)
+    # Ce qui empêche de bâtir l'aperçu de la fiche (nil si rien ne manque).
+    def manque_pour_apercu
+      return "élément non classé" if item_type.blank?
+      return "la commune n'est pas renseignée" if commune.blank?
+      return "le récit n'est pas rédigé" if histoire? && draft_body.blank?
+
+      "le résumé n'est pas renseigné" if opportunite? && summary.blank? && excerpt.blank?
+    end
+
     def opportunite?    = item_type == "opportunite"
     def histoire?       = item_type == "belle_histoire"
     def enriched?       = enriched_at.present?

@@ -142,6 +142,60 @@ module Admin
         assert_equal "petite_manifestation", c.opportunity.famille
       end
 
+      test "l'aperçu rend la vraie fiche publique d'une opportunité, sans rien enregistrer" do
+        c = enrichi(title: "Atelier couture", summary: "Un atelier ouvert à toutes.", adresse: "15 rue Saint-Dizier")
+        ::Veille::AdresseBan.client = Object.new.tap do |http|
+          http.define_singleton_method(:get) do |*, **|
+            { features: [{ geometry: { coordinates: [6.181748, 48.691955] },
+                           properties: { label: "15 Rue Saint Dizier 54000 Nancy", score: 0.97, type: "housenumber", city: "Nancy" } }] }.to_json
+          end
+        end
+
+        assert_no_difference [-> { Opportunity.count }, -> { Story.count }] do
+          get apercu_admin_veille_candidate_path(c), headers: auth
+        end
+        assert_response :success
+        assert_select "main.fch h1", text: /Atelier couture/
+        assert_select ".fch-texte", text: /Un atelier ouvert à toutes/
+        assert_select ".fch-pratique", text: /15 rue Saint-Dizier/
+        assert_match "48.691955", response.body, "coordonnées de l'adresse précise sur la mini-carte"
+        assert_equal "pending", c.reload.status
+      end
+
+      test "l'aperçu d'une belle histoire rend la page Belle Histoire" do
+        c = enrichi(item_type: "belle_histoire", title: "Le jardin de Léa", summary: "Un chapeau.",
+                    draft_body: "Un récit inspirant.\n\nSource : X")
+        assert_no_difference -> { Story.count } do
+          get apercu_admin_veille_candidate_path(c), headers: auth
+        end
+        assert_response :success
+        assert_select "main.fch--histoire"
+        assert_match "Un récit inspirant", response.body
+      end
+
+      test "pas d'aperçu tant que la commune ou le récit manque" do
+        get apercu_admin_veille_candidate_path(enrichi(commune: nil)), headers: auth
+        assert_response :unprocessable_entity
+        get apercu_admin_veille_candidate_path(enrichi(item_type: "belle_histoire")), headers: auth
+        assert_response :unprocessable_entity
+      end
+
+      test "l'écran du candidat montre l'aperçu, le formulaire de correction et Valider" do
+        c = enrichi(title: "Atelier couture")
+        get admin_veille_candidate_path(c), headers: auth
+        assert_select "iframe[src=?]", apercu_admin_veille_candidate_path(c)
+        assert_select "form[action=?] input[name=title]", completer_admin_veille_candidate_path(c)
+        assert_select "form[action=?]", valider_admin_veille_candidate_path(c)
+      end
+
+      test "le titre et l'horaire corrigés à la main sont enregistrés et repris dans l'aperçu" do
+        c = enrichi(title: "Ancien titre")
+        patch completer_admin_veille_candidate_path(c), params: { title: "Nouveau titre", schedule_text: "Tous les mardis", commune: "Nancy", summary: c.summary }, headers: auth
+        assert_equal ["Nouveau titre", "Tous les mardis"], c.reload.attributes.values_at("title", "schedule_text")
+        get apercu_admin_veille_candidate_path(c), headers: auth
+        assert_select "main.fch h1", text: /Nouveau titre/
+      end
+
       test "la saisie d'une adresse est enregistrée avec la commune" do
         c = enrichi(commune: nil)
         patch completer_admin_veille_candidate_path(c), params: { commune: "Nancy", adresse: "12 rue Exemple", summary: c.summary }, headers: auth

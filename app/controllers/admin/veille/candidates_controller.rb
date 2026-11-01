@@ -33,6 +33,27 @@ module Admin
 
       def show; end
 
+      # Aperçu de ce que « Valider » publierait : les VRAIES vues publiques (opportunities/show,
+      # stories/show, layout fiche) rendues sur la fiche que construit Validation, sans rien
+      # enregistrer. Affiché dans une iframe de l'écran du candidat.
+      def apercu
+        return render(plain: "Aperçu indisponible : #{@candidate.manque_pour_apercu}.", status: :unprocessable_entity) if @candidate.manque_pour_apercu
+
+        fiche = ::Veille::Validation.new(@candidate).apercu
+        if fiche.is_a?(Story)
+          @story = fiche
+          @opportunites = []
+          @autres_histoires = Story.none
+          @tuiles = DioramaTuiles.new if fiche.latitude.present?
+          render template: "stories/show", layout: "fiche"
+        else
+          @opportunity = fiche
+          @similaires = Opportunity.none
+          @tuiles = DioramaTuiles.new if fiche.latitude.present?
+          render template: "opportunities/show", layout: "fiche"
+        end
+      end
+
       def retenir = trancher("retenu", "Candidat retenu.")
 
       def ecarter = trancher("ecarte", "Candidat écarté.")
@@ -103,8 +124,8 @@ module Admin
       def completer
         return localiser if @candidate.a_localiser? && params[:commune].to_s.strip.present?
 
-        @candidate.update!(params.permit(:commune, :adresse, :summary))
-        redirect_to admin_veille_candidate_path(@candidate), status: :see_other, notice: "Commune et résumé enregistrés."
+        @candidate.update!(params.permit(:title, :schedule_text, :commune, :adresse, :summary).to_h.compact)
+        redirect_to admin_veille_candidate_path(@candidate), status: :see_other, notice: "Modifications enregistrées."
       end
 
       private
@@ -118,7 +139,7 @@ module Admin
                              alert: "« #{saisie} » n'est pas une commune du périmètre : rien n'a été enregistré ni publié."
         end
 
-        @candidate.update!(params.permit(:summary, :adresse).merge(commune: ::Veille::Territoire.canonique(saisie)))
+        @candidate.update!(params.permit(:title, :schedule_text, :summary, :adresse).to_h.compact.merge(commune: ::Veille::Territoire.canonique(saisie)))
         fiche = ::Veille::Validation.new(@candidate).call
         redirect_to admin_veille_candidate_path(@candidate), status: :see_other, **avis_publication(fiche)
       rescue ::Veille::Validation::Incomplet => e
