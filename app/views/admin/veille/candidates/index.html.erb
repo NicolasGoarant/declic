@@ -2,7 +2,7 @@
 <p class="muted small" id="compteurs"><%= render "compteurs", counts: @counts %></p>
 
 <p style="margin:14px 0">
-  <% { "pending" => "À relire", "a_verifier" => "À vérifier", "retenu" => "Retenus", "publie" => "Validés (brouillon créé)", "ecarte" => "Écartés" }.each do |statut, libelle| %>
+  <% { "pending" => "À relire", "a_verifier" => "À vérifier", "retenu" => "Retenus", "publie" => "Publiés", "ecarte" => "Écartés" }.each do |statut, libelle| %>
     <%= link_to "#{libelle} (#{@counts[statut.to_sym]})",
                 admin_veille_candidates_path(@filtres.merge(status: statut)),
                 class: "btn #{'secondary' unless @status == statut}",

@@ -92,7 +92,7 @@ Rails.application.routes.draw do
           patch :retenir
           patch :ecarter
           patch :a_verifier
-          post  :valider # crée le brouillon Opportunity ou Story (inactif)
+          post  :valider # crée la fiche Opportunity ou Story et la met en ligne
           post  :rediger # Redaction::Brouillon (Sonnet), réponse en Turbo Stream
           patch :enregistrer_brouillon # corrige le récit à la main et relance les contrôles
           patch :accord # accord de la personne obtenu / retiré

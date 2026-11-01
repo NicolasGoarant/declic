@@ -313,7 +313,7 @@ module Admin
         assert_not_includes ::Admin::Veille::CandidatesController.action_methods, "publier"
       end
 
-      test "Valider crée la Story inactive avec le récit relu, la date d'accord et la purge du tampon" do
+      test "Valider met la Story en ligne avec le récit relu, la date d'accord et la purge du tampon" do
         c = histoire(full_text: "Tampon.", commune: "Laxou", draft_status: "redige", accord_obtenu_at: Time.zone.local(2026, 11, 3),
                      draft_body: "#{RECIT}\n\nSource : Presse — u\nAccord de la personne : obtenu le 03/11/2026")
         Geocoder::Lookup::Test.add_stub("Laxou", [{ "latitude" => 48.6936, "longitude" => 6.1496, "address" => "Laxou" }])
@@ -323,7 +323,7 @@ module Admin
         end
 
         story = Story.find_by!(veille_candidate_id: c.id)
-        assert_not story.is_active
+        assert story.is_active
         assert_equal Time.zone.local(2026, 11, 3), story.accord_obtenu_at
         assert_includes story.body, "Elle a rouvert la porte"
         assert_equal c.url, story.source_url

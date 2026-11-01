@@ -5,7 +5,7 @@ module Veille
   #   pending  → collecté (connecteurs, rake veille:import ou import xlsx), classé par Veille::AiEnricher
   #   retenu   → validé à la main dans /admin/veille
   #   ecarte   → rejeté à la main
-  #   publie   → une Story a été créée à partir de ce candidat
+  #   publie   → sa fiche (Opportunity ou Story) a été créée et mise en ligne
   class Candidate < ApplicationRecord
     STATUSES   = %w[pending a_verifier retenu ecarte publie].freeze
 
@@ -83,7 +83,8 @@ module Veille
         .where("draft_attempts < ?", MAX_REDACTIONS_AUTO)
     }
     # Classés par l'IA, sans commune repérée : ils attendent qu'un humain les situe. Pas de récit
-    # rédigé d'ici là (a_rediger), et « Valider » refuse tant que la commune manque.
+    # rédigé d'ici là (a_rediger), et « Valider » refuse tant que la commune manque. La saisie de
+    # la commune publie l'élément (CandidatesController#completer).
     scope :a_localiser, -> { where(status: %w[pending a_verifier], commune: [nil, ""]).where.not(enriched_at: nil) }
     # À relire par un humain : enrichi, non écarté. « À vérifier » en fait partie.
     scope :a_relire, -> { where(status: %w[pending a_verifier]).where(discard_reason: nil) }

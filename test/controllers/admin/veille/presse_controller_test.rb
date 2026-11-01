@@ -97,8 +97,17 @@ module Admin
         post "/admin/veille/candidates/#{c.id}/valider", headers: auth
         assert_match(/Il manque/, flash[:alert])
 
-        patch "/admin/veille/candidates/#{c.id}/completer", params: { commune: "Nancy", summary: "Un atelier de couture ouvre à Nancy." }, headers: auth
-        assert_difference("::Story.count", 1) { post "/admin/veille/candidates/#{c.id}/valider", headers: auth }
+        assert_no_difference("::Story.count") do
+          patch "/admin/veille/candidates/#{c.id}/completer", params: { commune: "Nancy", summary: "Un atelier de couture ouvre à Nancy." }, headers: auth
+        end
+        assert_equal "retenu", c.reload.status, "la presse ne se publie pas à la saisie de la commune"
+
+        post "/admin/veille/candidates/#{c.id}/valider", headers: auth
+        assert_match(/accord de la personne/, flash[:alert])
+        assert_equal 0, ::Story.where(veille_candidate_id: c.id).count
+
+        patch "/admin/veille/candidates/#{c.id}/accord", params: { obtenu: "1" }, headers: auth
+        assert_difference("::Story.active.count", 1) { post "/admin/veille/candidates/#{c.id}/valider", headers: auth }
         assert_nil c.reload.full_text, "le texte collé est effacé à la création de la fiche"
       end
     end

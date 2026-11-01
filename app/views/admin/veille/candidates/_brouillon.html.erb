@@ -60,14 +60,14 @@
         Accord de la personne obtenu<%= " le #{l(candidate.accord_obtenu_at.to_date)}" if candidate.accord_obtenu_at %>
       </span>
     </label>
-    <p class="small muted">Sans cet accord, la fiche créée ne pourra pas être mise en ligne.</p>
+    <p class="small muted">Sans cet accord, la fiche ne peut pas être publiée.</p>
     <p><%= f.submit "Enregistrer l'accord", class: "btn secondary" %></p>
   <% end %>
 
   <% if candidate.pending? || candidate.retenu? || candidate.a_verifier? %>
-    <%= button_to "Valider : créer la fiche hors ligne", valider_admin_veille_candidate_path(candidate), method: :post,
-                  class: "btn", disabled: controles.bloque?,
-                  form: { data: { turbo_confirm: "Créer un brouillon de fiche (hors ligne) à partir de ce récit ?" } } %>
+    <%= button_to "Valider et publier", valider_admin_veille_candidate_path(candidate), method: :post,
+                  class: "btn", disabled: controles.bloque? || !candidate.accord_obtenu?,
+                  form: { data: { turbo_confirm: "Créer la fiche et publier ce récit en ligne ?" } } %>
   <% end %>
 <% elsif error.blank? %>
   <p class="muted small" style="margin-top:20px">

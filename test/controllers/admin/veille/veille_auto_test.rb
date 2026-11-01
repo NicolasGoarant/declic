@@ -84,7 +84,7 @@ module Admin
         assert_not_includes texte, "Ancien"
       end
 
-      test "Valider crée un brouillon hors ligne et rien d'autre" do
+      test "Valider crée la fiche et la met en ligne" do
         c = enrichi(title: "Forum", url: "https://exemple.fr/forum")
 
         assert_difference -> { Opportunity.count }, 1 do
@@ -92,16 +92,62 @@ module Admin
         end
 
         assert_response :redirect
-        assert_not Opportunity.order(:id).last.is_active
+        assert Opportunity.order(:id).last.is_active
+        assert_match "En ligne : Forum", flash[:notice]
         assert_equal "publie", c.reload.status
       end
 
-      test "Valider une belle histoire crée une Story inactive" do
+      test "Valider une belle histoire sans l'accord de la personne ne crée rien" do
         c = enrichi(item_type: "belle_histoire", draft_body: "Récit.\n\nSource : X\nAccord de la personne : à obtenir")
-        assert_difference -> { Story.count }, 1 do
+        assert_no_difference -> { Story.count } do
           post valider_admin_veille_candidate_path(c), headers: auth
         end
-        assert_not Story.order(:id).last.is_active
+        assert_match "accord de la personne", flash[:alert]
+        assert_equal "pending", c.reload.status
+      end
+
+      test "la saisie de la commune publie un élément à localiser, sans autre geste" do
+        c = enrichi(commune: nil, famille: "petite_manifestation")
+        assert c.a_localiser?
+
+        assert_difference -> { Opportunity.active.count }, 1 do
+          patch completer_admin_veille_candidate_path(c), params: { commune: "nancy", summary: c.summary }, headers: auth
+        end
+        assert_equal "publie", c.reload.status
+        assert_equal "Nancy", c.commune, "le nom officiel de la commune"
+        assert_equal "petite_manifestation", c.opportunity.famille
+      end
+
+      test "un élément à localiser reste en attente tant que la commune manque ou n'est pas admise" do
+        c = enrichi(commune: nil)
+        assert_no_difference -> { Opportunity.count } do
+          patch completer_admin_veille_candidate_path(c), params: { commune: "  " }, headers: auth
+          patch completer_admin_veille_candidate_path(c), params: { commune: "Nacy" }, headers: auth
+          post valider_admin_veille_candidate_path(c), headers: auth
+        end
+        assert_equal "pending", c.reload.status
+        assert c.a_localiser?
+      end
+
+      test "une histoire à localiser garde sa commune mais attend récit et accord" do
+        c = enrichi(item_type: "belle_histoire", commune: nil)
+        assert_no_difference -> { Story.count } do
+          patch completer_admin_veille_candidate_path(c), params: { commune: "Nancy" }, headers: auth
+        end
+        assert_match "pas encore de publication", flash[:alert]
+        assert_equal ["Nancy", "pending"], [c.reload.commune, c.status]
+      end
+
+      test "l'onglet Publiés dit si la fiche est encore en ligne" do
+        c = enrichi(url: "https://exemple.fr/en-ligne")
+        post valider_admin_veille_candidate_path(c), headers: auth
+        get "/admin/veille", params: { status: "publie" }, headers: auth
+        assert_includes texte, "en ligne"
+        assert_not_includes texte, "brouillon créé"
+
+        c.reload.opportunity.update!(is_active: false)
+        get "/admin/veille", params: { status: "publie" }, headers: auth
+        assert_includes texte, "retirée du site"
       end
 
       test "Valider un élément incomplet explique ce qui manque et ne crée rien" do

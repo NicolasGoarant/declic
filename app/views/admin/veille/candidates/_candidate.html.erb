@@ -53,7 +53,7 @@
           <%= link_to "Relire le récit →", admin_veille_candidate_path(candidate), class: "btn" %>
         <% elsif candidate.item_type.present? && (candidate.pending? || candidate.a_verifier?) %>
           <%= button_to "Valider", valider_admin_veille_candidate_path(candidate), method: :post, class: "btn",
-                        form: { data: { turbo_confirm: "Créer un brouillon (hors ligne) à partir de cet élément ?" } } %>
+                        form: { data: { turbo_confirm: "Créer la fiche et la publier en ligne ?" } } %>
         <% elsif candidate.pending? %>
           <%= button_to "Retenir", retenir_admin_veille_candidate_path(candidate), method: :patch, class: "btn" %>
         <% else %>
@@ -64,7 +64,8 @@
           <%= button_to "À vérifier", a_verifier_admin_veille_candidate_path(candidate), method: :patch, class: "btn secondary" %>
         <% end %>
       <% elsif candidate.publie? %>
-        <span class="badge ok">brouillon créé</span>
+        <% fiche = candidate.story || candidate.opportunity %>
+        <% if fiche %><span class="badge <%= fiche.is_active ? 'ok' : 'no' %>"><%= fiche.is_active ? "en ligne" : "retirée du site" %></span><% end %>
         <% if candidate.story %>
           <%= link_to "Voir la fiche", edit_admin_story_path(candidate.story), class: "btn secondary" %>
         <% elsif candidate.opportunity %>

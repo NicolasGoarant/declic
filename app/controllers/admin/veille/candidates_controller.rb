@@ -39,13 +39,10 @@ module Admin
 
       def a_verifier = trancher("a_verifier", "Marqué à vérifier.")
 
-      # « Valider » : crée le brouillon (Opportunity ou Story, inactif) à partir du
-      # résumé reformulé. Aucune publication : la mise en ligne se fait ensuite
-      # depuis l'admin des fiches.
+      # « Valider » : crée la fiche (Opportunity ou Story) et la met en ligne.
       def valider
         fiche = ::Veille::Validation.new(@candidate).call
-        redirect_back fallback_location: admin_veille_root_path,
-                      notice: "Brouillon créé, hors ligne : #{fiche.title}"
+        redirect_back fallback_location: admin_veille_root_path, notice: avis_publication(fiche)
       rescue ::Veille::Validation::Incomplet => e
         redirect_back fallback_location: admin_veille_root_path, alert: e.message
       rescue ActiveRecord::RecordInvalid => e
@@ -100,13 +97,42 @@ module Admin
       end
 
       # Article de presse retenu à la main (l'IA ne l'a pas classé) ou élément à localiser : la
-      # commune et le résumé que demande « Valider » sont saisis ici.
+      # commune et le résumé que demande « Valider » sont saisis ici. Un élément à localiser a déjà
+      # été classé par l'IA : la saisie de sa commune le publie, sans autre geste. La presse reste
+      # sur son propre circuit (texte collé, récit, accord, puis « Valider »).
       def completer
+        return localiser if @candidate.a_localiser? && params[:commune].to_s.strip.present?
+
         @candidate.update!(params.permit(:commune, :summary))
         redirect_to admin_veille_candidate_path(@candidate), status: :see_other, notice: "Commune et résumé enregistrés."
       end
 
       private
+
+      # Une faute de frappe ne doit pas mettre en ligne une fiche mal située : même périmètre
+      # que la collecte (Veille::Territoire). Rien n'est enregistré si la commune est refusée.
+      def localiser
+        saisie = params[:commune].to_s.strip
+        unless ::Veille::Territoire.admis?(saisie, @candidate.item_type)
+          return redirect_to admin_veille_candidate_path(@candidate), status: :see_other,
+                             alert: "« #{saisie} » n'est pas une commune du périmètre : rien n'a été enregistré ni publié."
+        end
+
+        @candidate.update!(params.permit(:summary).merge(commune: ::Veille::Territoire.canonique(saisie)))
+        fiche = ::Veille::Validation.new(@candidate).call
+        redirect_to admin_veille_candidate_path(@candidate), status: :see_other, notice: avis_publication(fiche)
+      rescue ::Veille::Validation::Incomplet => e
+        redirect_to admin_veille_candidate_path(@candidate), status: :see_other, alert: "Commune enregistrée, pas encore de publication. #{e.message}"
+      rescue ActiveRecord::RecordInvalid => e
+        redirect_to admin_veille_candidate_path(@candidate), status: :see_other,
+                    alert: "Commune enregistrée, publication impossible : #{e.record.errors.full_messages.to_sentence}"
+      end
+
+      # Une fiche sans coordonnées est en ligne mais absente de la carte : autant le dire tout de suite.
+      def avis_publication(fiche)
+        avis = "En ligne : #{fiche.title}"
+        fiche.latitude.present? ? avis : "#{avis}. Position introuvable : pas de pin sur la carte tant qu'elle n'est pas corrigée dans la fiche."
+      end
 
       def date_filtre(valeur)
         Date.iso8601(valeur.to_s) if valeur.present?

@@ -42,14 +42,18 @@
       <dd><span class="badge"><%= @candidate.status %></span></dd>
     </dl>
 
-    <% if (@candidate.presse? && @candidate.enriched_at.nil?) || @candidate.a_localiser? %>
+    <% resume_manquant = @candidate.enriched? && @candidate.summary.blank? && (@candidate.pending? || @candidate.a_verifier?) %>
+    <% if (@candidate.presse? && @candidate.enriched_at.nil?) || @candidate.a_localiser? || resume_manquant %>
       <h2 style="margin-top:20px">Pour créer la fiche</h2>
+      <% if @candidate.a_localiser? %>
+        <p class="small muted"><%= @candidate.histoire? ? "La commune enregistrée, le récit pourra être rédigé puis publié." : "Dès que la commune est enregistrée, la fiche est publiée en ligne." %></p>
+      <% end %>
       <%= form_with url: completer_admin_veille_candidate_path(@candidate), method: :patch do |f| %>
         <%= f.label :commune, "Commune" %>
         <%= f.text_field :commune, value: @candidate.commune %>
         <%= f.label :summary, "Résumé (tes mots)" %>
         <%= f.text_area :summary, value: @candidate.summary %>
-        <p><%= f.submit "Enregistrer", class: "btn secondary" %></p>
+        <p><%= f.submit @candidate.a_localiser? && @candidate.opportunite? ? "Localiser et publier" : "Enregistrer", class: "btn secondary" %></p>
       <% end %>
     <% end %>
 
