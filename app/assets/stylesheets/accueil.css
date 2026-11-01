@@ -225,13 +225,16 @@ body.acc-corps {
   position: relative;
   background: var(--table-fond);
   overflow: hidden;
-  /* Pins et bouquets (diorama/reglages.js#PINS) : injectées une fois par le contrôleur
-     (appliquerReglagesPins), pour n'écrire ces valeurs qu'à un seul endroit. */
+}
+/* Pins et bouquets (diorama/reglages.js#PINS), sur la carte d'accueil et la mini-carte des fiches :
+   injectées une fois par le contrôleur (appliquerReglagesPins), pour n'écrire ces valeurs qu'à un
+   seul endroit. */
+.acc-carte, .fch-carte {
   --taille-icone: var(--taille-icone-bureau, 52px);
   --pin-pied: calc(var(--taille-icone) + var(--tige-longueur, 44px) - var(--pin-recouvrement, 4px));
 }
 @media (max-width: 699.98px) {
-  .acc-carte { --taille-icone: var(--taille-icone-mobile, 44px); }
+  .acc-carte, .fch-carte { --taille-icone: var(--taille-icone-mobile, 44px); }
 }
 /* z-index : Leaflet numérote ses volets jusqu'à 1000, ils restent enfermés ici, sous la sheet. */
 .acc-carte-fond { position: absolute; inset: 0; z-index: 0; background: var(--table-fond); }
