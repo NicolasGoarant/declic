@@ -97,6 +97,38 @@ module Admin
         end
       end
 
+      test "écarter la sélection mémorise plusieurs URL d'un coup, sans candidat" do
+        autre = "#{URL}-2"
+        assert_no_difference("::Veille::Candidate.count") do
+          assert_difference("::Veille::PresseEcartee.count", 2) do
+            post "/admin/veille/presse/ecarter", params: { urls: [URL, autre, URL] }, headers: auth
+          end
+        end
+        assert_redirected_to "/admin/veille/presse"
+        assert_match "2 articles écartés", flash[:notice]
+        assert_equal [URL, autre].sort, ::Veille::PresseEcartee.pluck(:url).sort
+      end
+
+      test "écarter la sélection : tout ou rien si un lien est étranger aux flux" do
+        assert_no_difference("::Veille::PresseEcartee.count") do
+          post "/admin/veille/presse/ecarter", params: { urls: [URL, "https://ailleurs.example/x"] }, headers: auth
+        end
+        assert flash[:alert].present?
+      end
+
+      test "écarter sans rien de sélectionné ne crée rien" do
+        assert_no_difference("::Veille::PresseEcartee.count") { post "/admin/veille/presse/ecarter", headers: auth }
+        assert_equal "Aucun article sélectionné.", flash[:alert]
+      end
+
+      test "la liste propose une case par article, le bouton de sélection et le tout sélectionner" do
+        avec_flux { get "/admin/veille/presse", headers: auth }
+        assert_select "input[type=checkbox][name='urls[]'][value=?][form=ecarter-selection]", URL
+        assert_select "form#ecarter-selection button[disabled]", text: "Écarter la sélection"
+        assert_select "input[type=checkbox][data-selection-target=tout]"
+        assert_select "form[action=?] button", "/admin/veille/presse/ecarter", text: "Écarter" # le bouton de ligne reste
+      end
+
       test "écarter refuse un lien hors des journaux de la veille" do
         assert_no_difference("::Veille::PresseEcartee.count") do
           post "/admin/veille/presse/ecarter", params: { url: "https://ailleurs.example/x" }, headers: auth

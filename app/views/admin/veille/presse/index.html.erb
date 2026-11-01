@@ -1,7 +1,7 @@
 <h1>Veille presse manuelle</h1>
 <p class="muted small">
   Titres et liens lus à l'instant dans les flux RSS (environ 24 h d'articles). Rien n'est envoyé à l'IA.
-  Ouvre l'article avec ton abonnement ; « Retenir » crée un candidat, où tu colles le texte pour lancer la rédaction ; « Écarter » mémorise seulement l'adresse de l'article pour ne plus le proposer.
+  Ouvre l'article avec ton abonnement ; « Retenir » crée un candidat, où tu colles le texte pour lancer la rédaction ; « Écarter » (ou « Écarter la sélection » pour plusieurs cases cochées) mémorise seulement l'adresse de l'article pour ne plus le proposer.
 </p>
 
 <% @lecture.erreurs.each do |nom, message| %>
@@ -11,13 +11,21 @@
 <% if @lecture.liens.empty? %>
   <div class="vide"><p>Aucun article à afficher pour le moment.</p></div>
 <% else %>
+  <div data-controller="selection">
+  <%# Les cases se rattachent à ce formulaire par l'attribut form : les boutons « Écarter » de chaque ligne sont des formulaires à part, qu'on ne peut pas imbriquer. %>
+  <%= form_with url: admin_veille_ecarter_presse_path, method: :post, id: "ecarter-selection", class: "barre-selection" do %>
+    <%= button_tag "Écarter la sélection", type: "submit", class: "btn secondary", disabled: true, data: { selection_target: "bouton" } %>
+    <span class="muted small" data-selection-target="compte"></span>
+  <% end %>
   <table class="table">
     <thead>
-      <tr><th style="width:62%">Article</th><th style="width:22%">Flux &amp; date</th><th style="width:16%">Décision</th></tr>
+      <tr><th style="width:3%"><input type="checkbox" aria-label="Tout sélectionner" data-selection-target="tout" data-action="selection#basculer"></th><th style="width:59%">Article</th><th style="width:22%">Flux &amp; date</th><th style="width:16%">Décision</th></tr>
     </thead>
     <tbody>
       <% @lecture.liens.each do |lien| %>
         <tr>
+          <td><%= check_box_tag "urls[]", lien.url, false, id: nil, form: "ecarter-selection", "aria-label": "Sélectionner : #{lien.titre}",
+                                data: { selection_target: "case", action: "selection#maj" } %></td>
           <td><%= link_to lien.titre, lien.url, target: "_blank", rel: "noopener noreferrer" %> ↗</td>
           <td class="small">
             <%= lien.flux %>
@@ -33,4 +41,5 @@
       <% end %>
     </tbody>
   </table>
+  </div>
 <% end %>
