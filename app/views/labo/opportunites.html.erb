@@ -6,6 +6,7 @@
 <% opportunites = @opportunites.map { |o| opportunite_pour_carte(o) } %>
 <% content_for :title, "Les Opportunités — Déclic" %>
 <% content_for :onglet_courant, "explorer" %>
+<% content_for :bandeau_position, true %>
 <% content_for :feuilles do %>
   <%= stylesheet_link_tag "labo_pages" %>
 <% end %>

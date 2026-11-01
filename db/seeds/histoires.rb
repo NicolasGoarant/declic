@@ -10,7 +10,7 @@ end
 
 histoire(
   title: "Camille a fait de sa cour d'immeuble un jardin",
-  thematique: "ecologiser", tags: "Végétalisation, Voisinage",
+  tags: "Végétalisation, Voisinage",
   happened_on: Date.current - 12, venue_name: "La cour des Fleurs", discover_url: "https://example.com/cour-des-fleurs",
   location: "8 rue de la Source, 54000 Nancy", address: "8 rue de la Source", city: "Nancy", postal_code: "54000",
   latitude: 48.6870, longitude: 6.1750,
@@ -29,7 +29,7 @@ histoire(
 
 histoire(
   title: "Sofiane cuisine les recettes de sa grand-mère pour les autres",
-  thematique: "entreprendre", tags: "Cuisine, Traiteur, Reconversion",
+  tags: "Cuisine, Traiteur, Reconversion",
   happened_on: Date.current - 25, venue_name: "La Table de Sofiane", discover_url: "https://example.com/table-de-sofiane",
   location: "8 rue des Ponts, 54000 Nancy", address: "8 rue des Ponts", city: "Nancy", postal_code: "54000",
   latitude: 48.6935, longitude: 6.1834,
@@ -48,7 +48,7 @@ histoire(
 
 histoire(
   title: "Une salle de danse pour se faire des amis",
-  thematique: "rencontres", tags: "Danse, Lien social",
+  tags: "Danse, Lien social",
   happened_on: Date.current - 40, venue_name: "MJC Lillebonne", discover_url: "https://example.com/mjc-lillebonne",
   location: "MJC Lillebonne, 14 rue du Cheval Blanc, 54000 Nancy", address: "14 rue du Cheval Blanc", city: "Nancy", postal_code: "54000",
   latitude: 48.6949, longitude: 6.1889,
@@ -67,7 +67,7 @@ histoire(
 
 histoire(
   title: "Léa, de la scène au tour de potier",
-  thematique: "formation", tags: "Céramique, Reconversion, Art",
+  tags: "Céramique, Reconversion, Art",
   happened_on: Date.current - 55, venue_name: "Atelier Terre & Feu", discover_url: "https://example.com/terre-et-feu",
   location: "12 rue des Michottes, 54000 Nancy", address: "12 rue des Michottes", city: "Nancy", postal_code: "54000",
   latitude: 48.6890, longitude: 6.1770,
@@ -85,7 +85,7 @@ histoire(
 
 histoire(
   title: "Un potager partagé pour se retrouver",
-  thematique: "benevolat", tags: "Solidarité, Jardin, Alimentation",
+  tags: "Solidarité, Jardin, Alimentation",
   happened_on: Date.current - 70, venue_name: "Le potager de Boudonville", discover_url: "https://example.com/potager-boudonville",
   location: "Rue de Boudonville, 54000 Nancy", address: "Rue de Boudonville", city: "Nancy", postal_code: "54000",
   latitude: 48.6800, longitude: 6.1650,
@@ -105,7 +105,7 @@ histoire(
 # Hors Métropole : teste la carte OpenStreetMap (hors emprise du diorama).
 histoire(
   title: "Manon a transformé une ancienne ferme vosgienne en atelier partagé",
-  thematique: "entreprendre", tags: "Artisanat, Ruralité, Atelier",
+  tags: "Artisanat, Ruralité, Atelier",
   happened_on: Date.current - 90, venue_name: "La Ferme des Ateliers", discover_url: "https://example.com/ferme-des-ateliers",
   location: "12 chemin des Prés, 88400 Gérardmer", address: "12 chemin des Prés", city: "Gérardmer", postal_code: "88400",
   latitude: 48.0737, longitude: 6.8783,

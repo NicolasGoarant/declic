@@ -22,25 +22,65 @@ class DioramaTuiles
   # R2 est retiré de la liste (masqué côté panneau Calques).
   STYLES = { "jeu-video-v2" => "Jeu vidéo", "toits-v1" => "Réaliste" }.freeze
   STYLE_DEFAUT = "jeu-video-v2".freeze
+  # Dalles refaites après publication d'un style : les anciennes adresses portent `immutable` (un an de cache), les dalles
+  # corrigées vont donc dans un jeu à part, qui ne contient qu'elles et dont le manifeste les liste. Une dalle listée s'y lit, les
+  # autres restent dans le style. Tant que ce manifeste ne répond pas, rien ne change ; retirer la ligne rend l'ancien rendu.
+  # bornes2 (nancy-3d rapports/jeu-video-v2/propriete-jv2) : tout coupes1 (les « échelles » des coupes intérieures de mansardes
+  # retirées) plus les 10 bâtiments à faux toit sur du vide, toits bornés à l'emprise.
+  # scissions1 (nancy-3d rapports/jeu-video-v2/scissions) : bornes2 plus Le Tilleul Argenté en trois blocs et quatre moignons, percé en 2026.
+  # tetes1 (nancy-3d rapports/jeu-video-v2/cedre-bleu) : scissions1 plus les deux têtes basses du Cèdre Bleu, absentes de la BD TOPO.
+  # lotissement1 (nancy-3d rapports/jeu-video-v2/lotissement-2025) : tetes1 plus les 20 bâtiments créés le 10/09/2025 dans la BD TOPO, hauteurs lues sur les ombres de l'ortho 2026.
+  # lotissement2 (nancy-3d rapports/jeu-video-v2/lotissement-2025/retrait-635) : tetes1 plus les 19 bâtiments du programme, sans 492620635, isolé et ajouté par erreur. Cartes d'ambiance inchangées : v6 = v7 au pixel.
+  SURCOUCHES = { "jeu-video-v2" => "jeu-video-v2-lotissement2" }.freeze
   MASQUE = "masque-bati".freeze             # {z}/{x}/{y}.png, niveaux 6 à 8, centre-ville
   PROPRIETE = "propriete-toits-v1".freeze   # 8/{x}/{y}.png (pas de dossier dalles/)
+  # Les deux cartes ci-dessus décrivent le dessin de toits-v1. Là où un style dessine un volume sur ce que toits-v1 laissait au sol,
+  # l'ambiance posait l'ombre de contact et la lumière des rues sur un toit : les taches du grand toit à l'accueil. Ces cartes-ci sont
+  # lues par la seule ambiance, à ce style ; bateaux, vivants, trains et maquette blanche gardent les leurs. Tant que l'un des deux
+  # manifestes ne répond pas, rien ne change ; retirer la ligne rend l'ancien rendu.
+  # nancy-3d rapports/jeu-video-v2/propriete-jv2.
+  CARTES_AMBIANCE = { "jeu-video-v2" => { propriete: "propriete-jv2-v6", masque: "masque-bati-jv2-v6" } }.freeze
   AMBIANCES_DOSSIER = "ambiances".freeze    # {nom}-actuelle.json (format nancy-3d/ambiance)
   AMBIANCES = %w[heure-bleue automne hiver].freeze
   ARBRES = "masque-arbres".freeze           # {z}/{x}/{y}.png, niveaux 6 à 8, blanc = feuillage (automne)
   # Lampadaires de la nuit (format nancy-3d/lumieres-nuit, points au niveau 8) : les lanternes
   # relevées si elles sont publiées un jour, sinon les positions procédurales IGN BD TOPO®.
   LAMPADAIRES = [ %w[lumieres-nuit lanternes.json], %w[lampadaires-bdtopo lampadaires-bdtopo.json] ].freeze
+  # Les bateaux (diorama/mobiles) : calque des itinéraires sur l'eau, atlas des sprites et leurs modèles. Ils
+  # se masquent derrière les ponts et les arbres grâce à la carte de propriété : sans elle, pas de bateaux.
+  # DIORAMA_MOBILES_URL désigne un autre dossier de même forme (manifeste.json compris, servi en CORS) : c'est
+  # ainsi qu'on essaie un jeu avant de le publier sur R2.
+  MOBILES = "mobiles-v6".freeze   # v5 sur un calque raccordé aux ponts (bateaux qui ressortent des ponts, 15/10) ; v1 à v5 restent sur R2
+  # Les vivants (diorama/vivants : vélos, piétons, voitures, bus, trolleybus) : par défaut sur la page d'accueil (21/10),
+  # avec ?vivants=1 sur /labo/diorama.
+  # vivants-v2 (publié le 21/10/2026) ajoute bus et trolleybus ; vivants-v1 reste sur R2. DIORAMA_VIVANTS_URL : essayer un autre dossier.
+  VIVANTS = "vivants-v2".freeze
+  # Les trains (diorama/trains : rames TER et TGV sur le réseau ferré, scénarios de démonstration de nancy-3d, joués en
+  # boucle comme décor) : par défaut sur la page d'accueil, avec les vivants et sur le style jeu-video-v2 ; avec ?trains=1
+  # sur /labo/diorama. DIORAMA_TRAINS_URL : essayer un autre dossier.
+  TRAINS = "trains-v1".freeze
+  # La nuit chaude (nancy-3d rapports/nuit-chaude-v1) : bâtiment par pixel au niveau 8 (batiments/8/{x}/{y}.png, le
+  # tirage des fenêtres allumées par bâtiment) et flaques des lanternes Géonancy des places (flaques-places.json).
+  # Pas encore publiée sur R2 : DIORAMA_NUIT_URL désigne un dossier de même forme (manifeste.json compris, servi en
+  # CORS), et c'est ainsi qu'on la valide en local. Absente, la nuit garde son tirage de fenêtres et ses places sans flaques.
+  NUIT = "nuit-chaude-v1".freeze
 
   DUREE_CACHE = 10.minutes
   DELAI_SONDE_S = 2
   CACHE = {}
   VERROU = Mutex.new
 
-  attr_reader :base
+  attr_reader :base, :mobiles, :vivants, :nuit, :trains
 
   # `sonde` : appelable qui reçoit une URL et rend true si elle répond 200 (injectable en test).
-  def initialize(base: ENV["DIORAMA_TILES_URL"].presence || URL_DEFAUT, sonde: nil)
+  def initialize(base: ENV["DIORAMA_TILES_URL"].presence || URL_DEFAUT, mobiles: ENV["DIORAMA_MOBILES_URL"].presence,
+                 vivants: ENV["DIORAMA_VIVANTS_URL"].presence, nuit: ENV["DIORAMA_NUIT_URL"].presence,
+                 trains: ENV["DIORAMA_TRAINS_URL"].presence, sonde: nil)
     @base = base.chomp("/")
+    @mobiles = (mobiles || url(MOBILES)).chomp("/")
+    @vivants = (vivants || url(VIVANTS)).chomp("/")
+    @nuit = (nuit || url(NUIT)).chomp("/")
+    @trains = (trains || url(TRAINS)).chomp("/")
     @sonde = sonde || method(:repond?)
   end
 
@@ -59,14 +99,21 @@ class DioramaTuiles
     # Couches facultatives : sans elles, l'automne se replie sur les verts sombres et la nuit reste sans lumières.
     arbres = vrai && p.fetch(url("#{ARBRES}/manifeste.json"))
     lumieres = vrai && lampadaires(p).present?
-    { vrai: vrai, styles: styles, blanche: blanche, ambiances: ambiances, arbres: arbres, lumieres: lumieres }
+    bateaux = vrai && propriete && p.fetch("#{mobiles}/manifeste.json")
+    vivants = vrai && propriete && p.fetch("#{self.vivants}/manifeste.json")
+    nuit = vrai && p.fetch("#{self.nuit}/manifeste.json")
+    # les trains se posent par la carte de propriété (occlusion), comme les vivants dont ils partagent la toile
+    trains = vrai && propriete && p.fetch("#{self.trains}/manifeste.json")
+    { vrai: vrai, styles: styles, blanche: blanche, ambiances: ambiances, arbres: arbres, lumieres: lumieres, mobiles: bateaux,
+      vivants: vivants, nuit: nuit, trains: trains }
   end
 
   # Ce que reçoit le contrôleur Stimulus.
   def pour_js
     {
-      base: base, styles: STYLES.keys, style_defaut: STYLE_DEFAUT, masque: MASQUE, propriete: PROPRIETE,
-      arbres: ARBRES, lumieres: lampadaires(presents),
+      base: base, styles: STYLES.keys, style_defaut: STYLE_DEFAUT, surcouches: surcouches, masque: MASQUE, propriete: PROPRIETE,
+      cartes_ambiance: cartes_ambiance,
+      arbres: ARBRES, lumieres: lampadaires(presents), mobiles: mobiles, vivants: vivants, trains: trains, nuit: nuit,
       ambiances: AMBIANCES.index_with { |nom| parametres_ambiance(nom) },
       disponibles: disponibles
     }
@@ -76,6 +123,14 @@ class DioramaTuiles
 
   def parametres_ambiance(nom) = "#{AMBIANCES_DOSSIER}/#{nom}-actuelle.json"
 
+  # Les surcouches publiées, par style : le navigateur ne lit le manifeste que de celles-ci (pas de 404 en console).
+  def surcouches = SURCOUCHES.select { |_, dossier| presents.fetch(url("#{dossier}/manifeste.json")) }
+
+  # Les cartes d'ambiance propres à un style, si TOUTES sont publiées : une propriété neuve sur un masque ancien changerait de lecture entre les zooms.
+  def cartes_ambiance
+    CARTES_AMBIANCE.select { |_, cartes| cartes.values.all? { |dossier| presents.fetch(url("#{dossier}/manifeste.json")) } }
+  end
+
   # Chemin du fichier de lampadaires publié (le premier de LAMPADAIRES), ou nil.
   def lampadaires(p)
     dossier, fichier = LAMPADAIRES.find { |d, _| p.fetch(url("#{d}/manifeste.json")) }
@@ -83,17 +138,17 @@ class DioramaTuiles
   end
 
   def urls_a_sonder
-    [ *STYLES.keys, MASQUE, PROPRIETE, ARBRES, *LAMPADAIRES.map(&:first) ].map { |dossier| url("#{dossier}/manifeste.json") } +
-      AMBIANCES.map { |nom| url(parametres_ambiance(nom)) }
+    [ *STYLES.keys, *SURCOUCHES.values, *CARTES_AMBIANCE.values.flat_map(&:values), MASQUE, PROPRIETE, ARBRES, *LAMPADAIRES.map(&:first) ].map { |dossier| url("#{dossier}/manifeste.json") } +
+      AMBIANCES.map { |nom| url(parametres_ambiance(nom)) } + [ "#{mobiles}/manifeste.json", "#{vivants}/manifeste.json", "#{nuit}/manifeste.json", "#{trains}/manifeste.json" ]
   end
 
   def presents
     VERROU.synchronize do
-      entree = CACHE[base]
+      entree = CACHE[[ base, mobiles, vivants, nuit, trains ]]
       return entree[:resultat] if entree && entree[:le] > DUREE_CACHE.ago
     end
     resultat = urls_a_sonder.map { |u| Thread.new { [ u, @sonde.call(u) ] } }.to_h(&:value)
-    VERROU.synchronize { CACHE[base] = { le: Time.current, resultat: resultat } }
+    VERROU.synchronize { CACHE[[ base, mobiles, vivants, nuit, trains ]] = { le: Time.current, resultat: resultat } }
     resultat
   end
 

@@ -1,0 +1,48 @@
+<div class="legal-page">
+  <div class="legal-container">
+
+    <div class="legal-backline">
+      <%= link_to root_path, class: "legal-back" do %>
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Retour à l'accueil
+      <% end %>
+    </div>
+
+    <header class="legal-header">
+      <h1>Sources des données</h1>
+    </header>
+
+    <section class="legal-section">
+      <h2>Le diorama de Nancy</h2>
+      <div class="legal-card">
+        <p>Relief, bâti et imagerie : IGN (BD TOPO®, BD ORTHO®, LiDAR HD), Licence Ouverte 2.0.</p>
+        <p>Données locales : Métropole du Grand Nancy, Géonancy.</p>
+        <p>Plan et tracé des voies, des canaux et des rues : © les contributeurs OpenStreetMap, licence ODbL.</p>
+      </div>
+    </section>
+
+    <section class="legal-section">
+      <h2>Les trains de la gare de Nancy-Ville</h2>
+      <div class="legal-card">
+        <p>Les trains qui passent devant la gare suivent les horaires réels du jour : horaires théoriques (GTFS) et
+        mises à jour en temps réel (GTFS-RT, prochaines heures de passage) publiés par la SNCF, sous licence
+        <strong>ODbL</strong>, via
+        <%= link_to "transport.data.gouv.fr", "https://transport.data.gouv.fr", target: "_blank", rel: "noopener", class: "legal-link" %>
+        et <%= link_to "data.sncf.com", "https://data.sncf.com", target: "_blank", rel: "noopener", class: "legal-link" %>.</p>
+        <p>Les rames sont dessinées d'après la catégorie du train (TER, TGV, Intercités), pas d'après le matériel réel.
+        Quand aucun train n'est attendu, des trains d'illustration circulent. Le diorama n'affiche ni retard ni perturbation :
+        pour voyager, consultez les services de la SNCF.</p>
+      </div>
+    </section>
+
+    <section class="legal-section">
+      <h2>Météo et ambiance</h2>
+      <div class="legal-card">
+        <p>Ensoleillement et météo : <%= link_to "Open-Meteo", "https://open-meteo.com", target: "_blank", rel: "noopener", class: "legal-link" %>.</p>
+      </div>
+    </section>
+
+  </div>
+</div>

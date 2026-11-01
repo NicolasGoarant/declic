@@ -75,6 +75,7 @@ gem 'faraday'
 gem 'rss'           # parseur RSS/Atom de base (utilisé par feedjira aussi)
 gem 'feedjira', '~> 3.2'
 gem 'icalendar'
+gem 'rubyzip', '~> 3.0'   # extrait du GTFS SNCF (Trains::GtfsExtrait) : doit être en production, pas seulement avec selenium
 gem 'httparty'
 
 gem 'kramdown'
@@ -97,4 +98,4 @@ gem "image_processing", "~> 1.14"
 gem 'httparty'
 gem 'nokogiri'
 
-gem "roo", "~> 2.10" # lecture du repérage initial (.xlsx) de la veille
+gem "roo", "~> 3.0" # lecture du repérage initial (.xlsx) de la veille

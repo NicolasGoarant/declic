@@ -10,17 +10,22 @@
 // proches se regroupent en bouquets (diorama/bouquets), sans Leaflet.markercluster.
 import { Controller } from "@hotwired/stimulus"
 import { creerProjection } from "diorama_projection"
+import { demander } from "geoloc_auto"
 import { creerCoucheDalles, creerCoucheBlanche, NIVEAU_ANNEXES } from "diorama/couches"
 import { creerCoucheAmbiance, lireAmbiance, uniformesEtat } from "diorama/ambiance"
 import { momentAuto, saisonAuto, libelleAuto } from "diorama/soleil"
 import { meteoAuto, meteoGardee } from "diorama/meteo"
 import { Precipitations } from "diorama/precipitations"
+import { Mobiles } from "diorama/mobiles"
+import { Vivants } from "diorama/vivants"
+import { Trains } from "diorama/trains"
 import { chargerLampadaires, compterLampadaires } from "diorama/lampadaires"
 import { LAMPADAIRES, PINS } from "diorama/reglages"
+import { voletHalo, haloPermis, TiltShift } from "diorama/vue"
 import { regrouper, eventail, FLEURS_MAX, respiration, echelleIcone, dispositionPin } from "diorama/bouquets"
 import { chargerContour, creerDecoupe, poserSocle } from "diorama/contour"
 import {
-  CLE_FOND, CLE_AMBIANCE, CLE_AUTO, CLES_REGLAGES, CLE_BLANCHE, CLE_STYLE, lire, ecrire, fondDeDepart, styleDeDepart
+  CLE_FOND, CLE_AMBIANCE, CLE_AUTO, CLE_CHOIX_SOUS, CLES_REGLAGES, CLE_BLANCHE, CLE_STYLE, lire, ecrire, fondDeDepart, styleDeDepart
 } from "diorama/preferences"
 import { lireDate, aujourdhui, estPasse, estAVenir, dansLaFenetre, etiquette, periode, jourCourt } from "diorama/dates"
 
@@ -64,6 +69,22 @@ const HISTOIRES = "histoires" // Categorie::HISTOIRES : les Belles Histoires
 const CLE_FAVORIS = "declic:favoris"
 const CLE_FAMILLES = "declic:familles-affichees" // même clé que explorateur_controller.js
 const ETROIT = "(max-width: 699.98px)"
+const RAYON_PROXIMITE_KM = 10 // filtre « À proximité » du volet (la liste Opportunités a son propre curseur)
+// Les vivants : leur volet (entre les bateaux, 440, et la météo, 450) et l'assombrissement de leur toile par moment
+// (leurs sprites sont cuits en plein jour ; les dalles, elles, reçoivent l'étalonnage de l'ambiance).
+const Z_VIVANTS = 445
+const SCENARIOS_TRAINS = ["gare", "ligne_droite"] // joués l'un après l'autre (diorama/trains, poserEnBoucle)
+const DELAI_FOND_NET_MS = 8000 // au plus, l'attente du fond net avant de poser bateaux, vivants et trains
+const TEINTES_VIVANTS = {
+  aube: "brightness(0.85) saturate(0.85)", "heure-doree": "brightness(0.9) sepia(0.15)",
+  "heure-bleue": "brightness(0.65) saturate(0.7)", nuit: "brightness(0.45) saturate(0.6)"
+}
+
+function distanceKm(lat1, lon1, lat2, lon2) {
+  const rad = (d) => (d * Math.PI) / 180
+  const a = Math.sin(rad(lat2 - lat1) / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lon2 - lon1) / 2) ** 2
+  return 12742 * Math.asin(Math.sqrt(a))
+}
 
 // Texte noir ou blanc selon la clarté de la couleur de catégorie (luminance relative WCAG).
 function encreSur(hex) {
@@ -79,7 +100,7 @@ export default class extends Controller {
     "carte", "alerte", "voletTitre", "poigneeTitre", "compteur", "fiches", "vide", "stats",
     "modeleFiche", "modelePin", "modelePopup", "categorie", "toutes", "recherche", "famille",
     "boutonCalques", "panneauCalques", "voileCalques", "choixFond", "rubriqueAmbiance", "choixAuto",
-    "choixReglage", "choixBlanche", "ambianceAuto", "rubriqueStyle", "choixStyle"
+    "choixReglage", "choixBlanche", "ambianceAuto", "rubriqueStyle", "choixStyle", "pillesPosition", "pillePlusProches", "pilleProximite"
   ]
 
   connect() {
@@ -88,7 +109,8 @@ export default class extends Controller {
     if (this.miniValue) { this.demarrerMini(); return }
     window.addEventListener("declic:position", this.surPositionAuto)
     if (window.declicPosition) this.surPositionAuto()
-    this.filtre = { categories: new Set(), favoris: false, texte: "", familles: this.lireFamilles() }
+    this.filtre = { categories: new Set(), favoris: false, texte: "", proximite: false, proches: false, familles: this.lireFamilles() }
+    this.position = null
     this.majBasculesFamilles()
     this.favoris = this.lireFavoris()
     this.selection = null
@@ -108,6 +130,10 @@ export default class extends Controller {
     clearTimeout(this.minuterieAide)
     this.aideZoom?.remove()
     this.precipitations?.detruire()
+    this.mobiles?.detruire()
+    this.vivants?.arreter()
+    this.tilt?.detruire()
+    this.tilt = null
     this.observateur?.disconnect()
     window.removeEventListener("declic:position", this.surPositionAuto)
     window.removeEventListener("orientationchange", this.surOrientation)
@@ -196,6 +222,21 @@ export default class extends Controller {
     const reponse = await fetch(`${this.tuilesValue.base}/${style}/manifeste.json`)
     if (!reponse.ok) throw new Error(`manifeste HTTP ${reponse.status}`)
     this.manifestes[style] = await reponse.json()
+    await this.chargerSurcouche(style)
+  }
+
+  // Les dalles refaites de ce style (voir DioramaTuiles::SURCOUCHES) : illisible, on reste sur les dalles du style.
+  async chargerSurcouche(style) {
+    const dossier = this.tuilesValue.surcouches?.[style]
+    if (!dossier) return
+    try {
+      const reponse = await fetch(this.url(dossier, "manifeste.json"))
+      if (!reponse.ok) throw new Error(`manifeste HTTP ${reponse.status}`)
+      this.surcouches ??= {}
+      this.surcouches[style] = { dossier, dalles: this.indexerDalles(await reponse.json()) }
+    } catch (erreur) {
+      console.warn(`diorama : surcouche ${dossier} illisible`, erreur)
+    }
   }
 
   // Pixel du point dans la mosaïque (niveau 8), ou null hors couverture : hors de la mosaïque, sur
@@ -281,11 +322,12 @@ export default class extends Controller {
     if (this.dioramaDispo) {
       try {
         // Les masques se lisent avant la carte : sans leur liste de dalles, on demanderait des dalles absentes (404).
-        const [, masque, arbres] = await Promise.all([
+        const [, masque, arbres, propriete] = await Promise.all([
           this.chargerManifeste(), t.disponibles.blanche ? this.chargerListe(t.masque) : null,
-          t.disponibles.arbres ? this.chargerListe(t.arbres) : null
+          t.disponibles.arbres ? this.chargerListe(t.arbres) : null,
+          t.disponibles.mobiles || t.disponibles.vivants ? this.chargerListe(t.propriete) : null
         ])
-        Object.assign(this, { dallesMasque: masque, dallesArbres: arbres })
+        Object.assign(this, { dallesMasque: masque, dallesArbres: arbres, dallesPropriete: propriete })
         this.preparerDecoupe(await contour)
       } catch (erreur) {
         console.error("diorama :", erreur)
@@ -301,7 +343,12 @@ export default class extends Controller {
     this.majCalques()
     if (this.dioramaDispo) {
       // Automatique : le soleil bouge, la météo se renouvelle (appel gardé 30 minutes).
-      this.minuterieAuto = setInterval(() => { if (this.auto) this.rafraichirAuto() }, 60000)
+      // Un choix à la main se périme quand le ciel change de moment (choixEchu) : un onglet resté ouvert la nuit repasse
+      // aussi à l'automatique au matin.
+      this.minuterieAuto = setInterval(() => {
+        if (!this.auto && this.choixEchu()) this.reprendreAuto()
+        if (this.auto) this.rafraichirAuto()
+      }, 60000)
       if (this.auto) this.rafraichirAuto()
     }
   }
@@ -496,6 +543,11 @@ export default class extends Controller {
     this.fermerPopup()
     this.precipitations?.detruire()
     this.precipitations = null
+    this.mobiles?.detruire()
+    this.mobiles = null
+    this.vivants?.arreter() // la toile part avec la carte ; les données restent, pour le retour au diorama
+    this.tilt?.detruire()
+    this.tilt = null
     this.carte.remove()
     this.popup = null
     this.fond = fond
@@ -553,6 +605,8 @@ export default class extends Controller {
         this.carte.setMaxZoom(zoomMax)
         this.poserCoucheFond(this.coucheCourante())
       }
+      this.mobiles?.majStyle() // le correctif d'occlusion des bateaux ne vaut que pour son style
+      this.vivants?.majStyle() // celui des toits jv2, pour les vivants, aussi
       this.majCalques()
     }).catch((erreur) => {
       console.error("diorama : style indisponible", erreur)
@@ -628,7 +682,13 @@ export default class extends Controller {
   // L'URL de la dalle « vraie » (webp) à une position, dans le style qui la couvre. Sans style
   // couvrant (estCouverte a déjà renvoyé false), on retombe sur le style actif pour ne pas passer
   // une URL invalide à Leaflet ; la dalle vide ainsi obtenue n'est de toute façon jamais demandée.
-  urlDalle = (coords) => this.url(this.styleDalle(coords) ?? this.style, `${coords.z}/${coords.x}/${coords.y}.webp`)
+  // Une dalle refaite se lit dans la surcouche de ce style.
+  urlDalle = (coords) => {
+    const style = this.styleDalle(coords) ?? this.style
+    const surcouche = this.surcouches?.[style]
+    const dossier = surcouche?.dalles[coords.z]?.has(`${coords.x}/${coords.y}`) ? surcouche.dossier : style
+    return this.url(dossier, `${coords.z}/${coords.x}/${coords.y}.webp`)
+  }
 
   // Repère un pan de pyramide qu'aucun style (actif ou repli) ne comble : après
   // ECHECS_CONSECUTIFS_TRACE échecs de suite sur des dalles pourtant couvertes (donc réellement
@@ -692,19 +752,24 @@ export default class extends Controller {
     if (cle === `${NEUTRE.moment}|${NEUTRE.saison}|${NEUTRE.meteo}`) return this.coucheVraie()
     const t = this.tuilesValue
     if (!this.couches[cle]) {
+      // Les cartes propres au style s'il en a, sinon celles de toits-v1 (DioramaTuiles::CARTES_AMBIANCE). La couche ne survit pas à un changement de style.
+      const cartes = t.cartes_ambiance?.[this.style] ?? t
       const publies = Promise.all(PUBLIEES.map((nom) => Object.values(etat).includes(nom) ? this.etalonnage(nom) : null))
         .then((jsons) => Object.fromEntries(PUBLIEES.map((nom, i) => [nom, jsons[i]])))
       this.couches[cle] = this.surveillerEchecs(this.decouper(creerCoucheAmbiance(this.L, {
         cle: `${this.style}|${cle}`, // le cache des dalles calculées est commun à tous les styles
         uniformes: publies.then((p) => uniformesEtat(etat, p, { arbres: Boolean(this.dallesArbres), projection: this.projection })),
         dalle: this.urlDalle,
-        propriete: (chemin) => this.url(t.propriete, `${chemin}.png`),
-        masque: (chemin) => this.url(t.masque, `${chemin}.png`),
+        propriete: (chemin) => this.url(cartes.propriete, `${chemin}.png`),
+        masque: (chemin) => this.url(cartes.masque, `${chemin}.png`),
         arbres: (chemin) => this.url(t.arbres, `${chemin}.png`),
+        // nuit-chaude-v1 : bâtiment par pixel (niveau 8), pour tirer les fenêtres allumées par bâtiment
+        batiments: t.nuit && t.disponibles?.nuit ? (chemin) => `${t.nuit}/batiments/${chemin}.png` : null,
         estCouverte: this.estCouverte, masqueListe: this.masqueListe,
         arbresListe: (coords) => this.listee(this.dallesArbres, coords),
         fenetresPeintes: (coords) => LAMPADAIRES.fenetres.peintes.includes(this.styleDalle(coords)),
         moment: etat.moment,
+        versSol: this.style === "jeu-video-v2" ? this.abrisVersSol() : null,
         lampadaires: LAMPADAIRES.intensite[etat.moment] ? this.lampadaires() : null,
         options: this.optionsCouche
       })))
@@ -712,11 +777,25 @@ export default class extends Controller {
     return this.couches[cle]
   }
 
+  // Les abris de quai effacés du fond jeu-video-v2 mais encore « volume » dans la propriété (diorama/couches, classesVersSol) :
+  // la liste vient du correctif d'occlusion des trains (même fichier, dalles_vers_sol). Jamais d'échec : sans elle, la
+  // propriété brute. ?ambiance-abris=0 : propriété brute (témoin).
+  abrisVersSol() {
+    const t = this.tuilesValue
+    if (!t.disponibles?.trains || new URLSearchParams(window.location.search).get("ambiance-abris") === "0") return null
+    this.promesseAbris ||= fetch(`${t.trains}/occlusion-trains-jv2.json`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => (j?.style === "jeu-video-v2" && j.dalles_vers_sol ? new Map(Object.entries(j.dalles_vers_sol)) : null))
+      .catch(() => null)
+    return this.promesseAbris
+  }
+
   // Les lampadaires (diorama/lampadaires), lus une fois, au premier moment éclairé ; null sans eux.
   lampadaires() {
     const t = this.tuilesValue
     this.promesseLampadaires ||= t.lumieres && t.disponibles?.lumieres
-      ? chargerLampadaires(`${t.base}/${t.lumieres}`, this.projection).catch((erreur) => {
+      ? chargerLampadaires(`${t.base}/${t.lumieres}`, this.projection,
+        t.nuit && t.disponibles?.nuit ? `${t.nuit}/flaques-places.json` : null).catch((erreur) => {
         console.error(`lampadaires : ${t.base}/${t.lumieres} illisible, la nuit reste sans lumières.`, erreur)
         return null
       })
@@ -743,16 +822,41 @@ export default class extends Controller {
     return this.etalonnages[nom]
   }
 
+  // Les calques animés (bateaux, vivants, trains) lisent une trentaine de Mio et quelque 800 dalles de propriété : au premier
+  // affichage ils attendent que les dalles de la vue soient là (ou DELAI_FOND_NET_MS), pour ne pas leur disputer le réseau.
+  attendreFondNet(couche) {
+    if (this.promesseFondNet) return
+    let fin
+    this.promesseFondNet = new Promise((ok) => { fin = ok })
+    const minuteur = setTimeout(fin, DELAI_FOND_NET_MS)
+    couche.once("load", () => { clearTimeout(minuteur); fin() })
+    this.promesseFondNet.then(() => { this.fondNet = true; if (this.carte) this.majMeteo() })
+  }
+
+  fondEnAttente() { return Boolean(this.promesseFondNet) && !this.fondNet }
+
   // Maquette blanche et ambiance sont exclusives : la blanche l'emporte tant qu'elle est cochée.
   coucheCourante() {
     return this.rendu === "blanche" ? this.coucheBlanche() : this.coucheAmbiance(this.etat)
   }
 
   // On ajoute avant de retirer : l'attribution ne doit pas s'effacer le temps d'une bascule.
+  // nuit-chaude-v1 : une couche d'ambiance éclairée amène sa couche d'émission, dans le volet du halo (diorama/vue).
+  // Le tilt-shift est posé une fois par carte du diorama, hors mini-carte ; ?tilt=0 le retire, ?halo=0 retire le halo.
   poserCoucheFond(nouvelle) {
     nouvelle.addTo(this.carte)
-    if (this.coucheFond && this.coucheFond !== nouvelle) this.carte.removeLayer(this.coucheFond)
+    this.attendreFondNet(nouvelle)
+    if (nouvelle.emission && haloPermis()) { voletHalo(this.carte); nouvelle.emission.addTo(this.carte) }
+    if (this.coucheFond && this.coucheFond !== nouvelle) {
+      this.carte.removeLayer(this.coucheFond)
+      if (this.coucheFond.emission && this.coucheFond.emission !== nouvelle.emission) this.carte.removeLayer(this.coucheFond.emission)
+    }
     this.coucheFond = nouvelle
+    if (!this.miniValue && TiltShift.permis() && this.tilt?.carte !== this.carte) {
+      this.tilt?.detruire()
+      this.tilt = new TiltShift(this.L, this.carte)
+      window.__dioramaTilt = this.tilt
+    }
   }
 
   // ─── Ambiance (moment, saison, météo) et maquette blanche, gardées sur l'appareil ─────
@@ -772,12 +876,25 @@ export default class extends Controller {
     const auto = lire(CLE_AUTO)
     const dejaRegle = (ancienne && ancienne !== "auto") || Object.values(CLES_REGLAGES).some((cle) => lire(cle) !== null)
     this.auto = auto === null ? !dejaRegle : auto === "1"
+    if (!this.auto && this.choixEchu()) this.reprendreAuto()
     this.choisis = Object.fromEntries(Object.keys(REGLAGES).map((r) => {
       const valeur = lire(CLES_REGLAGES[r]) ?? reprise[r]
       return [r, this.valide(r, valeur) ? valeur : NEUTRE[r]]
     }))
     this.meteoReelle = meteoGardee() || "clair"
     this.etat = this.etatEffectif()
+  }
+
+  // Un choix à la main (ou l'automatique coupé) ne tient que tant que le ciel réel garde le moment où il a été fait :
+  // une nuit choisie le soir ne s'impose plus au matin (26/10 : un réglage « nuit » d'un soir d'essais affichait encore la
+  // nuit à 9 h). Un choix gardé sans ce moment (d'avant le 26/10) est échu.
+  choixEchu() {
+    return lire(CLE_CHOIX_SOUS) !== momentAuto()
+  }
+
+  reprendreAuto() {
+    this.auto = true
+    ecrire(CLE_AUTO, "1")
   }
 
   // Ce qu'« Automatique » retient maintenant (sans filtre de disponibilité).
@@ -807,6 +924,7 @@ export default class extends Controller {
   choisirAuto(event) {
     this.auto = event.target.checked
     ecrire(CLE_AUTO, this.auto ? "1" : "0")
+    if (!this.auto) ecrire(CLE_CHOIX_SOUS, momentAuto())
     this.quitterBlanche()
     if (this.auto) this.rafraichirAuto()
     else this.appliquerAmbiance()
@@ -820,6 +938,7 @@ export default class extends Controller {
       this.auto = false
       ecrire(CLE_AUTO, "0")
     }
+    ecrire(CLE_CHOIX_SOUS, momentAuto())
     this.choisis = { ...this.choisis, [reglage]: event.target.value }
     Object.entries(this.choisis).forEach(([r, v]) => ecrire(CLES_REGLAGES[r], v))
     this.quitterBlanche()
@@ -862,6 +981,94 @@ export default class extends Controller {
     if (type && !this.precipitations) this.precipitations = new Precipitations(this.L, this.carte, type)
     if (ambiance) this.element.dataset.moment = this.etat.moment
     else delete this.element.dataset.moment
+    this.majMobiles(ambiance)
+    this.majVivants(ambiance)
+  }
+
+  // Les bateaux (diorama/mobiles), à tout moment comme les vivants (jusqu'au 26/10 : de jour seulement) : leurs sprites
+  // sont cuits en plein jour, la toile est donc assombrie hors du jour (TEINTES_VIVANTS) ; les bateaux en marche suivent
+  // l'heure de Nancy (aucun la nuit), ceux à quai restent.
+  // Crochet d'instrument déclaré : ?mobiles=0 ne les pose pas (témoin du banc de cadence).
+  majMobiles(ambiance) {
+    const t = this.tuilesValue
+    const coupe = new URLSearchParams(window.location.search).get("mobiles") === "0"
+    const voulu = ambiance && !coupe && Boolean(t.disponibles?.mobiles) && Boolean(this.dallesPropriete) && !this.fondEnAttente()
+    if (this.mobiles && (!voulu || this.mobiles.carte !== this.carte)) {
+      this.mobiles.detruire()
+      this.mobiles = null
+    }
+    if (voulu && !this.mobiles) {
+      this.mobiles = new Mobiles(this.L, this.carte, {
+        dossier: t.mobiles, dallesPropriete: this.dallesPropriete, contient: this.decoupe?.contient,
+        propriete: (chemin) => this.url(t.propriete, `${chemin}.png`), style: () => this.style, horaire: true
+      })
+    }
+    this.mobiles?.teinter(TEINTES_VIVANTS[this.etat.moment] || "")
+  }
+
+  // Les vivants (diorama/vivants : piétons, vélos, voitures, bus, trolleybus), sur le diorama hors maquette blanche,
+  // mêmes seuils et réglages que /labo/diorama ; effectifs selon l'heure de Nancy. Une toile dans un volet entre les
+  // bateaux (440) et la météo (450) : sous les pins (600). Les sprites sont cuits en plein jour : hors du jour, la toile
+  // est assombrie (TEINTES_VIVANTS). Lus une fois (15 Mio sur R2), après la pose de la carte ; rien si l'appareil
+  // demande moins d'animations ou économise ses données. Crochet : ?vivants=0 ne les pose pas.
+  // Les vrais trains (relais Rails /trains/prochains.json) ; ?trains-reel=0 les coupe (boucle seule), ?trains-heure=HH:MM
+  // joue les horaires de cette heure (essais, ignoré en production)
+  relaisTrains() {
+    const q = new URLSearchParams(window.location.search)
+    if (q.get("trains-reel") === "0") return null
+    const m = (q.get("trains-heure") || "").match(/^(\d{1,2}):(\d{2})$/)
+    if (!m) return "/trains/prochains.json"
+    const debut = Date.now(), depart = Number(m[1]) * 3600 + Number(m[2]) * 60   // l'heure d'essai avance avec la page
+    return () => {
+      const s = (depart + Math.round((Date.now() - debut) / 1000)) % 86400, deux = (n) => String(n).padStart(2, "0")
+      return `/trains/prochains.json?a=${deux(Math.floor(s / 3600))}:${deux(Math.floor(s / 60) % 60)}:${deux(s % 60)}`
+    }
+  }
+
+  majVivants(ambiance) {
+    const t = this.tuilesValue
+    const coupe = new URLSearchParams(window.location.search).get("vivants") === "0"
+    const voulu = ambiance && !coupe && Boolean(t.disponibles?.vivants) && Boolean(this.dallesPropriete?.[NIVEAU_REPERE]) &&
+                  Vivants.permis() && !navigator.connection?.saveData && !this.fondEnAttente()
+    if (!voulu) { this.vivants?.arreter(); return }
+    if (!this.vivants) {
+      const carte = () => this.carte
+      const propriete = (chemin) => this.url(t.propriete, `${chemin}.png`)
+      // Les trains (diorama/trains) : un décor en boucle sur la toile des vivants, triés avec eux. Rien ne se lit tant que la
+      // vue ne recoupe pas le réseau ferré de la gare ; seulement sur jeu-video-v2. Crochet : ?trains=0 ne les pose pas.
+      const trains = t.disponibles?.trains && new URLSearchParams(window.location.search).get("trains") !== "0"
+        ? new Trains({ dossier: t.trains, scenarios: SCENARIOS_TRAINS, propriete, dallesPropriete: this.dallesPropriete[NIVEAU_REPERE],
+                       style: () => this.style, relais: this.relaisTrains() })
+        : null
+      this.vivants = new Vivants({
+        dossier: t.vivants, propriete, trains,
+        dallesPropriete: this.dallesPropriete[NIVEAU_REPERE], style: () => this.style, horaire: true,
+        vue: () => {
+          const c = carte().project(carte().getCenter(), NIVEAU_REPERE), z = carte().getSize()
+          return { cx: c.x, cy: c.y, s: 2 ** (carte().getZoom() - NIVEAU_REPERE), W: z.x, H: z.y }
+        },
+        volet: () => {
+          const volet = carte().getPane("vivants") || carte().createPane("vivants")
+          volet.style.zIndex = Z_VIVANTS
+          volet.style.pointerEvents = "none"
+          return volet
+        },
+        placer: (toile) => this.L.DomUtil.setPosition(toile, carte().containerPointToLayerPoint([0, 0])),
+        cachee: () => this.zoomEnCours
+      })
+      window.__dioramaVivants = this.vivants
+      this.vivantsPrets = this.vivants.charger().catch((erreur) => { console.warn("vivants :", erreur); this.vivantsEchec = true })
+    }
+    if (this.vivantsEchec) return
+    this.vivants.teinter(TEINTES_VIVANTS[this.etat.moment] || "")
+    if (this.vivants.carte !== this.carte) {
+      // une nouvelle carte (retour du plan) : la toile change de volet, l'animation de zoom se suit sur elle
+      this.vivants.arreter()
+      this.vivants.carte = this.carte
+      this.carte.on("zoomstart", () => { this.zoomEnCours = true })
+      this.carte.on("zoomend", () => { this.zoomEnCours = false })
+    }
+    this.vivantsPrets.then(() => { if (!this.vivantsEchec && this.vivants?.carte === this.carte && this.fond === "diorama") this.vivants.demarrer() })
   }
 
   // ─── Les points et leurs marqueurs ───────────────────────────────────────────────────
@@ -890,9 +1097,7 @@ export default class extends Controller {
   }
 
   iconePin(p) {
-    // p.icone_categorie : dessine l'icône d'une autre catégorie que celle qui filtre (ex. Belles
-    // Histoires filtrées par thématique mais toujours affichées avec l'étincelle « histoires »).
-    const cat = this.categorie(p.icone_categorie || p.categorie)
+    const cat = this.categorie(p.categorie)
     const pin = this.modelePinTarget.content.firstElementChild.cloneNode(true)
     pin.style.setProperty("--c", cat.couleur)
     pin.dataset.id = p.id
@@ -1141,6 +1346,7 @@ export default class extends Controller {
     if (!this.familleAffichee(p)) return false
     if (f.favoris && !this.favoris.has(p.id)) return false
     if (f.texte && !this.correspond(p, f.texte)) return false
+    if (f.proximite && this.position && this.kmDe(p) > RAYON_PROXIMITE_KM) return false
     return true
   }
 
@@ -1214,16 +1420,17 @@ export default class extends Controller {
   // ─── Me localiser (pages Opportunités / Belles Histoires) ───────────────────────────────
   // Bouton optionnel : n'existe que sur les pages qui le posent. Pose un marqueur « vous êtes ici »
   // et prévient (événement CustomEvent) qui veut filtrer par distance, ex. explorateur_controller.
+  // La demande passe par geoloc_auto (même invite, même état de permission que l'arrivée sur la page) ;
+  // le succès revient par l'événement « declic:position » (surPositionAuto).
   localiser() {
-    if (!navigator.geolocation) { this.dispatch("localisation-echec"); return }
-    navigator.geolocation.getCurrentPosition(
-      (position) => this.appliquerPosition(position.coords.latitude, position.coords.longitude),
-      () => this.dispatch("localisation-echec"),
-      { enableHighAccuracy: false, timeout: 8000 }
-    )
+    if (window.declicPosition) { this.surPositionAuto(); return }
+    demander(() => this.dispatch("localisation-echec"))
   }
 
   appliquerPosition(latitude, longitude) {
+    const premiere = !this.position
+    this.position = { lat: latitude, lon: longitude }
+    this.filtre.proches ||= premiere // position connue : la liste passe d'office par distance, désactivable
     const latlng = this.versLatLng(latitude, longitude)
     this.marqueurMoi?.remove()
     if (latlng) {
@@ -1233,6 +1440,33 @@ export default class extends Controller {
       this.carte.setView(latlng, this.carte.getZoom())
     }
     this.dispatch("localise", { detail: { lat: latitude, lon: longitude } })
+    this.majPillesPosition()
+    if (this.filtre.proches || this.filtre.proximite) this.appliquerFiltres()
+  }
+
+  kmDe(p) {
+    if (!Number.isFinite(p.latitude) || !Number.isFinite(p.longitude)) return Infinity
+    return distanceKm(this.position.lat, this.position.lon, p.latitude, p.longitude)
+  }
+
+  // « Plus proches » et « À proximité » (volet de l'accueil) : proposés dès que la position est connue.
+  basculerPlusProches() {
+    this.filtre.proches = !this.filtre.proches
+    this.majPillesPosition()
+    this.appliquerFiltres()
+  }
+
+  basculerProximite() {
+    this.filtre.proximite = !this.filtre.proximite
+    this.majPillesPosition()
+    this.appliquerFiltres()
+  }
+
+  majPillesPosition() {
+    if (!this.hasPillesPositionTarget) return
+    this.pillesPositionTarget.hidden = !this.position
+    if (this.hasPillePlusProchesTarget) this.pillePlusProchesTarget.setAttribute("aria-pressed", String(this.filtre.proches))
+    if (this.hasPilleProximiteTarget) this.pilleProximiteTarget.setAttribute("aria-pressed", String(this.filtre.proximite))
   }
 
   // Position obtenue d'office à l'arrivée (geoloc_auto.js) : mêmes effets que « Me localiser », sans jamais
@@ -1298,13 +1532,17 @@ export default class extends Controller {
       .sort((a, b) => Math.max(a.debut, jour) - Math.max(b.debut, jour) || parDistance(a, b))
     const sansDate = visibles.filter((p) => !p.debut && !p.fin).sort(parDistance)
 
+    const parProximite = this.filtre.proches && this.position
     let titre = "Au centre de la vue"
     if (!aVenir.length) titre = "Toujours d'actualité"
+    if (parProximite) titre = "Plus proches de vous"
     const titreVolet = this.filtre.favoris ? "Vos favoris" : this.filtre.texte ? "Résultats" : titre
     this.voletTitreTarget.textContent = titreVolet
     this.poigneeTitreTarget.textContent = titreVolet
 
-    let liste = [...aVenir, ...sansDate]
+    let liste = parProximite
+      ? [...aVenir, ...sansDate].sort((a, b) => this.kmDe(a) - this.kmDe(b))
+      : [...aVenir, ...sansDate]
     if (this.selection) {
       const choisi = liste.find((p) => p.id === this.selection)
       if (choisi) liste = [choisi, ...liste.filter((p) => p !== choisi)]

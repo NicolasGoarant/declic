@@ -8,6 +8,7 @@ pin_all_from "app/javascript/controllers", under: "controllers"
 
 pin "map", to: "map.js"
 pin "geoloc_auto", to: "geoloc_auto.js"
+pin "bandeau_position", to: "bandeau_position.js"
 pin "diorama_projection", to: "diorama_projection.js"
 
 # Page d'accueil diorama (/labo/accueil). Leaflet est importé à la demande par le contrôleur

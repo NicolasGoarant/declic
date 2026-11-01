@@ -22,6 +22,8 @@ class FichesPartageTest < ActionDispatch::IntegrationTest
     image = css_select("meta[property='og:image']").first["content"]
     assert_match %r{\Ahttp://www\.example\.com/assets/fallback-opportunity-ecologiser-.*\.jpg\z}, image
     assert_select "[data-controller=diorama][data-diorama-mini-value=true]"
+    # iconePin (diorama_controller.js) anime .pin-vol : sans lui, la mini-carte reste vide.
+    assert_select "template[data-diorama-target=modelePin] .pin-vol .pin-picto"
   end
 
   test "histoire : image de repli des Belles Histoires" do

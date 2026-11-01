@@ -33,7 +33,11 @@ Rails.application.routes.draw do
   get "/confidentialite",  to: "pages#confidentialite", as: :confidentialite
   get "/presse",           to: "pages#presse",          as: :presse
   get "/faq",              to: "pages#faq",             as: :faq
+  get "/sources",          to: "pages#sources",         as: :sources
   get "contact", to: "pages#contact"
+
+  # Horaires des trains de Nancy-Ville pour le diorama (relais GTFS + GTFS-RT, voir Trains::Prochains)
+  get "trains/prochains", to: "trains#prochains", as: :trains_prochains, defaults: { format: :json }
 
   # Page de test du pyramide de tuiles diorama (non liée depuis la navigation)
   get "labo/diorama", to: "labo#diorama", as: :labo_diorama

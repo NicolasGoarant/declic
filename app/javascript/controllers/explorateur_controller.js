@@ -4,6 +4,7 @@
 // labo/_filtre_categories) ; la géolocalisation est partagée via l'événement `diorama:localise`
 // (bouton « Me localiser » de la carte) ou demandée ici directement (pastille « À proximité »).
 import { Controller } from "@hotwired/stimulus"
+import { demander } from "geoloc_auto"
 
 const CLE_FAVORIS = "declic:favoris" // même clé que diorama_controller.js et fiche_controller.js
 const CLE_FAMILLES = "declic:familles-affichees" // même clé que diorama_controller.js
@@ -89,29 +90,32 @@ export default class extends Controller {
 
   // ─── À proximité : demande sa propre géolocalisation si « Me localiser » n'a pas déjà répondu ──
   basculerProximite(evenement) {
-    if (!this.position) { this.demanderLocalisation(evenement.currentTarget); return }
+    if (!this.position) { this.demanderLocalisation(); return }
     this.filtre.proximite = !this.filtre.proximite
     this.majPilleProximite()
     this.rendre()
   }
 
-  demanderLocalisation(bouton) {
-    if (!navigator.geolocation) { this.signalerEchecLocalisation(); return }
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        this.surLocalisation({ detail: { lat: position.coords.latitude, lon: position.coords.longitude } })
-        this.filtre.proximite = true
-        bouton?.setAttribute("aria-pressed", "true")
-        this.rendre()
-      },
-      () => this.signalerEchecLocalisation(),
-      { enableHighAccuracy: false, timeout: 8000 }
-    )
+  // La demande passe par geoloc_auto (partagée avec « Me localiser ») : la position revient par diorama:localise.
+  demanderLocalisation() {
+    this.proximiteEnAttente = true
+    demander(() => { this.proximiteEnAttente = false; this.signalerEchecLocalisation() })
   }
 
   // Écoute diorama:localise (bouton « Me localiser » de la carte) : une seule permission pour les deux.
   surLocalisation({ detail: { lat, lon } }) {
+    const premiere = !this.position
     this.position = { lat, lon }
+    // Position connue pour la première fois : les résultats passent par distance (le menu reste modifiable).
+    if (premiere && this.hasTriTarget && this.triTarget.querySelector('option[value="proches"]')) {
+      this.filtre.tri = "proches"
+      this.triTarget.value = "proches"
+    }
+    if (this.proximiteEnAttente) { // pastille « À proximité » cliquée avant que la position soit connue
+      this.proximiteEnAttente = false
+      this.filtre.proximite = true
+      this.majPilleProximite()
+    }
     if (this.hasRayonBlocTarget) this.rayonBlocTarget.hidden = false
     if (this.hasProximiteMessageTarget) this.proximiteMessageTarget.hidden = true
     this.rendre()
@@ -177,9 +181,6 @@ export default class extends Controller {
     }
     if (t === "date") {
       return [...liste].sort((a, b) => new Date(a.debut || 8640000000000000) - new Date(b.debut || 8640000000000000))
-    }
-    if (t === "thematique") {
-      return [...liste].sort((a, b) => (a.categorie_libelle || "").localeCompare(b.categorie_libelle || "", "fr"))
     }
     // recentes (par défaut) : les fiches les plus récemment publiées d'abord.
     return [...liste].sort((a, b) => new Date(b.cree_le || 0) - new Date(a.cree_le || 0))

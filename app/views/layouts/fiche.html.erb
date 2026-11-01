@@ -22,6 +22,7 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
     <%= stylesheet_link_tag "accueil" %>
+    <%= stylesheet_link_tag "bandeau_position" %>
     <%= stylesheet_link_tag "fiche" %>
     <%= yield :feuilles %>
 
@@ -30,6 +31,7 @@
 
   <body class="acc-corps" data-turbo="false">
     <div class="acc">
+      <%= render "shared/bandeau_position" if content_for?(:bandeau_position) %>
       <%= render "accueil/barre_haute", courant: yield(:onglet_courant) %>
       <%= yield %>
       <%= render "accueil/pied" %>

@@ -27,7 +27,6 @@ class Story < ApplicationRecord
   validate :points_forts_limites
   validate :accord_avant_mise_en_ligne
   before_save :actualiser_mention_accord, if: :will_save_change_to_accord_obtenu_at?
-  validates :thematique, inclusion: { in: Opportunity::CATEGORIES }, allow_blank: true
 
   # « Ce qu'il faut retenir » : au plus 3 points {icone, titre, texte} (voir PointsForts).
   def points_forts_liste = PointsForts.normaliser(points_forts)
@@ -43,29 +42,13 @@ class Story < ApplicationRecord
     self.points_forts = PointsForts.normaliser(blocs).first(PointsForts::MAX)
   end
 
-  # Catégorie d'opportunité de l'histoire : la thématique choisie dans l'admin, sinon celle que
-  # portent ses étiquettes (clé ou libellé : « ecologiser », « Écologiser »…), sinon nil.
-  def categorie_opportunite
-    return thematique if thematique.present? && Opportunity::CATEGORIES.include?(thematique)
-
-    etiquettes = tags.to_s.split(/[;,]/).map { |t| t.strip.parameterize }
-    Opportunity::CATEGORIES.find do |cle|
-      etiquettes.include?(cle) || etiquettes.include?(Categorie.trouver(cle).libelle.parameterize)
-    end
-  end
-
-  # « Des opportunités pour avoir ton déclic » : actives et pas terminées, de la catégorie de
-  # l'histoire (thématique, puis étiquettes), complétées par les plus proches géographiquement.
+  # « Des opportunités pour avoir ton déclic » : actives et pas terminées, les plus proches
+  # géographiquement de l'histoire. Une Belle Histoire n'a pas de catégorie.
   def opportunites_proches(limite = 3)
     base = Opportunity.publiques.actuelles
-    choix = categorie_opportunite ? base.where(category: categorie_opportunite).limit(limite).to_a : []
-    return choix if choix.size >= limite
+    return base.limit(limite).to_a unless latitude.present? && longitude.present?
 
-    reste = base.where.not(id: choix.map(&:id))
-    if latitude.present? && longitude.present?
-      reste = reste.with_coords.to_a.sort_by { |o| (o.latitude.to_f - latitude)**2 + ((o.longitude.to_f - longitude) * Math.cos(latitude * Math::PI / 180))**2 }
-    end
-    choix + reste.first(limite - choix.size)
+    base.with_coords.to_a.sort_by { |o| (o.latitude.to_f - latitude)**2 + ((o.longitude.to_f - longitude) * Math.cos(latitude * Math::PI / 180))**2 }.first(limite)
   end
 
   # « D'autres belles histoires ».
@@ -118,7 +101,7 @@ class Story < ApplicationRecord
   def a_la_une? = tags.to_s.split(/[;,]/).any? { |t| t.strip.parameterize == ETIQUETTE_A_LA_UNE }
 
   def self.pour_la_une(limite = 3)
-    recentes = active.order(happened_on: :desc, created_at: :desc)
+    recentes = active.with_attached_image.with_attached_photos.order(happened_on: :desc, created_at: :desc)
     choisies = recentes.where("LOWER(tags) LIKE ?", "%la une%").select(&:a_la_une?).first(limite)
     choisies.presence || recentes.limit(limite).to_a
   end

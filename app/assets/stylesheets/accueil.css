@@ -958,3 +958,12 @@ body.acc-corps {
 .bascules-familles-titre { color: #6b6880; }
 .bascule-famille { min-height: 36px; padding: 4px 12px; border: 1px solid #c9c6d6; border-radius: 999px; background: #fff; color: inherit; font: inherit; cursor: pointer; }
 .bascule-famille[aria-pressed="true"] { border-color: #5b3fd6; background: #efebfc; color: #5b3fd6; font-weight: 600; }
+
+/* Volet : « Plus proches » / « À proximité », visibles quand la position est connue. */
+.acc-pilles-position { display: flex; gap: 6px; flex-wrap: wrap; }
+.acc-pilles-position[hidden] { display: none; }
+.acc-pilles-position button {
+  border: 1px solid var(--violet-pale); border-radius: 999px; padding: 4px 10px; cursor: pointer;
+  background: #fff; color: var(--violet); font: inherit; font-size: 13px; font-weight: 700;
+}
+.acc-pilles-position button[aria-pressed="true"] { background: var(--violet); border-color: var(--violet); color: #fff; }

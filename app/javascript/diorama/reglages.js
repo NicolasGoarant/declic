@@ -55,11 +55,15 @@ export const MOMENTS = {
   // moins de 8° et 0,1 des cibles ci-dessus ; ombres à moins de 8° en teinte mais en dessous de la cible
   // en saturation (chroma des pixels d'origine, souvent trop faible — pas un défaut de la rotation elle-
   // même : cf. NOTES.md pour le suivi).
+  // nuit-chaude-v1 : la dominante bleue venait de trois réglages à la fois — température 21 000 K, voile des
+  // ombres [40, 26, 110] à 0,88, cible d'ombre bleu profond — et la clarté de 0,75 rendait une nuit plus claire que
+  // la référence (clarté médiane 104,7 contre 75,2). Valeurs du banc nuit-chaude-v1 (nancy-3d, validées sur le pilote le 2026-10-25).
   nuit: {
-    temperature: 21000, teinte: -0.1, saturation: 1.28, contraste: 1.08, luminosite: 0.75,
-    voile: { couleur: [40, 26, 110], part: 0.88, ombres: true },
-    // Parcs et pelouses (pixels de feuillage) : bleu-vert profond, jamais noirs.
-    parcs: { couleur: [20, 78, 92], part: 0.4 }
+    temperature: 6500, teinte: 0.02, saturation: 1.12, contraste: 1.4,
+    luminosite: 0.55,
+    voile: { couleur: [70, 40, 22], part: 0.6, ombres: true },
+    // Parcs et pelouses : vert sombre chaud, jamais noirs.
+    parcs: { couleur: [34, 62, 30], part: 0.4 }
   },
   // Nuit profonde : l'ancien étalonnage v6 (« Terrasse du café le soir »), fond bleu outremer saturé et
   // voile plat, ≈ 60 % de la clarté du jour. Conservé pour compatibilité mais retiré du panneau (absent
@@ -88,9 +92,9 @@ export const PUBLIES = { "heure-bleue": { force: 1 }, hiver: { force: 1 } }
 // plafond de clarté L*) les rues et façades éclairées, et les ombres — plutôt que le mélange RGB
 // « max »/« écran » qui blanchissait les zones de recouvrement (rues et façades viraient au rose pâle).
 export const NUIT_CIBLES = {
-  rue: [248, 219, 113],
-  facade: [208, 168, 101],
-  ombre: [8, 17, 22]
+  rue: [248, 214, 128],
+  facade: [236, 186, 112],
+  ombre: [34, 20, 12]       // nuit-chaude-v1 : brun profond au lieu du bleu (8, 17, 22)
 }
 
 // L'automne ne teinte QUE les feuillages.
@@ -185,7 +189,7 @@ export const LAMPADAIRES = {
     aplatissement: APLATI,
     poids: 0.5,               // apport d'une nappe à la carte de lumière (0-1, au centre)
     gain: 2.8,                // saturation douce de la somme
-    doseTeinte: 1.8,           // v7b : dosage du virage de teinte (a*/b*) vers NUIT_CIBLES.rue (>1 : sature tôt)
+    doseTeinte: 1.8,         // v7b : dosage du virage de teinte (a*/b*) vers NUIT_CIBLES.rue (>1 : sature tôt)
     // Correctif place/gare (v7b) : lift ADDITIF de clarté (L*), en points L*, plafonné à la cible dans le
     // shader — PAS un mélange vers la cible (qui écrasait toute variation locale dès que w approchait 1
     // sur une large zone, d'où l'aplat plat sur la place Stanislas et le carrefour de la gare).
@@ -198,8 +202,13 @@ export const LAMPADAIRES = {
     aplatissement: APLATI,
     poids: 0.4,
     gain: 2.6,
-    rayonnement: 0.55         // part du cœur ajoutée en mélange « écran »
+    rayonnement: 0.55,        // part du cœur ajoutée en mélange « écran »
+    emission: 0.35 // nuit-chaude-v1 : part du cœur versée au canevas d'émission (halo de vue)
   },
+  // nuit-chaude-v1 : ombre de contact au sol (px du niveau 8) — au pied des façades, et en plus dans les rues
+  // resserrées (bâti au-dessus ET au-dessous à l'écran à moins de `rue_px` en tout).
+  contact: { portee_px: 14, decroissance_px: 4,
+    pied: 0.2, rue: 0.12, rue_px: 26 },
   feu: {
     couleur: "#FFF4DC",       // cœur presque blanc, halo chaud autour
     diametre_px: [2, 3],      // à l'écran : ne descend pas sous 2 px, ne dépasse pas 3 px (hors halo)
@@ -216,6 +225,10 @@ export const LAMPADAIRES = {
   places: {
     poids: 0.65,
     gain: 2,
+    // nuit-chaude-v2 : flaques au pied des lanternes Géonancy des places (couche « nuit », flaques-places.json :
+    // places OSM qui portent au moins une lanterne, et les trois ci-dessous) ; le disque de la place descend alors à `fond`. Rayon : 2,4 m par mètre de mât (lanternes.json déclare 1,6 ;
+    // le balayage v2 croît jusqu'au bord 2,4, retenu à l'œil — choix déclaré, rapport v2 § 1).
+    flaques: { fond: 0.2, poids: 0.8, rayon_par_m: 2.4 },
     liste: [
       { nom: "place Stanislas", lat: 48.69355, lon: 6.18325, rayon_m: 75, altitude_m: 206 },
       { nom: "place de la Carrière", lat: 48.69565, lon: 6.18225, rayon_m: 95, altitude_m: 206 },
@@ -253,7 +266,13 @@ export const LAMPADAIRES = {
     // Styles dont les dalles portent leurs fenêtres peintes : la nuit allume celles-là, au lieu de la
     // grille ci-dessus, tirée des masques de toits-v1 et mal calée sur eux (grain jaune sur les toits).
     peintes: ["jeu-video-v2"],
-    vitre_contraste: 0.12     // une vitre peinte : au moins 0,12 de clarté sous son mur, tout autour
+    vitre_contraste: 0.12, // une vitre peinte : au moins 0,12 de clarté sous son mur, tout autour
+    vitre_cotes: 3,             // nuit-chaude-v1 : côtés plus clairs exigés (4 avant)
+    vitre_ecart_px: 2,          // nuit-chaude-v1 : à quelle distance (px du niveau 8) on cherche ce mur
+    // nuit-chaude-v1 : tirage PAR BÂTIMENT (couche annexe `batiments`) — `eteints` des bâtiments n'ont aucune
+    // fenêtre allumée ; les autres tirent leur part dans [part_min, part_max] selon u^exposant.
+    par_batiment: { part_min: 0.08, part_max: 0.85, exposant: 1.4,
+      eteints: 0.15 }
   },
   // Correctif gare : les quais et murs de soutènement des voies sont classés bâti avec du sol dégagé
   // juste en dessous (le ballast, le quai) et reçoivent donc à tort des fenêtres. Faute de masque
@@ -265,6 +284,22 @@ export const LAMPADAIRES = {
     b: { lat: 48.6889, lon: 6.1780 },
     demi_largeur_m: 130
   }
+}
+
+// Effets de VUE (nancy-3d nuit-chaude-v1, validés sur le pilote le 2026-10-25) : ils portent sur la vue
+// assemblée, pas sur la dalle — donc ne connaissent pas les bords de dalle, et ne demandent rien aux tuiles
+// (nancy-3d docs/industrialisation.md § 5c : le tilt-shift vit dans la vue du consommateur).
+//   halo : le canevas d'ÉMISSION de chaque dalle (fenêtres allumées, cœurs et feux des lampadaires) dans un volet
+//     flouté (σ px d'écran) et éclairci (gain), posé en « écran » sur le fond — nuit et heure bleue seulement ;
+//   tilt_shift (« T1 ») : flou dont l'écart-type croît de 0 dans une bande nette horizontale centrée (part
+//     `bande` de la demi-hauteur) à `sigma_max_px` aux bords haut et bas, en smoothstep. En axonométrie la
+//     profondeur d'un point du SOL est affine en sa ligne d'écran : le flou par ligne suit le plan du sol.
+//     Réalisé par `niveaux` volets en backdrop-filter emboîtés (les variances s'ajoutent) ; ?tilt=0 le retire.
+//     2 volets au lieu de 4 n'apporte rien de mesurable en cadence (×1,15 puis ×0,99, rapport-v6) : on garde 4.
+//   halo.mode : « dalle » (flou appliqué une fois par dalle) ou « vue » (volet filtré) — voir vue.js#haloMode.
+export const VUE = {
+  halo: { sigma_px: 3, gain: 1.8, mode: "dalle" },
+  tilt_shift: { bande: 0.45, sigma_max_px: 2, niveaux: 4 }
 }
 
 // Les pins et les fleurs des bouquets : taille visible unique, et tous les effets (transformations
