@@ -59,6 +59,8 @@
         <% else %>
           <%= link_to "Rédiger →", admin_veille_candidate_path(candidate), class: "btn" %>
         <% end %>
+        <%# Aperçu : la page du candidat, ancrée sur la vraie fiche publique rendue en dessous, avec le formulaire de correction. %>
+        <%= link_to "Aperçu", admin_veille_candidate_path(candidate, anchor: "apercu"), class: "btn secondary" %>
         <%= button_to "Écarter", ecarter_admin_veille_candidate_path(candidate), method: :patch, class: "btn secondary" %>
         <% unless candidate.a_verifier? %>
           <%= button_to "À vérifier", a_verifier_admin_veille_candidate_path(candidate), method: :patch, class: "btn secondary" %>

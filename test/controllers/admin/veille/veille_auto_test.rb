@@ -162,6 +162,31 @@ module Admin
         assert_equal "pending", c.reload.status
       end
 
+      test "l'aperçu d'une opportunité à la commune seule rend la fiche sans repère précis, sans rien enregistrer" do
+        c = enrichi(title: "Atelier couture", summary: "Un atelier ouvert à toutes.", adresse: nil)
+        assert_no_difference [-> { Opportunity.count }, -> { Story.count }] do
+          get apercu_admin_veille_candidate_path(c), headers: auth
+        end
+        assert_response :success
+        assert_select "main.fch h1", text: /Atelier couture/
+        assert_select ".fch-texte", text: /Un atelier ouvert à toutes/
+        assert_no_match(/48\.691955/, response.body)
+        assert_equal "pending", c.reload.status
+      end
+
+      test "chaque ligne de la file à valider a un lien « Aperçu » vers la fiche rendue du candidat" do
+        a_valider = enrichi(title: "Atelier couture")
+        histoire = enrichi(item_type: "belle_histoire", title: "Le jardin de Léa", draft_body: "Un récit.")
+        publie = enrichi(title: "Déjà en ligne", status: "publie")
+
+        get "/admin/veille", headers: auth
+        assert_select "tr##{dom_id(a_valider)} a[href=?]", "#{admin_veille_candidate_path(a_valider)}#apercu", text: "Aperçu"
+        assert_select "tr##{dom_id(histoire)} a[href=?]", "#{admin_veille_candidate_path(histoire)}#apercu", text: "Aperçu"
+
+        get "/admin/veille", params: { status: "publie" }, headers: auth
+        assert_select "tr##{dom_id(publie)} a", text: "Aperçu", count: 0
+      end
+
       test "l'aperçu d'une belle histoire rend la page Belle Histoire" do
         c = enrichi(item_type: "belle_histoire", title: "Le jardin de Léa", summary: "Un chapeau.",
                     draft_body: "Un récit inspirant.\n\nSource : X")
