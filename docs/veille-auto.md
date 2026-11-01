@@ -1,6 +1,6 @@
 # Veille automatique (opportunités et belles histoires)
 
-> **Statut (01/11/2026) : en production** sur `www.declic.site` (app EU `declic-nancy-paris-eu`, v21, commit 4bf7dd7). Les migrations sont passées. L'écran `/admin/veille` est derrière le mot de passe admin. Pas encore actifs en prod : la clé `ANTHROPIC_API_KEY` (donc ni enrichissement ni rédaction par l'IA), le Scheduler `veille:quotidien` et les sources `veille_sources` ; la presse se lit à la main sur `/admin/veille/presse`.
+> **Statut (01/11/2026) : en production** sur `www.declic.site` (app EU `declic-nancy-paris-eu`, v21, commit 4bf7dd7). Les migrations sont passées. L'écran `/admin/veille` est derrière le mot de passe admin. IA active (`ANTHROPIC_API_KEY` posée le 01/11, plafond 15 $/mois). Scheduler Heroku ajouté ; la tâche `rake veille:quotidien` (05:00 UTC) est à créer à la main dans son tableau de bord. `veille_sources` est vide : les sources du quotidien sont dans le code. La presse reste en lecture manuelle sur `/admin/veille/presse`.
 
 Branche `veille-auto` (depuis `main` + `veille-belles-histoires`). Écran : `/admin/veille`. Rien n'est publié sans clic « Valider », et le brouillon créé est inactif.
 
