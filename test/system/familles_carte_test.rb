@@ -12,16 +12,16 @@ class FamillesCarteTest < ApplicationSystemTestCase
     end
   end
 
-  test "les familles masquées n'apparaissent qu'à la demande du visiteur, qui retrouve son choix" do
+  test "la famille masquée n'apparaît qu'à la demande du visiteur, qui retrouve son choix" do
     DioramaTuiles.stub(:new, @tuiles) do
       visit labo_opportunites_path
       assert_text "Atelier vélo"
       assert_no_text "Vide-grenier du quartier"
-      assert_no_text "Conférence sur le climat"
+      assert_text "Conférence sur le climat" # « Conférences et visites » s'affiche sans bascule
+      assert_no_button "Conférences et visites"
 
       click_button "Brocantes, foires et fêtes"
       assert_text "Vide-grenier du quartier"
-      assert_no_text "Conférence sur le climat"
       assert_selector ".bascule-famille[aria-pressed='true']", count: 1
 
       visit labo_opportunites_path

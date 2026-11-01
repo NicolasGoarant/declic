@@ -14,9 +14,9 @@ class OpportunityFamilleTest < ActiveSupport::TestCase
     assert_not Opportunity.new(title: "T", description: "D", category: "rencontres").valid?
   end
 
-  test "sans_familles_masquees retire les deux familles masquées, garde le reste et les fiches sans famille" do
-    gardees = [fiche(nil), fiche("pratiquer")]
-    masquees = [fiche("petite_manifestation"), fiche("decouvrir")]
+  test "sans_familles_masquees retire les brocantes, garde le reste (conférences et visites comprises) et les fiches sans famille" do
+    gardees = [fiche(nil), fiche("pratiquer"), fiche("decouvrir")]
+    masquees = [fiche("petite_manifestation")]
     resultat = Opportunity.sans_familles_masquees
     gardees.each { |o| assert_includes resultat, o }
     masquees.each { |o| assert_not_includes resultat, o }
@@ -27,7 +27,8 @@ class OpportunityFamilleTest < ActiveSupport::TestCase
   end
 
   test "famille_masquable ne vaut que pour les familles masquées" do
-    assert_equal "decouvrir", fiche("decouvrir").famille_masquable
+    assert_equal "petite_manifestation", fiche("petite_manifestation").famille_masquable
+    assert_nil fiche("decouvrir").famille_masquable
     assert_nil fiche("pratiquer").famille_masquable
     assert_nil fiche(nil).famille_masquable
   end

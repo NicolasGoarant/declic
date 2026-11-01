@@ -40,7 +40,7 @@ class Opportunity < ApplicationRecord
     "decouvrir" => "Conférences et visites", "petite_manifestation" => "Brocantes, foires et fêtes"
   }.freeze
   # Masquées par défaut sur la carte, jamais retirées de la base : la fiche reste en ligne et le visiteur peut les afficher.
-  FAMILLES_MASQUEES = %w[petite_manifestation decouvrir].freeze
+  FAMILLES_MASQUEES = %w[petite_manifestation].freeze
   scope :active,      -> { where(is_active: true) }
   # FACE PUBLIQUE : actives, et — pour la seule famille « petite_manifestation » (brocante, vide-grenier,
   # foire, fête) — visibles de 00h00 le 7e jour avant le début jusqu'au lendemain du dernier jour (ends_on,

@@ -56,7 +56,7 @@ class LaboOpportunitesTest < ActionDispatch::IntegrationTest
 
     assert_equal({ "Vide-grenier" => "petite_manifestation", "Atelier" => nil }, points_json.to_h { |p| [p["titre"], p["masquable"]] })
     assert_select "button.bascule-famille", text: /Brocantes, foires et fêtes/
-    assert_select "button.bascule-famille[aria-pressed=false]", 2
+    assert_select "button.bascule-famille[aria-pressed=false]", 1
   end
 
   test "une opportunité inactive n'apparaît pas" do
