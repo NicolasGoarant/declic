@@ -27,7 +27,8 @@ class DioramaTuiles
   # autres restent dans le style. Tant que ce manifeste ne répond pas, rien ne change ; retirer la ligne rend l'ancien rendu.
   # bornes2 (nancy-3d rapports/jeu-video-v2/propriete-jv2) : tout coupes1 (les « échelles » des coupes intérieures de mansardes
   # retirées) plus les 10 bâtiments à faux toit sur du vide, toits bornés à l'emprise.
-  SURCOUCHES = { "jeu-video-v2" => "jeu-video-v2-bornes2" }.freeze
+  # scissions1 (nancy-3d rapports/jeu-video-v2/scissions) : bornes2 plus Le Tilleul Argenté en trois blocs et quatre moignons, percé en 2026.
+  SURCOUCHES = { "jeu-video-v2" => "jeu-video-v2-scissions1" }.freeze
   MASQUE = "masque-bati".freeze             # {z}/{x}/{y}.png, niveaux 6 à 8, centre-ville
   PROPRIETE = "propriete-toits-v1".freeze   # 8/{x}/{y}.png (pas de dossier dalles/)
   # Les deux cartes ci-dessus décrivent le dessin de toits-v1. Là où un style dessine un volume sur ce que toits-v1 laissait au sol,
@@ -35,7 +36,7 @@ class DioramaTuiles
   # lues par la seule ambiance, à ce style ; bateaux, vivants, trains et maquette blanche gardent les leurs. Tant que l'un des deux
   # manifestes ne répond pas, rien ne change ; retirer la ligne rend l'ancien rendu.
   # nancy-3d rapports/jeu-video-v2/propriete-jv2.
-  CARTES_AMBIANCE = { "jeu-video-v2" => { propriete: "propriete-jv2-v3", masque: "masque-bati-jv2-v3" } }.freeze
+  CARTES_AMBIANCE = { "jeu-video-v2" => { propriete: "propriete-jv2-v4", masque: "masque-bati-jv2-v4" } }.freeze
   AMBIANCES_DOSSIER = "ambiances".freeze    # {nom}-actuelle.json (format nancy-3d/ambiance)
   AMBIANCES = %w[heure-bleue automne hiver].freeze
   ARBRES = "masque-arbres".freeze           # {z}/{x}/{y}.png, niveaux 6 à 8, blanc = feuillage (automne)
