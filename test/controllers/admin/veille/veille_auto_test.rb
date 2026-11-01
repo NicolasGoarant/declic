@@ -142,6 +142,13 @@ module Admin
         assert_equal "petite_manifestation", c.opportunity.famille
       end
 
+      test "la saisie d'une adresse est enregistrée avec la commune" do
+        c = enrichi(commune: nil)
+        patch completer_admin_veille_candidate_path(c), params: { commune: "Nancy", adresse: "12 rue Exemple", summary: c.summary }, headers: auth
+        assert_equal "12 rue Exemple", c.reload.adresse
+        assert_equal "publie", c.status, "adresse introuvable (réseau coupé en test) : publiée quand même, au centre de la commune"
+      end
+
       test "un élément à localiser reste en attente tant que la commune manque ou n'est pas admise" do
         c = enrichi(commune: nil)
         assert_no_difference -> { Opportunity.count } do

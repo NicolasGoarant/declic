@@ -8,6 +8,13 @@ require "rails/test_help"
 # depuis le lookup réel configuré dans `config/initializers/geocoder.rb`.
 Geocoder.configure(lookup: :test, ip_lookup: :test)
 
+# Idem pour l'API Adresse (BAN) : par défaut elle « tombe en panne », donc repli sur la commune.
+# Un test qui veut une adresse précise installe son faux client (voir AdresseBanTest).
+class ClientBanIndisponible
+  def get(*, **) = raise(Veille::Http::Error, "réseau coupé en test")
+end
+Veille::AdresseBan.client = ClientBanIndisponible.new
+
 module ActiveSupport
   class TestCase
     # Run tests in parallel with specified workers
@@ -17,7 +24,10 @@ module ActiveSupport
     fixtures :all
 
     # Chaque test part sans stub hérité du précédent.
-    teardown { Geocoder::Lookup::Test.reset }
+    teardown do
+      Geocoder::Lookup::Test.reset
+      Veille::AdresseBan.client = ClientBanIndisponible.new
+    end
 
     # Add more helper methods to be used by all tests here...
   end

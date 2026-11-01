@@ -30,6 +30,7 @@ module Veille
       raise Incomplet, "Il manque #{manques.to_sentence} : complète l'élément (ou écarte-le)." if manques.any?
 
       verifier_recit if @c.histoire?
+      @point = AdresseBan.localiser(@c.adresse, @c.commune)
 
       Candidate.transaction do
         fiche = @c.histoire? ? creer_histoire : creer_opportunite
@@ -50,7 +51,7 @@ module Veille
       Opportunity.transaction do
         opp = Opportunity.create!(
           title: @c.title, description: description_opportunite, category: @c.declic_category.presence || "rencontres",
-          location: @c.commune, city: @c.commune, starts_on: @c.starts_on, ends_on: @c.ends_on,
+          **lieu, city: @c.commune, starts_on: @c.starts_on, ends_on: @c.ends_on,
           schedule_text: @c.schedule_text, source: "veille", external_id: Digest::SHA1.hexdigest(@c.url),
           source_name: @c.source_label, source_url: @c.url, cta_button_text: LIEN_TEXTE, cta_button_url: @c.url,
           famille: (@c.famille if Opportunity::FAMILLES.key?(@c.famille)), is_active: true
@@ -61,6 +62,15 @@ module Veille
       end
     end
 
+    # Adresse précise trouvée : le repère va à l'adresse. Sinon (adresse vide, introuvable, API en
+    # panne), la commune seule, géocodée par le modèle comme avant : la publication n'est jamais bloquée.
+    def lieu
+      return { location: @c.commune } if @point.nil?
+
+      { location: "#{@c.adresse.squish}, #{@c.commune}", address: @c.adresse.squish,
+        latitude: @point.latitude, longitude: @point.longitude }
+    end
+
     def description_opportunite
       [@c.summary.presence || @c.excerpt, "#{LIEN_TEXTE} : #{@c.url}"].compact_blank.join("\n\n")
     end
@@ -68,7 +78,7 @@ module Veille
     # Story#purge_veille_candidate_full_text efface le tampon à la création.
     def creer_histoire
       Story.create!(
-        title: @c.title, chapo: @c.summary, body: @c.draft_body, location: @c.commune,
+        title: @c.title, chapo: @c.summary, body: @c.draft_body, **lieu,
         happened_on: @c.published_on, source_url: @c.url,
         source_name: @c.source_label, source_published_on: @c.published_on, veille_candidate: @c,
         accord_obtenu_at: @c.accord_obtenu_at, is_active: true

@@ -103,7 +103,7 @@ module Admin
       def completer
         return localiser if @candidate.a_localiser? && params[:commune].to_s.strip.present?
 
-        @candidate.update!(params.permit(:commune, :summary))
+        @candidate.update!(params.permit(:commune, :adresse, :summary))
         redirect_to admin_veille_candidate_path(@candidate), status: :see_other, notice: "Commune et résumé enregistrés."
       end
 
@@ -118,7 +118,7 @@ module Admin
                              alert: "« #{saisie} » n'est pas une commune du périmètre : rien n'a été enregistré ni publié."
         end
 
-        @candidate.update!(params.permit(:summary).merge(commune: ::Veille::Territoire.canonique(saisie)))
+        @candidate.update!(params.permit(:summary, :adresse).merge(commune: ::Veille::Territoire.canonique(saisie)))
         fiche = ::Veille::Validation.new(@candidate).call
         redirect_to admin_veille_candidate_path(@candidate), status: :see_other, **avis_publication(fiche)
       rescue ::Veille::Validation::Incomplet => e

@@ -51,6 +51,9 @@
       <%= form_with url: completer_admin_veille_candidate_path(@candidate), method: :patch do |f| %>
         <%= f.label :commune, "Commune" %>
         <%= f.text_field :commune, value: @candidate.commune %>
+        <%= f.label :adresse, "Adresse (facultatif)" %>
+        <%= f.text_field :adresse, value: @candidate.adresse, placeholder: "12 rue Saint-Dizier" %>
+        <p class="small muted">Avec l'adresse, le repère se pose sur la carte à l'endroit exact ; sinon, au centre de la commune.</p>
         <%= f.label :summary, "Résumé (tes mots)" %>
         <%= f.text_area :summary, value: @candidate.summary %>
         <p><%= f.submit @candidate.a_localiser? && @candidate.opportunite? ? "Localiser et publier" : "Enregistrer", class: "btn secondary" %></p>

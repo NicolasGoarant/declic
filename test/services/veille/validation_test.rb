@@ -30,6 +30,27 @@ class Veille::ValidationTest < ActiveSupport::TestCase
     assert_nil c.full_text, "le texte brut est effacé une fois la fiche créée"
   end
 
+  test "avec une adresse trouvée, le repère va à l'adresse et non au centre de la commune" do
+    Veille::AdresseBan.client = Class.new { def get(*, **) = { features: [{ geometry: { coordinates: [6.2011, 48.6803] }, properties: { score: 0.95, type: "housenumber", city: "Nancy", label: "x" } }] }.to_json }.new
+    c = candidat(item_type: "opportunite", commune: "Nancy", adresse: "12 rue Exemple", summary: "Une phrase. Une autre.")
+
+    opp = Veille::Validation.new(c).call
+
+    assert_equal [48.6803, 6.2011], [opp.latitude.to_f, opp.longitude.to_f]
+    assert_equal "12 rue Exemple, Nancy", opp.location
+    assert_equal "12 rue Exemple", opp.address
+  end
+
+  test "adresse introuvable ou API en panne : repli sur le centre de la commune, publication non bloquée" do
+    c = candidat(item_type: "opportunite", commune: "Nancy", adresse: "12 rue Exemple", summary: "Une phrase. Une autre.")
+
+    opp = Veille::Validation.new(c).call
+
+    assert opp.is_active
+    assert_equal "Nancy", opp.location
+    assert_equal [48.6937, 6.1834], [opp.latitude.to_f, opp.longitude.to_f]
+  end
+
   test "la famille passe du candidat à la fiche, sauf hors_ligne" do
     c = candidat(item_type: "opportunite", commune: "Nancy", summary: "Une phrase. Une autre.", famille: "petite_manifestation")
     assert_equal "petite_manifestation", Veille::Validation.new(c).call.famille

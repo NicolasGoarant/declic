@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_11_01_120000) do
+ActiveRecord::Schema[7.2].define(version: 2026_11_01_130000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -134,9 +134,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_11_01_120000) do
     t.time "end_time"
     t.json "photos_order"
     t.string "famille"
-    t.index ["famille"], name: "index_opportunities_on_famille"
     t.index ["ends_at"], name: "index_opportunities_on_ends_at"
     t.index ["ends_on"], name: "index_opportunities_on_ends_on"
+    t.index ["famille"], name: "index_opportunities_on_famille"
     t.index ["slug"], name: "index_opportunities_on_slug", unique: true
     t.index ["source", "external_id"], name: "index_opportunities_on_source_and_external_id", unique: true
     t.index ["starts_at"], name: "index_opportunities_on_starts_at"
@@ -248,6 +248,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_11_01_120000) do
     t.string "famille"
     t.string "role_public"
     t.string "zone"
+    t.string "adresse"
     t.index ["draft_status"], name: "index_veille_candidates_on_draft_status"
     t.index ["normalized_title", "starts_on"], name: "index_veille_candidates_on_normalized_title_and_starts_on"
     t.index ["origin"], name: "index_veille_candidates_on_origin"
