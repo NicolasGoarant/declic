@@ -30,7 +30,8 @@ class DioramaTuiles
   # scissions1 (nancy-3d rapports/jeu-video-v2/scissions) : bornes2 plus Le Tilleul Argenté en trois blocs et quatre moignons, percé en 2026.
   # tetes1 (nancy-3d rapports/jeu-video-v2/cedre-bleu) : scissions1 plus les deux têtes basses du Cèdre Bleu, absentes de la BD TOPO.
   # lotissement1 (nancy-3d rapports/jeu-video-v2/lotissement-2025) : tetes1 plus les 20 bâtiments créés le 10/09/2025 dans la BD TOPO, hauteurs lues sur les ombres de l'ortho 2026.
-  SURCOUCHES = { "jeu-video-v2" => "jeu-video-v2-lotissement1" }.freeze
+  # lotissement2 (nancy-3d rapports/jeu-video-v2/lotissement-2025/retrait-635) : tetes1 plus les 19 bâtiments du programme, sans 492620635, isolé et ajouté par erreur. Cartes d'ambiance inchangées : v6 = v7 au pixel.
+  SURCOUCHES = { "jeu-video-v2" => "jeu-video-v2-lotissement2" }.freeze
   MASQUE = "masque-bati".freeze             # {z}/{x}/{y}.png, niveaux 6 à 8, centre-ville
   PROPRIETE = "propriete-toits-v1".freeze   # 8/{x}/{y}.png (pas de dossier dalles/)
   # Les deux cartes ci-dessus décrivent le dessin de toits-v1. Là où un style dessine un volume sur ce que toits-v1 laissait au sol,

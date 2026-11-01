@@ -93,8 +93,8 @@ class DioramaTuilesTest < ActiveSupport::TestCase
 
   test "une surcouche n'est annoncée au navigateur que si son manifeste répond" do
     assert_empty tuiles(%w[jeu-video-v2/manifeste.json]).pour_js[:surcouches]
-    t = tuiles(%w[jeu-video-v2/manifeste.json jeu-video-v2-lotissement1/manifeste.json])
-    assert_equal({ "jeu-video-v2" => "jeu-video-v2-lotissement1" }, t.pour_js[:surcouches])
+    t = tuiles(%w[jeu-video-v2/manifeste.json jeu-video-v2-lotissement2/manifeste.json])
+    assert_equal({ "jeu-video-v2" => "jeu-video-v2-lotissement2" }, t.pour_js[:surcouches])
     assert_equal %w[jeu-video-v2], t.disponibles[:styles]
   end
 
