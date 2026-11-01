@@ -46,6 +46,7 @@ module Veille
         famille:     { type: "string", enum: FAMILLES_HISTOIRE + FAMILLES_OPPORTUNITE + [HORS_LIGNE] },
         zone:        { type: "string", enum: %w[grand_nancy bassin_nancy grand_est ailleurs inconnue] },
         commune:     { type: "string" },
+        lieu:        { type: "string" },
         date_debut:  { type: "string" },
         date_fin:    { type: "string" },
         regime:      { type: "string" },
@@ -54,7 +55,7 @@ module Veille
         confiance:   { type: "integer" }, # 0-100 : bornée par #apply (l'API refuse minimum/maximum)
         motif:       { type: "string" }
       },
-      required: %w[type role_public famille zone commune date_debut date_fin regime resume hors_ligne confiance motif],
+      required: %w[type role_public famille zone commune lieu date_debut date_fin regime resume hors_ligne confiance motif],
       additionalProperties: false
     }.freeze
 
@@ -123,6 +124,8 @@ module Veille
 
       COMMUNE : la commune d'ancrage telle que le texte la donne, dans ou hors du Grand Nancy. Chaîne vide si le texte ne la donne pas. Tu ne la devines pas depuis le nom de la source.
 
+      LIEU : le nom du lieu où se tient l'événement, tel que la source l'indique (« Musée des Beaux-Arts », « Salle Poirel », « 12 rue Saint-Dizier »), sans la commune. Chaîne vide si la source n'en donne pas : tu ne le devines jamais. Une commune seule n'est pas un lieu.
+
       DATES : date_debut et date_fin au format AAAA-MM-JJ, uniquement si le texte les donne. Pas de date : chaînes vides, et « regime » dit en quelques mots le régime (« Ouvert toute l'année », « Sur rendez-vous »…) ; sinon regime est vide.
 
       RÉSUMÉ : exactement deux phrases, en français, reformulées avec tes propres mots. Au plus 15 mots consécutifs identiques à la source. Ni emoji, ni emphase, ni formule d'accroche. Les noms propres, lieux, dates et chiffres se reprennent tels quels.
@@ -172,6 +175,7 @@ module Veille
       fin     = parse_date(result["date_fin"])   || candidate.ends_on
 
       attrs = {
+        adresse: lieu_pour(candidate, result, commune),
         item_type: type, famille: famille, role_public: result["role_public"].presence, zone: result["zone"].presence,
         declic_category: categorie_pour(type, candidate, famille), commune: commune || candidate.commune,
         starts_on: debut, ends_on: fin,
@@ -211,6 +215,18 @@ module Veille
     end
 
     private
+
+    # Nom de lieu relevé par l'IA, utilisé comme « Adresse » (géocodée à la validation). Agenda Grand
+    # Nancy seulement : la presse n'a pas de texte source lu automatiquement. Jamais d'écrasement d'une
+    # saisie à la main ; une commune seule n'est pas un lieu.
+    def lieu_pour(candidate, result, commune)
+      return candidate.adresse if candidate.origin != "agenda_nancy" || candidate.adresse.present?
+
+      lieu = result["lieu"].to_s.squish
+      return nil if lieu.blank? || Veille::Text.normalize(lieu) == Veille::Text.normalize(commune || candidate.commune)
+
+      lieu.slice(0, 200)
+    end
 
     # Si le modèle ne donne pas de commune reconnue, le code la cherche lui-même,
     # dans le titre d'abord, le texte ensuite.

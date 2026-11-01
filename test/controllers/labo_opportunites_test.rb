@@ -78,4 +78,28 @@ class LaboOpportunitesTest < ActionDispatch::IntegrationTest
     visiter
     assert_equal [ "Une opportunité" ], points_json.map { |p| p["titre"] }
   end
+
+  test "une petite manifestation n'apparaît sur la carte et la fiche publique que dans sa fenêtre" do
+    aujourdhui = Time.current.in_time_zone(ConversionDates::FUSEAU).to_date
+    avant   = opportunite("Brocante lointaine", famille: "petite_manifestation", starts_on: aujourdhui + 20)
+    pendant = opportunite("Brocante de la semaine", famille: "petite_manifestation", starts_on: aujourdhui + 3)
+    apres   = opportunite("Brocante finie", famille: "petite_manifestation", starts_on: aujourdhui - 1)
+    autre   = opportunite("Atelier lointain", famille: "pratiquer", starts_on: aujourdhui + 20)
+
+    visiter
+    titres = points_json.map { |p| p["titre"] || p["title"] }
+    assert_includes titres, "Brocante de la semaine"
+    assert_includes titres, "Atelier lointain"
+    assert_not_includes titres, "Brocante lointaine"
+    assert_not_includes titres, "Brocante finie"
+
+    get opportunity_url(pendant)
+    assert_response :success
+    get opportunity_url(avant)
+    assert_response :not_found
+    get opportunity_url(apres)
+    assert_response :not_found
+    get opportunity_url(autre)
+    assert_response :success
+  end
 end

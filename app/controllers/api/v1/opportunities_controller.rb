@@ -3,7 +3,7 @@ module Api
     class OpportunitiesController < ApplicationController
       def index
         # Filtrer uniquement les opportunités actives
-        opportunities = Opportunity.where(is_active: true)
+        opportunities = Opportunity.publiques
                                    .where.not(latitude: nil, longitude: nil)
                                    .order(created_at: :desc)
                                    .limit(100)
@@ -37,6 +37,7 @@ module Api
 
       def show
         @opportunity = Opportunity.find(params[:id])
+        raise ActiveRecord::RecordNotFound unless @opportunity.dans_la_fenetre_publique?
 
         img_url = if @opportunity.image.attached?
                     rails_blob_url(@opportunity.image)

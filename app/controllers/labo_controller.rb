@@ -16,13 +16,13 @@ class LaboController < ApplicationController
   # rendu (pas de seconde requête, pas d'état « chargement »), et l'API publique
   # /api/v1/opportunities, limitée à 100 fiches et sans les dates saisies, reste inchangée.
   def accueil
-    @opportunites = Opportunity.active.with_coords.with_attached_image.order(:id)
+    @opportunites = Opportunity.publiques.with_coords.with_attached_image.order(:id)
     @histoires_carte = Story.active.where.not(latitude: nil, longitude: nil).with_attached_image.order(:id)
     @tuiles = DioramaTuiles.new
     # Les blocs sous la carte (maquette docs/maquettes/maquette-accueil-2026-09-30.png).
     @temoignages = temoignages_accueil
     # Agenda : de quoi remplir la vedette et quatre lignes pour chaque catégorie filtrée.
-    @prochaines = Opportunity.active.sans_familles_masquees.prochaines.with_attached_photos.with_attached_image.limit(40)
+    @prochaines = Opportunity.publiques.sans_familles_masquees.prochaines.with_attached_photos.with_attached_image.limit(40)
     @une = Story.pour_la_une(1).first
     @histoires_accueil = Story.active.where.not(id: @une&.id).order(happened_on: :desc, created_at: :desc).limit(2).with_attached_image
     @chiffres = chiffres_impact
@@ -33,7 +33,7 @@ class LaboController < ApplicationController
   # Page Opportunités (maquette declic-maquette-opportunites-v1) : uniquement des opportunités,
   # jamais de Belles Histoires (règle éditoriale, voir NOTES.md).
   def opportunites
-    @opportunites = Opportunity.active.with_coords.with_attached_image.order(created_at: :desc)
+    @opportunites = Opportunity.publiques.with_coords.with_attached_image.order(created_at: :desc)
     @tuiles = DioramaTuiles.new
     render layout: "fiche"
   end
@@ -59,11 +59,11 @@ class LaboController < ApplicationController
   # comptes utilisateurs, les « personnes engagées » sont celles que la base connaît par leur nom :
   # structures qui portent une opportunité et personnes des Belles Histoires.
   def chiffres_impact
-    noms = Opportunity.active.where.not(organization: [ nil, "" ]).distinct.pluck(:organization) +
+    noms = Opportunity.publiques.where.not(organization: [ nil, "" ]).distinct.pluck(:organization) +
            Story.active.pluck(:quote_author, :author_name).flatten
     # Initiatives, rencontres et histoires : publiées ET placées sur la carte, comme le badge des
     # catégories (une fiche hors de la Métropole n'est pas comptée).
-    actives = Opportunity.active.dans_la_zone
+    actives = Opportunity.publiques.dans_la_zone
     {
       initiatives: actives.count,
       personnes: noms.compact_blank.map { |n| n.strip.downcase }.uniq.size,

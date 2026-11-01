@@ -109,4 +109,30 @@ class Veille::ValidationTest < ActiveSupport::TestCase
     end
     assert_equal "pending", c.reload.status
   end
+
+  test "un nom de lieu sans adresse postale est localisé via OSM : repère précis" do
+    http = VeilleSupport::FakeHttp.new
+    http.define_singleton_method(:get) { |*, **| { features: [] }.to_json }
+    Veille::AdresseBan.client = http
+    osm = VeilleSupport::FakeHttp.new
+    osm.define_singleton_method(:get) do |*, **|
+      [{ lat: "48.6936593", lon: "6.1818995", display_name: "Musée des Beaux-Arts", address: { city: "Nancy" } }].to_json
+    end
+    Veille::LieuOsm.client = osm
+
+    c = candidat(item_type: "opportunite", declic_category: "rencontres", commune: "Nancy", summary: "Deux phrases. Voilà.",
+                 adresse: "Musée des Beaux-Arts", url: "https://exemple.fr/musee")
+    opp = Veille::Validation.new(c).call
+
+    assert_in_delta 48.6936593, opp.latitude, 1e-6
+    assert_equal "Musée des Beaux-Arts", opp.address
+  end
+
+  test "lieu introuvable : repli sur la commune, la publication n'est pas bloquée" do
+    c = candidat(item_type: "opportunite", declic_category: "rencontres", commune: "Nancy", summary: "Deux phrases. Voilà.",
+                 adresse: "Lieu inconnu", url: "https://exemple.fr/inconnu")
+    opp = Veille::Validation.new(c).call
+    assert_equal "publie", c.reload.status
+    assert_in_delta 48.6937, opp.latitude, 1e-4, "centre de la commune"
+  end
 end

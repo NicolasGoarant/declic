@@ -14,6 +14,7 @@ class ClientBanIndisponible
   def get(*, **) = raise(Veille::Http::Error, "réseau coupé en test")
 end
 Veille::AdresseBan.client = ClientBanIndisponible.new
+Veille::LieuOsm.client = ClientBanIndisponible.new # idem pour les noms de lieux (OSM)
 
 module ActiveSupport
   class TestCase
@@ -27,6 +28,7 @@ module ActiveSupport
     teardown do
       Geocoder::Lookup::Test.reset
       Veille::AdresseBan.client = ClientBanIndisponible.new
+      Veille::LieuOsm.client = ClientBanIndisponible.new
     end
 
     # Add more helper methods to be used by all tests here...

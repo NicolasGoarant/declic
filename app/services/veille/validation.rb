@@ -30,7 +30,7 @@ module Veille
       raise Incomplet, "Il manque #{manques.to_sentence} : complète l'élément (ou écarte-le)." if manques.any?
 
       verifier_recit if @c.histoire?
-      @point = AdresseBan.localiser(@c.adresse, @c.commune)
+      @point = point_precis
 
       Candidate.transaction do
         fiche = @c.histoire? ? creer_histoire : creer_opportunite
@@ -44,7 +44,7 @@ module Veille
     # si l'API Adresse la trouve ; sinon aucune (à la publication, le centre de la commune).
     # L'id 0 et le slug ne servent qu'à fabriquer les liens de la vue.
     def apercu
-      @point = AdresseBan.localiser(@c.adresse, @c.commune)
+      @point = point_precis
       fiche = @c.histoire? ? Story.new(attributs_histoire.except(:veille_candidate)) : Opportunity.new(attributs_opportunite)
       fiche.id = 0
       fiche.created_at = fiche.updated_at = Time.current
@@ -54,6 +54,10 @@ module Veille
     end
 
     private
+
+    # Le champ « Adresse » accepte une adresse postale (API Adresse) ou un nom de lieu comme « Musée des
+    # Beaux-Arts » (OSM, que la BAN ne connaît pas). Rien trouvé : nil, donc la commune.
+    def point_precis = AdresseBan.localiser(@c.adresse, @c.commune) || LieuOsm.localiser(@c.adresse, @c.commune)
 
     def verifier_recit
       raise Incomplet, "Le récit n'est pas encore rédigé : rédige-le et relis-le avant de le publier." if @c.draft_body.blank?

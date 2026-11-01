@@ -3,13 +3,15 @@
 class OpportunitiesController < ApplicationController
   # Liste des opportunités publiques (uniquement les actives)
   def index
-    @opportunities = Opportunity.active.order(created_at: :desc).limit(100)
+    @opportunities = Opportunity.publiques.order(created_at: :desc).limit(100)
   end
 
   # Affichage d'une opportunité via son slug (FriendlyId). Mise en page de /labo/accueil
   # (layout « fiche ») ; les tuiles servent à la mini-carte diorama.
   def show
     @opportunity = Opportunity.friendly.find(params[:id])
+    # Petite manifestation hors de sa fenêtre de visibilité : introuvable côté public (l'admin la garde).
+    raise ActiveRecord::RecordNotFound unless @opportunity.dans_la_fenetre_publique?
     @similaires = @opportunity.similaires.with_attached_image.with_attached_photos
     @tuiles = DioramaTuiles.new if @opportunity.latitude.present? && @opportunity.longitude.present?
     render layout: "fiche"

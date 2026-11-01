@@ -24,10 +24,10 @@ class PagesController < ApplicationController
     ]
 
     # Toutes les opportunities actives, triées par date de création décroissante (les plus récentes en premier)
-    @opportunities = Opportunity.where(is_active: true).order(created_at: :desc)
+    @opportunities = Opportunity.publiques.order(created_at: :desc)
 
     # Les 3 dernières opportunities (basées sur published_at)
-    @latest = Opportunity.active.order(published_at: :desc).limit(3)
+    @latest = Opportunity.publiques.order(published_at: :desc).limit(3)
   end
 
   def legal; end
@@ -40,7 +40,7 @@ class PagesController < ApplicationController
   # « Pourquoi Déclic ? » : même habillage que les fiches (layout « fiche », barre de /labo/accueil).
   def philosophie
     @chiffres = Rails.cache.fetch("pourquoi/chiffres", expires_in: 10.minutes) do
-      { opportunites: Opportunity.active.count, histoires: Story.active.count }
+      { opportunites: Opportunity.publiques.count, histoires: Story.active.count }
     end
     @collage = COLLAGE.map { |cle, repli, alt| { categorie: Categorie.trouver(cle), photo: photo_de_categorie(cle) || { src: repli, alt: alt } } }
     @pins_territoire = pins_territoire
@@ -63,7 +63,7 @@ class PagesController < ApplicationController
   def pins_territoire
     poses = [ PourquoiCarte::CENTRE ]
     PINS_TERRITOIRE.filter_map do |cle|
-      candidates = Opportunity.active.with_coords.where(category: cle).order(:id)
+      candidates = Opportunity.publiques.with_coords.where(category: cle).order(:id)
                               .select { |o| PourquoiCarte.dans_la_metropole?(o.longitude, o.latitude) }
       o = candidates.max_by do |op|
         poses.map { |lon, lat| Math.hypot((op.longitude.to_f - lon) * 0.66, op.latitude.to_f - lat) }.min
@@ -76,13 +76,13 @@ class PagesController < ApplicationController
 
   # Photo de couverture d'une opportunité active (puis d'une histoire) de la catégorie, ou nil.
   def photo_de_categorie(cle)
-    fiche = Opportunity.active.where(category: cle).joins(:image_attachment).order(updated_at: :desc).first ||
+    fiche = Opportunity.publiques.where(category: cle).joins(:image_attachment).order(updated_at: :desc).first ||
             Story.active.joins(:image_attachment).order(updated_at: :desc).limit(50).find { |s| s.categorie_opportunite == cle }
     fiche && { src: url_for(fiche.image), alt: fiche.title }
   end
 
   def load_public_counts
-    @opportunities_count = Opportunity.active.count
+    @opportunities_count = Opportunity.publiques.count
     @stories_count       = Story.active.count
   end
 end

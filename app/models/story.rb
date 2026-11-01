@@ -57,7 +57,7 @@ class Story < ApplicationRecord
   # « Des opportunités pour avoir ton déclic » : actives et pas terminées, de la catégorie de
   # l'histoire (thématique, puis étiquettes), complétées par les plus proches géographiquement.
   def opportunites_proches(limite = 3)
-    base = Opportunity.active.actuelles
+    base = Opportunity.publiques.actuelles
     choix = categorie_opportunite ? base.where(category: categorie_opportunite).limit(limite).to_a : []
     return choix if choix.size >= limite
 

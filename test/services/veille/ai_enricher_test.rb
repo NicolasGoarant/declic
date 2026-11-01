@@ -274,4 +274,31 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
       assert_empty cherche.(schema, []), "#{nom} : mots-clés de schéma non pris en charge"
     end
   end
+
+  test "Agenda Grand Nancy : le lieu relevé par l'IA devient l'adresse du candidat" do
+    c, = enrich(candidat(origin: "agenda_nancy"), lieu: "Musée des Beaux-Arts")
+    assert_equal "Musée des Beaux-Arts", c.adresse
+  end
+
+  test "pas de lieu identifiable, ou une simple commune : aucune adresse" do
+    c, = enrich(candidat(origin: "agenda_nancy"), lieu: "")
+    assert_nil c.adresse
+    c, = enrich(candidat(origin: "agenda_nancy"), lieu: "Nancy")
+    assert_nil c.adresse
+  end
+
+  test "une adresse saisie à la main n'est jamais écrasée par l'IA" do
+    c, = enrich(candidat(origin: "agenda_nancy", adresse: "12 rue Saint-Dizier"), lieu: "Musée des Beaux-Arts")
+    assert_equal "12 rue Saint-Dizier", c.adresse
+  end
+
+  test "la presse n'est pas concernée : pas de lieu repris de l'IA" do
+    c, = enrich(candidat(origin: "presse"), lieu: "Musée des Beaux-Arts")
+    assert_nil c.adresse
+  end
+
+  test "le prompt demande le lieu et le schéma le prévoit" do
+    assert_includes Veille::AiEnricher::SCHEMA[:required], "lieu"
+    assert_match "LIEU", Veille::AiEnricher.prompt_for(title: "T", text: "x")[:system]
+  end
 end

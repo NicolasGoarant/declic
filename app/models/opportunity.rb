@@ -42,6 +42,17 @@ class Opportunity < ApplicationRecord
   # Masquées par défaut sur la carte, jamais retirées de la base : la fiche reste en ligne et le visiteur peut les afficher.
   FAMILLES_MASQUEES = %w[petite_manifestation decouvrir].freeze
   scope :active,      -> { where(is_active: true) }
+  # FACE PUBLIQUE : actives, et — pour la seule famille « petite_manifestation » (brocante, vide-grenier,
+  # foire, fête) — visibles du 7e jour avant le début jusqu'au dernier jour inclus (ends_on, à défaut
+  # la date unique) ; elles disparaissent le lendemain, dès minuit. Sans date, pas de fenêtre. Les autres familles
+  # ne sont pas concernées. L'admin n'utilise PAS ce scope : tout y reste visible et modifiable.
+  FENETRE_PETITE_MANIFESTATION_JOURS = 7
+  scope :publiques, lambda { |aujourdhui = Time.current.in_time_zone(ConversionDates::FUSEAU).to_date|
+    debut = "COALESCE(opportunities.starts_on, opportunities.ends_on)"
+    fin   = "COALESCE(opportunities.ends_on, opportunities.starts_on)"
+    active.where("opportunities.famille IS NULL OR opportunities.famille <> 'petite_manifestation' OR #{debut} IS NULL " \
+                 "OR (#{debut} <= ? AND #{fin} >= ?)", aujourdhui + FENETRE_PETITE_MANIFESTATION_JOURS, aujourdhui)
+  }
   scope :with_coords, -> { where.not(latitude: nil, longitude: nil) }
   scope :sans_familles_masquees, -> { where("opportunities.famille IS NULL OR opportunities.famille NOT IN (?)", FAMILLES_MASQUEES) }
 
@@ -62,7 +73,7 @@ class Opportunity < ApplicationRecord
 
   # « Opportunités similaires » de la fiche : même catégorie, actives, pas terminées.
   def similaires(limite = 3)
-    self.class.active.actuelles.where(category: category).where.not(id: id).limit(limite)
+    self.class.publiques.actuelles.where(category: category).where.not(id: id).limit(limite)
   end
 
   # --- Géocodage (location -> lat/lng), restreint à la zone de Nancy ---
@@ -139,6 +150,17 @@ class Opportunity < ApplicationRecord
   # Pas encore terminée (inclut une opportunité en cours) ; faux si permanente.
   def a_venir? = !permanente? && derniere_date >= aujourdhui_a_paris
   def passee?  = !permanente? && derniere_date < aujourdhui_a_paris
+
+  # Même règle que le scope `publiques` (fenêtre des petites manifestations), pour une fiche chargée :
+  # sert à refuser l'accès direct à l'URL publique hors fenêtre. Les autres familles : toujours vraie.
+  def dans_la_fenetre_publique?(aujourdhui = aujourdhui_a_paris)
+    return true unless famille == "petite_manifestation"
+
+    debut = starts_on || ends_on
+    return true if debut.nil?
+
+    debut <= aujourdhui + FENETRE_PETITE_MANIFESTATION_JOURS && derniere_date >= aujourdhui
+  end
 
   # « Sam. 14 février 2026 », « Du sam. 14 février au dim. 15 mars 2026 », « Jusqu'au … » ; nil si permanente.
   def date_affichee
