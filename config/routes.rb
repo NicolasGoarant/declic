@@ -105,6 +105,7 @@ Rails.application.routes.draw do
       # Veille presse manuelle : titres et liens, sans stockage ni IA.
       get  "presse",         to: "presse#index",   as: :presse
       post "presse/retenir", to: "presse#retenir", as: :retenir_presse
+      post "presse/ecarter", to: "presse#ecarter", as: :ecarter_presse
     end
   end
 end

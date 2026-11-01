@@ -77,6 +77,41 @@ module Admin
         assert_no_difference("::Veille::Candidate.count") { retenir }
       end
 
+      test "écarter mémorise l'URL seule, sans candidat, et l'article n'est plus proposé" do
+        assert_no_difference("::Veille::Candidate.count") do
+          assert_difference("::Veille::PresseEcartee.count", 1) do
+            post "/admin/veille/presse/ecarter", params: { url: URL }, headers: auth
+          end
+        end
+        assert_redirected_to "/admin/veille/presse"
+        assert_equal [URL], ::Veille::PresseEcartee.pluck(:url)
+
+        avec_flux { get "/admin/veille/presse", headers: auth }
+        assert_select "a[href=?]", URL, count: 0
+      end
+
+      test "écarter deux fois ne crée pas de doublon" do
+        post "/admin/veille/presse/ecarter", params: { url: URL }, headers: auth
+        assert_no_difference("::Veille::PresseEcartee.count") do
+          post "/admin/veille/presse/ecarter", params: { url: URL }, headers: auth
+        end
+      end
+
+      test "écarter refuse un lien hors des journaux de la veille" do
+        assert_no_difference("::Veille::PresseEcartee.count") do
+          post "/admin/veille/presse/ecarter", params: { url: "https://ailleurs.example/x" }, headers: auth
+        end
+        assert_redirected_to "/admin/veille/presse"
+      end
+
+      test "un autre article reste proposé quand le premier est écarté" do
+        autre = ::Veille::Connectors::Presse::Lien.new(titre: "Autre", url: "#{URL}-2", flux: "L'Est Républicain", publie_le: Time.zone.local(2026, 10, 31, 9))
+        ::Veille::PresseEcartee.create!(url: URL)
+        avec_flux(liens: [@lien, autre]) { get "/admin/veille/presse", headers: auth }
+        assert_select "a[href=?]", "#{URL}-2", text: "Autre"
+        assert_select "a[href=?]", URL, count: 0
+      end
+
       test "refuse un lien hors des journaux de la veille" do
         assert_no_difference("::Veille::Candidate.count") { retenir(url: "https://ailleurs.example/x") }
         assert_redirected_to "/admin/veille/presse"

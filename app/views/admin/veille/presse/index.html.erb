@@ -1,7 +1,7 @@
 <h1>Veille presse manuelle</h1>
 <p class="muted small">
-  Titres et liens lus à l'instant dans les flux RSS (environ 24 h d'articles). Rien n'est enregistré ni envoyé à l'IA.
-  Ouvre l'article avec ton abonnement ; « Retenir » crée un candidat, où tu colles le texte pour lancer la rédaction.
+  Titres et liens lus à l'instant dans les flux RSS (environ 24 h d'articles). Rien n'est envoyé à l'IA.
+  Ouvre l'article avec ton abonnement ; « Retenir » crée un candidat, où tu colles le texte pour lancer la rédaction ; « Écarter » mémorise seulement l'adresse de l'article pour ne plus le proposer.
 </p>
 
 <% @lecture.erreurs.each do |nom, message| %>
@@ -26,6 +26,8 @@
           <td>
             <%= button_to "Retenir", admin_veille_retenir_presse_path, method: :post, class: "btn secondary",
                           params: { titre: lien.titre, url: lien.url, publie_le: lien.publie_le&.to_date&.iso8601 } %>
+            <%= button_to "Écarter", admin_veille_ecarter_presse_path, method: :post, class: "btn secondary",
+                          params: { url: lien.url } %>
           </td>
         </tr>
       <% end %>

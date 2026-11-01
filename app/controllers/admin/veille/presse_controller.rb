@@ -5,10 +5,24 @@ module Admin
     # Veille presse manuelle : titres et liens lus à l'affichage, sans stockage ni
     # IA. « Retenir » est le seul moyen de faire entrer un article en base : il crée
     # un candidat qui ne porte que le titre et le lien, et que les passes
-    # automatiques ignorent (Veille::Candidate.hors_presse).
+    # automatiques ignorent (Veille::Candidate.hors_presse). « Écarter » ne garde que
+    # l'URL de l'article (Veille::PresseEcartee), pour ne plus le proposer.
     class PresseController < BaseController
       def index
-        @lecture = ::Veille::Connectors::Presse.new.lister
+        lecture = ::Veille::Connectors::Presse.new.lister
+        ecartees = ::Veille::PresseEcartee.where(url: lecture.liens.map(&:url)).pluck(:url).to_set
+        @lecture = ::Veille::Connectors::Presse::Lecture.new(liens: lecture.liens.reject { |l| ecartees.include?(l.url) },
+                                                             erreurs: lecture.erreurs)
+      end
+
+      def ecarter
+        url = params[:url].to_s.strip
+        unless ::Veille::Connectors::Presse.lien_autorise?(url)
+          return redirect_to admin_veille_presse_path, alert: "Ce lien ne provient pas d'un flux de la veille presse."
+        end
+
+        ::Veille::PresseEcartee.find_or_create_by!(url: url)
+        redirect_to admin_veille_presse_path, status: :see_other, notice: "Article écarté : il ne sera plus proposé."
       end
 
       def retenir

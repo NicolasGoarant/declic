@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_11_01_110000) do
+ActiveRecord::Schema[7.2].define(version: 2026_11_01_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -255,6 +255,13 @@ ActiveRecord::Schema[7.2].define(version: 2026_11_01_110000) do
     t.index ["status"], name: "index_veille_candidates_on_status"
     t.index ["url"], name: "index_veille_candidates_on_url", unique: true
     t.index ["veille_source_id"], name: "index_veille_candidates_on_veille_source_id"
+  end
+
+  create_table "veille_presse_ecartees", force: :cascade do |t|
+    t.string "url", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["url"], name: "index_veille_presse_ecartees_on_url", unique: true
   end
 
   create_table "veille_sources", force: :cascade do |t|
