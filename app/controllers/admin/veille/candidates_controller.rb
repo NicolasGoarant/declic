@@ -42,7 +42,7 @@ module Admin
       # « Valider » : crée la fiche (Opportunity ou Story) et la met en ligne.
       def valider
         fiche = ::Veille::Validation.new(@candidate).call
-        redirect_back fallback_location: admin_veille_root_path, notice: avis_publication(fiche)
+        redirect_back fallback_location: admin_veille_root_path, **avis_publication(fiche)
       rescue ::Veille::Validation::Incomplet => e
         redirect_back fallback_location: admin_veille_root_path, alert: e.message
       rescue ActiveRecord::RecordInvalid => e
@@ -120,7 +120,7 @@ module Admin
 
         @candidate.update!(params.permit(:summary).merge(commune: ::Veille::Territoire.canonique(saisie)))
         fiche = ::Veille::Validation.new(@candidate).call
-        redirect_to admin_veille_candidate_path(@candidate), status: :see_other, notice: avis_publication(fiche)
+        redirect_to admin_veille_candidate_path(@candidate), status: :see_other, **avis_publication(fiche)
       rescue ::Veille::Validation::Incomplet => e
         redirect_to admin_veille_candidate_path(@candidate), status: :see_other, alert: "Commune enregistrée, pas encore de publication. #{e.message}"
       rescue ActiveRecord::RecordInvalid => e
@@ -129,9 +129,11 @@ module Admin
       end
 
       # Une fiche sans coordonnées est en ligne mais absente de la carte : autant le dire tout de suite.
+      # Le lien voyage à part du message : le titre vient de la source, le message reste échappé.
       def avis_publication(fiche)
         avis = "En ligne : #{fiche.title}"
-        fiche.latitude.present? ? avis : "#{avis}. Position introuvable : pas de pin sur la carte tant qu'elle n'est pas corrigée dans la fiche."
+        avis = "#{avis}. Position introuvable : pas de pin sur la carte tant qu'elle n'est pas corrigée dans la fiche." if fiche.latitude.blank?
+        { notice: avis, flash: { lien_fiche: polymorphic_path(fiche) } }
       end
 
       def date_filtre(valeur)

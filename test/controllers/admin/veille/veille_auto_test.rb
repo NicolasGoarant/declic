@@ -94,7 +94,31 @@ module Admin
         assert_response :redirect
         assert Opportunity.order(:id).last.is_active
         assert_match "En ligne : Forum", flash[:notice]
+        assert_equal opportunity_path(Opportunity.order(:id).last), flash[:lien_fiche]
         assert_equal "publie", c.reload.status
+
+        follow_redirect! headers: auth
+        assert_select ".flash.notice a[target=_blank][rel=noopener][href=?]", opportunity_path(Opportunity.order(:id).last), text: "Voir la fiche publiée"
+      end
+
+      test "Valider une belle histoire donne le lien vers sa page publique" do
+        c = enrichi(item_type: "belle_histoire", title: "Récit <b>gras</b>", draft_body: "Récit.\n\nSource : X", accord_obtenu_at: Time.current)
+
+        assert_difference -> { Story.count }, 1 do
+          post valider_admin_veille_candidate_path(c), headers: auth
+        end
+
+        follow_redirect! headers: auth
+        assert_select ".flash.notice a[target=_blank][href=?]", story_path(Story.order(:id).last), text: "Voir la fiche publiée"
+        assert_select ".flash.notice b", false # le titre vient de la source : jamais interprété comme du HTML
+      end
+
+      test "pas de lien vers une fiche quand Valider échoue" do
+        c = enrichi(commune: nil)
+
+        post valider_admin_veille_candidate_path(c), headers: auth
+
+        assert_nil flash[:lien_fiche]
       end
 
       test "Valider une belle histoire sans l'accord de la personne ne crée rien" do

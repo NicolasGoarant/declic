@@ -43,6 +43,7 @@ class VeillePublicationTest < ApplicationSystemTestCase
       admin "/admin/veille"
       accept_confirm { click_button "Valider" }
       assert_text "En ligne : Vide-grenier de test"
+      assert_selector ".flash.notice a[target=_blank]", text: "Voir la fiche publiée"
 
       assert_visible_sur_la_carte_a_la_demande "Vide-grenier de test"
     end
@@ -60,6 +61,7 @@ class VeillePublicationTest < ApplicationSystemTestCase
       fill_in "Commune", with: "Nancy"
       click_button "Localiser et publier"
       assert_text "En ligne : Brocante sans commune"
+      assert_selector ".flash.notice a[target=_blank]", text: "Voir la fiche publiée"
       assert_equal "publie", c.reload.status
 
       assert_visible_sur_la_carte_a_la_demande "Brocante sans commune"
