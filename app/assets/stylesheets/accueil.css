@@ -200,7 +200,7 @@ body.acc-corps {
    Barre élargie à 8 px du bord et libellés à 10 px, resserrés. */
 /* Téléphone : six cellules de même hauteur, alignées sur le haut. Le libellé réserve deux lignes (Belles Histoires
    passe sur deux lignes, les autres sur une, centrée dans la zone) : toutes les icônes partagent la même ligne,
-   et le badge se repère sur l'enveloppe de l'icône, donc au même endroit pour les six. Avant, les cellules étaient
+   et le badge se repère sur l'enveloppe de l'icône, donc au même endroit pour les sept. Avant, les cellules étaient
    centrées verticalement dans la barre : la plus haute (deux lignes) remontait et son badge avec elle. */
 @media (max-width: 767.98px) {
   :root { --legende-h: 76px; }
@@ -212,8 +212,8 @@ body.acc-corps {
   .acc-cat-libelle { display: flex; align-items: center; justify-content: center; min-height: 24px; line-height: 12px; text-wrap: balance; }
 }
 @media (max-width: 419.98px) {
-  .acc-categories { left: 8px; right: 8px; }
-  .acc-cat { font-size: 10px; letter-spacing: -0.04em; }
+  .acc-categories { left: 8px; right: 8px; padding-inline: 0; }
+  .acc-cat { font-size: 9px; letter-spacing: -0.04em; } /* sept cellules : « Entreprendre » doit tenir dans la sienne */
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   @media (max-width: 1023.98px) { .acc-categories { background: rgba(255, 255, 255, 0.8); } }
