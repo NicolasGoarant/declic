@@ -43,15 +43,25 @@ class Opportunity < ApplicationRecord
   FAMILLES_MASQUEES = %w[petite_manifestation decouvrir].freeze
   scope :active,      -> { where(is_active: true) }
   # FACE PUBLIQUE : actives, et — pour la seule famille « petite_manifestation » (brocante, vide-grenier,
-  # foire, fête) — visibles du 7e jour avant le début jusqu'au dernier jour inclus (ends_on, à défaut
-  # la date unique) ; elles disparaissent le lendemain, dès minuit. Sans date, pas de fenêtre. Les autres familles
-  # ne sont pas concernées. L'admin n'utilise PAS ce scope : tout y reste visible et modifiable.
+  # foire, fête) — visibles de 00h00 le 7e jour avant le début jusqu'au lendemain du dernier jour (ends_on,
+  # à défaut la date unique) à 00h01 : elles disparaissent à cette minute-là, heure de Paris. Sans date, pas de
+  # fenêtre. Les autres familles ne sont pas concernées. L'admin n'utilise PAS ce scope : tout y reste visible.
   FENETRE_PETITE_MANIFESTATION_JOURS = 7
-  scope :publiques, lambda { |aujourdhui = Time.current.in_time_zone(ConversionDates::FUSEAU).to_date|
+  # Le dernier jour est « tenu » une minute de plus : à 00h00 le lendemain on est encore dedans, à 00h01 non.
+  FENETRE_PETITE_MANIFESTATION_SURSIS = 1.minute
+
+  # Bornes (jour de début au plus tard, dernier jour au plus tôt) de la fenêtre à l'instant donné.
+  def self.bornes_fenetre_publique(maintenant)
+    paris = maintenant.in_time_zone(ConversionDates::FUSEAU)
+    [ paris.to_date + FENETRE_PETITE_MANIFESTATION_JOURS, (paris - FENETRE_PETITE_MANIFESTATION_SURSIS).to_date ]
+  end
+
+  scope :publiques, lambda { |maintenant = Time.current|
+    debut_max, fin_min = bornes_fenetre_publique(maintenant)
     debut = "COALESCE(opportunities.starts_on, opportunities.ends_on)"
     fin   = "COALESCE(opportunities.ends_on, opportunities.starts_on)"
     active.where("opportunities.famille IS NULL OR opportunities.famille <> 'petite_manifestation' OR #{debut} IS NULL " \
-                 "OR (#{debut} <= ? AND #{fin} >= ?)", aujourdhui + FENETRE_PETITE_MANIFESTATION_JOURS, aujourdhui)
+                 "OR (#{debut} <= ? AND #{fin} >= ?)", debut_max, fin_min)
   }
   scope :with_coords, -> { where.not(latitude: nil, longitude: nil) }
   scope :sans_familles_masquees, -> { where("opportunities.famille IS NULL OR opportunities.famille NOT IN (?)", FAMILLES_MASQUEES) }
@@ -153,13 +163,14 @@ class Opportunity < ApplicationRecord
 
   # Même règle que le scope `publiques` (fenêtre des petites manifestations), pour une fiche chargée :
   # sert à refuser l'accès direct à l'URL publique hors fenêtre. Les autres familles : toujours vraie.
-  def dans_la_fenetre_publique?(aujourdhui = aujourdhui_a_paris)
+  def dans_la_fenetre_publique?(maintenant = Time.current)
     return true unless famille == "petite_manifestation"
 
     debut = starts_on || ends_on
     return true if debut.nil?
 
-    debut <= aujourdhui + FENETRE_PETITE_MANIFESTATION_JOURS && derniere_date >= aujourdhui
+    debut_max, fin_min = self.class.bornes_fenetre_publique(maintenant)
+    debut <= debut_max && derniere_date >= fin_min
   end
 
   # « Sam. 14 février 2026 », « Du sam. 14 février au dim. 15 mars 2026 », « Jusqu'au … » ; nil si permanente.
