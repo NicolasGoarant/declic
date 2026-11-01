@@ -81,13 +81,6 @@ class Veille::ValidationTest < ActiveSupport::TestCase
     end
   end
 
-  test "valider ne touche pas à l'étiquette du candidat" do
-    c = candidat(item_type: "opportunite", commune: "Nancy", summary: "Une phrase.")
-    etiquette = Veille::Etiquette.create!(ref: "C#{c.id}", avis: "garder")
-    Veille::Validation.new(c).call
-    assert_equal "garder", etiquette.reload.avis
-  end
-
   test "une fiche invalide ne change pas le statut du candidat" do
     c = candidat(item_type: "opportunite", commune: nil, summary: nil, excerpt: nil)
     assert_no_difference -> { Opportunity.count } do

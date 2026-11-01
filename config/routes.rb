@@ -105,10 +105,6 @@ Rails.application.routes.draw do
       # Veille presse manuelle : titres et liens, sans stockage ni IA.
       get  "presse",         to: "presse#index",   as: :presse
       post "presse/retenir", to: "presse#retenir", as: :retenir_presse
-
-      # Étiquetage pour calibrer le prompt, séparé de la file de relecture.
-      get   "etiquetage",      to: "etiquetage#index",  as: :etiquetage
-      patch "etiquetage/:ref", to: "etiquetage#update", as: :etiqueter
     end
   end
 end
