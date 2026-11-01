@@ -869,10 +869,10 @@ body.acc-corps {
   }
   .acc-categories {
     position: static; height: auto;
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 0 var(--gouttiere) 12px; padding: 0; overflow: visible;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 2px; margin: 0 var(--gouttiere) 12px; padding: 0; overflow: visible;
     border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
   }
-  .acc-cat { flex: none; width: auto; padding: 8px 4px; }
+  .acc-cat { flex: none; width: auto; padding: 8px 0; font-size: 12px; letter-spacing: -0.02em; }
   .acc-cat:hover { background: var(--fond); }
   .acc-carte { grid-area: carte; height: auto; border-left: 1px solid var(--gris-clair); }
   .acc-commandes { bottom: 28px; right: 24px; }

@@ -1,7 +1,7 @@
 {
   "name": "Déclic",
   "short_name": "Déclic",
-  "description": "Les opportunités citoyennes près de chez toi — entreprendre, se former, rencontrer, agir.",
+  "description": "Les opportunités citoyennes près de chez toi — entreprendre, se former, pratiquer, découvrir, agir.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

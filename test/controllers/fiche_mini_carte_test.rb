@@ -5,7 +5,7 @@ require "test_helper"
 class FicheMiniCarteTest < ActionDispatch::IntegrationTest
   test "la fiche géocodée embarque un gabarit de pin complet pour la mini-carte" do
     fiche = opportunities(:one)
-    fiche.update_columns(is_active: true, latitude: 48.69366, longitude: 6.1819, category: "rencontres", title: "Visite du musée")
+    fiche.update_columns(is_active: true, latitude: 48.69366, longitude: 6.1819, category: "decouvrir", title: "Visite du musée")
 
     get opportunity_path(fiche)
     assert_response :success

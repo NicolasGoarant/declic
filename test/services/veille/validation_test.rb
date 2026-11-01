@@ -120,7 +120,7 @@ class Veille::ValidationTest < ActiveSupport::TestCase
     end
     Veille::LieuOsm.client = osm
 
-    c = candidat(item_type: "opportunite", declic_category: "rencontres", commune: "Nancy", summary: "Deux phrases. Voilà.",
+    c = candidat(item_type: "opportunite", declic_category: "decouvrir", commune: "Nancy", summary: "Deux phrases. Voilà.",
                  adresse: "Musée des Beaux-Arts", url: "https://exemple.fr/musee")
     opp = Veille::Validation.new(c).call
 
@@ -129,7 +129,7 @@ class Veille::ValidationTest < ActiveSupport::TestCase
   end
 
   test "lieu introuvable : repli sur la commune, la publication n'est pas bloquée" do
-    c = candidat(item_type: "opportunite", declic_category: "rencontres", commune: "Nancy", summary: "Deux phrases. Voilà.",
+    c = candidat(item_type: "opportunite", declic_category: "decouvrir", commune: "Nancy", summary: "Deux phrases. Voilà.",
                  adresse: "Lieu inconnu", url: "https://exemple.fr/inconnu")
     opp = Veille::Validation.new(c).call
     assert_equal "publie", c.reload.status

@@ -13,6 +13,13 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
     [candidate.reload, client]
   end
 
+  test "le prompt donne le critère Pratiquer / Découvrir" do
+    prompt = Veille::AiEnricher::SYSTEM_PROMPT
+    assert_includes prompt, "Pratiquer (familles pratiquer, rencontre, lieu_collectif)"
+    assert_includes prompt, "Découvrir (familles decouvrir, petite_manifestation)"
+    assert_not_includes prompt, "Rencontrer"
+  end
+
   test "le prompt porte les exclusions : nomination, actualité juridique, fait divers" do
     system = Veille::AiEnricher.prompt_for(title: "T", text: "x")[:system]
     assert_match "nomination", system
@@ -79,9 +86,9 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
     assert_nil c.reload.declic_category
   end
 
-  test "une opportunité dont le modèle ne donne pas de catégorie retombe sur « rencontres »" do
+  test "une opportunité dont le modèle ne donne pas de catégorie retombe sur « decouvrir »" do
     c, = enrich(candidat(origin: "presse"), type: "opportunite", categorie: nil)
-    assert_equal "rencontres", c.reload.declic_category
+    assert_equal "decouvrir", c.reload.declic_category
   end
 
   test "le schéma ne demande plus la catégorie, et chaque famille d'opportunité mène à une catégorie" do
@@ -91,10 +98,10 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
   end
 
   test "une source officielle reste une opportunité, quoi qu'en dise le modèle" do
-    c, = enrich(candidat(origin: "agenda_nancy", declic_category: "rencontres", item_type: "opportunite"),
+    c, = enrich(candidat(origin: "agenda_nancy", declic_category: "decouvrir", item_type: "opportunite"),
                 type: "belle_histoire", categorie: "ecologiser")
     assert_equal "opportunite", c.item_type
-    assert_equal "rencontres", c.declic_category
+    assert_equal "decouvrir", c.declic_category
   end
 
   test "une opportunité en Meurthe-et-Moselle est gardée, hors du département elle est écartée" do
@@ -158,9 +165,9 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
   end
 
   test "la catégorie se déduit de la famille" do
-    { "se_former" => "formation", "pratiquer" => "rencontres", "agir_ecologie" => "ecologiser",
+    { "se_former" => "formation", "pratiquer" => "pratiquer", "agir_ecologie" => "ecologiser",
       "s_engager" => "benevolat", "evenement_solidaire" => "benevolat", "entreprendre" => "entreprendre",
-      "decouvrir" => "rencontres", "petite_manifestation" => "rencontres" }.each do |famille, categorie|
+      "decouvrir" => "decouvrir", "petite_manifestation" => "decouvrir", "rencontre" => "pratiquer", "lieu_collectif" => "pratiquer" }.each do |famille, categorie|
       c, = enrich(candidat(origin: "agenda_nancy", declic_category: "formation"), famille: famille)
       assert_equal categorie, c.declic_category, famille
       assert_equal famille, c.famille

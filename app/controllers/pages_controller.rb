@@ -15,8 +15,8 @@ class PagesController < ApplicationController
       { id: 2, category: 'formation',    title: 'Je veux apprendre',
         description: 'Découvrez des formations pour développer vos compétences',
         icon: 'book-open', color: 'bg-gradient-to-br from-blue-500 to-indigo-600' },
-      { id: 3, category: 'rencontres',   title: 'Je veux rencontrer',
-        description: 'Rejoignez des communautés et créez des liens authentiques',
+      { id: 3, category: 'pratiquer',    title: 'Je veux pratiquer',
+        description: 'Rejoignez un collectif et pratiquez une activité avec d\'autres',
         icon: 'users',     color: 'bg-gradient-to-br from-green-500 to-teal-600' },
       { id: 4, category: 'entreprendre', title: 'Je veux entreprendre',
         description: "Lancez votre projet avec le soutien d'entrepreneurs expérimentés",
@@ -55,9 +55,9 @@ class PagesController < ApplicationController
     [ "formation", "pourquoi/se-former.webp", "Mains qui peignent des figurines en céramique lors d'un atelier" ],
     [ "benevolat", "pourquoi/s-engager.webp", "Jardin avec pelouse et haie devant une maison" ],
     [ "entreprendre", "pourquoi/entreprendre.webp", "Espace de travail partagé où des personnes échangent" ],
-    [ "rencontres", "pourquoi/rencontrer.webp", "Atelier d'artisanat partagé où plusieurs personnes travaillent" ]
+    [ "pratiquer", "pourquoi/pratiquer.webp", "Atelier d'artisanat partagé où plusieurs personnes travaillent" ]
   ].freeze
-  PINS_TERRITOIRE = %w[ecologiser benevolat rencontres formation].freeze
+  PINS_TERRITOIRE = %w[ecologiser benevolat pratiquer formation].freeze
 
   # Une vraie opportunité par catégorie, dans la Métropole, choisie pour écarter les pins les uns des
   # autres (et du centre) : chaque choix maximise sa distance au plus proche des points déjà posés.

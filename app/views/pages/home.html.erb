@@ -38,7 +38,7 @@ def thumb_for(o)
     'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=400&q=80&auto=format&fit=crop'
   when 'formation'
     'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&q=80&auto=format&fit=crop'
-  when 'rencontres'
+  when 'pratiquer', 'decouvrir'
     'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&q=80&auto=format&fit=crop'
   when 'entreprendre'
     'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&q=80&auto=format&fit=crop'
@@ -69,7 +69,8 @@ def cat_pill(cat)
     'benevolat'    => { bg: '#fff1f2', color: '#e11d48',  label: 'Bénévolat'    },
     'ecologiser'   => { bg: '#f0fdf4', color: '#16a34a',  label: 'Écologiser'   },
     'formation'    => { bg: '#eff6ff', color: '#2563eb',  label: 'Formation'    },
-    'rencontres'   => { bg: '#fefce8', color: '#a16207',  label: 'Rencontres'   },
+    'pratiquer'    => { bg: '#fefce8', color: '#a16207',  label: 'Pratiquer'    },
+    'decouvrir'    => { bg: '#ecfeff', color: '#0e7490',  label: 'Découvrir'    },
     'entreprendre' => { bg: '#fff7ed', color: '#c2410c',  label: 'Entreprendre' },
     'histoires'    => { bg: '#fdf4ff', color: '#9333ea',  label: 'Témoignage'   },
   }
@@ -145,7 +146,8 @@ end
             <option value="benevolat">❤️ Bénévolat</option>
             <option value="ecologiser">🌱 Écologiser</option>
             <option value="formation">📘 Formation</option>
-            <option value="rencontres">👥 Rencontres</option>
+            <option value="pratiquer">🛠️ Pratiquer</option>
+            <option value="decouvrir">🎭 Découvrir</option>
             <option value="entreprendre">🚀 Entreprendre</option>
             <option value="histoires">✨ Belles histoires</option>
           </select>
@@ -154,7 +156,8 @@ end
             <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
             <button class="chip" data-cat="ecologiser">🌱 Écologiser</button>
             <button class="chip" data-cat="formation">📘 Formation</button>
-            <button class="chip" data-cat="rencontres">👥 Rencontres</button>
+            <button class="chip" data-cat="pratiquer">🛠️ Pratiquer</button>
+            <button class="chip" data-cat="decouvrir">🎭 Découvrir</button>
             <button class="chip" data-cat="entreprendre">🚀 Entreprendre</button>
             <button class="chip" data-cat="histoires">✨ Belles histoires</button>
           </div>
@@ -774,7 +777,8 @@ end
 .chip[data-cat="benevolat"]   { --chip-border:#f43f5e; --chip-text:#f43f5e; }
 .chip[data-cat="ecologiser"]  { --chip-border:#22c55e; --chip-text:#22c55e; }
 .chip[data-cat="formation"]   { --chip-border:#6366f1; --chip-text:#6366f1; }
-.chip[data-cat="rencontres"]  { --chip-border:#eab308; --chip-text:#eab308; }
+.chip[data-cat="pratiquer"]   { --chip-border:#eab308; --chip-text:#eab308; }
+.chip[data-cat="decouvrir"]   { --chip-border:#2AA7B8; --chip-text:#2AA7B8; }
 .chip[data-cat="entreprendre"]{ --chip-border:#f97316; --chip-text:#f97316; }
 .chip[data-cat="histoires"]   { --chip-border:#ec4899; --chip-text:#ec4899; }
 .chip[data-cat="toutes"]      { --chip-border:#a855f7; --chip-text:#a855f7; }

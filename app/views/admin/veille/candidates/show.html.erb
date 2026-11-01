@@ -113,7 +113,7 @@
       <p class="small muted">Pas encore d'aperçu : <%= manque %>.</p>
     <% else %>
       <p class="small muted">
-        Rendu de la vraie page publique (<%= @candidate.histoire? ? "Belle Histoire" : "Opportunité" %>, catégorie « <%= @candidate.histoire? ? "Belles Histoires" : (@candidate.categorie_label || "Rencontres") %> »<%= ", famille « #{Opportunity::FAMILLES[@candidate.famille]} »" if @candidate.opportunite? && Opportunity::FAMILLES.key?(@candidate.famille) %>),
+        Rendu de la vraie page publique (<%= @candidate.histoire? ? "Belle Histoire" : "Opportunité" %>, catégorie « <%= @candidate.histoire? ? "Belles Histoires" : (@candidate.categorie_label || "Découvrir") %> »<%= ", famille « #{Opportunity::FAMILLES[@candidate.famille]} »" if @candidate.opportunite? && Opportunity::FAMILLES.key?(@candidate.famille) %>),
         sans rien enregistrer. Lieu : <strong><%= [ @candidate.adresse.presence, @candidate.commune ].compact.join(", ") %></strong> ;
         repère sur la carte à l'adresse précise si elle est trouvée, sinon au centre de la commune à la publication.
       </p>

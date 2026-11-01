@@ -31,9 +31,9 @@ module Veille
     # Catégorie (donc couleur du pin) déduite par le code, pour qu'elle ne contredise jamais la famille.
     CATEGORIE_PAR_FAMILLE = {
       "s_engager" => "benevolat", "evenement_solidaire" => "benevolat", "agir_ecologie" => "ecologiser",
-      "entreprendre" => "entreprendre", "se_former" => "formation", "pratiquer" => "rencontres",
-      "rencontre" => "rencontres", "decouvrir" => "rencontres", "lieu_collectif" => "rencontres",
-      "petite_manifestation" => "rencontres"
+      "entreprendre" => "entreprendre", "se_former" => "formation", "pratiquer" => "pratiquer",
+      "rencontre" => "pratiquer", "lieu_collectif" => "pratiquer", "decouvrir" => "decouvrir",
+      "petite_manifestation" => "decouvrir"
     }.freeze
     # Rubrique de l'Agenda Grand Nancy : signal sûr, indépendant du modèle.
     RUBRIQUE_BROCANTE = /\bbrocante\b/i
@@ -60,7 +60,7 @@ module Veille
     }.freeze
 
     SYSTEM_PROMPT = <<~TXT.freeze
-      Tu es assistant éditorial de Déclic, plateforme du Grand Nancy dont la promesse est « Change ta vie, en quelques clics » : aider chacun à s'engager, entreprendre, se former, écologiser, rencontrer d'autres gens, et s'inspirer de ceux qui ont franchi le pas. On te donne un élément repéré sur une source publique. Tu le classes et tu le résumes. Un humain relira tout.
+      Tu es assistant éditorial de Déclic, plateforme du Grand Nancy dont la promesse est « Change ta vie, en quelques clics » : aider chacun à s'engager, entreprendre, se former, écologiser, pratiquer, découvrir, et s'inspirer de ceux qui ont franchi le pas. On te donne un élément repéré sur une source publique. Tu le classes et tu le résumes. Un humain relira tout.
 
       PRINCIPE : tu décris plus que tu n'élimines. Un événement local ouvert au public reste dans la base, même si l'on y vient surtout pour écouter ou flâner : sa famille dit ce qu'il est, et l'humain décide de ce qu'il affiche. Hors ligne reste l'exception, réservée à la liste ci-dessous.
 
@@ -93,10 +93,14 @@ module Veille
       - pratiquer : activité ponctuelle ou de loisir où l'on fait soi-même, pour adultes, familles ou enfants (atelier d'une journée ou d'un week-end, initiation, stage de découverte, cours de pratique de loisir)
       - lieu_collectif : lieu à rejoindre durablement (MJC, maison de quartier, studio associatif, collectif, réseau)
       - evenement_solidaire : la participation finance ou sert explicitement une cause
-      - rencontre : on échange avec les autres présents (rôle participant)
+      - rencontre : on échange et on construit avec les autres présents (rôle participant) ; une conférence-rencontre où l'on vient surtout écouter relève de decouvrir
       - decouvrir : conférence, débat, rencontre d'auteur, projection-débat, répétition ouverte, visite guidée, exposition commentée ou médiation : on écoute et on apprend quelque chose
       - petite_manifestation : vide-grenier, brocante, marché, foire, salon, bourse aux objets, loto, fête ou soirée festive, sans cause explicite ni enjeu d'engagement. Le titre ou la rubrique doit le dire : cette famille ne sert jamais de solution de repli pour un texte qu'on ne comprend pas.
       Pour un contenu hors ligne : hors_ligne.
+
+      CATÉGORIE : le code la déduit de ta famille ; choisis donc la famille selon ce critère.
+      - Pratiquer (familles pratiquer, rencontre, lieu_collectif) : la personne est actrice ou participante directe : ateliers, activités manuelles, rejoindre un collectif ou un groupe, pratiquer une activité avec d'autres.
+      - Découvrir (familles decouvrir, petite_manifestation) : la personne vient voir, visiter ou assister : visites guidées, expositions, conférences, événements type brocantes, foires ou fêtes, choses à observer plus qu'à faire soi-même.
 
       SE_FORMER OU PRATIQUER : regarde d'abord la nature, puis la durée. Visée professionnelle, langue suivie, certification, reconversion : se_former. Loisir, découverte, enfants ou familles, une séance, une journée, un week-end, cours de loisir même étalés sur plusieurs mois : pratiquer, même si l'activité s'appelle atelier, cours, stage ou formation et même si l'on y apprend quelque chose. Une rubrique « Atelier » n'est jamais se_former. Une série d'ateliers de même intitulé reçoit la même famille à chaque date.
 
@@ -261,7 +265,7 @@ module Veille
       return nil if type == "belle_histoire"
       return candidate.declic_category if SOURCES_CATEGORIE_FIXE.include?(candidate.origin) && candidate.declic_category.present?
 
-      CATEGORIE_PAR_FAMILLE[famille] || candidate.declic_category.presence || "rencontres"
+      CATEGORIE_PAR_FAMILLE[famille] || candidate.declic_category.presence || "decouvrir"
     end
 
     def parse_date(valeur)

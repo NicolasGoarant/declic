@@ -68,7 +68,7 @@ opportunite(
 )
 
 opportunite(
-  category: "rencontres", title: "Soirée salsa, bachata et kizomba",
+  category: "pratiquer", title: "Soirée salsa, bachata et kizomba",
   organization: "Association Les Nuits Latines", published_at: jour(-3),
   starts_on: jour(13), ends_on: jour(13), start_time: "20:00", end_time: "23:30",
   is_free: false, tags: "Danse, Soirée, Musique",
@@ -97,7 +97,7 @@ opportunite(
 )
 
 opportunite(
-  category: "rencontres", title: "Visite guidée : la place Stanislas et son histoire",
+  category: "decouvrir", title: "Visite guidée : la place Stanislas et son histoire",
   organization: "Nancy à pied (exemple)", published_at: jour(-20),
   starts_on: jour(16), ends_on: jour(16), start_time: "15:00", end_time: "16:30",
   location: "Place Stanislas, 54000 Nancy", address: "Place Stanislas", latitude: 48.6936, longitude: 6.1833, **STANISLAS,
@@ -157,7 +157,7 @@ opportunite(
 )
 
 opportunite(
-  category: "rencontres", title: "Stage de sculpture sur pierre",
+  category: "pratiquer", title: "Stage de sculpture sur pierre",
   organization: "Atelier de la Carrière", published_at: jour(-12),
   starts_on: jour(38), ends_on: jour(39), start_time: "09:30", end_time: "17:00",
   location: "Atelier de la Carrière, 12 rue des Michottes, 54000 Nancy", address: "12 rue des Michottes",
@@ -247,7 +247,7 @@ opportunite(
 )
 
 opportunite(
-  category: "rencontres", title: "Atelier bijouterie en accès libre",
+  category: "pratiquer", title: "Atelier bijouterie en accès libre",
   organization: "Atelier Lune d'Or", published_at: jour(-50),
   schedule_text: "Ouvert le mercredi et le samedi après-midi, sur inscription",
   location: "Atelier Lune d'Or, 3 rue de la République, 54520 Laxou", address: "3 rue de la République",

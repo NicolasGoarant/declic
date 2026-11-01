@@ -54,7 +54,7 @@
   <%# ─── Trois chiffres ─── %>
   <section class="pq-contenu pq-chiffres" aria-label="Déclic en chiffres">
     <% [
-         [ "ecologiser", @chiffres[:opportunites], "Opportunités", "pour s'engager, se former, entreprendre, rencontrer…" ],
+         [ "ecologiser", @chiffres[:opportunites], "Opportunités", "pour s'engager, se former, entreprendre, pratiquer, découvrir…" ],
          [ "benevolat", 1, "Métropole", "le Grand Nancy, un territoire dynamique et solidaire." ],
          [ "histoires", @chiffres[:histoires], "Histoires", "de personnes inspirantes près de chez vous." ]
        ].each do |cle, nombre, libelle, detail| %>
@@ -147,7 +147,7 @@
       <% [
            [ "histoires", "Des histoires qui inspirent", "Portraits authentiques de personnes qui ont osé franchir le pas. Leurs parcours donnent envie d'agir." ],
            [ "entreprendre", "Des opportunités concrètes", "Événements, formations, projets à rejoindre. Tout est géolocalisé, fiable et actionnable en un clic." ],
-           [ "rencontres", "Une communauté qui partage", "Chaque utilisateur peut proposer une histoire ou une opportunité. Ceux qui trouvent leur déclic deviennent eux aussi acteurs du réseau." ]
+           [ "pratiquer", "Une communauté qui partage", "Chaque utilisateur peut proposer une histoire ou une opportunité. Ceux qui trouvent leur déclic deviennent eux aussi acteurs du réseau." ]
          ].each do |cle, titre, texte| %>
         <article class="pq-carte-texte pq-carte-texte--ligne" style="--c: <%= cat.(cle).couleur %>">
           <span class="pq-pastille"><%= icone.(cle, 40) %></span>
@@ -188,7 +188,7 @@
       <p class="pq-sous-titre">Les principes qui guident chacune de nos décisions</p>
       <div class="pq-grille pq-grille--4">
         <% [
-             [ "rencontres", "Ouvert & Accessible", "Gratuit, sans inscription obligatoire, pour tous. Tout le monde peut contribuer et partager ses opportunités." ],
+             [ "decouvrir", "Ouvert & Accessible", "Gratuit, sans inscription obligatoire, pour tous. Tout le monde peut contribuer et partager ses opportunités." ],
              [ "benevolat", "Bienveillant & Authentique", "Nous croyons en la force de l'encouragement et des histoires vraies. Pas de filtre, pas de pose, juste des parcours inspirants." ],
              [ "ecologiser", "Local & Concret", "Chaque action compte. Nous valorisons l'impact territorial et facilitons l'engagement de proximité, dans la métropole du Grand Nancy." ],
              [ "histoires", "Collaboratif", "Déclic est co-construit avec les habitants, les associations et les institutions locales." ]

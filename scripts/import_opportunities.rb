@@ -14,9 +14,12 @@ class OpportunityImporter
     'formation' => 'formation',
     'cours' => 'formation',
     'atelier' => 'formation',
-    'rencontres' => 'rencontres',
-    'rencontre' => 'rencontres',
-    'networking' => 'rencontres',
+    'rencontres' => 'pratiquer',
+    'rencontre' => 'pratiquer',
+    'networking' => 'pratiquer',
+    'pratiquer' => 'pratiquer',
+    'decouvrir' => 'decouvrir',
+    'découvrir' => 'decouvrir',
     'entreprendre' => 'entreprendre',
     'entrepreneuriat' => 'entreprendre',
     'startup' => 'entreprendre'
@@ -79,7 +82,7 @@ class OpportunityImporter
   end
 
   def self.normalize_category(cat)
-    return 'rencontres' if cat.blank?
+    return 'decouvrir' if cat.blank?
     
     cat_lower = cat.to_s.downcase.strip
     CATEGORY_MAPPING[cat_lower] || cat_lower

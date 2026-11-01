@@ -31,7 +31,7 @@ class Opportunity < ApplicationRecord
   end
 
   # --- Scopes / constantes ---
-  CATEGORIES = %w[benevolat formation rencontres entreprendre ecologiser].freeze
+  CATEGORIES = %w[ecologiser entreprendre formation benevolat pratiquer decouvrir].freeze
   # Ce qu'est la fiche, indépendamment de sa catégorie (qui porte la couleur du pin). Remplie par la veille.
   FAMILLES = {
     "s_engager" => "S'engager", "agir_ecologie" => "Agir pour l'écologie", "entreprendre" => "Entreprendre",

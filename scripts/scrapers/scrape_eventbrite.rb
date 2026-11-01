@@ -159,11 +159,12 @@ class EventbriteScraper
     
     return 'ecologiser' if title_lower =~ /(écolo|environnement|nature|bio|durable|climat|zéro déchet)/
     return 'formation' if title_lower =~ /(atelier|formation|workshop|cours|masterclass|séminaire)/
-    return 'rencontres' if title_lower =~ /(networking|meetup|café|apéro|concert|festival|expo)/
+    return 'pratiquer' if title_lower =~ /(networking|meetup|café|apéro)/
+    return 'decouvrir' if title_lower =~ /(concert|festival|expo)/
     return 'benevolat' if title_lower =~ /(solidaire|bénévol|don\b|aide|humanitaire)/
     return 'entreprendre' if title_lower =~ /(startup|entrepreneur|pitch|business|innovation)/
     
-    'rencontres'
+    'decouvrir'
   end
 
   def self.get_lat(city)

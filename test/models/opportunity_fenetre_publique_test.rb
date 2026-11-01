@@ -8,7 +8,7 @@ class OpportunityFenetrePubliqueTest < ActiveSupport::TestCase
   def a(jour, heure = "12:00:00") = ActiveSupport::TimeZone[ConversionDates::FUSEAU].parse("#{jour} #{heure}")
 
   def fiche(famille: "petite_manifestation", debut: nil, fin: nil)
-    Opportunity.create!(title: "Fiche #{SecureRandom.hex(3)}", description: "Texte.", category: "rencontres",
+    Opportunity.create!(title: "Fiche #{SecureRandom.hex(3)}", description: "Texte.", category: "decouvrir",
                         latitude: 48.69, longitude: 6.18, famille: famille, starts_on: debut, ends_on: fin, is_active: true)
   end
 

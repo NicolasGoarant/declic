@@ -3,7 +3,7 @@
 # Champ par champ, réutilise ce qui existe déjà (accueil_helper, Opportunity#date_affichee...) plutôt
 # que de reformater les dates ou les lieux une deuxième fois.
 module LaboHelper
-  # Les 5 catégories réelles (Opportunity::CATEGORIES), sans la pseudo-catégorie « histoires » qui
+  # Les 6 catégories réelles (Opportunity::CATEGORIES), sans la pseudo-catégorie « histoires » qui
   # ne sert qu'au diorama : le filtre de /labo/opportunites n'en a pas besoin.
   def categories_reelles
     Categorie::TOUTES.reject { |c| c.cle == Categorie::HISTOIRES }

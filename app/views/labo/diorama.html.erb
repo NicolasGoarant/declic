@@ -47,7 +47,8 @@
       <button class="chip" data-cat="benevolat" style="--c:#f43f5e">❤️ Bénévolat</button>
       <button class="chip" data-cat="ecologiser" style="--c:#16a34a">🌱 Écologiser</button>
       <button class="chip" data-cat="formation" style="--c:#3b82f6">📘 Formation</button>
-      <button class="chip" data-cat="rencontres" style="--c:#facc15">👥 Rencontres</button>
+      <button class="chip" data-cat="pratiquer" style="--c:#facc15">🛠️ Pratiquer</button>
+      <button class="chip" data-cat="decouvrir" style="--c:#2AA7B8">🎭 Découvrir</button>
       <button class="chip" data-cat="entreprendre" style="--c:#f59e0b">🚀 Entreprendre</button>
       <button class="chip" data-cat="histoires" style="--c:#a855f7">✨ Belles histoires</button>
     </div>
@@ -132,11 +133,11 @@
     // --- Popup (même contenu que la carte Leaflet : badge catégorie, titre, organisation, date, lieu) ---
     const CATS = {
       benevolat: ["#f43f5e", "Bénévolat"], ecologiser: ["#16a34a", "Écologie"], formation: ["#3b82f6", "Formation"],
-      rencontres: ["#facc15", "Rencontres"], entreprendre: ["#f59e0b", "Entreprise"], histoires: ["#a855f7", "Témoignage"], default: ["#7e5bef", "Initiative"],
+      pratiquer: ["#facc15", "Pratiquer"], decouvrir: ["#2AA7B8", "Découvrir"], entreprendre: ["#f59e0b", "Entreprise"], histoires: ["#a855f7", "Témoignage"], default: ["#7e5bef", "Initiative"],
     };
     const IMG = {
       benevolat: "photo-1488521787991-ed7bbaae773c", formation: "photo-1555949963-ff9fe0c870eb",
-      rencontres: "photo-1511632765486-a01980e01a18", default: "photo-1500648767791-00dcc994a43e",
+      pratiquer: "photo-1511632765486-a01980e01a18", decouvrir: "photo-1511632765486-a01980e01a18", default: "photo-1500648767791-00dcc994a43e",
     };
     const esc = s => (s || "").toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     const mdPlain = s => (s || "")

@@ -23,7 +23,7 @@ module VeilleSupport
   end
 
   def reponse_ia(**attrs)
-    { "type" => "opportunite", "categorie" => "rencontres", "commune" => "Nancy", "date_debut" => "", "date_fin" => "",
+    { "type" => "opportunite", "categorie" => "decouvrir", "commune" => "Nancy", "date_debut" => "", "date_fin" => "",
       "regime" => "", "hors_ligne" => false, "resume" => "Une première phrase. Une seconde phrase.", "confiance" => 80,
       "motif" => "Invite à venir." }.merge(attrs.transform_keys(&:to_s))
   end

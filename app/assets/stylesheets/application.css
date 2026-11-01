@@ -135,7 +135,8 @@ body {
 /* Variantes de couleur selon catégorie */
 .dcpp-pill[data-cat="benevolat"]    { background:#fff1f2; color:#be123c; border-color:#fecdd3; }
 .dcpp-pill[data-cat="formation"]    { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
-.dcpp-pill[data-cat="rencontres"]   { background:#ecfdf5; color:#047857; border-color:#bbf7d0; }
+.dcpp-pill[data-cat="pratiquer"]    { background:#ecfdf5; color:#047857; border-color:#bbf7d0; }
+.dcpp-pill[data-cat="decouvrir"]    { background:#ecfeff; color:#0e7490; border-color:#a5f3fc; }
 .dcpp-pill[data-cat="entreprendre"] { background:#fff7ed; color:#c2410c; border-color:#fed7aa; }
 
 /* ========================================
@@ -150,7 +151,8 @@ body {
 .dc-marker.benevolat    { background:#f43f5e; }
 .dc-marker.ecologiser   { background:#16a34a; }
 .dc-marker.formation    { background:#3b82f6; }
-.dc-marker.rencontres   { background:#facc15; }
+.dc-marker.pratiquer    { background:#facc15; }
+.dc-marker.decouvrir    { background:#2AA7B8; }
 .dc-marker.entreprendre { background:#f59e0b; }
 .dc-marker.histoires    { background:#a855f7; }
 .dc-marker.default      { background:#7e5bef; }

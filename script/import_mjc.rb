@@ -10,7 +10,7 @@ FICHES = [
   # ─────────────────────────────────────────
   {
     title:         "MJC Desforges — 80 ans d'éducation populaire au cœur de Nancy",
-    category:      "rencontres",
+    category:      "pratiquer",
     organization:  "MJC Philippe Desforges",
     location:      "Nancy Centre",
     address:       "27 Rue de la République",
@@ -61,7 +61,7 @@ FICHES = [
   # ─────────────────────────────────────────
   {
     title:         "MJC Beauregard — La maison de quartier ouverte à toutes et tous",
-    category:      "rencontres",
+    category:      "pratiquer",
     organization:  "MJC Beauregard",
     location:      "Quartier Beauregard, Nancy",
     address:       "Place Maurice Ravel",
@@ -112,7 +112,7 @@ FICHES = [
   # ─────────────────────────────────────────
   {
     title:         "MJC Haut-du-Lièvre — Agitatrice de culture sur le Plateau de Haye",
-    category:      "rencontres",
+    category:      "pratiquer",
     organization:  "MJC Haut-du-Lièvre",
     location:      "Plateau de Haye, Nancy",
     address:       "854 Avenue Raymond Pinchard",
@@ -162,7 +162,7 @@ FICHES = [
   # ─────────────────────────────────────────
   {
     title:         "MJC 3 Maisons — Cirque, jonglerie et jardin partagé quartier des 3 Maisons",
-    category:      "rencontres",
+    category:      "pratiquer",
     organization:  "MJC 3 Maisons",
     location:      "Quartier des 3 Maisons, Nancy",
     address:       "12 rue de Fontenoy",
@@ -220,7 +220,7 @@ FICHES = [
   # ─────────────────────────────────────────
   {
     title:         "MJC Bazin — La maison de quartier vivante depuis 1973",
-    category:      "rencontres",
+    category:      "pratiquer",
     organization:  "MJC Bazin",
     location:      "Nancy, quartier Saint-Max / canal",
     address:       "47 rue Henri Bazin",
@@ -276,7 +276,7 @@ FICHES = [
   # ─────────────────────────────────────────
   {
     title:         "MJC Lillebonne — Une fourmilière d'activités en plein cœur de Nancy",
-    category:      "rencontres",
+    category:      "pratiquer",
     organization:  "MJC Lillebonne Saint-Épvre",
     location:      "Nancy Centre / Vieille Ville",
     address:       "14 rue du Cheval Blanc",
@@ -382,7 +382,7 @@ FICHES = [
   # ─────────────────────────────────────────
   {
     title:         "Studios de musique ouverts à tous — MJC Haut-du-Lièvre",
-    category:      "rencontres",
+    category:      "pratiquer",
     organization:  "MJC Haut-du-Lièvre",
     location:      "Plateau de Haye, Nancy",
     address:       "854 Avenue Raymond Pinchard",
@@ -435,7 +435,7 @@ FICHES = [
   # ─────────────────────────────────────────
   {
     title:         "Local de répétition en auto-gestion — MJC 3 Maisons",
-    category:      "rencontres",
+    category:      "pratiquer",
     organization:  "MJC 3 Maisons",
     location:      "Quartier des 3 Maisons, Nancy",
     address:       "12 rue de Fontenoy",
@@ -475,7 +475,7 @@ FICHES = [
   # ─────────────────────────────────────────
   {
     title:         "Galerie Lillebonne — Art contemporain dans une MJC depuis 1984",
-    category:      "rencontres",
+    category:      "pratiquer",
     organization:  "MJC Lillebonne — Galerie Lillebonne",
     location:      "Nancy Centre / Vieille Ville",
     address:       "14 rue du Cheval Blanc",

@@ -73,11 +73,11 @@ class HelloAssoScraper
     
     return 'ecologiser' if title_lower =~ /(écolo|environnement|nature|bio|climat)/
     return 'formation' if title_lower =~ /(formation|atelier|cours|apprentissage)/
-    return 'rencontres' if title_lower =~ /(rencontre|café|apéro|networking|meetup)/
+    return 'pratiquer' if title_lower =~ /(rencontre|café|apéro|networking|meetup)/
     return 'benevolat' if title_lower =~ /(bénévol|solidaire|aide|don\b)/
     return 'entreprendre' if title_lower =~ /(entrepreneur|startup|pitch|business)/
     
-    'rencontres' # Défaut
+    'decouvrir' # Défaut
   end
 end
 

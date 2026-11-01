@@ -30,9 +30,10 @@ BLANC = (255, 255, 255)
 CATEGORIES = [  # clé, libellé, couleur (Categorie::TOUTES)
     ("ecologiser", "Écologiser", "#82C162"),
     ("entreprendre", "Entreprendre", "#F8910E"),
-    ("rencontres", "Rencontrer", "#EBBF60"),
     ("formation", "Se former", "#5A75E8"),
     ("benevolat", "S'engager", "#E85DAB"),
+    ("pratiquer", "Pratiquer", "#EBBF60"),
+    ("decouvrir", "Découvrir", "#2AA7B8"),
     ("histoires", "Belles Histoires", "#9472F6"),
 ]
 
@@ -118,14 +119,14 @@ def ligne_icones(img, cles, y, taille):
 
 
 def main():
-    # Image de partage par défaut : logo, accroche, les six catégories.
+    # Image de partage par défaut : logo, accroche, les catégories et les Belles Histoires.
     img = fond()
     logo(img, 90, 90)
     texte(img, 92, 225, ["Rencontres, opportunités et belles histoires", "pour faire bouger le Grand Nancy."])
     ligne_icones(img, [c[0] for c in CATEGORIES], 470, 104)
     enregistrer(img, "og_default.jpg")
 
-    # Opportunité sans photo, catégorie inconnue : les cinq catégories d'opportunités.
+    # Opportunité sans photo, catégorie inconnue : les six catégories d'opportunités.
     img = fond()
     logo(img, 90, 90)
     texte(img, 92, 225, ["Une opportunité à saisir près de chez vous."])

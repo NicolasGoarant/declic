@@ -21,7 +21,7 @@ class Veille::RunnerTest < ActiveSupport::TestCase
     def initialize = (@vus = []; @usage = { "input_tokens" => 1000, "output_tokens" => 200 })
     def enrich(c)
       @vus << c
-      c.update!(item_type: "opportunite", declic_category: "rencontres", commune: "Nancy", summary: "R.", enriched_at: Time.current)
+      c.update!(item_type: "opportunite", declic_category: "decouvrir", commune: "Nancy", summary: "R.", enriched_at: Time.current)
     end
   end
 
@@ -95,7 +95,7 @@ class Veille::RunnerTest < ActiveSupport::TestCase
     enricher.define_singleton_method(:enrich) do |c|
       appels += 1
       raise AnthropicClient::ConnectionError, "timeout" if appels == 1
-      c.update!(item_type: "opportunite", declic_category: "rencontres", commune: "Nancy", summary: "R.", enriched_at: Time.current)
+      c.update!(item_type: "opportunite", declic_category: "decouvrir", commune: "Nancy", summary: "R.", enriched_at: Time.current)
     end
     rapport = runner([FauxConnecteur.new("A", items: [item(title: "Un"), item(title: "Deux")])], enricher: enricher).run
 

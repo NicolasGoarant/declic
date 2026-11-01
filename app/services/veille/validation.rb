@@ -67,7 +67,7 @@ module Veille
 
     def attributs_opportunite
       {
-        title: @c.title, description: description_opportunite, category: @c.declic_category.presence || "rencontres",
+        title: @c.title, description: description_opportunite, category: @c.declic_category.presence || "decouvrir",
         **lieu, city: @c.commune, starts_on: @c.starts_on, ends_on: @c.ends_on,
         schedule_text: @c.schedule_text, source: "veille", external_id: Digest::SHA1.hexdigest(@c.url),
         source_name: @c.source_label, source_url: @c.url, cta_button_text: LIEN_TEXTE, cta_button_url: @c.url,

@@ -27,7 +27,8 @@ class RawMapper
     return 'formation'   if t.match?(/formation|atelier|bootcamp|cours|apprendre/)
     return 'benevolat'   if t.match?(/bénévol|solidar|entraide|aide|don/)
     return 'entreprendre'if t.match?(/entrepren|incubateur|startup|projet/)
-    return 'rencontres'  if t.match?(/rencontre|café|communaut|réseau|club|soirée/)
+    return 'decouvrir'   if t.match?(/visite|exposition|conférence|brocante|foire|fête/)
+    return 'pratiquer'   if t.match?(/rencontre|café|communaut|réseau|club|soirée/)
     'benevolat'
   end
 end

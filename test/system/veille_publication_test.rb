@@ -15,7 +15,7 @@ class VeillePublicationTest < ApplicationSystemTestCase
 
   def candidat(**attrs)
     Veille::Candidate.create!({ url: "https://exemple.fr/#{SecureRandom.hex(4)}", origin: "agenda_nancy", item_type: "opportunite",
-                                declic_category: "rencontres", famille: "petite_manifestation", summary: "Un résumé reformulé.",
+                                declic_category: "decouvrir", famille: "petite_manifestation", summary: "Un résumé reformulé.",
                                 reliability: "haute", enriched_at: Time.current }.merge(attrs))
   end
 

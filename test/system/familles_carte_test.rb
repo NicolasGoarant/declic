@@ -7,7 +7,7 @@ class FamillesCarteTest < ApplicationSystemTestCase
   setup do
     @tuiles = DioramaTuiles.new(base: "https://tuiles.test/#{SecureRandom.hex(4)}", sonde: ->(_) { false })
     { "Vide-grenier du quartier" => "petite_manifestation", "Conférence sur le climat" => "decouvrir", "Atelier vélo" => "pratiquer" }.each do |titre, famille|
-      Opportunity.create!(title: titre, description: "Texte.", category: "rencontres", latitude: 48.69, longitude: 6.18,
+      Opportunity.create!(title: titre, description: "Texte.", category: "decouvrir", latitude: 48.69, longitude: 6.18,
                           famille: famille, is_active: true)
     end
   end

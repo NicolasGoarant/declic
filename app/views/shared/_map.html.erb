@@ -113,7 +113,8 @@ function bootDeclicMap(){
       benevolat:   '#f43f5e',
       ecologiser:  '#16a34a',
       formation:   '#3b82f6',
-      rencontres:  '#facc15',
+      pratiquer:   '#facc15',
+      decouvrir:   '#2AA7B8',
       entreprendre:'#f59e0b',
       histoires:   '#a855f7',
       default:     '#7e5bef'
@@ -122,7 +123,8 @@ function bootDeclicMap(){
       benevolat:   '❤️',
       ecologiser:  '🌱',
       formation:   '📘',
-      rencontres:  '🤝',
+      pratiquer:   '🛠️',
+      decouvrir:   '🎭',
       entreprendre:'🚀',
       histoires:   '✨',
       default:     '📍'
@@ -176,7 +178,8 @@ function bootDeclicMap(){
         benevolat:    { color: '#f43f5e', label: 'Bénévolat' },
         ecologiser:   { color: '#16a34a', label: 'Écologie' },
         formation:    { color: '#3b82f6', label: 'Formation' },
-        rencontres:   { color: '#facc15', label: 'Rencontres' },
+        pratiquer:    { color: '#facc15', label: 'Pratiquer' },
+        decouvrir:    { color: '#2AA7B8', label: 'Découvrir' },
         entreprendre: { color: '#f59e0b', label: 'Entreprise' },
         histoires:    { color: '#a855f7', label: 'Témoignage' },
         default:      { color: '#7e5bef', label: 'Initiative' }
@@ -198,7 +201,7 @@ function bootDeclicMap(){
         if(obj.image_url) return obj.image_url;
         if(cKey==='benevolat') return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400&q=80&fit=crop';
         if(cKey==='formation') return 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=400&q=80&fit=crop';
-        if(cKey==='rencontres') return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=400&q=80&fit=crop';
+        if(cKey==='pratiquer'||cKey==='decouvrir') return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=400&q=80&fit=crop';
         return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80&fit=crop';
       })(o);
 

@@ -4,7 +4,7 @@
 fix_csv.py
 - Nettoie/normalise le CSV brut du collecteur
 - Filtre “agenda culturel”
-- Devine une catégorie (par mots-clés) parmi: benevolat, formation, rencontres, entreprendre
+- Devine une catégorie (par mots-clés) parmi: benevolat, formation, pratiquer, decouvrir, entreprendre
 - Extrait une date/heure FR et calcule starts_at / ends_at
 - Formate une ligne “Quand ? …” (time_commitment) cohérente
 - Force la présence d'un lien '🔗 En savoir plus : …' dans description si source_url existe
@@ -18,7 +18,7 @@ import csv, re, sys, argparse
 from datetime import datetime, timedelta
 from dateutil import parser as dateparser
 
-ALLOWED_CATEGORIES = {"benevolat","formation","rencontres","entreprendre"}
+ALLOWED_CATEGORIES = {"benevolat","formation","pratiquer","decouvrir","entreprendre"}
 
 CULTURE_BLOCK = re.compile(
     r"\b(concert|spectacle|théâtre|exposition|vernissage|cinéma|festival|"
@@ -36,7 +36,8 @@ HOUR_CAND = re.compile(r"(\d{1,2})\s*h\s*(\d{2})?", re.I)
 KW = {
     "benevolat":   [r"bénévol", r"maraude", r"distributi(on|on)", r"tri de dons", r"accueil", r"entraide"],
     "formation":   [r"formation", r"atelier", r"webinaire", r"initiation", r"certificat", r"HACCP", r"apprendre"],
-    "rencontres":  [r"apéro", r"rencontre", r"café[- ]?projet", r"club", r"réseau", r"visite", r"balade"],
+    "pratiquer":   [r"apéro", r"rencontre", r"café[- ]?projet", r"club", r"réseau"],
+    "decouvrir":   [r"visite", r"balade"],
     "entreprendre":[r"entrepreneur", r"business plan", r"finance(r|ment)", r"mentorat", r"pro bono", r"juridique"],
 }
 

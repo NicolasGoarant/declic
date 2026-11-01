@@ -16,7 +16,7 @@ def thumb_for(o)
   case cat
   when 'benevolat'    then 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=600&q=80&fit=crop'
   when 'formation'    then 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&q=80&fit=crop'
-  when 'rencontres'   then 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80&fit=crop'
+  when 'pratiquer', 'decouvrir' then 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80&fit=crop'
   when 'entreprendre' then 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=80&fit=crop'
   when 'ecologiser'   then 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80&fit=crop'
   else                     'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&q=80&fit=crop'
@@ -40,7 +40,7 @@ end
         <span class="ops-pill-head">Agir maintenant</span>
         <h1 class="ops-title">Les Opportunités</h1>
         <p class="ops-chapo">
-          Bénévolat, formations, rencontres, entrepreneuriat...<br>
+          Bénévolat, formations, pratiques, découvertes, entrepreneuriat...<br>
           Trouvez l'action concrète qui vous correspond près de chez vous.
         </p>
 
@@ -63,7 +63,8 @@ end
   <button class="chip <%= 'is-active' if current_cat == 'benevolat' %>" data-cat="benevolat">❤️ Bénévolat</button>
   <button class="chip <%= 'is-active' if current_cat == 'ecologiser' %>" data-cat="ecologiser">🌱 Écologiser</button>
   <button class="chip <%= 'is-active' if current_cat == 'formation' %>" data-cat="formation">📘 Formation</button>
-  <button class="chip <%= 'is-active' if current_cat == 'rencontres' %>" data-cat="rencontres">🤝 Rencontres</button>
+  <button class="chip <%= 'is-active' if current_cat == 'pratiquer' %>" data-cat="pratiquer">🛠️ Pratiquer</button>
+  <button class="chip <%= 'is-active' if current_cat == 'decouvrir' %>" data-cat="decouvrir">🎭 Découvrir</button>
 </div>
 
       <div class="ops-mapwrap">
@@ -232,8 +233,9 @@ end
 .ops-badge[data-cat="entreprendre"]{ color: #f59e0b; }
 .ops-badge[data-cat="ecologiser"]  { color: #16a34a; }
 .ops-badge[data-cat="formation"]   { color: #3b82f6; }
-.ops-badge[data-cat="rencontres"]  { color: #facc15;
+.ops-badge[data-cat="pratiquer"]   { color: #facc15;
 }
+.ops-badge[data-cat="decouvrir"]   { color: #2AA7B8; }
 
 .ops-card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
 .ops-card-title { font-family: "Epilogue"; font-weight: 800; font-size: 1.25rem;
@@ -296,11 +298,11 @@ function initOpsMap() {
 // CONFIG ICONES & COULEURS
   const colors = {
     benevolat: '#f43f5e', ecologiser: '#16a34a', formation: '#3b82f6',
-    rencontres: '#facc15', entreprendre:'#f59e0b', default: '#4f46e5'
+    pratiquer: '#facc15', decouvrir: '#2AA7B8', entreprendre:'#f59e0b', default: '#4f46e5'
   };
   const emojis = {
     benevolat: '❤️', ecologiser: '🌱', formation: '📘',
-    rencontres: '🤝', entreprendre:'🚀', default: '📍'
+    pratiquer: '🛠️', decouvrir: '🎭', entreprendre:'🚀', default: '📍'
   };
   const iconFor = (c) => {
     const cat = (c||'').toLowerCase().trim();

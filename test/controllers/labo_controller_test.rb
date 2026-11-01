@@ -10,7 +10,7 @@ class LaboControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_nil response.headers["X-Robots-Tag"]
     assert_select "[data-controller=diorama]"
-    assert_select ".acc-cat", 6
+    assert_select ".acc-cat", 7
     assert_select "nav.acc-onglets"
     # Panneau « Calques » : Fond (Diorama, Plan), Style (Jeu vidéo, Réaliste) et Ambiance complète
     # (Automatique, moment, saison, météo, maquette blanche).
@@ -117,7 +117,7 @@ class LaboControllerTest < ActionDispatch::IntegrationTest
     Opportunity.update_all(is_active: false)
     jour = Date.current
     opportunite(title: "Dans dix jours", starts_on: jour + 10)
-    opportunite(title: "Demain", starts_on: jour + 1, category: "rencontres")
+    opportunite(title: "Demain", starts_on: jour + 1, category: "pratiquer")
     opportunite(title: "Hier", starts_on: jour - 1)
     opportunite(title: "Permanente")
     opportunite(title: "Dans trois jours", starts_on: jour + 3)
@@ -126,18 +126,18 @@ class LaboControllerTest < ActionDispatch::IntegrationTest
 
     # Vedettes : la prochaine de toutes (visible), puis la première de chaque autre catégorie (masquée).
     assert_select "[data-agenda-target=vedette]" do |vedettes|
-      assert_equal [ "rencontres", "formation" ], vedettes.map { |v| v["data-categorie"] }
+      assert_equal [ "pratiquer", "formation" ], vedettes.map { |v| v["data-categorie"] }
       assert_equal [ nil, "" ], vedettes.map { |v| v["hidden"] }
     end
     assert_select "[data-agenda-target=vedette]:not([hidden]) .opp-titre", text: "Demain"
-    assert_select "[data-agenda-target=vedette]:not([hidden]) .opp-etiquette", text: "Rencontrer"
-    assert_select "[data-agenda-target=vedette]:not([hidden]) img[src*='fallback-opportunity-rencontres']"
+    assert_select "[data-agenda-target=vedette]:not([hidden]) .opp-etiquette", text: "Pratiquer"
+    assert_select "[data-agenda-target=vedette]:not([hidden]) img[src*='fallback-opportunity-pratiquer']"
     assert_select ".agenda-ligne .agenda-titre" do |titres|
       assert_equal [ "Dans trois jours", "Dans dix jours", "Dans un mois" ], titres.map(&:text)
     end
     assert_select ".agenda-ligne[href^='/opportunities/']", 3
     assert_select ".agenda-date strong", text: (jour + 3).day.to_s
-    assert_select ".bloc-filtre[aria-pressed]", 6
+    assert_select ".bloc-filtre[aria-pressed]", 7
     assert_select ".bloc-opportunites a.bloc-bouton--jaune[href=?]", labo_opportunites_path
     assert_select ".bloc-opportunites", text: /Hier|Permanente/, count: 0
   end

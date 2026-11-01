@@ -76,7 +76,7 @@ class LaboController < ApplicationController
     {
       initiatives: actives.count,
       personnes: noms.compact_blank.map { |n| n.strip.downcase }.uniq.size,
-      rencontres: actives.where(category: "rencontres").count,
+      rencontres: actives.where(category: %w[pratiquer decouvrir]).count,
       histoires: Story.active.dans_la_zone.count
     }
   end

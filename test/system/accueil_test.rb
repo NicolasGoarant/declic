@@ -73,7 +73,7 @@ class AccueilTest < ApplicationSystemTestCase
       assert_operator legende.y + legende.height, :<=, find(".acc-poignee").rect.y
 
       categories = all(".acc-cat").map { |c| c.find(".acc-cat-libelle").text }
-      assert_equal 6, categories.size
+      assert_equal 7, categories.size
       assert_equal "Belles Histoires", categories.last
 
       find(".acc-cat[data-cle='histoires']").click

@@ -122,11 +122,12 @@ class NancyScraper
     
     return 'ecologiser' if title_lower =~ /(écolo|environnement|nature|jardin|vélo|bio)/
     return 'formation' if title_lower =~ /(atelier|formation|cours|stage)/
-    return 'rencontres' if title_lower =~ /(concert|exposition|spectacle|festival|café|rencontre)/
+    return 'decouvrir' if title_lower =~ /(concert|exposition|spectacle|festival)/
+    return 'pratiquer' if title_lower =~ /(café|rencontre)/
     return 'benevolat' if title_lower =~ /(solidaire|bénévol|aide)/
     return 'entreprendre' if title_lower =~ /(entrepreneur|startup|innovation)/
     
-    'rencontres'
+    'decouvrir'
   end
 end
 

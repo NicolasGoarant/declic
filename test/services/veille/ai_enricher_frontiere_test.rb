@@ -3,7 +3,7 @@ require_relative "support"
 require_relative "fake_anthropic_client"
 
 # Frontière se_former / pratiquer : le modèle tranche (nature d'abord, durée ensuite), le code garde
-# la famille rendue et en déduit la catégorie (formation / rencontres). Le client est simulé : ces
+# la famille rendue et en déduit la catégorie (formation / pratiquer). Le client est simulé : ces
 # tests couvrent la règle donnée au modèle et ce que le code en fait, pas le jugement du modèle.
 class Veille::AiEnricherFrontiereTest < ActiveSupport::TestCase
   include VeilleSupport
@@ -34,12 +34,12 @@ class Veille::AiEnricherFrontiereTest < ActiveSupport::TestCase
     assert_equal "opportunite", c.item_type
   end
 
-  test "côté pratiquer : atelier de loisir d'un week-end → catégorie rencontres" do
+  test "côté pratiquer : atelier de loisir d'un week-end → catégorie pratiquer" do
     c = enrich(candidat(title: "Atelier poterie en famille", full_text: "Un week-end pour modeler son bol."),
                famille: "pratiquer", date_debut: "2026-11-14", date_fin: "2026-11-15")
 
     assert_equal "pratiquer", c.famille
-    assert_equal "rencontres", c.declic_category
+    assert_equal "pratiquer", c.declic_category
     assert_equal "opportunite", c.item_type
   end
 
@@ -48,7 +48,7 @@ class Veille::AiEnricherFrontiereTest < ActiveSupport::TestCase
     cours_loisir = enrich(candidat(title: "Cours de dessin du jeudi soir"), famille: "pratiquer")
 
     assert_equal %w[se_former pratiquer], [cours_langue.famille, cours_loisir.famille]
-    assert_equal %w[formation rencontres], [cours_langue.declic_category, cours_loisir.declic_category]
+    assert_equal %w[formation pratiquer], [cours_langue.declic_category, cours_loisir.declic_category]
   end
 
   test "une série d'ateliers de même intitulé garde la même famille à chaque date" do

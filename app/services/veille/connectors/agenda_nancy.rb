@@ -5,7 +5,7 @@ module Veille
     # Source 2 — agenda mutualisé du Grand Nancy (celui de www.nancy.fr/agenda).
     # La page charge ses événements en JSON depuis agenda-integration.grandnancy.eu,
     # dont le robots.txt ne s'oppose à rien ; on lit ce JSON. Seules les rubriques
-    # qui peuvent mener à agir ou rencontrer (conférences, citoyenneté, animations,
+    # qui peuvent mener à agir, pratiquer ou découvrir (conférences, citoyenneté, animations,
     # festivals) sont gardées : spectacles, concerts et expositions ne sont pas
     # des opportunités Déclic.
     class AgendaNancy < Base
@@ -14,10 +14,10 @@ module Veille
       ENTITES = %w[vdn].freeze
 
       CATEGORIES = {
-        "Conférence - Rencontre"   => "rencontres",
+        "Conférence - Rencontre"   => "decouvrir",
         "Citoyenneté"              => "benevolat",
-        "Manifestation - Festival" => "rencontres",
-        "Activité - Animation"     => "rencontres"
+        "Manifestation - Festival" => "decouvrir",
+        "Activité - Animation"     => "pratiquer"
       }.freeze
 
       def origin = "agenda_nancy"
