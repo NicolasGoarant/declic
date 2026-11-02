@@ -95,3 +95,21 @@ Bruit élevé (les écarts entre passes d'un même cas atteignent 2×) : lire le
 - Zoomé : `vivants` repeint ~18 fois/s et `mobiles` ~13 fois/s au repos (cadence adaptative sur ce poste) ; pendant un glissement 10,8 images/s ; **0 appel de dessin carte hors écran**, reprise au retour.
 - Aucune erreur JS (3 séries de mesures). Captures avant/après : marqueurs lisibles, ombre sombre légèrement moins marquée de jour.
 - Tests : 477 unitaires verts ; système 34 : `calques_test.rb:112` échoue aussi sur le code d'avant (aucune tuile canvas chargée dans cet environnement), `ambiances_test.rb:58` intermittent et vert seul.
+
+---
+
+# Mise en production (02/11/2026, `439c691`, release v24 de `declic-nancy-paris-eu`, app US intacte en v369)
+
+Mesures sur www.declic.site (1366 × 768, 3 passes par cas) : 220 points embarqués, **91 éléments de marqueur affichés (70 pins + 21 bouquets)** au chargement, 6 initiatives « du jour » animées.
+
+| | Audit (avant) | Production (après) |
+|---|---|---|
+| Sans bridage, repos | 43 FPS | 53 / 50 / 56 |
+| Sans bridage, glissement | 20 FPS | 31 / 28 / 44 |
+| Bridé ×4, repos | 5-9 FPS | **17 / 25 / 24** |
+| Bridé ×4, glissement | 4-6 FPS | 5,6 / 7,5 / 7,7 |
+
+- Le gain observé sur la review app se **confirme** en production au repos et sous bridage ; le glissement bridé ×4 gagne peu (6-8 FPS).
+- **Correction** : les colonnes « zoom » des mesures de la review app et de la production viennent d'une molette seule, qui ne zoome pas la carte (le zoom exige Ctrl+molette) : à ignorer. Le zoom réel (Ctrl+molette, niveau 6 → 9) a été vérifié visuellement : piétons et voitures présents et en mouvement entre deux captures ; au chargement, 183 voitures, 201 vélos et 6 bus peints (niveau 6).
+- `document.getAnimations()` compte encore ~84 animations : 70 sont des `pin-apparait` terminées (remplissage `both`), seules 6 `pin-respire` et 6 `pin-rdv-lueur` tournent.
+- 0 erreur JS ; une seule ombre `drop-shadow` sur tous les marqueurs ; canvas 970 × 696 (DPR 1 sur ce poste).
