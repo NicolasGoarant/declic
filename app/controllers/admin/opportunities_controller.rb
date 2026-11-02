@@ -21,7 +21,7 @@ class Admin::OpportunitiesController < Admin::BaseController
     scope = scope.where.not(geocoding_flagged_reason: nil) if @flagged
 
     @tri, @sens = tri_fiche_params
-    @opportunities = trier_par_completude(scope.includes(:image_attachment, :photos_attachments).order(created_at: :desc), @tri, @sens)
+    @opportunities = trier_par_completude(scope.includes(image_attachment: :blob, photos_attachments: :blob).order(created_at: :desc), @tri, @sens)
 
     @counts = {
       total: Opportunity.count,

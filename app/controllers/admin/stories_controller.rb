@@ -21,7 +21,7 @@ class Admin::StoriesController < Admin::BaseController
 
     @tri, @sens = tri_fiche_params
     @stories = trier_par_completude(
-      scope.includes(:image_attachment, :photos_attachments)
+      scope.includes(image_attachment: :blob, photos_attachments: :blob)
            .order(Arel.sql("COALESCE(updated_at, created_at) DESC"))
            .limit(500),
       @tri, @sens

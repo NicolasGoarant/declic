@@ -142,6 +142,36 @@ class AdminFichesTest < ActionDispatch::IntegrationTest
     assert_select ".fiche-pct", text: "20 %"
   end
 
+  test "la liste des opportunités montre vignette, extrait et dates de l'événement" do
+    avec = opportunite("Avec image", description: "<p>Un **long** texte de présentation. " + "mot " * 80 + "</p>",
+                       starts_on: Date.new(2026, 11, 3), ends_on: Date.new(2026, 11, 5))
+    avec.image.attach(png)
+    opportunite("Sans image", description: "Court.")
+    get admin_opportunities_url, headers: @headers
+    assert_response :success
+    assert_select "tbody tr", 2
+    assert_select "img.vignette", 1
+    assert_select ".vignette--vide", 1
+    extraits = css_select(".row-extrait").map(&:text)
+    assert extraits.all? { |t| t.length <= AdminFichesHelper::EXTRAIT_ADMIN_LONGUEUR + 1 }
+    assert extraits.none? { |t| t.include?("**") || t.include?("<p>") }
+    assert_select ".date-evenement", text: /03\/11\/2026 → 05\/11\/2026/
+    assert_select ".date-evenement", 1
+  end
+
+  test "la liste des histoires montre vignette, extrait (chapô d'abord) et auteur" do
+    s = Story.create!(title: "Une histoire", location: "Nancy", latitude: 48.69, longitude: 6.18, chapo: "Le chapô de l'histoire.", body: "Le corps.", author_name: "Alice")
+    s.image.attach(png)
+    Story.create!(title: "Sans rien", location: "Nancy", latitude: 48.69, longitude: 6.18)
+    get admin_stories_url, headers: @headers
+    assert_response :success
+    assert_select "tbody tr", 2
+    assert_select "img.vignette", 1
+    assert_select ".vignette--vide", 1
+    assert_select ".row-extrait", text: "Le chapô de l'histoire."
+    assert_select ".row-subtitle", text: "Alice"
+  end
+
   test "la route geocode_missing des opportunités existe et répond" do
     assert_equal "/admin/opportunities/geocode_missing", geocode_missing_admin_opportunities_path
     post geocode_missing_admin_opportunities_url, headers: @headers
