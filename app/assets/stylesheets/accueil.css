@@ -872,10 +872,10 @@ body.acc-corps {
   }
   .acc-categories {
     position: static; height: auto;
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 2px; margin: 0 var(--gouttiere) 12px; padding: 0; overflow: visible;
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 2px; margin: 0 var(--gouttiere) 12px; padding: 0; overflow: visible; /* 4 par ligne, la dernière ligne (3) centrée */
     border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
   }
-  .acc-cat { flex: none; width: auto; padding: 8px 0; font-size: 12px; letter-spacing: -0.02em; }
+  .acc-cat { flex: none; width: calc((100% - 6px) / 4); padding: 8px 0; font-size: 12px; letter-spacing: -0.02em; } /* 4 colonnes égales : 3 écarts de 2 px */
   .acc-cat:hover { background: var(--fond); }
   .acc-carte { grid-area: carte; height: auto; border-left: 1px solid var(--gris-clair); }
   .acc-commandes { bottom: 28px; right: 24px; }
