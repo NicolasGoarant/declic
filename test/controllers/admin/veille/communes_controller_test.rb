@@ -17,7 +17,7 @@ module Admin
 
       def retenir(**params)
         post "/admin/veille/communes/retenir",
-             params: { commune: "Ludres", titre: "Fête d'automne", url: "https://www.facebook.com/villedeludres/posts/123" }.merge(params),
+             params: { commune: "Laxou", titre: "Fête d'automne", url: "https://www.facebook.com/623567883135655/posts/123" }.merge(params),
              headers: auth
       end
 
@@ -29,10 +29,10 @@ module Admin
       test "liste les communes sans flux exploitable, avec liens, et pas celles lues automatiquement" do
         assert_no_difference("::Veille::Candidate.count") { get "/admin/veille/communes", headers: auth }
         assert_response :success
-        assert_select "td strong", text: "Ludres"
         assert_select "td strong", text: "Laxou"
-        assert_select "td strong", text: "Pulnoy", count: 0
-        assert_select "a[href=?][target=_blank]", "https://www.instagram.com/villedeludres/", text: "Instagram"
+        assert_select "td strong", count: 11
+        %w[Pulnoy Maxéville Ludres Vandœuvre-lès-Nancy].each { |nom| assert_select "td strong", text: nom, count: 0 }
+        assert_select "a[href=?][target=_blank]", "https://www.instagram.com/ville_de_laxou", text: "Instagram"
         assert_select "a[href=?]", "https://www.laxou.fr", text: "Site"
       end
 
@@ -40,7 +40,7 @@ module Admin
         assert_difference("::Veille::Candidate.count", 1) { retenir }
         cand = ::Veille::Candidate.find_by!(origin: "commune_manuel")
         assert_redirected_to admin_veille_candidate_path(cand)
-        assert_equal "Ludres", cand.commune
+        assert_equal "Laxou", cand.commune
         assert_equal "retenu", cand.status
         assert_equal "opportunite", cand.item_type
         assert_equal "Fête d'automne", cand.title

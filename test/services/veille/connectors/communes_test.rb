@@ -26,10 +26,22 @@ class Veille::ConnectorsCommunesTest < ActiveSupport::TestCase
   end
 
   test "annuaire : une commune à réutilisation restreinte n'est jamais lue par le connecteur" do
-    restreintes = Veille::AnnuaireCommunes.toutes.select(&:reutilisation_restreinte?)
-    assert_includes restreintes.map(&:nom), "Ludres"
-    assert_empty restreintes & Veille::AnnuaireCommunes.automatisables
-    assert_includes Veille::AnnuaireCommunes.manuelles.map(&:nom), "Ludres"
+    Tempfile.create(["annuaire", ".yml"]) do |f|
+      f.write({ "communes" => [
+        { "nom" => "Ludres", "site" => "https://www.ludres.com", "rss" => "https://www.ludres.com/feed/", "flux_actif" => true, "reutilisation" => "restreinte" },
+        { "nom" => "Pulnoy", "site" => "https://www.pulnoy.fr", "rss" => FLUX_PULNOY, "flux_actif" => true, "reutilisation" => "autorisee" }
+      ] }.to_yaml)
+      f.flush
+      assert_equal ["Pulnoy"], Veille::AnnuaireCommunes.automatisables(fichier: f.path).map(&:nom)
+      assert_equal ["Ludres"], Veille::AnnuaireCommunes.manuelles(fichier: f.path).map(&:nom)
+    end
+  end
+
+  test "annuaire : les 8 communes à lire sont celles décidées au 02/11/2026" do
+    assert_equal ["Art-sur-Meurthe", "Jarville-la-Malgrange", "Laneuveville-devant-Nancy", "Ludres", "Maxéville", "Pulnoy",
+                  "Saulxures-lès-Nancy", "Vandœuvre-lès-Nancy"], Veille::AnnuaireCommunes.automatisables.map(&:nom).sort
+    assert_equal 11, Veille::AnnuaireCommunes.manuelles.size
+    assert_equal "autorisee_par_decision", Veille::AnnuaireCommunes.par_nom("Ludres").reutilisation
   end
 
   test "annuaire : automatisables et manuelles se partagent les 19 communes" do
@@ -86,7 +98,8 @@ class Veille::ConnectorsCommunesTest < ActiveSupport::TestCase
     Veille::Connectors::Communes.new(http: http, today: TODAY).call
     attendus = Veille::AnnuaireCommunes.automatisables.map(&:rss)
     assert_equal attendus.sort, http.appels.sort
-    assert_no_match(/ludres/, http.appels.join)
+    assert_equal 8, http.appels.size
+    assert_no_match(/laxou|malzeville|saint-max/, http.appels.join, "pas de flux vide ni de commune sans flux")
   end
 
   test "dans le pipeline : candidats créés, doublon ignoré, passes automatiques non bloquées" do

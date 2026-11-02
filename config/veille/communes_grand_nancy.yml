@@ -14,7 +14,8 @@
 #                   dans la file de relecture, réécriture par nos soins) :
 #                     autorisee      reproduction électronique permise avec la source
 #                     non_precisee   aucune mention trouvée
-#                     restreinte     interdiction explicite ou usage limité aux échanges avec la commune
+#                     restreinte     interdiction explicite ou usage limité aux échanges avec la commune (le connecteur ne lit pas)
+#                     autorisee_par_decision  clause restrictive, mais réutilisation assumée par le président de l'association (02/11/2026) ; le connecteur lit
 #                     non_lue        non examinée (pas de flux à lire)
 #   reutilisation_note  citation ou résumé de la clause
 #   facebook, instagram  pages repérées sur le site communal (liens seulement : aucun appel automatisé)
@@ -30,11 +31,11 @@ communes:
     flux_actif: true
     derniere_publication: 2026-10-06
     mentions_legales: https://artsurmeurthe.fr/mentions-legales/
-    reutilisation: restreinte
-    reutilisation_note: "Toute reproduction, représentation, modification, publication, adaptation totale ou partielle des éléments du site (…) est interdite, sauf autorisation écrite préalable."
+    reutilisation: autorisee_par_decision
+    reutilisation_note: "[Décision du président de l'association Déclic, 02/11/2026 : réutilisation assumée malgré cette clause] Toute reproduction, représentation, modification, publication, adaptation totale ou partielle des éléments du site (…) est interdite, sauf autorisation écrite préalable."
     facebook: https://www.facebook.com/Art.sur.Meurthe/
     instagram: https://www.instagram.com/art_sur_meurthe/
-    remarque: Ancien domaine mairie-art-sur-meurthe.fr redirige vers artsurmeurthe.fr. robots.txt avec Crawl-delay 10. Exclue du connecteur (mentions légales).
+    remarque: Ancien domaine mairie-art-sur-meurthe.fr redirige vers artsurmeurthe.fr. robots.txt avec Crawl-delay 10. Lue par le connecteur par décision du président (02/11/2026), malgré les mentions légales.
 
   - nom: Dommartemont
     site: http://www.dommartemont.fr
@@ -92,23 +93,23 @@ communes:
     flux_actif: true
     derniere_publication: 2026-10-30
     mentions_legales: https://www.jarville-la-malgrange.fr/mentions-legales/
-    reutilisation: restreinte
-    reutilisation_note: "Reproduction du site autorisée seulement pour un usage personnel, à l'exclusion de tout usage à des fins publicitaires, commerciales ou d'informations ; toute autre reproduction ou utilisation sans autorisation est interdite."
+    reutilisation: autorisee_par_decision
+    reutilisation_note: "[Décision du président de l'association Déclic, 02/11/2026 : réutilisation assumée malgré cette clause] Reproduction du site autorisée seulement pour un usage personnel, à l'exclusion de tout usage à des fins publicitaires, commerciales ou d'informations ; toute autre reproduction ou utilisation sans autorisation est interdite."
     facebook: https://www.facebook.com/jarville
     instagram: null
-    remarque: jarville.fr répond aussi mais sans contenu repéré ; le site officiel est jarville-la-malgrange.fr. Exclue du connecteur (mentions légales).
+    remarque: jarville.fr répond aussi mais sans contenu repéré ; le site officiel est jarville-la-malgrange.fr. Lue par le connecteur par décision du président (02/11/2026), malgré les mentions légales.
 
   - nom: Laneuveville-devant-Nancy
     site: https://www.ville-laneuveville-devant-nancy.fr
     rss: https://www.ville-laneuveville-devant-nancy.fr/?format=feed&type=rss
-    flux_actif: false
+    flux_actif: true
     derniere_publication: 2026-09-24
     mentions_legales: https://www.ville-laneuveville-devant-nancy.fr/mentions-legales
-    reutilisation: restreinte
-    reutilisation_note: "Toute reproduction, représentation, modification, publication, adaptation de tout ou partie des éléments du site (…) est interdite, sauf autorisation écrite préalable."
+    reutilisation: autorisee_par_decision
+    reutilisation_note: "[Décision du président de l'association Déclic, 02/11/2026 : réutilisation assumée malgré cette clause] Toute reproduction, représentation, modification, publication, adaptation de tout ou partie des éléments du site (…) est interdite, sauf autorisation écrite préalable."
     facebook: https://www.facebook.com/VilleLaneuvevilledevantNancy/
     instagram: null
-    remarque: Flux Joomla à 2 articles, le plus récent du 24/09 (peu actif). Exclue du connecteur (mentions légales).
+    remarque: Flux Joomla à 2 articles, le plus récent du 24/09 (peu actif, rien dans les 30 derniers jours, donc 0 candidat tant qu'un article neuf n'est pas publié). Lue par le connecteur par décision du président (02/11/2026), malgré les mentions légales.
 
   - nom: Laxou
     site: https://www.laxou.fr
@@ -126,11 +127,11 @@ communes:
     flux_actif: true
     derniere_publication: 2026-11-02
     mentions_legales: https://www.ludres.com/mentions-legales/
-    reutilisation: restreinte
-    reutilisation_note: "Les contenus figurant sur ce site sont exclusivement destinés aux échanges entre les utilisateurs et la commune de Ludres. Toute réutilisation des contenus à d'autres fins n'est pas autorisée."
+    reutilisation: autorisee_par_decision
+    reutilisation_note: "[Décision du président de l'association Déclic, 02/11/2026 : réutilisation assumée malgré cette clause] Les contenus figurant sur ce site sont exclusivement destinés aux échanges entre les utilisateurs et la commune de Ludres. Toute réutilisation des contenus à d'autres fins n'est pas autorisée."
     facebook: null
     instagram: https://www.instagram.com/villedeludres/
-    remarque: Exclue du connecteur (mentions légales). ville-ludres.fr redirige vers ludres.com.
+    remarque: Lue par le connecteur par décision du président (02/11/2026), malgré les mentions légales. ville-ludres.fr redirige vers ludres.com.
 
   - nom: Malzéville
     site: https://www.villedemalzeville.fr
@@ -182,11 +183,11 @@ communes:
     flux_actif: true
     derniere_publication: 2026-10-20
     mentions_legales: https://www.mairie-saulxures-les-nancy.fr/mentions-legales/
-    reutilisation: restreinte
-    reutilisation_note: "Les contenus figurant sur ce site sont exclusivement destinés aux échanges entre les utilisateurs et la commune de Saulxures-lès-Nancy. Toute réutilisation des contenus à d'autres fins n'est pas autorisée."
+    reutilisation: autorisee_par_decision
+    reutilisation_note: "[Décision du président de l'association Déclic, 02/11/2026 : réutilisation assumée malgré cette clause] Les contenus figurant sur ce site sont exclusivement destinés aux échanges entre les utilisateurs et la commune de Saulxures-lès-Nancy. Toute réutilisation des contenus à d'autres fins n'est pas autorisée."
     facebook: https://www.facebook.com/saulxureslesnancy/
     instagram: null
-    remarque: Exclue du connecteur (mentions légales).
+    remarque: Lue par le connecteur par décision du président (02/11/2026), malgré les mentions légales.
 
   - nom: Seichamps
     site: https://www.mairie-seichamps.fr
@@ -214,11 +215,11 @@ communes:
     flux_actif: true
     derniere_publication: 2026-11-02
     mentions_legales: https://www.vandoeuvre.fr/mentions-legales/
-    reutilisation: restreinte
-    reutilisation_note: "Toute copie, reproduction, représentation, adaptation, diffusion, intégrale ou partielle, du contenu du site (…) est illicite à l'exception d'une unique copie réservée à l'usage exclusivement privé du copiste. La citation est autorisée (nom et source) ; la multiplication des citations est une œuvre dérivée soumise à accord préalable."
+    reutilisation: autorisee_par_decision
+    reutilisation_note: "[Décision du président de l'association Déclic, 02/11/2026 : réutilisation assumée malgré cette clause] Toute copie, reproduction, représentation, adaptation, diffusion, intégrale ou partielle, du contenu du site (…) est illicite à l'exception d'une unique copie réservée à l'usage exclusivement privé du copiste. La citation est autorisée (nom et source) ; la multiplication des citations est une œuvre dérivée soumise à accord préalable."
     facebook: http://www.facebook.com/vandoeuvre
     instagram: https://www.instagram.com/villedevandoeuvre/
-    remarque: Exclue du connecteur (mentions légales).
+    remarque: Lue par le connecteur par décision du président (02/11/2026), malgré les mentions légales.
 
   - nom: Villers-lès-Nancy
     site: https://www.villerslesnancy.fr
