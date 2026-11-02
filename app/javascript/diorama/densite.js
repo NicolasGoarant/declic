@@ -10,3 +10,15 @@ export function dprToiles() {
 // Rythmes de repeinte des toiles animées : 30 images/s au repos, 12 pendant un geste de carte (déplacement, zoom).
 export const INTERVALLE_REPOS_MS = 1000 / 30 - 2
 export const INTERVALLE_GESTE_MS = 1000 / 12 - 2
+
+// Cadence adaptative : une repeinte qui coûte plus de la moitié de l'intervalle (poste modeste) espace les suivantes,
+// pour laisser au navigateur de quoi défiler et répondre. Lissage de la durée mesurée ; jamais en dessous de 8 images/s.
+export const INTERVALLE_MAX_MS = 125
+
+export function lisserCout(cout, mesure) {
+  return cout ? 0.8 * cout + 0.2 * mesure : mesure
+}
+
+export function intervalleAdapte(base, cout) {
+  return Math.min(INTERVALLE_MAX_MS, Math.max(base, 2 * (cout || 0)))
+}

@@ -40,7 +40,7 @@
 // restent à toute heure : la nuit, le port ne s'anime plus mais reste visible.
 
 import { heureANancy, lireCodes, surCourbe } from "diorama/vivants"
-import { dprToiles, INTERVALLE_REPOS_MS, INTERVALLE_GESTE_MS } from "diorama/densite"
+import { dprToiles, INTERVALLE_REPOS_MS, INTERVALLE_GESTE_MS, intervalleAdapte, lisserCout } from "diorama/densite"
 
 const NIVEAU_REPERE = 8
 // Dès ×0,25 (niveau 6, 26/10, Nicolas), comme vélos, voitures, bus et trolleybus (vivants.js) : aucun palier où les uns
@@ -407,10 +407,12 @@ export class Mobiles {
     this.avant = -Infinity
     const pas = (t) => {
       this.image = requestAnimationFrame(pas)
-      if (t - this.avant < (this.geste ? INTERVALLE_GESTE_MS : INTERVALLE_REPOS_MS)) return
+      if (t - this.avant < intervalleAdapte(this.geste ? INTERVALLE_GESTE_MS : INTERVALLE_REPOS_MS, this.cout)) return
       this.avant = t
+      const j0 = performance.now()
       if (this.geste) this.recaler()
       this.dessiner(t)
+      this.cout = lisserCout(this.cout, performance.now() - j0)
     }
     this.image = requestAnimationFrame(pas)
   }

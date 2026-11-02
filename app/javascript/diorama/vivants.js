@@ -37,7 +37,7 @@
 // des mobiles s'effacent. Bus et trolleybus : un passage sur m (fréquence ÷ m, intervalles réguliers) en début et fin de
 // service, aucun de 0 h 30 à 5 h. Courbe plausible, pas une donnée : à reprendre si des comptages arrivent.
 
-import { dprToiles, INTERVALLE_REPOS_MS, INTERVALLE_GESTE_MS } from "diorama/densite"
+import { dprToiles, INTERVALLE_REPOS_MS, INTERVALLE_GESTE_MS, intervalleAdapte, lisserCout } from "diorama/densite"
 
 const NIVEAU_REPERE = 8
 const MOINS_DE_MOUVEMENT = "(prefers-reduced-motion: reduce)"
@@ -523,12 +523,14 @@ export class Vivants {
       const v = this.vue(), cle = `${v.cx},${v.cy},${v.s},${v.W},${v.H}`
       // Pendant un geste de carte, 12 images/s au plus : la toile suit la carte à ce rythme (entre deux images, ses
       // mobiles restent posés sur le sol de la carte, qui défile). Au repos, 30 images/s.
-      const intervalle = this.enGeste?.() ? INTERVALLE_GESTE_MS : INTERVALLE_REPOS_MS
+      const intervalle = intervalleAdapte(this.enGeste?.() ? INTERVALLE_GESTE_MS : INTERVALLE_REPOS_MS, this.cout)
       if (tms - this.derniere < intervalle) return
       this.cleVue = cle; this.derniere = tms
+      const j0 = performance.now()
       this.majFacteurs(tms)
       this.placer?.(this.toile)
       this.image(v)
+      this.cout = lisserCout(this.cout, performance.now() - j0)
     }
     this.raf = requestAnimationFrame(boucle)
   }
