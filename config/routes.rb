@@ -111,6 +111,10 @@ Rails.application.routes.draw do
       get  "presse",         to: "presse#index",   as: :presse
       post "presse/retenir", to: "presse#retenir", as: :retenir_presse
       post "presse/ecarter", to: "presse#ecarter", as: :ecarter_presse
+
+      # Communes du Grand Nancy lues à la main (sans flux lisible, ou réutilisation non permise).
+      get  "communes",         to: "communes#index",   as: :communes
+      post "communes/retenir", to: "communes#retenir", as: :retenir_commune
     end
   end
 end

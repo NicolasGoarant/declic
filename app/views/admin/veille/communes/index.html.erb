@@ -1,0 +1,56 @@
+<h1>Veille des communes — lecture manuelle</h1>
+<p class="muted small">
+  Communes du Grand Nancy (hors Nancy) que la collecte automatique ne lit pas : pas de flux RSS actif, ou mentions légales qui s'opposent à la réutilisation.
+  Les liens ouvrent leur site et leurs pages sociales dans un nouvel onglet ; Déclic n'appelle jamais Facebook ni Instagram.
+  Quand une annonce vaut une fiche, colle son titre et son lien ci-dessous : « Retenir » crée un candidat que les passes automatiques ignorent.
+</p>
+
+<% if @communes.empty? %>
+  <div class="vide"><p>Aucune commune à lire à la main.</p></div>
+<% else %>
+  <table class="table">
+    <thead>
+      <tr><th style="width:17%">Commune</th><th style="width:25%">Où regarder</th><th style="width:20%">Pourquoi à la main</th><th style="width:38%">Retenir une annonce</th></tr>
+    </thead>
+    <tbody>
+      <% @communes.each do |c| %>
+        <tr>
+          <td><strong><%= c.nom %></strong></td>
+          <td class="small">
+            <%= link_to "Site", c.site, target: "_blank", rel: "noopener noreferrer" %>
+            <% if c.facebook.present? %> · <%= link_to "Facebook", c.facebook, target: "_blank", rel: "noopener noreferrer" %><% end %>
+            <% if c.instagram.present? %> · <%= link_to "Instagram", c.instagram, target: "_blank", rel: "noopener noreferrer" %><% end %>
+            <% if c.mentions_legales.present? %><div><%= link_to "Mentions légales", c.mentions_legales, target: "_blank", rel: "noopener noreferrer", class: "muted" %></div><% end %>
+          </td>
+          <td class="small">
+            <% if c.reutilisation_restreinte? %>
+              Flux existant, réutilisation non permise.
+            <% elsif c.rss.present? %>
+              Flux sans article récent.
+            <% else %>
+              Aucun flux lisible.
+            <% end %>
+            <% if c.remarque.present? %><div class="muted"><%= c.remarque %></div><% end %>
+          </td>
+          <td>
+            <%= form_with url: admin_veille_retenir_commune_path, method: :post do |f| %>
+              <%= hidden_field_tag :commune, c.nom, id: nil %>
+              <%= text_field_tag :titre, nil, placeholder: "Titre de l'annonce", required: true, id: nil, "aria-label": "Titre de l'annonce, #{c.nom}", style: "width:100%;margin-bottom:4px" %>
+              <%= url_field_tag :url, nil, placeholder: "Lien de l'annonce (https://…)", required: true, id: nil, "aria-label": "Lien de l'annonce, #{c.nom}", style: "width:100%;margin-bottom:4px" %>
+              <%= button_tag "Retenir", type: "submit", class: "btn secondary" %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
+
+<h2 style="margin-top:28px">Lues automatiquement</h2>
+<p class="muted small">
+  <% if @automatiques.empty? %>
+    Aucune commune n'est lue automatiquement.
+  <% else %>
+    <%= @automatiques.map(&:nom).to_sentence(last_word_connector: " et ") %> : leurs flux RSS sont lus chaque jour (rubrique « Sites des communes » de la relecture).
+  <% end %>
+</p>

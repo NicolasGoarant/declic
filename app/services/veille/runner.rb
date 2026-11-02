@@ -13,9 +13,9 @@ module Veille
     # panne) : inutile d'essuyer 30 refus et de remplir les logs.
     ERREURS_CONSECUTIVES_MAX = 3
 
-    QUOTIDIEN   = [Connectors::AgendaNancy, Connectors::Transentreprise].freeze
+    QUOTIDIEN   = [Connectors::AgendaNancy, Connectors::Transentreprise, Connectors::Communes].freeze
     # Ordre de priorité du cahier des charges, pour répartir les 30 appels.
-    PRIORITE = %w[agenda_nancy transentreprise].freeze
+    PRIORITE = %w[agenda_nancy transentreprise communes].freeze
 
     Rapport = Struct.new(:sources, :crees, :doublons, :hors_zone, :passes, :enrichis, :ecartes, :erreurs_ia,
                          :cout_usd, :restants, :plafond, :rediges, :redaction_bloquee, :erreurs_redaction,

@@ -1,0 +1,231 @@
+# Annuaire des 19 communes du Grand Nancy hors Nancy (Nancy : Agenda Grand Nancy).
+# Établi le 02/11/2026 : sites trouvés par recherche web puis vérifiés par requête, flux RSS
+# cherchés dans le HTML de l'accueil (<link rel="alternate">) puis par /feed/ et variantes,
+# mentions légales lues pour les communes à flux actif.
+#
+# Champs
+#   nom             nom officiel (clé de Veille::GrandNancy)
+#   site            site officiel
+#   rss             URL exacte du flux, nil si aucun
+#   flux_actif      vrai si le flux contient des articles récents (< 2 mois au 02/11/2026)
+#   derniere_publication  date du dernier article du flux (ISO)
+#   mentions_legales  page des mentions légales, nil si introuvable
+#   reutilisation   ce que disent les mentions légales pour notre usage (titre + extrait + lien
+#                   dans la file de relecture, réécriture par nos soins) :
+#                     autorisee      reproduction électronique permise avec la source
+#                     non_precisee   aucune mention trouvée
+#                     restreinte     interdiction explicite ou usage limité aux échanges avec la commune
+#                     non_lue        non examinée (pas de flux à lire)
+#   reutilisation_note  citation ou résumé de la clause
+#   facebook, instagram  pages repérées sur le site communal (liens seulement : aucun appel automatisé)
+#   remarque        tout ce qui explique le classement
+#
+# Le connecteur Veille::Connectors::Communes ne lit que les communes dont `flux_actif` est vrai
+# et dont `reutilisation` n'est pas `restreinte`. Toutes les autres vont sur /admin/veille/communes.
+---
+communes:
+  - nom: Art-sur-Meurthe
+    site: https://artsurmeurthe.fr
+    rss: https://artsurmeurthe.fr/feed/
+    flux_actif: true
+    derniere_publication: 2026-10-06
+    mentions_legales: https://artsurmeurthe.fr/mentions-legales/
+    reutilisation: restreinte
+    reutilisation_note: "Toute reproduction, représentation, modification, publication, adaptation totale ou partielle des éléments du site (…) est interdite, sauf autorisation écrite préalable."
+    facebook: https://www.facebook.com/Art.sur.Meurthe/
+    instagram: https://www.instagram.com/art_sur_meurthe/
+    remarque: Ancien domaine mairie-art-sur-meurthe.fr redirige vers artsurmeurthe.fr. robots.txt avec Crawl-delay 10. Exclue du connecteur (mentions légales).
+
+  - nom: Dommartemont
+    site: http://www.dommartemont.fr
+    rss: null
+    flux_actif: false
+    mentions_legales: null
+    reutilisation: non_lue
+    facebook: null
+    instagram: null
+    remarque: Site ancien, HTTPS inopérant (seul http:// répond). Aucun flux RSS repéré ni lien vers un réseau social.
+
+  - nom: Essey-lès-Nancy
+    site: https://www.esseylesnancy.fr
+    rss: null
+    flux_actif: false
+    mentions_legales: null
+    reutilisation: non_lue
+    facebook: https://www.facebook.com/villedesseylesnancy
+    instagram: null
+    remarque: Le site répond 403 à tout client automatisé (impossible de chercher un flux). Page Facebook donnée par la recherche web, non vérifiée.
+
+  - nom: Fléville-devant-Nancy
+    site: http://www.fleville.fr
+    rss: null
+    flux_actif: false
+    mentions_legales: http://www.fleville.fr/fr/13/mentions-legales.html
+    reutilisation: non_lue
+    facebook: https://www.facebook.com/flevilledevantnancy
+    instagram: null
+    remarque: Site ancien, HTTPS inopérant. /feed/ en 404, aucun lien de flux dans l'accueil.
+
+  - nom: Heillecourt
+    site: https://www.heillecourt.fr
+    rss: null
+    flux_actif: false
+    mentions_legales: https://www.heillecourt.fr/mentions-legales/
+    reutilisation: non_lue
+    facebook: null
+    instagram: null
+    remarque: /feed/ répond 403 (refus aux clients automatisés). Plusieurs pages Facebook liées par identifiant numérique, laquelle est la page de la mairie reste à établir.
+
+  - nom: Houdemont
+    site: https://www.houdemont.fr
+    rss: null
+    flux_actif: false
+    mentions_legales: https://www.houdemont.fr/mentions-legales/
+    reutilisation: non_lue
+    facebook: https://www.facebook.com/villedehoudemont/
+    instagram: https://www.instagram.com/ville_de_houdemont/
+    remarque: /feed/ répond une page HTML, pas un flux.
+
+  - nom: Jarville-la-Malgrange
+    site: https://www.jarville-la-malgrange.fr
+    rss: https://www.jarville-la-malgrange.fr/feed/
+    flux_actif: true
+    derniere_publication: 2026-10-30
+    mentions_legales: https://www.jarville-la-malgrange.fr/mentions-legales/
+    reutilisation: restreinte
+    reutilisation_note: "Reproduction du site autorisée seulement pour un usage personnel, à l'exclusion de tout usage à des fins publicitaires, commerciales ou d'informations ; toute autre reproduction ou utilisation sans autorisation est interdite."
+    facebook: https://www.facebook.com/jarville
+    instagram: null
+    remarque: jarville.fr répond aussi mais sans contenu repéré ; le site officiel est jarville-la-malgrange.fr. Exclue du connecteur (mentions légales).
+
+  - nom: Laneuveville-devant-Nancy
+    site: https://www.ville-laneuveville-devant-nancy.fr
+    rss: https://www.ville-laneuveville-devant-nancy.fr/?format=feed&type=rss
+    flux_actif: false
+    derniere_publication: 2026-09-24
+    mentions_legales: https://www.ville-laneuveville-devant-nancy.fr/mentions-legales
+    reutilisation: restreinte
+    reutilisation_note: "Toute reproduction, représentation, modification, publication, adaptation de tout ou partie des éléments du site (…) est interdite, sauf autorisation écrite préalable."
+    facebook: https://www.facebook.com/VilleLaneuvevilledevantNancy/
+    instagram: null
+    remarque: Flux Joomla à 2 articles, le plus récent du 24/09 (peu actif). Exclue du connecteur (mentions légales).
+
+  - nom: Laxou
+    site: https://www.laxou.fr
+    rss: null
+    flux_actif: false
+    mentions_legales: https://www.laxou.fr/fr/mentions-legales.html
+    reutilisation: non_lue
+    facebook: https://www.facebook.com/623567883135655
+    instagram: https://www.instagram.com/ville_de_laxou
+    remarque: /feed/ en 404, aucun lien de flux dans l'accueil.
+
+  - nom: Ludres
+    site: https://www.ludres.com
+    rss: https://www.ludres.com/feed/
+    flux_actif: true
+    derniere_publication: 2026-11-02
+    mentions_legales: https://www.ludres.com/mentions-legales/
+    reutilisation: restreinte
+    reutilisation_note: "Les contenus figurant sur ce site sont exclusivement destinés aux échanges entre les utilisateurs et la commune de Ludres. Toute réutilisation des contenus à d'autres fins n'est pas autorisée."
+    facebook: null
+    instagram: https://www.instagram.com/villedeludres/
+    remarque: Exclue du connecteur (mentions légales). ville-ludres.fr redirige vers ludres.com.
+
+  - nom: Malzéville
+    site: https://www.villedemalzeville.fr
+    rss: https://www.villedemalzeville.fr/feed/
+    flux_actif: false
+    mentions_legales: https://www.villedemalzeville.fr/mentions-legales/
+    reutilisation: non_lue
+    facebook: https://www.facebook.com/VilledeMalzeville
+    instagram: https://www.instagram.com/villemalzeville/
+    remarque: Flux valide mais vide (0 article au 02/11/2026). À relire plus tard.
+
+  - nom: Maxéville
+    site: https://maxeville.fr
+    rss: https://maxeville.fr/index.php/feed/
+    flux_actif: true
+    derniere_publication: 2026-11-01
+    mentions_legales: null
+    reutilisation: non_precisee
+    reutilisation_note: "Aucune page de mentions légales trouvée (ni lien dans l'accueil, ni URL usuelles). Aucune interdiction de réutilisation trouvée ; à confirmer par la mairie."
+    facebook: https://www.facebook.com/VilledeMaxeville
+    instagram: https://www.instagram.com/villedemaxeville/
+    remarque: robots.txt n'interdit que les vues du calendrier. Beaucoup d'articles n'ont qu'un titre (description vide), certains annoncent des événements.
+
+  - nom: Pulnoy
+    site: https://www.pulnoy.fr
+    rss: https://www.pulnoy.fr/feed/
+    flux_actif: true
+    derniere_publication: 2026-11-02
+    mentions_legales: https://www.pulnoy.fr/mentions-legales/
+    reutilisation: autorisee
+    reutilisation_note: "La reproduction de tout ou partie de ce site sur un support électronique est autorisée sous réserve de l'ajout de façon claire et lisible de la source www.pulnoy.fr et de la mention « Droits réservés ». Usage personnel, associatif ou professionnel ; toute utilisation à des fins commerciales ou publicitaires est exclue. (Iconographie exclue de la reproduction.)"
+    facebook: https://www.facebook.com/VilleDePulnoy/
+    instagram: null
+    remarque: Flux non annoncé dans l'accueil mais valide. Aucune image n'est reprise. La source doit rester citée et le lien d'origine conservé.
+
+  - nom: Saint-Max
+    site: https://www.saint-max.fr
+    rss: https://www.saint-max.fr/feed/
+    flux_actif: false
+    mentions_legales: https://www.saint-max.fr/mentions-legales/
+    reutilisation: non_lue
+    facebook: https://www.facebook.com/459311762906786
+    instagram: null
+    remarque: Flux valide mais vide (0 article au 02/11/2026).
+
+  - nom: Saulxures-lès-Nancy
+    site: https://www.mairie-saulxures-les-nancy.fr
+    rss: https://www.mairie-saulxures-les-nancy.fr/feed/
+    flux_actif: true
+    derniere_publication: 2026-10-20
+    mentions_legales: https://www.mairie-saulxures-les-nancy.fr/mentions-legales/
+    reutilisation: restreinte
+    reutilisation_note: "Les contenus figurant sur ce site sont exclusivement destinés aux échanges entre les utilisateurs et la commune de Saulxures-lès-Nancy. Toute réutilisation des contenus à d'autres fins n'est pas autorisée."
+    facebook: https://www.facebook.com/saulxureslesnancy/
+    instagram: null
+    remarque: Exclue du connecteur (mentions légales).
+
+  - nom: Seichamps
+    site: https://www.mairie-seichamps.fr
+    rss: null
+    flux_actif: false
+    mentions_legales: https://www.mairie-seichamps.fr/mentions-legales.htm
+    reutilisation: non_lue
+    facebook: null
+    instagram: null
+    remarque: /feed/ en 404, aucun lien de flux ni de réseau social dans l'accueil.
+
+  - nom: Tomblaine
+    site: https://www.tomblaine.fr
+    rss: null
+    flux_actif: false
+    mentions_legales: null
+    reutilisation: non_lue
+    facebook: null
+    instagram: null
+    remarque: Le site répond 503 aux clients automatisés le 02/11/2026 (impossible de chercher un flux).
+
+  - nom: Vandœuvre-lès-Nancy
+    site: https://www.vandoeuvre.fr
+    rss: https://www.vandoeuvre.fr/feed/
+    flux_actif: true
+    derniere_publication: 2026-11-02
+    mentions_legales: https://www.vandoeuvre.fr/mentions-legales/
+    reutilisation: restreinte
+    reutilisation_note: "Toute copie, reproduction, représentation, adaptation, diffusion, intégrale ou partielle, du contenu du site (…) est illicite à l'exception d'une unique copie réservée à l'usage exclusivement privé du copiste. La citation est autorisée (nom et source) ; la multiplication des citations est une œuvre dérivée soumise à accord préalable."
+    facebook: http://www.facebook.com/vandoeuvre
+    instagram: https://www.instagram.com/villedevandoeuvre/
+    remarque: Exclue du connecteur (mentions légales).
+
+  - nom: Villers-lès-Nancy
+    site: https://www.villerslesnancy.fr
+    rss: null
+    flux_actif: false
+    mentions_legales: https://www.villerslesnancy.fr/mentions-legales
+    reutilisation: non_lue
+    facebook: null
+    instagram: https://www.instagram.com/villers_les_nancy
+    remarque: /feed/ en 404, aucun lien de flux dans l'accueil.

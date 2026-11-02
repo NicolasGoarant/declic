@@ -22,11 +22,14 @@ module Veille
       "transentreprise" => "Transentreprise",
       "gazette"         => "La Gazette France",
       "presse"          => "Presse locale",
+      "communes"        => "Sites des communes",
+      "commune_manuel"  => "Commune (lecture manuelle)",
       "import_xlsx"     => "Repérage initial"
     }.freeze
 
-    # Contenus de presse : jamais envoyés à l'IA sans le geste explicite d'un humain.
-    ORIGINES_PRESSE = %w[presse gazette].freeze
+    # Contenus de presse, et annonces de communes retenues à la main (réseaux sociaux, sites sans
+    # droit de réutilisation) : jamais envoyés à l'IA sans le geste explicite d'un humain.
+    ORIGINES_PRESSE = %w[presse gazette commune_manuel].freeze
 
     # status est renseigné dès la création (défaut "pending"), donc requis.
     enum :status,   STATUSES.index_by(&:itself),   validate: true

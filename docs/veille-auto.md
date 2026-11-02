@@ -18,14 +18,22 @@ Chaque appel IA est journalisé (`veille_appels_ia`) ; **plafond mensuel 15 $** 
 | 4 Transentreprise | RSS `/rss/offre` répond ; 0 offre Nancy cette semaine | texte réduit à l'accroche |
 | 5 La Gazette France | **Retirée de `QUOTIDIEN`** (31/10) : contenu de presse lu et envoyé à l'IA sans geste humain | Connecteur conservé, non lancé. |
 | 6 Presse | **Veille manuelle** (31/10) : les CGU de L'Est Républicain s'opposent à la fouille de textes | `/admin/veille/presse` lit les flux à l'affichage : titre et lien seulement, ni stockage, ni chapeau, ni IA. « Retenir » crée un candidat que les passes automatiques ignorent (`Candidate.hors_presse`). |
+| 7 Sites des communes | **Commune par commune** (02/11, hors prod) : Pulnoy et Maxéville lus chaque jour ; les 17 autres à la main | Annuaire `config/veille/communes_grand_nancy.yml` (`Veille::AnnuaireCommunes`) ; connecteur `Connectors::Communes` (RSS des sites officiels, via `Veille::Http` donc robots.txt et délai). Ne lit une commune que si son flux est actif **et** que ses mentions légales n'interdisent pas la réutilisation (`reutilisation` ≠ `restreinte`). Type et catégorie laissés à l'IA. Les autres : `/admin/veille/communes` (liens seulement, « Retenir » → origine `commune_manuel`, ignorée des passes automatiques comme la presse). Aucun appel à Facebook ni Instagram (CGU Meta, voir `rapports/veille-reseaux-sociaux-2026-11-02.md`). |
 
 `Veille::Http` lit le robots.txt de chaque hôte avant toute requête (Crawl-delay respecté, 1 s mini entre appels).
 
 ## Heroku Scheduler
-- `rake veille:quotidien` (daily) : agenda et Transentreprise.
+- `rake veille:quotidien` (daily) : agenda, Transentreprise et sites des communes.
 - Variables : `ANTHROPIC_API_KEY`, `VEILLE_BUDGET_USD_MOIS` (facultative, 15 par défaut).
 - Rattrapage des récits : `rake veille:rediger` (`LIMITE=n`). Dépense d'un mois : `rake veille:cout[AAAA-MM]`.
 - Import initial : placer `docs/declic-reperage-v1-2026-10-13.xlsx` puis `rake veille:import_xlsx` (statut « à vérifier », sans IA).
+
+## Sources des communes (02/11/2026)
+- **Lues** : Pulnoy (mentions légales : reproduction électronique permise avec la source et « Droits réservés », usage non commercial) et Maxéville (aucune mention légale trouvée ; à confirmer auprès de la mairie).
+- **Exclues par leurs mentions légales** (flux actif mais réutilisation interdite ou limitée aux échanges avec la commune) : Ludres, Saulxures-lès-Nancy, Vandœuvre-lès-Nancy, Art-sur-Meurthe, Jarville-la-Malgrange, Laneuveville-devant-Nancy (peu actif). Une autorisation écrite de la mairie suffirait à les rouvrir : passer `reutilisation` à `autorisee` dans le YAML.
+- **Sans flux exploitable** : Dommartemont, Essey-lès-Nancy (403 aux robots), Fléville, Heillecourt (403), Houdemont, Laxou, Malzéville (flux vide), Saint-Max (flux vide), Seichamps, Tomblaine (503 aux robots), Villers-lès-Nancy.
+- Mettre à jour l'annuaire (YAML) quand un site change ; `flux_actif` et `derniere_publication` sont des constats du 02/11.
+- Les extraits ne gardent que le titre, le lien et l'extrait du flux (400 signes, sans le pied « apparu en premier sur »), pour les 30 derniers jours ; le plafond IA de 15 $/mois s'applique comme pour les autres sources (30 enrichissements par exécution, communes en dernier).
 
 ## Idées à reprendre plus tard (non implémentées)
 Issues de la branche `feat/ingest-sources` (un commit du 22/09/2025, écartée le 28/10/2026 : publication sans relecture, pas de `robots.txt`, pas de tests ; voir `docs/audit-feat-ingest-sources-2026-10-28.md` sur `main`). On ne reprend **pas le code** : on réécrit chaque idée comme connecteur `Veille::Connectors::Base`, qui passe par `Veille::Http` (robots.txt, 1 s mini) et rend des `Veille::Item` ; tout finit en brouillon dans `/admin/veille`. Le code d'origine se lit encore sur `origin/feat/ingest-sources` (`app/services/fetchers/`, `app/services/support/french_date_parser.rb`) : ne pas supprimer la branche tant que ces trois points ne sont pas traités.

@@ -253,7 +253,7 @@ class Veille::RunnerTest < ActiveSupport::TestCase
   end
 
   test "la veille quotidienne ne lance ni la presse, ni la Gazette, ni JeVeuxAider" do
-    assert_equal [Veille::Connectors::AgendaNancy, Veille::Connectors::Transentreprise], Veille::Runner::QUOTIDIEN
+    assert_equal [Veille::Connectors::AgendaNancy, Veille::Connectors::Transentreprise, Veille::Connectors::Communes], Veille::Runner::QUOTIDIEN
   end
 
   test "un contenu de presse en base n'est ni enrichi ni rédigé automatiquement" do

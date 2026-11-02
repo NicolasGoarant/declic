@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel><title>Ville de Pulnoy</title>
+<item><title>Marché de Noël &#8211; samedi 12 décembre</title><link>https://www.pulnoy.fr/marche-de-noel/</link>
+<pubDate>Mon, 12 Oct 2026 10:00:00 +0000</pubDate><description><![CDATA[<p>Venez nombreux au <b>marché</b> de Noël, salle des fêtes. […]</p><p>Cet article Marché de Noël est apparu en premier sur Ville de Pulnoy.</p>]]></description></item>
+<item><title>Ancien article</title><link>https://www.pulnoy.fr/ancien/</link>
+<pubDate>Mon, 01 Jun 2026 10:00:00 +0000</pubDate><description>Trop vieux.</description></item>
+<item><title>Lien étranger</title><link>https://pub.example.com/x</link>
+<pubDate>Mon, 12 Oct 2026 10:00:00 +0000</pubDate><description>Publicité.</description></item>
+<item><title></title><link>https://www.pulnoy.fr/sans-titre/</link><pubDate>Mon, 12 Oct 2026 10:00:00 +0000</pubDate></item>
+</channel></rss>
