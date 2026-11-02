@@ -20,6 +20,21 @@ class AdminFichesTest < ActionDispatch::IntegrationTest
     Opportunity.create!({ title: titre, description: "d", category: "benevolat" }.merge(attributs))
   end
 
+  test "la liste des opportunités affiche la catégorie en clair, la famille entre parenthèses" do
+    opportunite("A", category: "decouvrir", famille: "decouvrir")
+    opportunite("B", category: "formation", famille: "se_former")
+    opportunite("C", category: "benevolat")
+    opportunite("D", category: "ecologiser")
+    get admin_opportunities_url, headers: @headers
+    assert_response :success
+    subtitles = css_select(".row-subtitle").map { |n| n.text.squish }
+    assert_includes subtitles, "Découvrir (Conférences et visites)"
+    assert_includes subtitles, "Se former (Se former)"
+    assert_includes subtitles, "S'engager"
+    assert_includes subtitles, "Écologiser"
+    assert_select "select[name=category] option", text: "Découvrir"
+  end
+
   test "les formulaires s'affichent avec les nouveaux champs et sans highlights" do
     get new_admin_opportunity_url, headers: @headers
     assert_response :success

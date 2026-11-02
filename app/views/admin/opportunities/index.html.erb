@@ -15,7 +15,7 @@
       <select name="category">
         <option value="">Toutes les catégories</option>
         <% Opportunity::CATEGORIES.each do |c| %>
-          <option value="<%= c %>" <%= 'selected' if @cat == c %>><%= c.capitalize %></option>
+          <option value="<%= c %>" <%= 'selected' if @cat == c %>><%= Categorie.trouver(c)&.libelle || c.capitalize %></option>
         <% end %>
       </select>
       <label class="checkbox-label">
@@ -60,7 +60,10 @@
           </td>
           <td>
             <div class="row-title"><%= o.title %></div>
-            <div class="row-subtitle"><%= o.category %></div>
+            <div class="row-subtitle">
+              <%= Categorie.trouver(o.category)&.libelle || o.category.to_s.humanize %>
+              <% if o.famille.present? %><small>(<%= Opportunity::FAMILLES[o.famille] || o.famille %>)</small><% end %>
+            </div>
             <% extrait = extrait_admin(o.description) %>
             <% if extrait %><div class="row-extrait" title="<%= extrait %>"><%= extrait %></div><% end %>
           </td>

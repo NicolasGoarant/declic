@@ -52,7 +52,7 @@
           </td>
           <td>
             <div class="row-title"><%= s.title %></div>
-            <div class="row-subtitle"><%= [s.author_name.presence, s.thematique.presence].compact.join(" · ") %></div>
+            <div class="row-subtitle"><%= s.author_name.presence %></div>
             <% extrait = extrait_admin(s.chapo, s.description, s.body) %>
             <% if extrait %><div class="row-extrait" title="<%= extrait %>"><%= extrait %></div><% end %>
           </td>
