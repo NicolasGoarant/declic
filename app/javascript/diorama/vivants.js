@@ -523,7 +523,8 @@ export class Vivants {
       const v = this.vue(), cle = `${v.cx},${v.cy},${v.s},${v.W},${v.H}`
       // Pendant un geste de carte, 12 images/s au plus : la toile suit la carte à ce rythme (entre deux images, ses
       // mobiles restent posés sur le sol de la carte, qui défile). Au repos, 30 images/s.
-      const intervalle = intervalleAdapte(this.enGeste?.() ? INTERVALLE_GESTE_MS : INTERVALLE_REPOS_MS, this.cout)
+      const geste = Boolean(this.enGeste?.())
+      const intervalle = geste ? intervalleAdapte(INTERVALLE_GESTE_MS, this.cout, 3) : intervalleAdapte(INTERVALLE_REPOS_MS, this.cout)
       if (tms - this.derniere < intervalle) return
       this.cleVue = cle; this.derniere = tms
       const j0 = performance.now()

@@ -407,7 +407,7 @@ export class Mobiles {
     this.avant = -Infinity
     const pas = (t) => {
       this.image = requestAnimationFrame(pas)
-      if (t - this.avant < intervalleAdapte(this.geste ? INTERVALLE_GESTE_MS : INTERVALLE_REPOS_MS, this.cout)) return
+      if (t - this.avant < (this.geste ? intervalleAdapte(INTERVALLE_GESTE_MS, this.cout, 3) : intervalleAdapte(INTERVALLE_REPOS_MS, this.cout))) return
       this.avant = t
       const j0 = performance.now()
       if (this.geste) this.recaler()

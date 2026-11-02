@@ -19,6 +19,7 @@ export function lisserCout(cout, mesure) {
   return cout ? 0.8 * cout + 0.2 * mesure : mesure
 }
 
-export function intervalleAdapte(base, cout) {
-  return Math.min(INTERVALLE_MAX_MS, Math.max(base, 2 * (cout || 0)))
+// facteur : combien de fois la durée d'une repeinte on attend avant la suivante (2 au repos, 3 pendant un geste).
+export function intervalleAdapte(base, cout, facteur = 2) {
+  return Math.min(INTERVALLE_MAX_MS, Math.max(base, facteur * (cout || 0)))
 }
