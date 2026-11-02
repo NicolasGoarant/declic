@@ -1,5 +1,4 @@
-# NOTES
-Détail ancien (fiches, bateaux, vivants, toits, accueil, géoloc…) : `git log -p NOTES.md` (version du 27/10 avant condensation).
+# NOTES (détail ancien : `git log -p NOTES.md`, version du 27/10)
 ## Règle éditoriale (fiches)
 - **Opportunité** : invite à agir (datée ou permanente `schedule_text`, bouton `cta_button_text`/`cta_button_url`). **Belle Histoire** : récit sans appel à l'action (ni horaire ni bouton) ; dit où trouver la personne, sa parole, la source.
 ## Fait
@@ -22,9 +21,8 @@ Détail ancien (fiches, bateaux, vivants, toits, accueil, géoloc…) : `git log
 - Réseaux sociaux écartés (CGU Meta, API soumise à validation). Annuaire des 19 communes : `config/veille/communes_grand_nancy.yml` (`Veille::AnnuaireCommunes`). **Connecteur RSS `Connectors::Communes`** (dans `QUOTIDIEN`) : seulement Pulnoy (reproduction permise avec la source) et Maxéville (aucune mention trouvée, à confirmer). **Exclues par leurs mentions légales** : Ludres, Saulxures, Vandœuvre, Art-sur-Meurthe, Jarville, Laneuveville. **Page `/admin/veille/communes`** : 17 communes à la main, liens seulement ; « Retenir » → origine `commune_manuel` (ignorée des passes auto). 499 tests verts. Testé en local sur les vrais flux (11 candidats), **review app `declic-veill-veille-aut-240smd` introuvable** (supprimée). Reste : demander l'autorisation écrite aux mairies exclues, confirmer Maxéville, vérifier le coût IA après un vrai passage quotidien.
 ## Perf de la carte (EN PROD 02/11, 439c691, v24 eu ; app US intacte v369 ; `rapports/perf-carte-2026-11-02.md`)
 - Correctifs `d04bb29`, `d1c35ed`, `cd3ba6e` : toiles vivants/mobiles à 12 images/s en geste + cadence adaptative + arrêt hors écran, DPR plafonné à 1,5, pins sans respiration (sauf du jour : 6 sur 91) et un seul drop-shadow, `dessinerPins` incrémental. **Mesuré en prod (91 marqueurs affichés, 220 points)**, avant→après : sans bridage repos 43→53, glissement 20→34 ; bridé ×4 repos 5-9→17-25, glissement 4-6→6-8. 0 erreur JS, mobiles animés, marqueurs lisibles. Glissement ×4 encore lent (`poserCalque` des vivants). Les chiffres « zoom » de ces mesures viennent d'une molette seule qui ne zoome pas la carte (Ctrl+molette requis) : ne pas s'y fier. Reste : coût de pose des vivants, photos d'accueil 5 Mo.
-## Tests
+## Tests, reste à faire
 - `bin/rails test` : 499 verts (02/11). Système (34) : `CHROME_NO_SANDBOX=1 CHROME_BIN=~/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome SE_CHROMEDRIVER=~/.cache/selenium/chromedriver/linux64/155.0.8059.84/chromedriver`. Échecs constants sur `main` comme sur la fusion : `calques_test.rb:112`, `ambiances_test.rb:131` ; intermittents des deux côtés : `ambiances_test.rb:58/:83`, `calques_test.rb:81`.
-## Reste à faire
 - **Images Belles Histoires (31/10)** : Sven 635 sans photo ; Nooki 634 : 3 photos de `Nooki.docx`, **droits presse à trancher**.
 - GTFS : trou de la source le 31/10 (boucle ce jour-là) ; Intercités rendus en TER. Correctif B (propriété jeu-vidéo côté nancy-3d) si des rectangles clairs reviennent. Détail des trains/lucarnes/défauts du 27-28/10 : `git log -p NOTES.md`. Photos sources minuscules ; `source_name` sans URL ; `Story#quote`/`source_published_on` à surveiller en prod.
 ## Fichiers clés
