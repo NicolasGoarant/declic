@@ -29,15 +29,9 @@ module AdminFichesHelper
     brut.presence && truncate(brut, length: EXTRAIT_ADMIN_LONGUEUR, separator: " ", omission: "…")
   end
 
-  JOURS_ABREGES = %w[dim. lun. mar. mer. jeu. ven. sam.].freeze
-  MOIS_ABREGES = %w[janv. févr. mars avr. mai juin juil. août sept. oct. nov. déc.].freeze
-
   # « dim. 1er nov. » : jour abrégé, « 1er » pour le premier du mois, jour sans zéro, mois abrégé.
   def date_admin(date)
-    return nil if date.nil?
-
-    jour = date.day == 1 ? "1er" : date.day.to_s
-    "#{JOURS_ABREGES[date.wday]} #{jour} #{MOIS_ABREGES[date.month - 1]}"
+    DatesFr.abregee(date, annee: false) if date
   end
 
   # Dates propres à l'événement : « mar. 3 nov. » ou « mar. 3 → jeu. 5 nov. » ; nil pour une fiche permanente.

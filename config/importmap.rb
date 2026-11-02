@@ -7,6 +7,7 @@ pin "@hotwired/stimulus-loading", to: "stimulus-loading.js"
 pin_all_from "app/javascript/controllers", under: "controllers"
 
 pin "map", to: "map.js"
+pin "dates_fr", to: "dates_fr.js"
 pin "geoloc_auto", to: "geoloc_auto.js"
 pin "bandeau_position", to: "bandeau_position.js"
 pin "diorama_projection", to: "diorama_projection.js"

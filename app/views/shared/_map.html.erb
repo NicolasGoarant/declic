@@ -194,7 +194,8 @@ function bootDeclicMap(){
       let dateStr = "";
       if(o.starts_at || o.date) {
         const d = new Date(o.starts_at || o.date);
-        dateStr = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+        // « dimanche 1er novembre 2026 » (même règle que app/javascript/dates_fr.js, ici hors importmap)
+        dateStr = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).replace(/ 1 /, ' 1er ');
       }
 
       const img = (function thumbForJs(obj){

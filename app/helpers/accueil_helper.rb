@@ -126,21 +126,21 @@ module AccueilHelper
     asset_path("fallback-opportunity.jpg")
   end
 
-  MOIS_ABREGES = %w[janv. févr. mars avr. mai juin juil. août sept. oct. nov. déc.].freeze
+  MOIS_ABREGES = DatesFr::MOIS_ABREGES
 
-  # « Ven. 2 oct. » : la prochaine date utile d'une opportunité datée.
+  # « Ven. 2 oct. 2026 » : la prochaine date utile d'une opportunité datée.
   def date_courte(opportunite)
     date = opportunite.starts_on || opportunite.ends_on
     return nil unless date
 
-    texte = "#{Opportunity::JOURS_ABREGES[date.wday].capitalize} #{date.day} #{MOIS_ABREGES[date.month - 1]}"
+    texte = DatesFr.abregee(date).upcase_first
     opportunite.starts_on ? texte : "Jusqu'au #{texte.downcase_first}"
   end
 
   # Pastille d'agenda : [« 2 », « oct. »], la même date que date_courte.
   def date_pastille(opportunite)
     date = opportunite.starts_on || opportunite.ends_on
-    [ date.day.to_s, MOIS_ABREGES[date.month - 1] ] if date
+    [ DatesFr.jour(date), MOIS_ABREGES[date.month - 1] ] if date
   end
 
   # 1245 -> « 1 245 » (espace insécable).

@@ -151,8 +151,8 @@ class Opportunity < ApplicationRecord
   before_save :synchroniser_dates
 
   # --- Affichage des dates (fiche Opportunité) ---
-  JOURS_ABREGES = %w[dim. lun. mar. mer. jeu. ven. sam.].freeze
-  MOIS = %w[janvier février mars avril mai juin juillet août septembre octobre novembre décembre].freeze
+  JOURS_ABREGES = DatesFr::JOURS_ABREGES
+  MOIS = DatesFr::MOIS
 
   # Sans aucune date : « Ouvert toute l'année », etc. (le détail va dans schedule_text).
   def permanente? = starts_on.nil? && ends_on.nil?
@@ -173,7 +173,7 @@ class Opportunity < ApplicationRecord
     debut <= debut_max && derniere_date >= fin_min
   end
 
-  # « Sam. 14 février 2026 », « Du sam. 14 février au dim. 15 mars 2026 », « Jusqu'au … » ; nil si permanente.
+  # « Samedi 14 février 2026 », « Du samedi 14 février au dimanche 15 mars 2026 », « Jusqu'au … » ; nil si permanente.
   def date_affichee
     return nil if permanente?
     return "Jusqu'au #{jour_en_toutes_lettres(ends_on)}" if starts_on.nil?
@@ -286,7 +286,7 @@ class Opportunity < ApplicationRecord
   def aujourdhui_a_paris = Time.current.in_time_zone(ConversionDates::FUSEAU).to_date
 
   def jour_en_toutes_lettres(date, annee: true)
-    [ JOURS_ABREGES[date.wday], date.day, MOIS[date.month - 1], (date.year if annee) ].compact.join(" ")
+    DatesFr.complete(date, annee: annee)
   end
 
   def honeypot_must_be_blank

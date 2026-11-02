@@ -1,8 +1,8 @@
 // Les dates des fiches. Le serveur les rend en ISO (AAAA-MM-JJ) ou nulles ; tout le reste
 // compte comme « sans date ». Elles n'ont pas d'heure : on affiche une DATE, jamais « 00:00 ».
-const MOIS = ["janv.", "févr.", "mars", "avril", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."]
+import { abregee, complete, jourMoisAbrege } from "dates_fr"
+
 const JOURS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"]
-const JOURS_COURTS = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."]
 const JOUR_MS = 86400000
 
 // "2026-10-03" → Date locale à minuit, sinon null.
@@ -35,7 +35,7 @@ export function dansLaFenetre(p, quand, jour = aujourdhui()) {
   return p.debut < fin && dernierJour(p) >= jour
 }
 
-// Étiquette colorée de la fiche : « Aujourd'hui », « Demain », « Samedi », « Mer. 14 oct. ».
+// Étiquette colorée de la fiche : « Aujourd'hui », « Demain », « Samedi », « Mer. 14 oct. 2026 » (place contrainte : abrégé).
 export function etiquette(p, jour = aujourdhui()) {
   if (!p.debut) return null
   const debut = p.debut < jour ? jour : p.debut // en cours : on parle d'aujourd'hui
@@ -43,14 +43,16 @@ export function etiquette(p, jour = aujourdhui()) {
   if (ecart === 0) return "Aujourd'hui"
   if (ecart === 1) return "Demain"
   if (ecart < 7) return majuscule(JOURS[debut.getDay()])
-  return `${majuscule(JOURS_COURTS[debut.getDay()])} ${debut.getDate()} ${MOIS[debut.getMonth()]}`
+  return majuscule(abregee(debut))
 }
 
-export const jourCourt = (d) => `${d.getDate()} ${MOIS[d.getMonth()]}`
+export const jourCourt = jourMoisAbrege
 
-// « 3 oct. » ou « 3 oct. → 12 oct. ».
+// Ligne de résumé, format complet : « dimanche 1er novembre 2026 » ou « du samedi 3 au mardi 5 novembre 2026 »
+// (l'année et le mois ne sont dits qu'une fois quand ils sont communs).
 export function periode(p) {
   if (!p.debut) return null
-  if (!p.fin || p.fin.getTime() === p.debut.getTime()) return jourCourt(p.debut)
-  return `${jourCourt(p.debut)} → ${jourCourt(p.fin)}`
+  if (!p.fin || p.fin.getTime() === p.debut.getTime()) return complete(p.debut)
+  const memeAnnee = p.debut.getFullYear() === p.fin.getFullYear()
+  return `du ${complete(p.debut, !memeAnnee)} au ${complete(p.fin)}`
 }

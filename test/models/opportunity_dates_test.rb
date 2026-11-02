@@ -56,15 +56,22 @@ class OpportunityDatesTest < ActiveSupport::TestCase
   # --- Méthodes d'affichage ---
 
   test "date_affichee" do
-    assert_equal "Sam. 14 février 2026", Opportunity.new(starts_on: Date.new(2026, 2, 14)).date_affichee
-    assert_equal "Sam. 14 février 2026",
+    assert_equal "Samedi 14 février 2026", Opportunity.new(starts_on: Date.new(2026, 2, 14)).date_affichee
+    assert_equal "Samedi 14 février 2026",
                  Opportunity.new(starts_on: Date.new(2026, 2, 14), ends_on: Date.new(2026, 2, 14)).date_affichee
-    assert_equal "Du sam. 14 février au dim. 15 mars 2026",
+    assert_equal "Du samedi 14 février au dimanche 15 mars 2026",
                  Opportunity.new(starts_on: Date.new(2026, 2, 14), ends_on: Date.new(2026, 3, 15)).date_affichee
-    assert_equal "Du jeu. 31 décembre 2026 au ven. 1 janvier 2027",
+    assert_equal "Du jeudi 31 décembre 2026 au vendredi 1er janvier 2027",
                  Opportunity.new(starts_on: Date.new(2026, 12, 31), ends_on: Date.new(2027, 1, 1)).date_affichee
-    assert_equal "Jusqu'au mar. 30 juin 2026", Opportunity.new(ends_on: Date.new(2026, 6, 30)).date_affichee
+    assert_equal "Jusqu'au mardi 30 juin 2026", Opportunity.new(ends_on: Date.new(2026, 6, 30)).date_affichee
     assert_nil Opportunity.new.date_affichee
+  end
+
+  test "DatesFr : complet et abrégé, 1er du mois" do
+    assert_equal "dimanche 1er novembre 2026", DatesFr.complete(Date.new(2026, 11, 1))
+    assert_equal "dim. 1er nov. 2026", DatesFr.abregee(Date.new(2026, 11, 1))
+    assert_equal "dim. 22 nov.", DatesFr.abregee(Date.new(2026, 11, 22), annee: false)
+    assert_equal "mercredi 1er avril 2026", DatesFr.complete(Date.new(2026, 4, 1))
   end
 
   test "horaire_affiche" do

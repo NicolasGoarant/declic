@@ -60,6 +60,7 @@
   <%= javascript_import_module_tag "geoloc_auto", "bandeau_position" %>
   <script type="module">
     import { creerProjection } from "diorama_projection";
+    import { complete } from "dates_fr";
     // Opportunités réelles (même endpoint que la carte de la home), posées à z_ref faute de MNS.
     // Celles hors du secteur couvert par la mosaïque sont écartées silencieusement.
     const POINTS = [];
@@ -148,7 +149,7 @@
       const cat = (o.category || "").toLowerCase(), [color, label] = CATS[cat] || CATS.default;
       const img = o.image_url || `https://images.unsplash.com/${IMG[cat] || IMG.default}?w=400&q=80&fit=crop`;
       let date = "";
-      if (o.starts_at) date = new Date(o.starts_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+      if (o.starts_at) date = complete(new Date(o.starts_at));
       const desc = mdPlain(o.description || o.chapo), court = desc.length > 140 ? desc.slice(0, 140).replace(/\s+\S*$/, "") + "…" : desc;
       return `<div style="--cat:${color}">
         <div class="hero" style="background-image:url('${esc(img)}')"><span class="badge">${label}</span></div>
