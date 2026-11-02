@@ -120,12 +120,27 @@ export default class extends Controller {
     this.majCompteurs()
     this.majVolet()
     this.demarrer()
+    this.surveillerVisibilite()
     // Filtre Favoris par l'URL (/labo/accueil?favoris=1) : plus d'onglet pour l'ouvrir. Après la connexion
     // du volet, qui écoute l'événement d'ouverture.
     if (new URLSearchParams(window.location.search).get("favoris") === "1") setTimeout(() => this.basculerFavoris())
   }
 
+  // Les toiles animées (vivants, mobiles) s'arrêtent quand la carte n'est plus à l'écran (page défilée plus bas).
+  surveillerVisibilite() {
+    this.carteHorsVue = false
+    if (!("IntersectionObserver" in window)) return
+    this.observateurVue = new IntersectionObserver((entrees) => {
+      const hors = !entrees[entrees.length - 1].isIntersecting
+      if (hors === this.carteHorsVue) return
+      this.carteHorsVue = hors
+      this.mobiles?.pauseHorsVue(hors)
+    })
+    this.observateurVue.observe(this.carteTarget)
+  }
+
   disconnect() {
+    this.observateurVue?.disconnect()
     clearInterval(this.minuterieAuto)
     clearTimeout(this.minuterieAide)
     this.aideZoom?.remove()
@@ -366,6 +381,7 @@ export default class extends Controller {
     this.element.dataset.fond = this.fond
 
     this.calquePins = L.layerGroup().addTo(this.carte)
+    this.oublierPins()
     this.carte.on("zoomend", () => this.dessinerPins())
     this.carte.on("moveend", () => this.majVolet())
     this.carte.on("click", () => {
@@ -391,6 +407,7 @@ export default class extends Controller {
     this.ecranEtroit = window.matchMedia(ETROIT)
     this.surEcranEtroit = () => {
       this.points.forEach((p) => { p.marqueur = null })
+      this.oublierPins()
       this.dessinerPins()
     }
     this.ecranEtroit.addEventListener("change", this.surEcranEtroit)
@@ -1002,6 +1019,7 @@ export default class extends Controller {
         dossier: t.mobiles, dallesPropriete: this.dallesPropriete, contient: this.decoupe?.contient,
         propriete: (chemin) => this.url(t.propriete, `${chemin}.png`), style: () => this.style, horaire: true
       })
+      if (this.carteHorsVue) this.mobiles.pauseHorsVue(true)
     }
     this.mobiles?.teinter(TEINTES_VIVANTS[this.etat.moment] || "")
   }
@@ -1054,7 +1072,8 @@ export default class extends Controller {
           return volet
         },
         placer: (toile) => this.L.DomUtil.setPosition(toile, carte().containerPointToLayerPoint([0, 0])),
-        cachee: () => this.zoomEnCours
+        cachee: () => this.zoomEnCours || this.carteHorsVue,
+        enGeste: () => this.element.dataset.mouvement === "1"
       })
       window.__dioramaVivants = this.vivants
       this.vivantsPrets = this.vivants.charger().catch((erreur) => { console.warn("vivants :", erreur); this.vivantsEchec = true })
@@ -1076,6 +1095,7 @@ export default class extends Controller {
   // dalle vide ou hors de la Métropole, pas de marqueur. Plan : tous les points géolocalisés.
   poserPoints() {
     const L = this.L
+    this.oublierPins()
     this.points.forEach((p) => {
       p.latlng = null
       p.marqueur = null // l'icône suit le point : on la refait sur la nouvelle carte
@@ -1138,22 +1158,47 @@ export default class extends Controller {
   // point affiché, où poser sa popup (pied + décalage jusqu'au haut de son icône).
   dessinerPins() {
     if (!this.calquePins) return
-    this.calquePins.clearLayers()
+    const groupes = this.groupes(this.carte.getZoom())
+    // Mêmes groupes que la dernière fois (fin de zoom sans effet sur le regroupement, filtre sans effet) : rien à refaire.
+    const empreinte = groupes.map((g) => g.map((p) => p.id).join(",")).join("|")
+    if (empreinte === this.empreintePins) return
+    this.empreintePins = empreinte
+    // Sinon, on ne touche qu'à ce qui change : un pin ou un bouquet identique garde son élément dans la page.
     this.ancres = new Map()
     const { icone } = dispositionPin(this.etroitEcran())
-    for (const groupe of this.groupes(this.carte.getZoom())) {
+    const voulus = new Set(), bouquets = new Map()
+    for (const groupe of groupes) {
       if (groupe.length === 1) {
         const p = groupe[0]
         p.marqueur ||= this.L.marker(p.latlng, { icon: this.iconePin(p), title: p.titre, riseOnHover: true })
           .on("click", () => this.ouvrirPopup(p.id))
-        this.calquePins.addLayer(p.marqueur)
+        voulus.add(p.marqueur)
         this.ancres.set(p.id, { latlng: p.latlng, decalage: [0, -(icone + PINS.tige_longueur_px)] })
       } else {
-        this.calquePins.addLayer(this.bouquet(groupe))
+        const cle = groupe.map((p) => p.id).join(",")
+        let b = this.bouquetsPoses?.get(cle)
+        if (!b) { // bouquet neuf : bouquet() inscrit les ancres de ses fleurs, gardées avec lui pour les repasses
+          const toutes = this.ancres
+          this.ancres = new Map()
+          b = { couche: this.bouquet(groupe), ancres: this.ancres }
+          this.ancres = toutes
+        }
+        b.ancres.forEach((v, id) => this.ancres.set(id, v))
+        bouquets.set(cle, b)
+        voulus.add(b.couche)
       }
     }
+    this.bouquetsPoses = bouquets
+    this.calquePins.getLayers().forEach((couche) => { if (!voulus.has(couche)) this.calquePins.removeLayer(couche) })
+    voulus.forEach((couche) => { if (!this.calquePins.hasLayer(couche)) this.calquePins.addLayer(couche) })
     this.marquerSurvol()
     this.suivrePopup()
+  }
+
+  // Les marqueurs posés ne sont plus fiables (nouvelle carte, nouvelle taille d'icône) : le prochain dessin les refait tous.
+  oublierPins() {
+    this.empreintePins = null
+    this.bouquetsPoses = null
   }
 
   // Écarte les plus grandes catégories (échelle de compensation la plus forte, ex. « formation ») les

@@ -37,9 +37,10 @@
 // des mobiles s'effacent. Bus et trolleybus : un passage sur m (fréquence ÷ m, intervalles réguliers) en début et fin de
 // service, aucun de 0 h 30 à 5 h. Courbe plausible, pas une donnée : à reprendre si des comptages arrivent.
 
+import { dprToiles, INTERVALLE_REPOS_MS, INTERVALLE_GESTE_MS } from "diorama/densite"
+
 const NIVEAU_REPERE = 8
 const MOINS_DE_MOUVEMENT = "(prefers-reduced-motion: reduce)"
-const INTERVALLE_MS = 1000 / 30 - 2
 const ECHELLE_VIVANTS = 1.6         // DÉCIDÉ le 17/10 (diagnostics § 8) : gain minimal des piétons, voitures et vélos
 const MODELE_VELO = "velo-detaille" // 20/10
 // Par type : plancher en px CSS (longueur d'un véhicule, hauteur d'une personne), gain maximal sur la taille réelle,
@@ -148,7 +149,7 @@ export class Vivants {
   //           style (() → nom du style affiché : le correctif des toits jv2 ne vaut que pour SON style) ;
   //           horaire (vrai : effectifs selon l'heure de Nancy ; faux, le défaut : les effectifs validés),
   //           trains (un `Trains`, diorama/trains.js : ses caisses se peignent sur CETTE toile, triées avec les vivants)
-  constructor({ dossier, propriete, dallesPropriete, vue, ancre = null, volet = null, placer = null, cachee = null, style = null, horaire = false, trains = null }) {
+  constructor({ dossier, propriete, dallesPropriete, vue, ancre = null, volet = null, placer = null, cachee = null, enGeste = null, style = null, horaire = false, trains = null }) {
     this.dossier = dossier.replace(/\/$/, "")
     this.urlCode = propriete
     this.dallesCodes = dallesPropriete
@@ -157,6 +158,7 @@ export class Vivants {
     this.volet = volet
     this.placer = placer
     this.cachee = cachee
+    this.enGeste = enGeste // () => vrai pendant un déplacement ou un zoom de la carte : repeinte ralentie
     this.styleAffiche = style
     this.trains = trains
     this.codes = new Map()
@@ -393,7 +395,7 @@ export class Vivants {
   // 2 × k × gain × dpr (le navigateur ne réduit plus que d'un facteur entre 0,5 et 0,71) ; sinon l'atlas principal.
   spriteDe(o, k, gain) {
     const cle = this.cleSprite(o), c = this.capIndex(o.gE, o.gN), n = this.reduits.S.niveaux[cle]
-    const cible = 2 * k * gain * (window.devicePixelRatio || 1)
+    const cible = 2 * k * gain * dprToiles()
     if (n && this.sprites.echelles[cle] > cible) {
       let i = 0
       while (i < n.length - 1 && n[i][0] > cible) i++ // niveaux rangés par échelle décroissante
@@ -512,13 +514,17 @@ export class Vivants {
     else this.ancre.after(this.toile)
     this.derniere = 0
     this.cleVue = null
+    this.derniereSignature = null
     const boucle = (tms) => {
       if (!this.actif) return
       this.raf = requestAnimationFrame(boucle)
       if (document.hidden) return
       if (this.cachee?.()) { if (this.cleVue !== "cachee") { this.effacer(); this.cleVue = "cachee" } return }
       const v = this.vue(), cle = `${v.cx},${v.cy},${v.s},${v.W},${v.H}`
-      if (cle === this.cleVue && tms - this.derniere < INTERVALLE_MS) return
+      // Pendant un geste de carte, 12 images/s au plus : la toile suit la carte à ce rythme (entre deux images, ses
+      // mobiles restent posés sur le sol de la carte, qui défile). Au repos, 30 images/s.
+      const intervalle = this.enGeste?.() ? INTERVALLE_GESTE_MS : INTERVALLE_REPOS_MS
+      if (tms - this.derniere < intervalle) return
       this.cleVue = cle; this.derniere = tms
       this.majFacteurs(tms)
       this.placer?.(this.toile)
@@ -534,6 +540,7 @@ export class Vivants {
   }
 
   effacer() {
+    this.derniereSignature = null // la toile est vide : la prochaine image doit se peindre
     if (this.ctx) { this.ctx.setTransform(1, 0, 0, 1, 0, 0); this.ctx.clearRect(0, 0, this.toile.width, this.toile.height) }
   }
 
@@ -544,7 +551,7 @@ export class Vivants {
   }
 
   image(v) {
-    const j0 = performance.now(), dpr = window.devicePixelRatio || 1, toile = this.toile, ctx = this.ctx
+    const j0 = performance.now(), dpr = dprToiles(), toile = this.toile, ctx = this.ctx
     const sc = { k: v.s, niveau: NIVEAU_REPERE + Math.log2(v.s), ox: v.W / 2 - v.cx * v.s, oy: v.H / 2 - v.cy * v.s, largeur: v.W, hauteur: v.H,
                  xmin: v.cx - v.W / 2 / v.s, xmax: v.cx + v.W / 2 / v.s, ymin: v.cy - v.H / 2 / v.s, ymax: v.cy + v.H / 2 / v.s }
     // la toile s'affiche sur W × H px d'appareil EXACTEMENT (taille CSS = support / dpr) : à dpr 0,8, Firefox
@@ -552,10 +559,9 @@ export class Vivants {
     const W = Math.round(v.W * dpr), H = Math.round(v.H * dpr)
     if (toile.width !== W || toile.height !== H || toile.dprPose !== dpr) {
       toile.width = W; toile.height = H; toile.dprPose = dpr
+      this.derniereSignature = null // redimensionner vide la toile
       toile.style.width = `${W / dpr}px`; toile.style.height = `${H / dpr}px`
     }
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H)
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     const liste = []
     // un niveau se montre à partir de son zoom entier (la démo n'a que des zooms entiers) : jamais plus petit
     // qu'aux niveaux où les planchers ont été jugés
@@ -567,6 +573,13 @@ export class Vivants {
       this.trains?.poserEnBoucle(sc, performance.now(), liste)
     }
     liste.sort((a, b) => a.Y - b.Y)
+    // Rien n'a bougé de plus d'un quart de pixel d'appareil depuis la dernière image (même vue, mêmes mobiles, aucune
+    // caisse de train à peindre) : la toile est déjà juste, on ne l'efface ni ne la repeint.
+    const signature = this.signatureImage(liste, v, dpr)
+    if (signature !== null && signature === this.derniereSignature) return
+    this.derniereSignature = signature
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H)
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     const n = { pieton: 0, voiture: 0, velo: 0, bus: 0, trolleybus: 0 }
     for (const o of liste) {
       if (o.peindre) { o.peindre(ctx); continue }   // une caisse de train : se peint elle-même
@@ -574,6 +587,18 @@ export class Vivants {
     }
     this.stats = { pietons: n.pieton, voitures: n.voiture, velos: n.velo, bus: n.bus, trolleybus: n.trolleybus,
                    js: performance.now() - j0, niveau: sc.niveau, heure: this.facteurs ? this.heure : null }
+  }
+
+  // Empreinte numérique de ce que l'image va peindre ; null si un train se peint lui-même (il bouge sans cesse).
+  signatureImage(liste, v, dpr) {
+    let h = 17
+    const mel = (x) => { h = (Math.imul(h, 31) + (x | 0)) | 0 }
+    mel(v.cx * 4); mel(v.cy * 4); mel(v.s * 4096); mel(v.W); mel(v.H); mel(dpr * 100); mel(liste.length)
+    for (const o of liste) {
+      if (o.peindre) return null
+      mel(o.X * dpr * 4); mel(o.Y * dpr * 4); mel((o.alpha ?? 1) * 64)
+    }
+    return h
   }
 
   // Rien si l'appareil demande moins d'animations.

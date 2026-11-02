@@ -40,6 +40,7 @@
 // restent à toute heure : la nuit, le port ne s'anime plus mais reste visible.
 
 import { heureANancy, lireCodes, surCourbe } from "diorama/vivants"
+import { dprToiles, INTERVALLE_REPOS_MS, INTERVALLE_GESTE_MS } from "diorama/densite"
 
 const NIVEAU_REPERE = 8
 // Dès ×0,25 (niveau 6, 26/10, Nicolas), comme vélos, voitures, bus et trolleybus (vivants.js) : aucun palier où les uns
@@ -55,7 +56,6 @@ const NIVEAU_MASQUE = 7
 // (péniches 60 %), contre 68 % (57 %) au niveau 7 ; à ×2,5, 58 % (42 %) : un palier où les péniches manquent (26/10).
 const NIVEAU_LARGE = 7, GAIN_LARGE = 2
 const MOINS_DE_MOUVEMENT = "(prefers-reduced-motion: reduce)"
-const INTERVALLE_MS = 1000 / 30 - 2
 const Z_VOLET = 440
 // CHOISI : bateaux par km et par file — canal, rivière (jusqu'au 15/10 : péniches au canal, petits bateaux à la
 // rivière). RETENU le 15/10 (Nicolas) : 6 / 2 au lieu de 3 / 4, la péniche fait 68,3 % des bateaux-instants au lieu
@@ -161,9 +161,13 @@ export class Mobiles {
     this.reduit = window.matchMedia(MOINS_DE_MOUVEMENT)
     this.surReduit = () => this.majActivite()
     this.surVisibilite = () => this.majActivite()
-    this.surDeplacement = () => this.recaler()
-    this.surFin = () => { this.toileVisible(true); this.construireMasque(); this.majActivite() }
-    this.surZoomDebut = () => this.toileVisible(false)
+    // Pendant un geste de carte (déplacement, zoom) la toile ne se repeint qu'à 12 images/s et ne se recale qu'avec
+    // chaque repeinte : entre deux, ses bateaux restent posés sur le sol de la carte, qui défile.
+    this.geste = false
+    this.surGesteDebut = () => { this.geste = true }
+    this.surDeplacement = () => { if (!this.geste) this.recaler() }
+    this.surFin = () => { this.geste = false; this.recaler(); this.toileVisible(true); this.construireMasque(); this.majActivite() }
+    this.surZoomDebut = () => { this.geste = true; this.toileVisible(false) }
     this.surTaille = () => { this.dimensionner(); this.construireMasque() }
     this.reduit.addEventListener("change", this.surReduit)
     document.addEventListener("visibilitychange", this.surVisibilite)
@@ -315,8 +319,11 @@ export class Mobiles {
     if (this.detruit || !this.routes) return
     if (this.reduit.matches) { this.retirer(); return }
     if (!this.toile) this.poser()
-    if (document.hidden || this.carte.getZoom() < NIVEAU_MIN) { this.suspendre(); this.effacer() } else this.reprendre()
+    if (document.hidden || this.horsVue || this.carte.getZoom() < NIVEAU_MIN) { this.suspendre(); this.effacer() } else this.reprendre()
   }
+
+  // La carte sort de l'écran (ou y revient) : la boucle s'arrête, la toile est vidée.
+  pauseHorsVue(hors) { this.horsVue = hors; this.majActivite() }
 
   poser() {
     const volet = this.carte.getPane("mobiles") || this.carte.createPane("mobiles")
@@ -330,6 +337,7 @@ export class Mobiles {
     this.anneaux = new Map()
     this.masque = document.createElement("canvas")
     this.masqueCadre = null
+    this.carte.on("movestart", this.surGesteDebut)
     this.carte.on("move", this.surDeplacement)
     this.carte.on("moveend zoomend viewreset", this.surFin)
     this.carte.on("zoomstart", this.surZoomDebut)
@@ -341,6 +349,7 @@ export class Mobiles {
   retirer() {
     this.suspendre()
     if (!this.toile) return
+    this.carte.off("movestart", this.surGesteDebut)
     this.carte.off("move", this.surDeplacement)
     this.carte.off("moveend zoomend viewreset", this.surFin)
     this.carte.off("zoomstart", this.surZoomDebut)
@@ -376,8 +385,9 @@ export class Mobiles {
   toileVisible(oui) { if (this.toile) this.toile.style.visibility = oui ? "" : "hidden" }
 
   dimensionner() {
-    const { x, y } = this.carte.getSize(), dpr = window.devicePixelRatio || 1
+    const { x, y } = this.carte.getSize(), dpr = dprToiles()
     this.largeur = x; this.hauteur = y; this.dpr = dpr
+    this.derniereSignature = null // redimensionner vide la toile
     this.toile.width = Math.round(x * dpr); this.toile.height = Math.round(y * dpr)
     this.toile.style.width = `${x}px`; this.toile.style.height = `${y}px`
     this.recaler()
@@ -388,6 +398,7 @@ export class Mobiles {
   }
 
   effacer() {
+    this.derniereSignature = null // la toile est vide : la prochaine image doit se peindre
     if (this.ctx) { this.ctx.setTransform(1, 0, 0, 1, 0, 0); this.ctx.clearRect(0, 0, this.toile.width, this.toile.height) }
   }
 
@@ -396,8 +407,9 @@ export class Mobiles {
     this.avant = -Infinity
     const pas = (t) => {
       this.image = requestAnimationFrame(pas)
-      if (t - this.avant < INTERVALLE_MS) return
+      if (t - this.avant < (this.geste ? INTERVALLE_GESTE_MS : INTERVALLE_REPOS_MS)) return
       this.avant = t
+      if (this.geste) this.recaler()
       this.dessiner(t)
     }
     this.image = requestAnimationFrame(pas)
@@ -710,14 +722,26 @@ export class Mobiles {
     ctx.globalAlpha = 1
   }
 
+  signatureImage(liste, sc, mc, dpr) {
+    let h = 17
+    const mel = (x) => { h = (Math.imul(h, 31) + (x | 0)) | 0 }
+    mel(sc.k * 4096); mel(sc.ox * 4); mel(sc.oy * 4); mel(dpr * 100); mel(liste.length); mel(mc ? mc.ox * 4 + mc.oy * 4 + mc.k * 4096 : -1)
+    for (const b of liste) { mel(b.X * dpr * 4); mel(b.Y * dpr * 4); mel((b.alpha ?? 1) * 64) }
+    return h
+  }
+
   dessiner(tms) {
     const j0 = performance.now(), sc = this.cadre(), ctx = this.ctx, dpr = this.dpr
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, this.toile.width, this.toile.height)
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     const enMarche = this.poserBateaux(sc, this.horloge())
-    const segments = this.tracerSillages(ctx, sc, enMarche)
     const liste = enMarche.concat(this.poserAmarres(sc)).sort((a, b) => a.Y - b.Y)
     const mc = this.masqueCadre, masque = Boolean(mc && mc.k === sc.k)
+    // Même vue, même masque, aucun bateau déplacé de plus d'un quart de pixel d'appareil : la toile est déjà juste.
+    const signature = this.signatureImage(liste, sc, mc, dpr)
+    if (signature === this.derniereSignature) return
+    this.derniereSignature = signature
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, this.toile.width, this.toile.height)
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    const segments = this.tracerSillages(ctx, sc, enMarche)
     if (masque) {
       ctx.save(); ctx.globalCompositeOperation = "destination-out"
       ctx.drawImage(this.masque, sc.ox - mc.ox - MARGE_MASQUE, sc.oy - mc.oy - MARGE_MASQUE)
