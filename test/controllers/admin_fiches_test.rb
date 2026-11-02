@@ -30,6 +30,7 @@ class AdminFichesTest < ActionDispatch::IntegrationTest
     subtitles = css_select(".row-subtitle").map { |n| n.text.squish }
     assert_includes subtitles, "Découvrir (Conférences et visites)"
     assert_includes subtitles, "Se former (Se former)"
+    assert_select ".cat-badge", text: "Découvrir"
     assert_includes subtitles, "S'engager"
     assert_includes subtitles, "Écologiser"
     assert_select "select[name=category] option", text: "Découvrir"
@@ -170,8 +171,21 @@ class AdminFichesTest < ActionDispatch::IntegrationTest
     extraits = css_select(".row-extrait").map(&:text)
     assert extraits.all? { |t| t.length <= AdminFichesHelper::EXTRAIT_ADMIN_LONGUEUR + 1 }
     assert extraits.none? { |t| t.include?("**") || t.include?("<p>") }
-    assert_select ".date-evenement", text: /03\/11\/2026 → 05\/11\/2026/
+    assert_select ".date-evenement", text: /mar\. 3 nov\. → jeu\. 5 nov\./
     assert_select ".date-evenement", 1
+  end
+
+  test "lieu avec adresse postale complète, dates en jour abrégé" do
+    opportunite("Complète", address: "3 rue Stanislas", postal_code: "54000", city: "Nancy", created_at: Time.zone.local(2026, 11, 1, 10))
+    opportunite("Ville seule", city: "Nancy")
+    get admin_opportunities_url, headers: @headers
+    assert_select ".lieu-adresse", text: "3 rue Stanislas, 54000 Nancy"
+    assert_select ".lieu-adresse", text: "Nancy"
+    assert_select ".date-cell", text: /dim\. 1er nov\./
+    helper = Object.new.extend(AdminFichesHelper)
+    assert_equal "lun. 2 nov.", helper.date_admin(Date.new(2026, 11, 2))
+    assert_equal "mer. 1er avr.", helper.date_admin(Date.new(2026, 4, 1))
+    assert_equal "sam. 5 déc.", helper.date_admin(Date.new(2026, 12, 5))
   end
 
   test "la liste des histoires montre vignette, extrait (chapô d'abord) et auteur" do

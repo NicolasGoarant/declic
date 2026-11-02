@@ -48,7 +48,7 @@
           <td class="vignette-cell">
             <% url = vignette_admin_url(o) %>
             <% if url %>
-              <img class="vignette" src="<%= url %>" alt="" loading="lazy" width="48" height="48">
+              <img class="vignette" src="<%= url %>" alt="" loading="lazy" width="96" height="96">
             <% else %>
               <span class="vignette vignette--vide" title="Pas d'image de Une"></span>
             <% end %>
@@ -60,17 +60,22 @@
           </td>
           <td>
             <div class="row-title"><%= o.title %></div>
+            <% libelle, couleur = badge_categorie(o) %>
             <div class="row-subtitle">
-              <%= Categorie.trouver(o.category)&.libelle || o.category.to_s.humanize %>
+              <span class="cat-badge" style="--cat: <%= couleur %>"><%= libelle %></span>
               <% if o.famille.present? %><small>(<%= Opportunity::FAMILLES[o.famille] || o.famille %>)</small><% end %>
             </div>
             <% extrait = extrait_admin(o.description) %>
             <% if extrait %><div class="row-extrait" title="<%= extrait %>"><%= extrait %></div><% end %>
           </td>
           <td>
-            <span class="<%= 'warning' if o.latitude.blank? %>">
-              <%= o.address.presence || o.city.presence || "—" %>
-            </span>
+            <% nom, adresse = lieu_admin(o) %>
+            <div class="<%= 'warning' if o.latitude.blank? %>">
+              <% if nom || adresse %>
+                <% if nom %><div class="lieu-nom"><%= nom %></div><% end %>
+                <% if adresse %><div class="lieu-adresse"><%= adresse %></div><% end %>
+              <% else %>—<% end %>
+            </div>
             <% if o.geocoding_flagged_reason.present? %>
               <div class="geocoding-flag" title="<%= o.geocoding_flagged_reason %>">
                 🚩 géocodage rejeté — <%= o.geocoding_flagged_reason %>
@@ -79,7 +84,7 @@
           </td>
           <td><%= render "admin/shared/cellule_fiche", record: o %></td>
           <td class="date-cell">
-            <%= o.created_at.strftime("%d/%m/%Y") %>
+            <span title="Publication : <%= o.created_at.strftime("%d/%m/%Y") %>"><%= date_admin(o.created_at.to_date) %></span>
             <% periode = periode_admin(o) %>
             <% if periode %><div class="date-evenement" title="Dates de l'événement">📅 <%= periode %></div><% end %>
           </td>
@@ -121,12 +126,16 @@
   .fiche-pct.ok { background: #dcfce7; color: #15803d; }
   .fiche-pct.moyen { background: #fef3c7; color: #b45309; }
   .fiche-pct.bas { background: #fee2e2; color: #b91c1c; }
-  .vignette-cell { width: 56px; padding-right: 0 !important; }
-  .vignette { display: block; width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: #f1f5f9; }
+  .vignette-cell { width: 108px; padding-right: 0 !important; }
+  .vignette { display: block; width: 96px; height: 96px; border-radius: 10px; object-fit: cover; background: #f1f5f9; }
   .vignette--vide { border: 1px dashed #cbd5e1; background: #f8fafc; }
   .row-extrait { margin-top: 3px; max-width: 420px; font-size: 12px; line-height: 1.35; color: #64748b;
                  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .modern-table td { vertical-align: middle; }
+  .cat-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 800; text-transform: none; color: color-mix(in srgb, var(--cat) 55%, black); background: color-mix(in srgb, var(--cat) 18%, white); border: 1px solid color-mix(in srgb, var(--cat) 45%, white); }
+  .row-subtitle small { font-size: 11px; color: #94a3b8; font-weight: 500; margin-left: 4px; }
+  .lieu-nom { font-weight: 600; color: #0f172a; font-size: 13px; }
+  .lieu-adresse { font-size: 12px; color: #64748b; line-height: 1.35; }
   .date-cell { font-size: 12px; color: #64748b; white-space: nowrap; }
   .date-evenement { margin-top: 3px; font-size: 11px; font-weight: 600; color: #7c3aed; }
 </style>
