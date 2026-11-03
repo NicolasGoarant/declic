@@ -45,12 +45,26 @@ class OpportunityFenetrePubliqueTest < ActiveSupport::TestCase
     assert_not_includes publiques(a(AUJOURDHUI + 1)), o
   end
 
-  test "les autres familles ne sont pas concernées, ni une petite manifestation sans date" do
+  test "les autres familles n'ont pas de borne de début, ni une petite manifestation sans date" do
     lointaine = fiche(famille: "pratiquer", debut: AUJOURDHUI + 60)
-    passee    = fiche(famille: "decouvrir", debut: AUJOURDHUI - 30)
     sans_famille = fiche(famille: nil, debut: AUJOURDHUI + 60)
     sans_date = fiche
-    [lointaine, passee, sans_famille, sans_date].each { |o| assert_includes publiques, o }
+    permanente = fiche(famille: "decouvrir")
+    [lointaine, sans_famille, sans_date, permanente].each { |o| assert_includes publiques, o }
+  end
+
+  test "toutes familles : terminée depuis plus d'un jour = masquée du public, gardée en base" do
+    [ "pratiquer", "decouvrir", nil, "s_engager" ].each do |famille|
+      passee = fiche(famille: famille, debut: AUJOURDHUI - 30)
+      plage  = fiche(famille: famille, debut: AUJOURDHUI - 30, fin: AUJOURDHUI - 1)
+      encore = fiche(famille: famille, debut: AUJOURDHUI - 30, fin: AUJOURDHUI)
+      assert_not_includes publiques, passee
+      assert_not_includes publiques, plage
+      assert_not passee.dans_la_fenetre_publique?(a(AUJOURDHUI))
+      assert_includes publiques, encore
+      assert encore.dans_la_fenetre_publique?(a(AUJOURDHUI))
+      assert_includes Opportunity.where(is_active: true), passee
+    end
   end
 
   test "une fiche inactive reste hors du public" do

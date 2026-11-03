@@ -42,7 +42,8 @@ class Opportunity < ApplicationRecord
   # Masquées par défaut sur la carte, jamais retirées de la base : la fiche reste en ligne et le visiteur peut les afficher.
   FAMILLES_MASQUEES = %w[petite_manifestation].freeze
   scope :active,      -> { where(is_active: true) }
-  # FACE PUBLIQUE : actives, et — pour la seule famille « petite_manifestation » (brocante, vide-grenier,
+  # FACE PUBLIQUE : actives et pas terminées (toutes familles : fin passée depuis plus d'un jour = masquée), et — pour
+  # la seule famille « petite_manifestation » (brocante, vide-grenier,
   # foire, fête) — visibles de 00h00 le 7e jour avant le début jusqu'au lendemain du dernier jour (ends_on,
   # à défaut la date unique) à 00h01 : elles disparaissent à cette minute-là, heure de Paris. Sans date, pas de
   # fenêtre. Les autres familles ne sont pas concernées. L'admin n'utilise PAS ce scope : tout y reste visible.
@@ -60,8 +61,11 @@ class Opportunity < ApplicationRecord
     debut_max, fin_min = bornes_fenetre_publique(maintenant)
     debut = "COALESCE(opportunities.starts_on, opportunities.ends_on)"
     fin   = "COALESCE(opportunities.ends_on, opportunities.starts_on)"
-    active.where("opportunities.famille IS NULL OR opportunities.famille <> 'petite_manifestation' OR #{debut} IS NULL " \
-                 "OR (#{debut} <= ? AND #{fin} >= ?)", debut_max, fin_min)
+    # Toutes familles : une fiche dont la fin (ou la date unique) est passée disparaît à 00h01 le lendemain (heure de
+    # Paris), sans suppression en base. Seule la petite manifestation a en plus une borne de début (7 jours avant).
+    active.where("#{fin} IS NULL OR #{fin} >= ?", fin_min)
+          .where("opportunities.famille IS NULL OR opportunities.famille <> 'petite_manifestation' OR #{debut} IS NULL " \
+                 "OR #{debut} <= ?", debut_max)
   }
   scope :with_coords, -> { where.not(latitude: nil, longitude: nil) }
   scope :sans_familles_masquees, -> { where("opportunities.famille IS NULL OR opportunities.famille NOT IN (?)", FAMILLES_MASQUEES) }
@@ -164,13 +168,13 @@ class Opportunity < ApplicationRecord
   # Même règle que le scope `publiques` (fenêtre des petites manifestations), pour une fiche chargée :
   # sert à refuser l'accès direct à l'URL publique hors fenêtre. Les autres familles : toujours vraie.
   def dans_la_fenetre_publique?(maintenant = Time.current)
-    return true unless famille == "petite_manifestation"
-
     debut = starts_on || ends_on
     return true if debut.nil?
 
     debut_max, fin_min = self.class.bornes_fenetre_publique(maintenant)
-    debut <= debut_max && derniere_date >= fin_min
+    return false if derniere_date < fin_min
+
+    famille != "petite_manifestation" || debut <= debut_max
   end
 
   # « Samedi 14 février 2026 », « Du samedi 14 février au dimanche 15 mars 2026 », « Jusqu'au … » ; nil si permanente.
