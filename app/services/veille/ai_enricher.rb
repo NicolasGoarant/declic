@@ -109,6 +109,9 @@ module Veille
       HORS LIGNE (hors_ligne = true, famille = « hors_ligne »)
       Pour tous les contenus :
       - faits divers, actualité judiciaire, résultats sportifs, comptes rendus de conseils, mouvements sociaux, annonces institutionnelles, travaux, carnet (mariages, décès, anniversaires), santé grand public sans événement, événement annulé.
+      - actualité municipale ou administrative qui informe sans inviter à y aller ni à agir : parution d'un journal ou d'un bulletin, arrivée ou nomination d'un agent, arrêté, fermeture de route, dispositif ou aide (prime, subvention, démarche, guichet), campagne de prévention ou de vaccination, engagement de la commune (label, charte), planning de service.
+      - compte rendu d'un événement ou d'un chantier déjà terminé, écrit au passé (« a réuni », « ont participé », « un succès », « a pris des airs de… », « les jeunes ont découvert… ») : il n'y a plus rien à faire, et il ne raconte pas une personne nommée, donc ce n'est pas non plus une belle histoire.
+      Test pour trancher entre annonce d'opportunité et actualité : le lecteur peut-il, après lecture, se rendre quelque part, s'inscrire, candidater, donner ou participer à un moment précis ou régulier ? Si oui, c'est une opportunité (même maigre : baisse alors la confiance). Si le texte ne fait que renseigner ou rendre compte, hors ligne.
       - simple nomination sans parcours ni initiative.
       Pour un récit :
       - aucune personne ou collectif nommé (« quatre adolescents », « des bénévoles » ne suffisent pas), ou le texte rend compte d'une animation ponctuelle sans raconter personne ;
@@ -130,7 +133,7 @@ module Veille
 
       LIEU : le nom du lieu où se tient l'événement, tel que la source l'indique (« Musée des Beaux-Arts », « Salle Poirel », « 12 rue Saint-Dizier »), sans la commune. Chaîne vide si la source n'en donne pas : tu ne le devines jamais. Une commune seule n'est pas un lieu.
 
-      DATES : date_debut et date_fin au format AAAA-MM-JJ, uniquement si le texte les donne. Pas de date : chaînes vides, et « regime » dit en quelques mots le régime (« Ouvert toute l'année », « Sur rendez-vous »…) ; sinon regime est vide.
+      DATES : date_debut et date_fin au format AAAA-MM-JJ, uniquement si le texte les donne. Quand le texte ne donne pas l'année, c'est celle de la date de publication indiquée, ou la suivante si le jour est antérieur à cette publication et que le texte parle d'un événement à venir : tu n'inventes jamais une année antérieure à la publication. Un événement dont la date précède la date du jour est passé. Pas de date : chaînes vides, et « regime » dit en quelques mots le régime (« Ouvert toute l'année », « Sur rendez-vous »…) ; sinon regime est vide.
 
       RÉSUMÉ : exactement deux phrases, en français, reformulées avec tes propres mots. Au plus 15 mots consécutifs identiques à la source. Ni emoji, ni emphase, ni formule d'accroche. Les noms propres, lieux, dates et chiffres se reprennent tels quels.
 
@@ -140,8 +143,11 @@ module Veille
     TXT
 
     # Pur : paramètres de requête, sans réseau.
-    def self.prompt_for(title:, text:, origin: nil, commune: nil, starts_on: nil, ends_on: nil, schedule_text: nil)
+    def self.prompt_for(title:, text:, origin: nil, commune: nil, starts_on: nil, ends_on: nil, schedule_text: nil,
+                        published_on: nil, today: nil)
       lignes = ["Titre : #{title.to_s.strip}"]
+      lignes << "Date du jour : #{today}"                  if today
+      lignes << "Date de publication de la source : #{published_on}" if published_on
       lignes << "Source : #{Veille::Candidate.origine_label(origin)}" if origin.present?
       lignes << "Commune indiquée par la source : #{commune}"        if commune.present?
       lignes << "Début : #{starts_on}" if starts_on
@@ -160,7 +166,7 @@ module Veille
       result = run(self.class.prompt_for(
         title: candidate.title, text: candidate.full_text.presence || candidate.excerpt, origin: candidate.origin,
         commune: candidate.commune, starts_on: candidate.starts_on, ends_on: candidate.ends_on,
-        schedule_text: candidate.schedule_text
+        schedule_text: candidate.schedule_text, published_on: candidate.published_on, today: today
       ), candidate: candidate)
       apply(candidate, result, today: today)
       candidate
@@ -175,8 +181,8 @@ module Veille
 
       commune = localiser(candidate, result)
       famille = famille_pour(type, candidate, result)
-      debut   = parse_date(result["date_debut"]) || candidate.starts_on
-      fin     = parse_date(result["date_fin"])   || candidate.ends_on
+      debut   = date_plausible(parse_date(result["date_debut"]), candidate) || candidate.starts_on
+      fin     = date_plausible(parse_date(result["date_fin"]), candidate)   || candidate.ends_on
 
       attrs = {
         adresse: lieu_pour(candidate, result, commune),
@@ -266,6 +272,14 @@ module Veille
       return candidate.declic_category if SOURCES_CATEGORIE_FIXE.include?(candidate.origin) && candidate.declic_category.present?
 
       CATEGORIE_PAR_FAMILLE[famille] || candidate.declic_category.presence || "decouvrir"
+    end
+
+    # Garde-fou : une date plus d'un an avant la publication de la source est une année inventée
+    # par le modèle (« 20.11 » lu comme 2024) ; on l'ignore plutôt que d'écarter à tort comme passé.
+    def date_plausible(date, candidate)
+      return date if date.nil? || candidate.published_on.nil?
+
+      date < candidate.published_on - 365 ? nil : date
     end
 
     def parse_date(valeur)
