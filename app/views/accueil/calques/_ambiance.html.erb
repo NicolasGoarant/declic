@@ -1,13 +1,13 @@
 <%# Ambiance du diorama (masquée en mode Plan) : trois réglages indépendants qui se cumulent (moment,
     saison, météo), et un interrupteur « Automatique » qui les règle d'après le soleil, la date et la
-    météo réelle à Nancy. Aube, jour, heure dorée, nuit, pluie et neige ne demandent que le diorama ;
+    météo réelle à Nancy. Aube, jour, heure dorée, nuit, nuages, brouillard, pluie et neige ne demandent que le diorama ;
     heure bleue, automne et hiver ne sont rendus que si leur étalonnage répond sur le domaine des
     tuiles (DioramaTuiles#disponibles). Réglages des étalonnages : app/javascript/diorama/reglages.js. %>
 <% publiees = disponibles[:ambiances] %>
 <% reglages = [
      [ "moment", "Moment", { "aube" => "Aube", "jour" => "Jour", "heure-doree" => "Heure dorée", "heure-bleue" => "Heure bleue", "nuit" => "Nuit" } ],
      [ "saison", "Saison", { "printemps-ete" => "Printemps-été", "automne" => "Automne", "hiver" => "Hiver" } ],
-     [ "meteo", "Météo", { "clair" => "Clair", "pluie" => "Pluie", "neige" => "Neige" } ]
+     [ "meteo", "Météo", { "clair" => "Clair", "nuageux" => "Nuageux", "brouillard" => "Brouillard", "pluie" => "Pluie", "neige" => "Neige" } ]
    ] %>
 <% if disponibles[:vrai] %>
   <fieldset class="acc-calques-rubrique" data-rubrique="ambiance" data-diorama-target="rubriqueAmbiance">

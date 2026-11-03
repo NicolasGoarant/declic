@@ -156,6 +156,72 @@ class AmbiancesTest < ApplicationSystemTestCase
     end
   end
 
+  # Nuages et brouillard (diorama/voiles, 03/11/2026) : des toiles ancrées au sol dans le volet météo, sans toucher la dalle.
+  def toile?(classe) = evaluate_script("Boolean(document.querySelector('.leaflet-pane .#{classe}'))")
+
+  test "nuages de jour seulement, brouillard à toute heure, et la dalle reste celle du ciel clair" do
+    sur_la_carte do
+      ouvrir_calques
+      choisir "Jour", "moment"
+      choisir "Nuageux", "meteo"
+      assert_equal "nuageux", etat["meteo"]
+      assert_selector ".acc-nuages", visible: :all
+      assert_equal "0.22", evaluate_script("#{CONTROLEUR}.nuages.opacite.toFixed(2)")
+      assert_operator evaluate_script("#{CONTROLEUR}.nuages.stats.bulles"), :>, 0 # des ombres réellement posées
+      assert_equal 0, particules
+      choisir "Nuit", "moment"
+      assert_no_selector ".acc-nuages", visible: :all, wait: 5 # retrait en fondu
+      choisir "Brouillard", "meteo"
+      assert_selector ".acc-brouillard", visible: :all
+      assert_equal "brouillard", etat["meteo"]
+      assert_equal 0, particules
+      choisir "Pluie", "meteo"
+      assert_no_selector ".acc-brouillard", visible: :all, wait: 5
+      assert_operator particules, :>, 0
+    end
+  end
+
+  test "Open-Meteo dit brouillard (45) : brouillard en automatique, coupé par ?brouillard=0" do
+    open_meteo(45)
+    sur_la_carte do
+      assert_selector "[data-diorama-target=ambianceAuto]", text: /, brouillard\z/, visible: :all
+      assert_equal "brouillard", etat["meteo"]
+      assert_selector ".acc-brouillard", visible: :all
+      visit root_path(brouillard: 0)
+      assert_selector "[data-controller~=diorama][data-moment]"
+      assert_equal "brouillard", etat["meteo"]
+      assert_no_selector ".acc-brouillard", visible: :all
+    end
+  end
+
+  test "moins d'animations demandé : ni nuages ni brouillard" do
+    page.driver.browser.execute_cdp("Emulation.setEmulatedMedia", features: [ { name: "prefers-reduced-motion", value: "reduce" } ])
+    sur_la_carte do
+      ouvrir_calques
+      choisir "Jour", "moment"
+      choisir "Nuageux", "meteo"
+      assert_equal "nuageux", etat["meteo"]
+      choisir "Brouillard", "meteo"
+      assert_equal "brouillard", etat["meteo"]
+      assert_no_selector ".acc-nuages, .acc-brouillard", visible: :all
+    end
+  end
+
+  test "le brouillard se dissipe avec le soleil, les joggeurs courent matin et soir" do
+    sur_la_carte do
+      r = evaluate_async_script(<<~JS)
+        Promise.all([import("diorama/voiles"), import("diorama/vivants")]).then(([v, w]) => arguments[0]({
+          brouillard: [-10, 0, 6, 12, 18, 30].map((h) => Math.round(v.densiteBrouillard(h, "jour") * 100) / 100),
+          nuit: v.densiteBrouillard(-20, "nuit"),
+          joggeurs: [3, 8, 12, 18.5, 23].map((h) => Math.round(w.facteursHoraires(h).joggeur * 100) / 100)
+        }))
+      JS
+      assert_equal [1, 1, 0.82, 0.48, 0.3, 0.3], r["brouillard"]
+      assert_equal 0.7, r["nuit"]
+      assert_equal [0.03, 0.5, 0.6, 1, 0.03], r["joggeurs"]
+    end
+  end
+
   test "le mode automatique : moment selon le soleil à Nancy, saison selon la date" do
     sur_la_carte do
       resultats = evaluate_async_script(<<~JS)
@@ -173,14 +239,14 @@ class AmbiancesTest < ApplicationSystemTestCase
             octobre: s.saisonAuto(d("2026-10-15T12:00:00Z")),
             janvier: s.saisonAuto(d("2027-01-10T12:00:00Z")),
             libelle: s.libelleAuto({ moment: "nuit", saison: "automne", meteo: "pluie" }),
-            codes: [0, 3, 61, 80, 95, 71, 86].map(m.meteoDuCode)
+            codes: [0, 1, 2, 3, 45, 48, 61, 80, 95, 71, 86].map(m.meteoDuCode)
           })
         })
       JS
       assert_equal({ "midi" => "jour", "avantLever" => "aube", "matin" => "heure-doree", "soir" => "heure-doree",
                      "crepuscule" => "heure-bleue", "nuit" => "nuit", "juillet" => "printemps-ete", "octobre" => "automne",
                      "janvier" => "hiver", "libelle" => "nuit d'automne, pluie",
-                     "codes" => %w[clair clair pluie pluie pluie neige neige] }, resultats)
+                     "codes" => %w[clair clair nuageux nuageux brouillard brouillard pluie pluie pluie neige neige] }, resultats)
     end
   end
 end

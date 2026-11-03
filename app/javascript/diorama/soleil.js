@@ -55,7 +55,7 @@ export function saisonAuto(date = new Date()) {
 
 // « nuit d'automne », « heure dorée d'été » : de mars à mai, le printemps-été se dit « de printemps ».
 const MOMENTS = { aube: "aube", jour: "jour", "heure-doree": "heure dorée", "heure-bleue": "heure bleue", nuit: "nuit" }
-const METEOS = { clair: "ciel clair", pluie: "pluie", neige: "neige" }
+const METEOS = { clair: "ciel clair", nuageux: "nuageux", brouillard: "brouillard", pluie: "pluie", neige: "neige" }
 export function libelleAuto({ moment, saison, meteo }, date = new Date()) {
   const mois = moisANancy(date)
   const de = saison === "hiver" ? "d'hiver" : saison === "automne" ? "d'automne" : (mois >= 3 && mois <= 5 ? "de printemps" : "d'été")

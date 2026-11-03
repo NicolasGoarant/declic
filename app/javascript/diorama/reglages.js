@@ -347,11 +347,47 @@ export const AUTO = {
   // Saison selon le mois (heure de Nancy) ; les autres mois : printemps-été.
   mois_automne: [10, 11],
   mois_hiver: [12, 1, 2],
-  // Météo réelle : Open-Meteo, sans clé. Codes WMO : pluie (bruine, pluie, verglas, averses, orages)
-  // et neige (chute, grains, averses de neige) ; le reste, et tout échec : clair.
+  // Météo réelle : Open-Meteo, sans clé. Codes WMO : pluie (bruine, pluie, verglas, averses, orages),
+  // neige (chute, grains, averses de neige), brouillard (45 brouillard, 48 brouillard givrant, depuis le
+  // 03/11/2026 ; avant : clair) et nuageux (2 partiellement nuageux, 3 couvert, depuis le 03/11/2026 ; le 1,
+  // « principalement dégagé », reste clair) ; le reste, et tout échec : clair.
   meteo_url: "https://api.open-meteo.com/v1/forecast?latitude=48.6937&longitude=6.1834&current=weather_code",
   meteo_cache_min: 30,
   meteo_delai_ms: 5000,
   codes_pluie: [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99],
-  codes_neige: [71, 73, 75, 77, 85, 86]
+  codes_neige: [71, 73, 75, 77, 85, 86],
+  codes_brouillard: [45, 48],
+  codes_nuageux: [2, 3]
+}
+
+// Ombres de nuages (diorama/voiles, OmbresNuages ; 03/11/2026) : taches sombres, larges et floues, POSÉES SUR la maquette
+// (dimensionnées en mètres, ancrées au sol) et poussées par un vent fixe. Seulement de jour (jour 1, heure dorée ½ :
+// ombres plus longues et plus pâles), météo « nuageux ». CHOISIS, pas mesurés : vent d'ouest-sud-ouest (dominant en
+// Lorraine), 8 m/s ; une ombre de 220 à 560 m de rayon ; assombrissement de 0,22 au plus au cœur d'une tache.
+//   periode_m : le motif de nuages se répète tous les `periode_m` (tuilage), `nuages` par période.
+//   resolution : la toile est peinte à cette fraction de la taille de l'écran puis étirée (le motif est flou :
+//     rien ne se perd, et le remplissage coûte 16 fois moins à ¼).
+export const NUAGES = {
+  vent_m_s: 8, vent_vers_deg: 70, // relèvement de grille Lambert-93 (nord de grille = 0°, sens horaire) VERS lequel le vent pousse
+  periode_m: 3200, nuages: 12, bulles: [4, 7], rayon_m: [220, 560],
+  couleur: "18,28,52", opacite: 0.22,
+  intensite: { jour: 1, "heure-doree": 0.5 },
+  resolution: 0.25, images_s: 15
+}
+
+// Brouillard (diorama/voiles, Brouillard ; 03/11/2026), météo « brouillard » : un voile ancré au sol, plus épais sur l'eau
+// (Meurthe, canal : les itinéraires des bateaux, avec leur largeur, élargis de `berge_m`) et plus mince sur les volumes
+// (bâti, houppiers : la carte de propriété que les bateaux lisent déjà, dès le niveau 7), traversé de nappes plus claires
+// qui dérivent lentement. Il se DISSIPE avec la hauteur du soleil : épaisseur 1 sous l'horizon, `plancher` au-dessus de
+// `dissipe_deg` (interpolation douce entre les deux) ; tant que la météo réelle dit brouillard, il en reste un peu. CHOISIS.
+export const BROUILLARD = {
+  voile: 0.30, eau: 0.42, berge_m: 35, flou_eau_m: 30, volumes: 0.55,
+  nappes: { periode_m: 1600, nombre: 14, rayon_m: [120, 320], opacite: 0.16, vent_m_s: 1.2, vent_vers_deg: 70 },
+  dissipe_deg: 18, plancher: 0.3,
+  // couleur du voile selon le moment : blanc laiteux le jour, gris bleuté à l'aube et au crépuscule, sombre la nuit
+  couleurs: { jour: "236,238,240", "heure-doree": "240,232,220", aube: "196,202,216", "heure-bleue": "176,184,204", nuit: "92,100,122" },
+  nuit: 0.7, // la nuit le voile est moins couvrant (il ne fait que griser les lumières)
+  // hauteur du soleil prêtée à un moment choisi à la main (l'automatique lit la vraie)
+  hauteur_du_moment: { nuit: -20, aube: -4, "heure-bleue": -4, "heure-doree": 3, jour: 25 },
+  resolution: 0.33, images_s: 15, fondu_ms: 2500
 }

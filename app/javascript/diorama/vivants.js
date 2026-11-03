@@ -28,6 +28,7 @@
 //   ?vivants-t=S                fige l'horloge à S secondes (captures comparables)
 //   ?vivants-densite-velo=P,B   vélos par km et par sens, piste et bande (témoin : 16,12, la densité d'avant ×5)
 //   ?vivants-bus=0              ni bus ni trolleybus, même si le jeu en porte (témoin : la page d'avant le 21/10)
+//   ?joggeurs=0                 aucun joggeur, tous les piétons marchent (témoin : la page d'avant le 03/11/2026)
 //   ?vivants-heure=H            effectifs de l'heure H de Nancy (décimale : 18.5), sur toute page ; « pointe » : les
 //                               effectifs validés, sans courbe (sur /labo/diorama, c'est le défaut)
 //
@@ -61,12 +62,18 @@ const PLANCHER = {
 const VITESSE_VEH = [25, 13, 11, 9, 7, 4]   // m/s par classe : autoroute … partagée
 const DENSITE_VEH = [12, 14, 12, 9, 5, 2]   // par km et par file
 const DENSITE_PIE = [30, 30, 40, 15, 20]    // par km et par sens : trottoir, passage, piéton, escalier, bord
+// Joggeurs (03/11/2026, audit du diorama, piste 4) : une part des piétons COURT, sur les mêmes voies, avec le même sprite
+// (le jeu n'a que deux poses de marche, -g et -d : la course se lit à la vitesse et à la foulée plus longue). Part par
+// classe de voie — trottoir, passage, piéton, escalier, bord —, prise SUR les marcheurs (l'effectif total ne bouge pas) ;
+// plus forte sur les voies piétonnes (classe « pieton » : allées, chemins, parcs compris), faute de calque des parcs dans
+// Déclic. Personne ne monte un escalier à 3 m/s : la course y retombe à `vitesse_escalier`. CHOISIS, pas mesurés.
+const JOGGEURS = { part: [0.05, 0.05, 0.15, 0.05, 0.08], vitesse: [2.5, 3.0], vitesse_escalier: 1.4, foulee_m: 1.1 }
 const VITESSE_VELO = [4, 5]                 // m/s, bornes du tirage par itinéraire
 const DENSITE_VELO = [20, 15]               // par km et par sens, piste et bande : ×5, 20/10 au soir (§ 15)
 const VITESSE_BUS = [7, 8]                  // m/s : chaussée, voie réservée (bus et trolleybus)
 const MODELES_BUS = { bus: "bus-detaille-v2", trolleybus: "trolleybus-tempo1-v2" } // 20/10
 // le type de modèle (et de plancher) de chaque calque
-const TYPE_CALQUE = { vehicules: "voiture", pietons: "pieton", velos: "velo", bus: "bus", trolleybus: "trolleybus" }
+const TYPE_CALQUE = { vehicules: "voiture", pietons: "pieton", joggeurs: "pieton", velos: "velo", bus: "bus", trolleybus: "trolleybus" }
 const FONDU_M = 10                          // un mobile s'efface sur ses 10 derniers mètres avant un bout
 const MARGE_VUS = 0.5                       // les segments vus couvrent la vue élargie de moitié de chaque côté
 // Facteur d'effectif par famille aux heures de Nancy (ancres [heure, facteur], interpolées) : piétons au plus fort à midi
@@ -74,7 +81,11 @@ const MARGE_VUS = 0.5                       // les segments vus couvrent la vue 
 const COURBES = {
   pieton: [[0, 0.1], [5, 0.04], [7, 0.3], [9, 0.6], [12, 1], [14, 0.8], [17, 0.95], [18, 1], [20, 0.6], [22, 0.3], [24, 0.1]],
   velo: [[0, 0.04], [5, 0.02], [7, 0.5], [8, 0.9], [10, 0.5], [12, 0.7], [14, 0.55], [17, 0.9], [18, 1], [20, 0.4], [22, 0.15], [24, 0.04]],
-  voiture: [[0, 0.12], [5, 0.08], [7, 0.6], [8, 0.95], [10, 0.7], [12, 0.8], [14, 0.75], [17, 0.95], [18, 1], [20, 0.55], [22, 0.3], [24, 0.12]]
+  voiture: [[0, 0.12], [5, 0.08], [7, 0.6], [8, 0.95], [10, 0.7], [12, 0.8], [14, 0.75], [17, 0.95], [18, 1], [20, 0.55], [22, 0.3], [24, 0.12]],
+  // les joggeurs courent tôt le matin et en fin de journée, peu à midi, presque jamais la nuit (03/11/2026, plausible).
+  // Bornée pour que leur PART parmi les piétons vus reste de 3 à 10 % à toute heure : une première courbe culminant à 1
+  // dès 8 h, quand les marcheurs n'y sont qu'à 0,45, en montrait 16,7 % à la Pépinière (niveau 7, 20 images).
+  joggeur: [[0, 0.02], [5, 0.03], [6.5, 0.3], [8, 0.5], [10, 0.4], [12, 0.6], [14, 0.35], [17, 0.75], [18.5, 1], [20, 0.6], [21.5, 0.15], [23, 0.03], [24, 0.02]]
 }
 // Bus et trolleybus, par paliers [début, fin[ → part des passages : service réduit au matin et en soirée, rien la nuit.
 const SERVICE_BUS = [[0, 0.5, 0.5], [0.5, 5, 0], [5, 6.5, 0.5], [6.5, 20.5, 1], [20.5, 24, 0.5]]
@@ -95,7 +106,8 @@ export function surCourbe(ancres, h) {
 // Les facteurs de l'heure h (0 à 24) : { pieton, velo, voiture, bus, trolleybus }.
 export function facteursHoraires(h) {
   const bus = SERVICE_BUS.find(([a, b]) => h >= a && h < b)?.[2] ?? 1
-  return { pieton: surCourbe(COURBES.pieton, h), velo: surCourbe(COURBES.velo, h), voiture: surCourbe(COURBES.voiture, h), bus, trolleybus: bus }
+  return { pieton: surCourbe(COURBES.pieton, h), joggeur: surCourbe(COURBES.joggeur, h), velo: surCourbe(COURBES.velo, h),
+           voiture: surCourbe(COURBES.voiture, h), bus, trolleybus: bus }
 }
 
 function graineDe(i, j, k) {
@@ -170,7 +182,8 @@ export class Vivants {
     this.facteurs = null
     this.densiteVelo = params.has("vivants-densite-velo") ? params.get("vivants-densite-velo").split(",").map(parseFloat) : DENSITE_VELO
     this.sansBus = params.get("vivants-bus") === "0"
-    this.stats = { pietons: 0, voitures: 0, velos: 0, bus: 0, trolleybus: 0, js: 0, niveau: null, heure: null }
+    this.partJoggeurs = params.get("joggeurs") === "0" ? null : JOGGEURS.part
+    this.stats = { pietons: 0, joggeurs: 0, voitures: 0, velos: 0, bus: 0, trolleybus: 0, js: 0, niveau: null, heure: null }
     this.t0 = performance.now()
     this.actif = false
   }
@@ -213,9 +226,11 @@ export class Vivants {
           (m.type in MODELES_BUS && m.cle !== MODELES_BUS[m.type])) continue
       ;(this.parType[m.type] ||= []).push(m)
     }
+    const pietons = this.preparerCalque(pie, "pietons")
     this.calques = [
-      this.preparerCalque(veh, "vehicules"), this.preparerCalque(pie, "pietons"), this.preparerCalque(velo, "velos"),
-      ...lignes.map((t, i) => this.preparerCalque(calquesLignes[i], t))
+      this.preparerCalque(veh, "vehicules"), pietons, this.preparerCalque(velo, "velos"),
+      ...lignes.map((t, i) => this.preparerCalque(calquesLignes[i], t)),
+      ...(this.partJoggeurs ? [this.preparerJoggeurs(pietons)] : [])
     ]
     this.aBus = lignes.length > 0
   }
@@ -250,18 +265,29 @@ export class Vivants {
     return K
   }
 
+  // Les joggeurs : la géométrie des piétons (voies, morceaux), leurs propres temps de parcours. Leur famille horaire est la
+  // leur (`joggeur`), leur plancher et leurs sprites ceux des piétons.
+  preparerJoggeurs(P) {
+    const K = { ...P, nom: "joggeurs", famille: "joggeur", its: P.its.map(({ segs, boucle }) => ({ segs, boucle })) }
+    this.preparerParcours(K)
+    return K
+  }
+
   // Pour chaque itinéraire : longueurs et temps cumulés, flux (mobiles par seconde). Bus et trolleybus : le flux est la
   // fréquence de la ligne (bus/h ÷ 3 600), pas une densité.
   preparerParcours(K) {
-    const pie = K.nom === "pietons", velo = K.nom === "velos", bus = !!K.frequences
+    const pie = K.nom === "pietons", jog = K.nom === "joggeurs", velo = K.nom === "velos", bus = !!K.frequences, part = this.partJoggeurs
     K.its.forEach((it, ii) => {
       const n = it.segs.length, C = new Float64Array(n + 1), T = new Float64Array(n + 1), vit = new Float64Array(n)
       const vPieton = 1.1 + 0.4 * graineDe(ii, 7, 3), vVelo = VITESSE_VELO[0] + (VITESSE_VELO[1] - VITESSE_VELO[0]) * graineDe(ii, 7, 4)
+      const vJog = JOGGEURS.vitesse[0] + (JOGGEURS.vitesse[1] - JOGGEURS.vitesse[0]) * graineDe(ii, 7, 6)
       let flux = 0
       for (let j = 0; j < n; j++) {
         const sg = it.segs[j], l = Math.abs(sg[2] - sg[1]), cl = K.voies[sg[0]][0]
-        vit[j] = pie ? vPieton : velo ? vVelo : bus ? VITESSE_BUS[cl] : VITESSE_VEH[cl]
-        flux += (pie ? DENSITE_PIE[cl] : velo ? this.densiteVelo[cl] : bus ? 0 : DENSITE_VEH[cl]) / 1000 * vit[j] * l
+        vit[j] = pie ? vPieton : jog ? (cl === 3 ? JOGGEURS.vitesse_escalier : vJog) : velo ? vVelo : bus ? VITESSE_BUS[cl] : VITESSE_VEH[cl]
+        const densite = pie ? DENSITE_PIE[cl] * (part ? 1 - part[cl] : 1) : jog ? DENSITE_PIE[cl] * part[cl]
+          : velo ? this.densiteVelo[cl] : bus ? 0 : DENSITE_VEH[cl]
+        flux += densite / 1000 * vit[j] * l
         C[j + 1] = C[j] + l; T[j + 1] = T[j] + l / vit[j]
       }
       Object.assign(it, { C, T, vit, L: C[n], id: ii, phase: graineDe(ii, 11, 5) })
@@ -315,8 +341,8 @@ export class Vivants {
   // ─── La pose : les mobiles d'un segment, énumérés par leur rang dans la file (temps) ──────────────────────
   //  Mobile k de l'itinéraire : temps de parcours τ_k(t) = (phase + k·Δ + gigue_k + t) mod T_total, Δ = T_total / n.
   poserCalque(K, vus, sc, t, liste) {
-    const pie = K.nom === "pietons", E = this.rep.metre_est_px, N = this.rep.metre_nord_px, marge = 40
-    const f = this.facteurs?.[K.type] ?? 1, bus = Boolean(K.frequences) // part des mobiles gardés à cette heure
+    const pie = K.type === "pieton", jog = K.nom === "joggeurs", E = this.rep.metre_est_px, N = this.rep.metre_nord_px, marge = 40
+    const f = this.facteurs?.[K.famille ?? K.type] ?? 1, bus = Boolean(K.frequences) // part des mobiles gardés à cette heure
     if (f <= 0) return
     for (let q = 0; q < vus.length; q += 2) {
       const ii = vus[q], j = vus[q + 1], it = K.its[ii], Tt = it.T[it.segs.length]
@@ -343,14 +369,14 @@ export class Vivants {
         if (X < -marge || X > sc.largeur + marge || Y < -marge || Y > sc.hauteur + marge) continue
         const alpha = it.boucle ? 1 : Math.max(0, Math.min(1, u / FONDU_M, (it.L - u) / FONDU_M))
         if (alpha <= 0) continue
-        liste.push({ X, Y, gE, gN, M: this.choisirModele(K, ii, k), pie, u, k, ii, alpha })
+        liste.push({ X, Y, gE, gN, M: this.choisirModele(K, ii, k), pie, jog, u, k, ii, alpha })
       }
     }
   }
 
   decalageSeg(K, it, j, k) {
     const v = K.voies[it.segs[j][0]]
-    if (K.nom === "pietons") {
+    if (K.type === "pieton") {
       const cote = graineDe(it.id, 23, k) < 0.5 ? -1 : 1
       return v[0] === 4 ? cote * (v[2] + 0.9) : cote * 0.35 * graineDe(k, 29, it.id)
     }
@@ -387,7 +413,7 @@ export class Vivants {
 
   cleSprite(o) {
     if (!o.pie) return o.M.cle
-    const pas = Math.floor(o.u / 0.7 + graineDe(o.ii, 5, o.k) * 2) // une foulée tous les 0,7 m
+    const pas = Math.floor(o.u / (o.jog ? JOGGEURS.foulee_m : 0.7) + graineDe(o.ii, 5, o.k) * 2) // une foulée tous les 0,7 m (1,1 m en courant)
     return pas & 1 ? o.M.cle.replace(/-g$/, "-d") : o.M.cle
   }
 
@@ -583,12 +609,12 @@ export class Vivants {
     this.derniereSignature = signature
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H)
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    const n = { pieton: 0, voiture: 0, velo: 0, bus: 0, trolleybus: 0 }
+    const n = { pieton: 0, joggeur: 0, voiture: 0, velo: 0, bus: 0, trolleybus: 0 }
     for (const o of liste) {
       if (o.peindre) { o.peindre(ctx); continue }   // une caisse de train : se peint elle-même
-      this.peindre(ctx, sc, o); n[typeDe(o.M)]++
+      this.peindre(ctx, sc, o); n[o.jog ? "joggeur" : typeDe(o.M)]++
     }
-    this.stats = { pietons: n.pieton, voitures: n.voiture, velos: n.velo, bus: n.bus, trolleybus: n.trolleybus,
+    this.stats = { pietons: n.pieton, joggeurs: n.joggeur, voitures: n.voiture, velos: n.velo, bus: n.bus, trolleybus: n.trolleybus,
                    js: performance.now() - j0, niveau: sc.niveau, heure: this.facteurs ? this.heure : null }
   }
 

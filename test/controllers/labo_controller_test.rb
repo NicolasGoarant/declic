@@ -28,7 +28,7 @@ class LaboControllerTest < ActionDispatch::IntegrationTest
       assert_equal %w[printemps-ete automne hiver], choix.map { |c| c["value"] }
     end
     assert_select "input[name=calques-meteo]" do |choix|
-      assert_equal %w[clair pluie neige], choix.map { |c| c["value"] }
+      assert_equal %w[clair nuageux brouillard pluie neige], choix.map { |c| c["value"] }
     end
     assert_select "input[data-diorama-target=choixBlanche][role=switch]"
   end
@@ -46,7 +46,7 @@ class LaboControllerTest < ActionDispatch::IntegrationTest
       assert_equal %w[aube jour heure-doree nuit], choix.map { |c| c["value"] }
     end
     assert_select "input[name=calques-saison]", 1
-    assert_select "input[name=calques-meteo]", 3
+    assert_select "input[name=calques-meteo]", 5
     assert_select "input[data-diorama-target=choixBlanche]", 0
   end
 

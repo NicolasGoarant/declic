@@ -314,6 +314,25 @@ export class Mobiles {
     return l
   }
 
+  // ─── Prêtés au brouillard (diorama/voiles) ────────────────────────────────────────────────────────────────────
+  // L'eau : les itinéraires (px L8) et la largeur médiane de chacun (m) ; null tant que le jeu n'est pas lu.
+  eauVue() {
+    if (!this.routes) return null
+    this.eauPretee ||= {
+      routes: this.routes.map((r) => {
+        const l = r.largeurs.map((x) => x[1]).sort((a, b) => a - b)
+        return { trace: r.trace, largeur: l[Math.floor(l.length / 2)] ?? 10 }
+      })
+    }
+    return this.eauPretee
+  }
+
+  // Le masque des volumes de la vue (alpha 255 sur un volume), avec le cadre où il a été construit ; null sans masque.
+  masqueVu() {
+    if (!this.toile || !this.masqueCadre) return null
+    return { image: this.masque, ...this.masqueCadre, marge: MARGE_MASQUE }
+  }
+
   // ─── Activité : posé, suspendu ou retiré ──────────────────────────────────────────────────────────────────────
   majActivite() {
     if (this.detruit || !this.routes) return

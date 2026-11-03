@@ -14,13 +14,14 @@ import { demander } from "geoloc_auto"
 import { creerCoucheDalles, creerCoucheBlanche, NIVEAU_ANNEXES } from "diorama/couches"
 import { creerCoucheAmbiance, lireAmbiance, uniformesEtat } from "diorama/ambiance"
 import { momentAuto, saisonAuto, libelleAuto } from "diorama/soleil"
-import { meteoAuto, meteoGardee } from "diorama/meteo"
+import { meteoAuto, meteoGardee, meteoDuSol, METEOS } from "diorama/meteo"
 import { Precipitations } from "diorama/precipitations"
+import { OmbresNuages, Brouillard } from "diorama/voiles"
 import { Mobiles } from "diorama/mobiles"
 import { Vivants } from "diorama/vivants"
 import { Trains } from "diorama/trains"
 import { chargerLampadaires, compterLampadaires } from "diorama/lampadaires"
-import { LAMPADAIRES, PINS } from "diorama/reglages"
+import { LAMPADAIRES, NUAGES, PINS } from "diorama/reglages"
 import { voletHalo, haloPermis, TiltShift } from "diorama/vue"
 import { regrouper, eventail, FLEURS_MAX, respiration, echelleIcone, dispositionPin } from "diorama/bouquets"
 import { chargerContour, creerDecoupe, poserSocle } from "diorama/contour"
@@ -60,7 +61,7 @@ const PLAN = {
 const REGLAGES = {
   moment: ["jour", "aube", "heure-doree", "heure-bleue", "nuit"],
   saison: ["printemps-ete", "automne", "hiver"],
-  meteo: ["clair", "pluie", "neige"]
+  meteo: METEOS
 }
 const PUBLIEES = ["heure-bleue", "automne", "hiver"]
 const NEUTRE = { moment: "jour", saison: "printemps-ete", meteo: "clair" }
@@ -135,6 +136,8 @@ export default class extends Controller {
       if (hors === this.carteHorsVue) return
       this.carteHorsVue = hors
       this.mobiles?.pauseHorsVue(hors)
+      this.nuages?.pauseHorsVue(hors)
+      this.brouillard?.pauseHorsVue(hors)
     })
     this.observateurVue.observe(this.carteTarget)
   }
@@ -145,6 +148,8 @@ export default class extends Controller {
     clearTimeout(this.minuterieAide)
     this.aideZoom?.remove()
     this.precipitations?.detruire()
+    this.nuages?.detruire(true)
+    this.brouillard?.detruire(true)
     this.mobiles?.detruire()
     this.vivants?.arreter()
     this.tilt?.detruire()
@@ -560,6 +565,10 @@ export default class extends Controller {
     this.fermerPopup()
     this.precipitations?.detruire()
     this.precipitations = null
+    this.nuages?.detruire(true)
+    this.nuages = null
+    this.brouillard?.detruire(true)
+    this.brouillard = null
     this.mobiles?.detruire()
     this.mobiles = null
     this.vivants?.arreter() // la toile part avec la carte ; les données restent, pour le retour au diorama
@@ -854,7 +863,8 @@ export default class extends Controller {
 
   // Maquette blanche et ambiance sont exclusives : la blanche l'emporte tant qu'elle est cochée.
   coucheCourante() {
-    return this.rendu === "blanche" ? this.coucheBlanche() : this.coucheAmbiance(this.etat)
+    // nuages et brouillard ne touchent pas la dalle (diorama/voiles) : la couche est celle de la météo du sol
+    return this.rendu === "blanche" ? this.coucheBlanche() : this.coucheAmbiance({ ...this.etat, meteo: meteoDuSol(this.etat.meteo) })
   }
 
   // On ajoute avant de retirer : l'attribution ne doit pas s'effacer le temps d'une bascule.
@@ -981,7 +991,7 @@ export default class extends Controller {
   appliquerAmbiance() {
     const avant = this.etat
     this.etat = this.etatEffectif()
-    const change = Object.keys(REGLAGES).some((r) => avant?.[r] !== this.etat[r])
+    const change = ["moment", "saison"].some((r) => avant?.[r] !== this.etat[r]) || meteoDuSol(avant?.meteo) !== meteoDuSol(this.etat.meteo)
     if (change && this.carte && this.fond === "diorama") this.poserCoucheFond(this.coucheCourante())
     this.majMeteo()
     this.majCalques()
@@ -990,16 +1000,43 @@ export default class extends Controller {
   // Particules de pluie ou de neige (diorama/precipitations), et halo des pins la nuit (data-moment).
   majMeteo() {
     const ambiance = this.carte && this.fond === "diorama" && this.rendu !== "blanche"
-    const type = ambiance && this.etat.meteo !== "clair" ? this.etat.meteo : null
+    const type = ambiance && ["pluie", "neige"].includes(this.etat.meteo) ? this.etat.meteo : null
     if (this.precipitations && (this.precipitations.type !== type || this.precipitations.carte !== this.carte)) {
       this.precipitations.detruire()
       this.precipitations = null
     }
     if (type && !this.precipitations) this.precipitations = new Precipitations(this.L, this.carte, type)
+    this.majVoiles(ambiance)
     if (ambiance) this.element.dataset.moment = this.etat.moment
     else delete this.element.dataset.moment
     this.majMobiles(ambiance)
     this.majVivants(ambiance)
+  }
+
+  // Les voiles du ciel (diorama/voiles, 03/11/2026) : ombres de nuages de jour par temps nuageux, brouillard par temps de
+  // brouillard (dense à l'aube, dissipé quand le soleil monte). Sur le diorama hors maquette blanche, jamais si l'appareil
+  // demande moins d'animations ou économise ses données. Crochets : ?nuages=0, ?brouillard=0 ne les posent pas.
+  majVoiles(ambiance) {
+    const q = new URLSearchParams(window.location.search), { moment, meteo } = this.etat
+    const base = ambiance && this.projection && OmbresNuages.permis()
+    const nuages = base && meteo === "nuageux" && Boolean(NUAGES.intensite[moment]) && q.get("nuages") !== "0"
+    const brouillard = base && meteo === "brouillard" && q.get("brouillard") !== "0"
+    if (this.nuages && (!nuages || this.nuages.carte !== this.carte)) { this.nuages.detruire(); this.nuages = null }
+    if (this.brouillard && (!brouillard || this.brouillard.carte !== this.carte)) { this.brouillard.detruire(); this.brouillard = null }
+    if (nuages && !this.nuages) {
+      this.nuages = new OmbresNuages(this.L, this.carte, { projection: this.projection, moment })
+      window.__dioramaNuages = this.nuages
+    }
+    if (brouillard && !this.brouillard) {
+      this.brouillard = new Brouillard(this.L, this.carte, {
+        projection: this.projection, moment, auto: this.auto,
+        eau: () => this.mobiles?.eauVue(), masque: () => this.mobiles?.masqueVu()
+      })
+      window.__dioramaBrouillard = this.brouillard
+    }
+    this.nuages?.majMoment(moment)
+    this.brouillard?.majMoment(moment, this.auto)
+    if (this.carteHorsVue) { this.nuages?.pauseHorsVue(true); this.brouillard?.pauseHorsVue(true) }
   }
 
   // Les bateaux (diorama/mobiles), à tout moment comme les vivants (jusqu'au 26/10 : de jour seulement) : leurs sprites
