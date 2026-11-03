@@ -62,8 +62,8 @@ const Z_VOLET = 440
 // de 34,9 % (60,0 % du temps visible au zoom 8, contre 27,2 %).
 const DENSITE = [6.0, 2.0]
 // Part des bateaux en marche selon l'heure de Nancy (ancres [heure, facteur], interpolées) : la navigation suit le jour,
-// personne ne circule de 22 h à 6 h. Courbe plausible, pas une donnée (horaires d'écluses VNF, plaisance de journée).
-const COURBE_NAVIGATION = [[0, 0], [6, 0], [8, 0.4], [10, 0.8], [12, 1], [17, 1], [19, 0.6], [21, 0.15], [22, 0], [24, 0]]
+// il reste un filet de trafic de 22 h à 6 h (plancher 0,08 depuis le 03/11/2026, avant : 0). Courbe plausible, pas une donnée (horaires d'écluses VNF, plaisance de journée).
+const COURBE_NAVIGATION = [[0, 0.08], [6, 0.08], [8, 0.4], [10, 0.8], [12, 1], [17, 1], [19, 0.6], [21, 0.15], [22, 0.08], [24, 0.08]]
 // Modèles retirés du tirage, chacun REMPLACÉ par un autre de même type : la place du retiré dans la liste de tirage
 // est tenue par son remplaçant, donc chaque trajectoire garde son nombre de bateaux et tous les autres bateaux leur
 // modèle. Le sprite reste dans l'atlas. (15/10 : le canoë bordeaux → la barque à rames, la plus proche en taille,

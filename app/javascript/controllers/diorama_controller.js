@@ -1004,7 +1004,7 @@ export default class extends Controller {
 
   // Les bateaux (diorama/mobiles), à tout moment comme les vivants (jusqu'au 26/10 : de jour seulement) : leurs sprites
   // sont cuits en plein jour, la toile est donc assombrie hors du jour (TEINTES_VIVANTS) ; les bateaux en marche suivent
-  // l'heure de Nancy (aucun la nuit), ceux à quai restent.
+  // l'heure de Nancy (un filet la nuit, plancher 0,08 ; tous le jour), ceux à quai restent.
   // Crochet d'instrument déclaré : ?mobiles=0 ne les pose pas (témoin du banc de cadence).
   majMobiles(ambiance) {
     const t = this.tuilesValue
