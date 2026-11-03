@@ -87,7 +87,7 @@ namespace :veille do
     puts "  À relire : #{Rails.application.routes.url_helpers.admin_veille_root_path}"
   end
 
-  desc "Veille quotidienne : agenda et Transentreprise, 30 éléments enrichis au plus"
+  desc "Veille quotidienne : agenda et sites des communes, 30 éléments enrichis au plus"
   task quotidien: :environment do
     afficher_rapport(Veille::Runner.new(connecteurs: Veille::Runner::QUOTIDIEN).run)
   end

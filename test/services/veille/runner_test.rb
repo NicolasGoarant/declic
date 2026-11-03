@@ -252,8 +252,9 @@ class Veille::RunnerTest < ActiveSupport::TestCase
     assert_match(/coût estimé 3\.0000 USD/, io.string)
   end
 
-  test "la veille quotidienne ne lance ni la presse, ni la Gazette, ni JeVeuxAider" do
-    assert_equal [Veille::Connectors::AgendaNancy, Veille::Connectors::Transentreprise, Veille::Connectors::Communes], Veille::Runner::QUOTIDIEN
+  test "la veille quotidienne ne lance ni la presse, ni la Gazette, ni JeVeuxAider, ni Transentreprise" do
+    assert_equal [Veille::Connectors::AgendaNancy, Veille::Connectors::Communes], Veille::Runner::QUOTIDIEN
+    assert_not_includes Veille::Runner::QUOTIDIEN, Veille::Connectors::Transentreprise
   end
 
   test "un contenu de presse en base n'est ni enrichi ni rédigé automatiquement" do

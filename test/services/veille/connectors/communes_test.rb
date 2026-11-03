@@ -115,7 +115,7 @@ class Veille::ConnectorsCommunesTest < ActiveSupport::TestCase
     assert_equal "Sites des communes", Veille::Candidate.origine_label("communes")
   end
 
-  test "est dans le quotidien, après l'agenda et Transentreprise" do
+  test "est dans le quotidien, après l'agenda" do
     assert_includes Veille::Runner::QUOTIDIEN, Veille::Connectors::Communes
     assert_equal "communes", Veille::Runner::PRIORITE.last
   end
