@@ -43,9 +43,18 @@ class DioramaTuiles
   AMBIANCES_DOSSIER = "ambiances".freeze    # {nom}-actuelle.json (format nancy-3d/ambiance)
   AMBIANCES = %w[heure-bleue automne hiver].freeze
   ARBRES = "masque-arbres".freeze           # {z}/{x}/{y}.png, niveaux 6 à 8, blanc = feuillage (automne)
+  # Le masque des arbres propre à un style. masque-arbres a été calculé sur toits-v1 : sur jeu-video-v2 il ne couvrait que 43 à
+  # 68 % des couronnes et débordait sur le pavé (audit du 07/11). masque-arbres-jv2-v1 (nancy-3d rapports/declic-couches-v2 d01) :
+  # R = feuillage, V = essence (code × 20), B = identité de l'arbre. Tant que son manifeste ne répond pas, le style garde ARBRES.
+  ARBRES_STYLES = { "jeu-video-v2" => "masque-arbres-jv2-v1" }.freeze
+  # Objets relevés dans OpenStreetMap (nancy-3d rapports/declic-couches-v2 d02, un seul appel Overpass mis en cache, jamais depuis
+  # la page) : lampadaires (format lumieres-nuit), feux tricolores (même format) et marquages au sol (passages, voies cyclables,
+  # bordures). Absent, rien ne change : la nuit garde le semis BD TOPO, sans feux ni marquages.
+  OSM_MOBILIER = "osm-mobilier-v1".freeze
   # Lampadaires de la nuit (format nancy-3d/lumieres-nuit, points au niveau 8) : les lanternes
   # relevées si elles sont publiées un jour, sinon les positions procédurales IGN BD TOPO®.
-  LAMPADAIRES = [ %w[lumieres-nuit lanternes.json], %w[lampadaires-bdtopo lampadaires-bdtopo.json] ].freeze
+  LAMPADAIRES = [ %w[lumieres-nuit lanternes.json], [ OSM_MOBILIER, "lampadaires-osm.json" ],
+                  %w[lampadaires-bdtopo lampadaires-bdtopo.json] ].freeze
   # Les bateaux (diorama/mobiles) : calque des itinéraires sur l'eau, atlas des sprites et leurs modèles. Ils
   # se masquent derrière les ponts et les arbres grâce à la carte de propriété : sans elle, pas de bateaux.
   # DIORAMA_MOBILES_URL désigne un autre dossier de même forme (manifeste.json compris, servi en CORS) : c'est
@@ -97,7 +106,7 @@ class DioramaTuiles
     propriete = p.fetch(url("#{PROPRIETE}/manifeste.json"))
     ambiances = AMBIANCES.select { |nom| blanche && propriete && p.fetch(url(parametres_ambiance(nom))) }
     # Couches facultatives : sans elles, l'automne se replie sur les verts sombres et la nuit reste sans lumières.
-    arbres = vrai && p.fetch(url("#{ARBRES}/manifeste.json"))
+    arbres = vrai && (p.fetch(url("#{ARBRES}/manifeste.json")) || ARBRES_STYLES.values.any? { |d| p.fetch(url("#{d}/manifeste.json")) })
     lumieres = vrai && lampadaires(p).present?
     bateaux = vrai && propriete && p.fetch("#{mobiles}/manifeste.json")
     vivants = vrai && propriete && p.fetch("#{self.vivants}/manifeste.json")
@@ -113,7 +122,8 @@ class DioramaTuiles
     {
       base: base, styles: STYLES.keys, style_defaut: STYLE_DEFAUT, surcouches: surcouches, masque: MASQUE, propriete: PROPRIETE,
       cartes_ambiance: cartes_ambiance,
-      arbres: ARBRES, lumieres: lampadaires(presents), mobiles: mobiles, vivants: vivants, trains: trains, nuit: nuit,
+      arbres: ARBRES, arbres_styles: arbres_styles, lumieres: lampadaires(presents),
+      feux: osm_mobilier("feux-tricolores.json"), marquages: osm_mobilier("marquages-osm.json"), mobiles: mobiles, vivants: vivants, trains: trains, nuit: nuit,
       ambiances: AMBIANCES.index_with { |nom| parametres_ambiance(nom) },
       disponibles: disponibles
     }
@@ -131,6 +141,12 @@ class DioramaTuiles
     CARTES_AMBIANCE.select { |_, cartes| cartes.values.all? { |dossier| presents.fetch(url("#{dossier}/manifeste.json")) } }
   end
 
+  # Les masques d'arbres propres à un style, publiés (le navigateur ne lit le manifeste que de ceux-ci).
+  def arbres_styles = ARBRES_STYLES.select { |_, dossier| presents.fetch(url("#{dossier}/manifeste.json")) }
+
+  # Chemin d'un fichier du jeu OSM_MOBILIER s'il est publié, sinon nil.
+  def osm_mobilier(fichier) = presents.fetch(url("#{OSM_MOBILIER}/manifeste.json")) ? "#{OSM_MOBILIER}/#{fichier}" : nil
+
   # Chemin du fichier de lampadaires publié (le premier de LAMPADAIRES), ou nil.
   def lampadaires(p)
     dossier, fichier = LAMPADAIRES.find { |d, _| p.fetch(url("#{d}/manifeste.json")) }
@@ -138,7 +154,7 @@ class DioramaTuiles
   end
 
   def urls_a_sonder
-    [ *STYLES.keys, *SURCOUCHES.values, *CARTES_AMBIANCE.values.flat_map(&:values), MASQUE, PROPRIETE, ARBRES, *LAMPADAIRES.map(&:first) ].map { |dossier| url("#{dossier}/manifeste.json") } +
+    [ *STYLES.keys, *SURCOUCHES.values, *CARTES_AMBIANCE.values.flat_map(&:values), MASQUE, PROPRIETE, ARBRES, *ARBRES_STYLES.values, *LAMPADAIRES.map(&:first) ].uniq.map { |dossier| url("#{dossier}/manifeste.json") } +
       AMBIANCES.map { |nom| url(parametres_ambiance(nom)) } + [ "#{mobiles}/manifeste.json", "#{vivants}/manifeste.json", "#{nuit}/manifeste.json", "#{trains}/manifeste.json" ]
   end
 

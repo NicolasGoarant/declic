@@ -201,3 +201,33 @@ export function dessinerFeux(ctx, coords, index, force, emission = false) {
   ctx.restore()
   return points.length
 }
+
+// Les feux tricolores (même index que les lampadaires, voir chargerLampadaires) : un point rouge, orange ou vert en haut du
+// mât, tiré de la position du feu (figé). Comme les feux des mâts, dans la dalle déjà étalonnée et, avec `emission`, dans son
+// canevas d'émission (sans halo dessiné : la vue le floute).
+export function dessinerFeuxTricolores(ctx, coords, index, force, emission = false) {
+  if (!index || force <= 0 || coords.z < LAMPADAIRES.niveau_min) return 0
+  const f = LAMPADAIRES.feux_tricolores
+  const { s, cote8, ox, oy } = cadre(coords)
+  const coeur = Math.min(f.diametre_px[1], Math.max(f.diametre_px[0], 1.8 * Math.sqrt(s)))
+  const halo = Math.max(coeur, f.halo_rayon_px * s)
+  const m = index.marge
+  const points = [...dansLeRectangle(index, ox - m, oy - m, ox + cote8 + m, oy + cote8 + m)]
+  if (!points.length) return 0
+  ctx.save()
+  ctx.globalCompositeOperation = "lighter"
+  for (const [x, y, feu] of points) {
+    const u = ((Math.imul(Math.floor(x) * 73856093 ^ Math.floor(y) * 19349663, 1) >>> 0) % 1000) / 1000
+    const k = u < f.parts[0] ? 0 : u < f.parts[0] + f.parts[1] ? 1 : 2
+    const px = (x - ox) * s, py = (y - feu - oy) * s
+    ctx.fillStyle = f.couleurs[k]
+    if (!emission) {
+      ctx.globalAlpha = f.opacite * force * f.halo_opacite
+      ctx.beginPath(); ctx.arc(px, py, halo, 0, Math.PI * 2); ctx.fill()
+    }
+    ctx.globalAlpha = f.opacite * force
+    ctx.beginPath(); ctx.arc(px, py, coeur / 2, 0, Math.PI * 2); ctx.fill()
+  }
+  ctx.restore()
+  return points.length
+}

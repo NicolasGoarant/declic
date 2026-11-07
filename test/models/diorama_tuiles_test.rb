@@ -49,6 +49,23 @@ class DioramaTuilesTest < ActiveSupport::TestCase
     assert_equal "lumieres-nuit/lanternes.json", t.pour_js[:lumieres]
   end
 
+  test "objets OSM : lampadaires relevés avant le semis BD TOPO, feux et marquages seulement s'ils sont publiés" do
+    sans = tuiles(%w[toits-v1/manifeste.json lampadaires-bdtopo/manifeste.json]).pour_js
+    assert_equal "lampadaires-bdtopo/lampadaires-bdtopo.json", sans[:lumieres]
+    assert_nil sans[:feux]
+    assert_nil sans[:marquages]
+    avec = tuiles(%w[toits-v1/manifeste.json lampadaires-bdtopo/manifeste.json osm-mobilier-v1/manifeste.json]).pour_js
+    assert_equal %w[osm-mobilier-v1/lampadaires-osm.json osm-mobilier-v1/feux-tricolores.json osm-mobilier-v1/marquages-osm.json],
+                 avec.values_at(:lumieres, :feux, :marquages)
+  end
+
+  test "masque des arbres propre à jeu-video-v2 : seulement s'il est publié, et il rend les arbres disponibles" do
+    assert_empty tuiles(%w[jeu-video-v2/manifeste.json masque-arbres/manifeste.json]).pour_js[:arbres_styles]
+    t = tuiles(%w[jeu-video-v2/manifeste.json masque-arbres-jv2-v1/manifeste.json])
+    assert t.disponibles[:arbres]
+    assert_equal({ "jeu-video-v2" => "masque-arbres-jv2-v1" }, t.pour_js[:arbres_styles])
+  end
+
   test "les cartes d'ambiance d'un style exigent leurs deux manifestes, sinon rien ne change" do
     socle = %w[jeu-video-v2/manifeste.json masque-bati/manifeste.json propriete-toits-v1/manifeste.json]
     assert_empty tuiles(socle).pour_js[:cartes_ambiance]

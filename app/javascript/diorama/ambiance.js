@@ -24,8 +24,9 @@
 // ensuite sa propre teinte, du jaune au roux : une cellule de Voronoï de la taille d'un houppier,
 // calée sur les pixels du niveau 8, donc fixe au sol quel que soit le zoom ou le déplacement.
 import { COTE, creerCache, comblerInterstices, NIVEAU_ANNEXES, versAnnexe, chargerAnnexe } from "diorama/couches"
-import { carteDeLumiere, dessinerFeux, DEBORD } from "diorama/lampadaires"
-import { MOMENTS, PUBLIES, AUTOMNE, PLUIE, NEIGE, LAMPADAIRES, NUIT_CIBLES, VUE } from "diorama/reglages"
+import { carteDeLumiere, dessinerFeux, dessinerFeuxTricolores, DEBORD } from "diorama/lampadaires"
+import { avecMarquages } from "diorama/marquages"
+import { MOMENTS, PUBLIES, AUTOMNE, HIVER_ARBRES, PLUIE, NEIGE, LAMPADAIRES, NUIT_CIBLES, VUE } from "diorama/reglages"
 import { haloMode } from "diorama/vue"
 
 const REGLES_MAX = 3 // par étalonnage publié (hiver : 2, heure bleue et automne : 1)
@@ -59,7 +60,11 @@ const SOURCE_FS = [
   "uniform vec2 origine;     // coin haut-gauche de la dalle, en pixels du niveau 8",
   "uniform float echelle;    // pixels du niveau 8 par pixel de la dalle",
   "uniform int saison;       // 0 aucune, 1 règles publiées (hiver), 2 automne",
-  "uniform int modeArbres;   // 1 masque des arbres, 0 repli sur les verts sombres",
+  "uniform int modeArbres;   // 2 masque des arbres du style (R feuillage, V essence, B arbre), 1 masque de toits-v1, 0 repli",
+  "uniform vec4 essences[10]; // par code d'essence : teinte d'automne (rad, Lab), chroma ×, clarté +, part de l'automne",
+  "uniform float essenceVariation; // écart de teinte d'un arbre à l'autre dans une essence (rad)",
+  "uniform vec4 hiverArbres; // part, chroma, clarté ×, grain (L*) : feuillus d'hiver",
+  "uniform vec2 hiverTeinte; // teinte (rad, Lab) et son écart d'un arbre à l'autre",
   "uniform vec4 automne;     // intensité, variation de teinte (rad), variation de clarté, taille d'arbre",
   "uniform vec4 repli;       // teinte min, teinte max, saturation min, valeur max",
   "uniform float repliForce; // part de l'intensité en repli (moitié)",
@@ -165,6 +170,10 @@ const SOURCE_FS = [
   "  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) { vec2 n = vec2(float(x), float(y));",
   "    vec2 d = n + hache2(i + n) - fr; float l = dot(d, d); if (l < dmin) { dmin = l; id = hache(i + n + 5.7); } }",
   "  return id; }",
+  // L'essence (code) lue dans le masque du style : les paramètres de son automne (boucle : indice constant exigé par WebGL 1).
+  "vec4 essence(float code){ vec4 e = vec4(0.0, 1.0, 0.0, 1.0);",
+  "  for (int i = 1; i < 10; i++) if (float(i) == code) e = essences[i];",
+  "  return e; }",
   "float verts_sombres(vec3 o){ vec3 k = hsv(o);",
   "  return smoothstep(repli.x - 10.0, repli.x, k.x) * (1.0 - smoothstep(repli.y, repli.y + 10.0, k.x))",
   "       * smoothstep(repli.z, repli.z + 0.06, k.y) * (1.0 - smoothstep(repli.w, repli.w + 0.08, k.z)); }",
@@ -217,16 +226,34 @@ const SOURCE_FS = [
   "    wLum = (1.0 - (1.0 - lLum.r) * (1.0 - placePre)) * solPre * (1.0 - eauW); }",
   "  vec3 lab = versLab(o);",
   // 1. Saison.
-  "  if (saison == 1) lab = regles_s(lab, classe);",
+  // Le masque des arbres (modeArbres ≥ 1) : seul le feuillage prend la teinte (houppier), un toit ou un pavé sous le masque
+  // non. Masque du style (2) : l'arbre RÉEL donne l'identité (B) et l'essence (V) ; sinon une cellule de Voronoï.
+  "  vec4 tA = modeArbres >= 1 ? texture2D(tArbres, uv) : vec4(0.0);",
+  "  float essA = modeArbres == 2 ? floor(tA.g * 255.0 / 20.0 + 0.5) : 0.0;",
+  "  float idA = modeArbres == 2 && tA.b > 0.0 ? tA.b : arbre(monde / automne.w);",
+  "  if (saison == 1) {",
+  "    lab = regles_s(lab, classe);",
+  // Hiver approché (07/11) : les feuillus du masque virent au gris-brun terne, grain de ramure ; conifères et persistants
+  // (essences 1 et 9) restent verts. Sans masque, rien ne change (la classe feuillage reste protégée par l'étalonnage).
+  "    float w = modeArbres >= 1 && houppier(o) && essA != 1.0 && essA != 9.0 ? tA.r * hiverArbres.x : 0.0;",
+  "    if (w > 0.0) { float h = hiverTeinte.x + (idA * 2.0 - 1.0) * hiverTeinte.y;",
+  "      vec3 b = vec3(lab.x * hiverArbres.z + (hache(floor(monde * 2.0 / echelle) + idA * 13.0) * 2.0 - 1.0) * hiverArbres.w,",
+  "        hiverArbres.y * cos(h), hiverArbres.y * sin(h));",
+  "      lab = mix(lab, b, w); } }",
   "  else if (saison == 2) {",
-  // Le masque des arbres est calculé sur le rendu de toits-v1 : sur un autre style (jeu-video-v2), ses
-  // houppiers tombent aussi sur des toits, des façades ou la chaussée. Seul le feuillage prend la teinte.
-  "    float w = (modeArbres == 1 ? texture2D(tArbres, uv).r * (houppier(o) ? 1.0 : 0.0) : verts_sombres(o) * repliForce) * automne.x;",
+  "    float w = (modeArbres >= 1 ? tA.r * (houppier(o) ? 1.0 : 0.0) : verts_sombres(o) * repliForce) * automne.x;",
   "    if (w > 0.0) {",
   "      vec3 a = lab + sForce[0] * ((lab - sMs[0]) / sEs[0] * sEr[0] + sMr[0] - lab);",
-  "      float id = arbre(monde / automne.w), ang = (id * 2.0 - 1.0) * automne.y;",
-  "      a.yz = mat2(cos(ang), sin(ang), -sin(ang), cos(ang)) * a.yz;",
-  "      a.x += (hache(vec2(id * 91.0, 3.0)) * 2.0 - 1.0) * automne.z;",
+  "      float id = idA;",
+  "      if (essA > 0.0) { vec4 e = essence(essA);",
+  // Essence connue (OSM, Géonancy, ou silhouette conique) : sa propre teinte, à un petit écart près d'un arbre à l'autre.
+  "        float h = e.x + (id * 2.0 - 1.0) * essenceVariation;",
+  "        a.yz = length(a.yz) * e.y * vec2(cos(h), sin(h));",
+  "        a.x += e.z + (hache(vec2(id * 91.0, 3.0)) * 2.0 - 1.0) * automne.z * 0.5;",
+  "        w *= e.w; }",
+  "      else { float ang = (id * 2.0 - 1.0) * automne.y;",
+  "        a.yz = mat2(cos(ang), sin(ang), -sin(ang), cos(ang)) * a.yz;",
+  "        a.x += (hache(vec2(id * 91.0, 3.0)) * 2.0 - 1.0) * automne.z; }",
   "      lab = mix(lab, a, w); } }",
   "  vec3 rgb = depuisLab(lab);",
   // 2. Météo.
@@ -495,7 +522,8 @@ const hex = (h) => rgb([1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)))
 
 // Les uniformes communes à toutes les dalles d'un état { moment, saison, meteo }. `publies` : les
 // étalonnages publiés lus ({ "heure-bleue", hiver, automne } → JSON ou null). null : rien à faire.
-export function uniformesEtat(etat, publies, { arbres = false, projection = null } = {}) {
+// `arbres` : 0 aucun masque des arbres, 1 celui de toits-v1, 2 celui du style (essence et arbre dans V et B).
+export function uniformesEtat(etat, publies, { arbres = 0, projection = null } = {}) {
   const u = {}
   // Saison.
   let saison = 0
@@ -510,7 +538,16 @@ export function uniformesEtat(etat, publies, { arbres = false, projection = null
   u.automne = ["4f", ...[a.intensite, a.variation_teinte_deg * Math.PI / 180, a.variation_clarte, a.taille_arbre_px]]
   u.repli = ["4f", ...[a.repli.teinte_min, a.repli.teinte_max, a.repli.saturation_min, a.repli.valeur_max]]
   u.repliForce = ["1f", a.repli.intensite]
-  u.arbresPublies = arbres
+  const ess = new Float32Array(40)
+  for (const [code, e] of Object.entries(a.essences)) {
+    ess.set([e.teinte_deg * Math.PI / 180, e.chroma ?? 1, e.clarte ?? 0, e.part ?? 1], Number(code) * 4)
+  }
+  u.essences = ["4fv", ess]
+  u.essenceVariation = ["1f", a.variation_essence_deg * Math.PI / 180]
+  const h = HIVER_ARBRES
+  u.hiverArbres = ["4f", h.intensite, h.chroma, h.clarte, h.grain]
+  u.hiverTeinte = ["2f", h.teinte_deg * Math.PI / 180, h.variation_teinte_deg * Math.PI / 180]
+  u.arbresPublies = Number(arbres) || 0
   // Météo.
   u.meteo = ["1i", { clair: 0, pluie: 1, neige: 2 }[etat.meteo] ?? 0]
   u.pluie = ["4f", PLUIE.sol_luminosite, PLUIE.sol_contraste, PLUIE.saturation, PLUIE.volumes_luminosite]
@@ -607,21 +644,26 @@ export function creerCoucheAmbiance(L, opts) {
           urlClasse = opts.masque(annexe.chemin); mode = 1
           if (opts.masqueListe(annexeBas)) urlBas = opts.masque(annexeBas.chemin)
         }
-        // Masque des arbres : aux niveaux qu'il couvre (6 à 8, agrandi au-delà), une dalle non couverte n'a pas d'arbre.
-        const arbres = commun?.saison[1] === 2 && commun.arbresPublies && coords.z >= 6
+        // Masque des arbres (automne, et hiver approché) : aux niveaux qu'il couvre (6 à 8, agrandi au-delà), une dalle non
+        // couverte n'a pas d'arbre.
+        const arbres = commun?.saison[1] >= 1 && commun.arbresPublies > 0 && coords.z >= 6
         return Promise.all([
           commun, charger(opts.dalle(coords)), chargerAnnexe(urlClasse, annexe, mode === 0 ? segmentsDe(annexe) : null),
           arbres && opts.arbresListe(annexe) ? chargerAnnexe(opts.arbres(annexe.chemin), annexe) : null,
           force > 0 ? opts.lampadaires : null,
           force > 0 ? chargerAnnexe(urlBas, annexeBas, mode === 0 ? segmentsDe(annexeBas) : null) : null,
           force > 0 ? chargerAnnexe(urlHaut, annexeHaut, mode === 0 ? segmentsDe(annexeHaut) : null) : null,
-          force > 0 && opts.batiments && coords.z >= NIVEAU_ANNEXES ? chargerAnnexe(opts.batiments(annexe.chemin), annexe) : null
-        ]).then(([commun, base, classe, imageArbres, lampadaires, classeBas, classeHaut, bat]) => {
+          force > 0 && opts.batiments && coords.z >= NIVEAU_ANNEXES ? chargerAnnexe(opts.batiments(annexe.chemin), annexe) : null,
+          force > 0 ? opts.feux : null,
+          // marquages au sol : peints sur la dalle d'origine, bornés au sol par la carte de propriété (niveau 8 et au-delà)
+          coords.z >= NIVEAU_ANNEXES ? opts.marquages : null
+        ]).then(([commun, base, classe, imageArbres, lampadaires, classeBas, classeHaut, bat, feux, marquages]) => {
           if (!base) { emission(cle).ok(null); fini(new Error("dalle absente"), toile); return }
           // Pas de willReadFrequently : on ne relit jamais ces pixels, et un canevas 2D gardé sur le GPU
           // reçoit la copie du canevas WebGL sans la faire passer par le processeur.
           const ctx = toile.getContext("2d")
-          if (!commun) { ctx.drawImage(base, 0, 0); emission(cle).ok(null); fini(null, toile); return }
+          if (base && marquages && mode === 0) base = avecMarquages(base, coords, marquages, classe)
+          if (!commun) { ctx.drawImage(base, 0, 0); cache.garder(cle, toile); emission(cle).ok(null); fini(null, toile); return }
           const echelle = 2 ** (NIVEAU_REPERE - coords.z)
           const lumiere = force > 0 ? carteDeLumiere(coords, lampadaires) : null
           const uniformes = { ...commun,
@@ -633,7 +675,7 @@ export function creerCoucheAmbiance(L, opts) {
             sortie: ["1i", 0],
             origine: ["2f", coords.x * COTE * echelle, coords.y * COTE * echelle],
             echelle: ["1f", echelle],
-            modeArbres: ["1i", arbres ? 1 : 0],
+            modeArbres: ["1i", arbres ? commun.arbresPublies : 0],
             fenetresPeintes: ["1i", opts.fenetresPeintes?.(coords) ? 1 : 0]
           }
           delete uniformes.arbresPublies
@@ -647,11 +689,13 @@ export function creerCoucheAmbiance(L, opts) {
             const diag = typeof location !== "undefined" && new URLSearchParams(location.search).get("diagnostic") === "1"
             ce.drawImage(moteur.traiter(images, { ...uniformes, sortie: ["1i", diag ? 2 : 1] }), 0, 0)
             dessinerFeux(ce, coords, lampadaires, force, true)
+            dessinerFeuxTricolores(ce, coords, feux, force, true)
             toile.emission = e
           }
           emission(cle).ok(toile.emission ?? null)
           ctx.drawImage(moteur.traiter(images, uniformes), 0, 0)
           dessinerFeux(ctx, coords, lampadaires, force)
+          dessinerFeuxTricolores(ctx, coords, feux, force)
           // Halo « dalle » : le flou et le gain du volet, appliqués une fois à la création, sans volet filtré. Le flou
           // ne voit pas l'émission des voisines : un halo s'arrête au bord de la dalle (σ 3 px, donc ~9 px).
           if (toile.emission && halo === "dalle") {

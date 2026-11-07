@@ -21,6 +21,7 @@ import { Mobiles } from "diorama/mobiles"
 import { Vivants } from "diorama/vivants"
 import { Trains } from "diorama/trains"
 import { chargerLampadaires, compterLampadaires } from "diorama/lampadaires"
+import { chargerMarquages } from "diorama/marquages"
 import { LAMPADAIRES, NUAGES, PINS } from "diorama/reglages"
 import { voletHalo, haloPermis, TiltShift } from "diorama/vue"
 import { regrouper, eventail, FLEURS_MAX, respiration, echelleIcone, dispositionPin } from "diorama/bouquets"
@@ -342,12 +343,15 @@ export default class extends Controller {
     if (this.dioramaDispo) {
       try {
         // Les masques se lisent avant la carte : sans leur liste de dalles, on demanderait des dalles absentes (404).
-        const [, masque, arbres, propriete] = await Promise.all([
+        // Masques des arbres : celui de toits-v1 et ceux propres à un style (DioramaTuiles::ARBRES_STYLES), par dossier.
+        const dossiersArbres = t.disponibles.arbres ? [...new Set([t.arbres, ...Object.values(t.arbres_styles || {})])] : []
+        const [, masque, propriete, ...arbres] = await Promise.all([
           this.chargerManifeste(), t.disponibles.blanche ? this.chargerListe(t.masque) : null,
-          t.disponibles.arbres ? this.chargerListe(t.arbres) : null,
-          t.disponibles.mobiles || t.disponibles.vivants ? this.chargerListe(t.propriete) : null
+          t.disponibles.mobiles || t.disponibles.vivants ? this.chargerListe(t.propriete) : null,
+          ...dossiersArbres.map((d) => this.chargerListe(d))
         ])
-        Object.assign(this, { dallesMasque: masque, dallesArbres: arbres, dallesPropriete: propriete })
+        const dallesArbres = Object.fromEntries(dossiersArbres.map((d, i) => [d, arbres[i]]).filter(([, l]) => l))
+        Object.assign(this, { dallesMasque: masque, dallesArbres, dallesPropriete: propriete })
         this.preparerDecoupe(await contour)
       } catch (erreur) {
         console.error("diorama :", erreur)
@@ -775,28 +779,37 @@ export default class extends Controller {
   // La couche d'un état { moment, saison, meteo } ; l'état neutre est le diorama d'origine.
   coucheAmbiance(etat) {
     const cle = `${etat.moment}|${etat.saison}|${etat.meteo}`
-    if (cle === `${NEUTRE.moment}|${NEUTRE.saison}|${NEUTRE.meteo}`) return this.coucheVraie()
     const t = this.tuilesValue
+    // État neutre : le diorama d'origine, en simples images ; avec des marquages au sol publiés, la couche d'ambiance les
+    // pose quand même (dalle recopiée, marquages en plus, niveau 8 et au-delà seulement).
+    if (cle === `${NEUTRE.moment}|${NEUTRE.saison}|${NEUTRE.meteo}` && !this.marquagesDispo()) return this.coucheVraie()
     if (!this.couches[cle]) {
+      // Le masque des arbres du style s'il en a un (R feuillage, V essence, B arbre), sinon celui de toits-v1.
+      const dossierArbres = t.arbres_styles?.[this.style] ?? t.arbres
+      const listeArbres = this.dallesArbres?.[dossierArbres] ?? null
       // Les cartes propres au style s'il en a, sinon celles de toits-v1 (DioramaTuiles::CARTES_AMBIANCE). La couche ne survit pas à un changement de style.
       const cartes = t.cartes_ambiance?.[this.style] ?? t
       const publies = Promise.all(PUBLIEES.map((nom) => Object.values(etat).includes(nom) ? this.etalonnage(nom) : null))
         .then((jsons) => Object.fromEntries(PUBLIEES.map((nom, i) => [nom, jsons[i]])))
       this.couches[cle] = this.surveillerEchecs(this.decouper(creerCoucheAmbiance(this.L, {
         cle: `${this.style}|${cle}`, // le cache des dalles calculées est commun à tous les styles
-        uniformes: publies.then((p) => uniformesEtat(etat, p, { arbres: Boolean(this.dallesArbres), projection: this.projection })),
+        uniformes: publies.then((p) => uniformesEtat(etat, p, {
+          arbres: listeArbres ? (dossierArbres === t.arbres ? 1 : 2) : 0, projection: this.projection
+        })),
         dalle: this.urlDalle,
         propriete: (chemin) => this.url(cartes.propriete, `${chemin}.png`),
         masque: (chemin) => this.url(cartes.masque, `${chemin}.png`),
-        arbres: (chemin) => this.url(t.arbres, `${chemin}.png`),
+        arbres: (chemin) => this.url(dossierArbres, `${chemin}.png`),
         // nuit-chaude-v1 : bâtiment par pixel (niveau 8), pour tirer les fenêtres allumées par bâtiment
         batiments: t.nuit && t.disponibles?.nuit ? (chemin) => `${t.nuit}/batiments/${chemin}.png` : null,
         estCouverte: this.estCouverte, masqueListe: this.masqueListe,
-        arbresListe: (coords) => this.listee(this.dallesArbres, coords),
+        arbresListe: (coords) => this.listee(listeArbres, coords),
         fenetresPeintes: (coords) => LAMPADAIRES.fenetres.peintes.includes(this.styleDalle(coords)),
         moment: etat.moment,
         versSol: this.style === "jeu-video-v2" ? this.abrisVersSol() : null,
         lampadaires: LAMPADAIRES.intensite[etat.moment] ? this.lampadaires() : null,
+        feux: LAMPADAIRES.intensite[etat.moment] ? this.feuxTricolores() : null,
+        marquages: this.marquagesDispo() ? this.marquages() : null,
         options: this.optionsCouche
       })))
     }
@@ -830,6 +843,33 @@ export default class extends Controller {
         return null
       })
     return this.promesseLampadaires
+  }
+
+  // Les feux tricolores relevés dans OSM (même format que les lampadaires), lus une fois, au premier moment éclairé ; null sans eux.
+  feuxTricolores() {
+    const t = this.tuilesValue
+    this.promesseFeux ||= t.feux && t.disponibles?.vrai
+      ? chargerLampadaires(`${t.base}/${t.feux}`).catch((erreur) => {
+        console.error(`feux tricolores : ${t.base}/${t.feux} illisible, la nuit reste sans feux.`, erreur)
+        return null
+      })
+      : Promise.resolve(null)
+    return this.promesseFeux
+  }
+
+  // Les marquages au sol (diorama/marquages) : publiés, et pas coupés par ?marquages=0 (témoin).
+  marquagesDispo() {
+    return Boolean(this.tuilesValue.marquages && this.tuilesValue.disponibles?.vrai) &&
+      new URLSearchParams(window.location.search).get("marquages") !== "0"
+  }
+
+  marquages() {
+    const t = this.tuilesValue
+    this.promesseMarquages ||= chargerMarquages(`${t.base}/${t.marquages}`).catch((erreur) => {
+      console.error(`marquages : ${t.base}/${t.marquages} illisible, le sol reste sans marquages.`, erreur)
+      return null
+    })
+    return this.promesseMarquages
   }
 
   // Nombre de lampadaires éclairés dont le pied est dans la vue (null tant qu'ils ne sont pas lus).

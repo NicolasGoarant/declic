@@ -114,7 +114,35 @@ export const AUTOMNE = {
     teinte_min: 75, teinte_max: 165, // verts, en degrés HSV
     saturation_min: 0.12,
     valeur_max: 0.5,          // au-dessus (et jusqu'à valeur_max + 0,08, en fondu) : pelouse claire, préservée
+  },
+  // Par ESSENCE (code de l'octet V du masque masque-arbres-jv2-v1, nancy-3d declic-couches-v2 d01 : OSM species/genus, Géonancy
+  // GENRE, ou silhouette conique de v06). teinte_deg : teinte Lab visée (≈ 25 rouge, 40 rouge-orangé, 60 roux, 75 ocre, 92 jaune) ;
+  // chroma : facteur sur la saturation de l'étalonnage ; clarte : écart de L* ; part : 0 = l'arbre ne tourne pas. Sans code : la
+  // teinte unique de l'étalonnage, ± variation_teinte_deg.
+  variation_essence_deg: 8,
+  essences: {
+    1: { nom: "conifère", teinte_deg: 0, part: 0 },
+    2: { nom: "érable", teinte_deg: 40, chroma: 1.15, clarte: -2 },
+    3: { nom: "platane", teinte_deg: 75, chroma: 0.7, clarte: -6, part: 0.85 },
+    4: { nom: "tilleul", teinte_deg: 92, chroma: 1.05, clarte: 4 },
+    5: { nom: "marronnier, châtaignier", teinte_deg: 62, chroma: 0.9, clarte: -4 },
+    6: { nom: "chêne, hêtre, charme", teinte_deg: 58, chroma: 0.8, clarte: -8, part: 0.9 },
+    7: { nom: "feuillage jaune (bouleau, frêne, peuplier, ginkgo…)", teinte_deg: 95, chroma: 1.1, clarte: 6 },
+    8: { nom: "feuillage rouge (prunus, sorbier, liquidambar…)", teinte_deg: 22, chroma: 1.15, clarte: -6 },
+    9: { nom: "feuillu persistant", teinte_deg: 0, part: 0 }
   }
+}
+
+// L'HIVER DES ARBRES, approché (pas de ramure dessinée) : sur le masque des arbres, les feuillus virent au gris-brun terne,
+// avec un grain qui suggère les branches ; conifères et persistants (essences 1 et 9) restent verts. Sans masque, l'hiver
+// garde son étalonnage seul.
+export const HIVER_ARBRES = {
+  intensite: 0.8,            // part du virage (0 : feuillage d'été sous l'étalonnage d'hiver)
+  chroma: 9,                 // saturation visée (C* Lab) : terne
+  teinte_deg: 68,            // gris-brun
+  variation_teinte_deg: 14,  // d'un arbre à l'autre
+  clarte: 0.95,              // facteur sur L*
+  grain: 6                   // ± L* au demi-pixel : la ramure
 }
 
 // Météo : l'effet sur les dalles, puis les particules (canevas au-dessus de la carte).
@@ -217,6 +245,16 @@ export const LAMPADAIRES = {
     // du mât reste très brillant.
     halo_rayon_px: 2,
     halo_opacite: 0.35,       // part de `opacite` gardée pour le halo (dessinerFeux) ; le point du mât garde `opacite`
+    opacite: 0.95
+  },
+  // Les FEUX TRICOLORES relevés dans OSM (osm-mobilier-v1/feux-tricolores.json) : un point coloré en haut du mât, figé (la
+  // couleur est tirée de la position du feu, elle ne change pas : rien d'animé). Parts des trois couleurs, dans l'ordre.
+  feux_tricolores: {
+    couleurs: ["#FF3B2F", "#FFB020", "#3DFF7A"],
+    parts: [0.47, 0.06, 0.47],
+    diametre_px: [1.5, 2.5],
+    halo_rayon_px: 2.5,
+    halo_opacite: 0.45,
     opacite: 0.95
   },
   // Les grandes places, foyers de la ville : un halo chaud, posé sur leur sol minéral seulement
@@ -390,4 +428,17 @@ export const BROUILLARD = {
   // hauteur du soleil prêtée à un moment choisi à la main (l'automatique lit la vraie)
   hauteur_du_moment: { nuit: -20, aube: -4, "heure-bleue": -4, "heure-doree": 3, jour: 25 },
   resolution: 0.33, images_s: 15, fondu_ms: 2500
+}
+
+// Les MARQUAGES AU SOL (diorama/marquages), retracés depuis OSM sur le sol que jeu-video-v2 a peint en aplat. Couleurs avant
+// étalonnage : la nuit les assombrit comme le reste. Largeurs en mètres (× sol_m_px au niveau 8), avec un plancher en px.
+export const MARQUAGES = {
+  niveau_min: 8,
+  sol_m_px: 2.2626,
+  passages: { couleur: "#F4F2EC", opacite: 0.78, bande_m: 0.5, pas_m: 1.0 },
+  cyclables: {
+    bande: { couleur: "#4E9F5A", opacite: 0.5, largeur_m: 1.4 },
+    piste: { couleur: "#5A9F68", opacite: 0.45, largeur_m: 2.0 }
+  },
+  bordures: { couleur: "#EDE9E0", opacite: 0.45, largeur_m: 0.25, largeur_min_px: 0.8 }
 }
