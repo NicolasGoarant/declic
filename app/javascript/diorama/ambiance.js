@@ -63,6 +63,7 @@ const SOURCE_FS = [
   "uniform int modeArbres;   // 2 masque des arbres du style (R feuillage, V essence, B arbre), 1 masque de toits-v1, 0 repli",
   "uniform vec4 essences[10]; // par code d'essence : teinte d'automne (rad, Lab), chroma ×, clarté +, part de l'automne",
   "uniform float essenceVariation; // écart de teinte d'un arbre à l'autre dans une essence (rad)",
+  "uniform float essenceChromaMax; // plafond de C* Lab : le vert vif de jv2 tourné vers le rouge sortirait de la gamme sRGB",
   "uniform vec4 hiverArbres; // part, chroma, clarté ×, grain (L*) : feuillus d'hiver",
   "uniform vec2 hiverTeinte; // teinte (rad, Lab) et son écart d'un arbre à l'autre",
   "uniform vec4 automne;     // intensité, variation de teinte (rad), variation de clarté, taille d'arbre",
@@ -248,7 +249,7 @@ const SOURCE_FS = [
   "      if (essA > 0.0) { vec4 e = essence(essA);",
   // Essence connue (OSM, Géonancy, ou silhouette conique) : sa propre teinte, à un petit écart près d'un arbre à l'autre.
   "        float h = e.x + (id * 2.0 - 1.0) * essenceVariation;",
-  "        a.yz = length(a.yz) * e.y * vec2(cos(h), sin(h));",
+  "        a.yz = min(length(a.yz) * e.y, essenceChromaMax) * vec2(cos(h), sin(h));",
   "        a.x += e.z + (hache(vec2(id * 91.0, 3.0)) * 2.0 - 1.0) * automne.z * 0.5;",
   "        w *= e.w; }",
   "      else { float ang = (id * 2.0 - 1.0) * automne.y;",
@@ -544,6 +545,7 @@ export function uniformesEtat(etat, publies, { arbres = 0, projection = null } =
   }
   u.essences = ["4fv", ess]
   u.essenceVariation = ["1f", a.variation_essence_deg * Math.PI / 180]
+  u.essenceChromaMax = ["1f", a.chroma_max_essence]
   const h = HIVER_ARBRES
   u.hiverArbres = ["4f", h.intensite, h.chroma, h.clarte, h.grain]
   u.hiverTeinte = ["2f", h.teinte_deg * Math.PI / 180, h.variation_teinte_deg * Math.PI / 180]

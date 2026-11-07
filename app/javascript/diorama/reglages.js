@@ -120,6 +120,7 @@ export const AUTOMNE = {
   // chroma : facteur sur la saturation de l'étalonnage ; clarte : écart de L* ; part : 0 = l'arbre ne tourne pas. Sans code : la
   // teinte unique de l'étalonnage, ± variation_teinte_deg.
   variation_essence_deg: 8,
+  chroma_max_essence: 52,    // C* Lab au plus pour une essence connue (au-delà, rouge et orange saturent en aplat)
   essences: {
     1: { nom: "conifère", teinte_deg: 0, part: 0 },
     2: { nom: "érable", teinte_deg: 40, chroma: 1.15, clarte: -2 },
