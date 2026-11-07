@@ -12,15 +12,15 @@ class LaboHelperTest < ActionView::TestCase
 
   test "opportunite_pour_carte porte les champs de la carte et du pin, coordonnées en nombres" do
     o = Opportunity.new(
-      id: 42, title: "Repair Café", category: "ecologiser", description: "Un texte assez long. " * 5,
+      id: 42, title: "Repair Café", category: "ecologie", description: "Un texte assez long. " * 5,
       city: "Nancy", location: "12 rue X, 54000 Nancy", latitude: 48.69, longitude: 6.18,
       starts_on: Date.new(2026, 3, 14), created_at: Time.zone.now
     )
     point = opportunite_pour_carte(o)
 
     assert_equal "o42", point[:id]
-    assert_equal "ecologiser", point[:categorie]
-    assert_equal "Écologiser", point[:categorie_libelle]
+    assert_equal "ecologie", point[:categorie]
+    assert_equal "Écologie", point[:categorie_libelle]
     assert_kind_of Float, point[:latitude]
     assert_kind_of Float, point[:longitude]
     assert_equal "Nancy", point[:commune]
@@ -34,7 +34,7 @@ class LaboHelperTest < ActionView::TestCase
   end
 
   test "histoire_pour_carte porte la catégorie « histoires » (étincelle sur le pin), quelles que soient ses étiquettes" do
-    s = Story.new(id: 7, title: "Le déclic de Camille", tags: "ecologiser", quote: "J'ai osé.",
+    s = Story.new(id: 7, title: "Le déclic de Camille", tags: "ecologie", quote: "J'ai osé.",
                    city: "Nancy", location: "Nancy", latitude: 48.69, longitude: 6.18,
                    source_published_on: Date.new(2026, 2, 1), created_at: Time.zone.now)
     point = histoire_pour_carte(s)

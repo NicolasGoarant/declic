@@ -13,7 +13,7 @@ class Categorie
   HISTOIRES = "histoires".freeze
 
   TOUTES = [
-    Definition.new(cle: "ecologiser",   libelle: "Écologiser",       couleur: "#82C162", icone: "markers/ecologiser"),
+    Definition.new(cle: "ecologie",   libelle: "Écologie",       couleur: "#82C162", icone: "markers/ecologie"),
     Definition.new(cle: "entreprendre", libelle: "Entreprendre",     couleur: "#F8910E", icone: "markers/entreprendre"),
     Definition.new(cle: "formation",    libelle: "Se former",        couleur: "#5A75E8", icone: "markers/formation"),
     Definition.new(cle: "benevolat",    libelle: "S'engager",        couleur: "#E85DAB", icone: "markers/benevolat"),
@@ -24,7 +24,16 @@ class Categorie
 
   PAR_CLE = TOUTES.index_by(&:cle).freeze
 
+  # Clés retirées, encore présentes dans d'anciens liens (?category=…) et tableurs de repérage.
+  # « ecologiser » est devenue « ecologie » en novembre 2026 (données migrées par 20261107100000).
+  ANCIENNES_CLES = { "ecologiser" => "ecologie" }.freeze
+
+  # Clé actuelle pour une clé éventuellement ancienne ; les autres valeurs passent telles quelles.
+  def self.cle_actuelle(cle)
+    ANCIENNES_CLES.fetch(cle.to_s.downcase, cle.to_s.downcase)
+  end
+
   def self.trouver(cle)
-    PAR_CLE[cle.to_s.downcase]
+    PAR_CLE[cle_actuelle(cle)]
   end
 end

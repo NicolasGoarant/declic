@@ -44,7 +44,7 @@ def thumb_for(o)
     'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&q=80&auto=format&fit=crop'
   when 'histoires'
     'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80&auto=format&fit=crop'
-  when 'ecologiser'
+  when 'ecologie'
     'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=400&q=80&auto=format&fit=crop'
   else
     'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400&q=80&auto=format&fit=crop'
@@ -67,7 +67,7 @@ end
 def cat_pill(cat)
   pills = {
     'benevolat'    => { bg: '#fff1f2', color: '#e11d48',  label: 'Bénévolat'    },
-    'ecologiser'   => { bg: '#f0fdf4', color: '#16a34a',  label: 'Écologiser'   },
+    'ecologie'   => { bg: '#f0fdf4', color: '#16a34a',  label: 'Écologie'   },
     'formation'    => { bg: '#eff6ff', color: '#2563eb',  label: 'Formation'    },
     'pratiquer'    => { bg: '#fefce8', color: '#a16207',  label: 'Pratiquer'    },
     'decouvrir'    => { bg: '#ecfeff', color: '#0e7490',  label: 'Découvrir'    },
@@ -144,7 +144,7 @@ end
           <select class="hm-select-mobile" id="category-select">
             <option value="toutes">🌍 Toutes les catégories</option>
             <option value="benevolat">❤️ Bénévolat</option>
-            <option value="ecologiser">🌱 Écologiser</option>
+            <option value="ecologie">🌱 Écologie</option>
             <option value="formation">📘 Formation</option>
             <option value="pratiquer">🛠️ Pratiquer</option>
             <option value="decouvrir">🎭 Découvrir</option>
@@ -154,7 +154,7 @@ end
           <div class="hm-filterbar">
             <button class="chip is-active" data-cat="toutes">🌍 Toutes</button>
             <button class="chip" data-cat="benevolat">❤️ Bénévolat</button>
-            <button class="chip" data-cat="ecologiser">🌱 Écologiser</button>
+            <button class="chip" data-cat="ecologie">🌱 Écologie</button>
             <button class="chip" data-cat="formation">📘 Formation</button>
             <button class="chip" data-cat="pratiquer">🛠️ Pratiquer</button>
             <button class="chip" data-cat="decouvrir">🎭 Découvrir</button>
@@ -775,7 +775,7 @@ end
 @media (max-width:768px){ .hm-select-mobile{ display:block; } .hm-filterbar{ display:none; } }
 
 .chip[data-cat="benevolat"]   { --chip-border:#f43f5e; --chip-text:#f43f5e; }
-.chip[data-cat="ecologiser"]  { --chip-border:#22c55e; --chip-text:#22c55e; }
+.chip[data-cat="ecologie"]  { --chip-border:#22c55e; --chip-text:#22c55e; }
 .chip[data-cat="formation"]   { --chip-border:#6366f1; --chip-text:#6366f1; }
 .chip[data-cat="pratiquer"]   { --chip-border:#eab308; --chip-text:#eab308; }
 .chip[data-cat="decouvrir"]   { --chip-border:#2AA7B8; --chip-text:#2AA7B8; }

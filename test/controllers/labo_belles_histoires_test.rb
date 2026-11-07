@@ -32,7 +32,7 @@ class LaboBellesHistoiresTest < ActionDispatch::IntegrationTest
   end
 
   test "une belle histoire active porte sa citation et le mois/année de publication, sans horaire ni catégorie d'opportunité" do
-    histoire("Le déclic de Camille", tags: "ecologiser", quote: "J'ai osé.",
+    histoire("Le déclic de Camille", tags: "ecologie", quote: "J'ai osé.",
              source_published_on: Date.new(2026, 2, 1))
     visiter
 

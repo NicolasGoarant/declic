@@ -5,9 +5,10 @@ require 'csv'
 
 class OpportunityImporter
   CATEGORY_MAPPING = {
-    'ecologiser' => 'ecologiser',
-    'écologie' => 'ecologiser',
-    'environnement' => 'ecologiser',
+    'ecologiser' => 'ecologie', # ancienne clé (CSV d'avant novembre 2026)
+    'ecologie' => 'ecologie',
+    'écologie' => 'ecologie',
+    'environnement' => 'ecologie',
     'benevolat' => 'benevolat',
     'bénévolat' => 'benevolat',
     'solidaire' => 'benevolat',

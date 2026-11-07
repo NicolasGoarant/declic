@@ -12,7 +12,7 @@ class CalquesTest < ApplicationSystemTestCase
     page.driver.browser.manage.window.resize_to(1280, 900)
     @tuiles = DioramaTuiles.new(base: TuilesFactices::PREFIXE, sonde: TuilesFactices.sonde)
     base = { description: "Une initiative.", is_active: true, location: "Nancy" }
-    Opportunity.create!(base.merge(title: "Jardin partagé", category: "ecologiser", latitude: 48.6936, longitude: 6.1833))
+    Opportunity.create!(base.merge(title: "Jardin partagé", category: "ecologie", latitude: 48.6936, longitude: 6.1833))
     Opportunity.create!(base.merge(title: "Maraude", category: "benevolat", latitude: 48.6975, longitude: 6.1844))
     Opportunity.create!(base.merge(title: "Atelier à Pont-à-Mousson", category: "formation", latitude: 48.905, longitude: 6.054))
   end
@@ -80,17 +80,17 @@ class CalquesTest < ApplicationSystemTestCase
 
   test "un filtre de catégorie reste actif d'un fond à l'autre" do
     sur_la_carte do
-      assert_equal %w[benevolat ecologiser], categories_affichees
-      find(".acc-cat[data-cle=ecologiser]").click
-      assert_selector ".acc-cat[data-cle=ecologiser][aria-pressed=true]"
-      assert_equal %w[ecologiser], categories_affichees
+      assert_equal %w[benevolat ecologie], categories_affichees
+      find(".acc-cat[data-cle=ecologie]").click
+      assert_selector ".acc-cat[data-cle=ecologie][aria-pressed=true]"
+      assert_equal %w[ecologie], categories_affichees
       assert_selector "[data-diorama-target=compteur]", text: "1 lieu", visible: :all
 
       choisir_fond "Plan"
 
       assert_selector "[data-fond=plan]"
-      assert_selector ".acc-cat[data-cle=ecologiser][aria-pressed=true]"
-      assert_equal %w[ecologiser], categories_affichees
+      assert_selector ".acc-cat[data-cle=ecologie][aria-pressed=true]"
+      assert_equal %w[ecologie], categories_affichees
       assert_selector ".acc-fiches .fiche", count: 1
       assert_selector ".acc-fiches .fiche", text: "Jardin partagé"
     end

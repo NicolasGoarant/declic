@@ -157,7 +157,7 @@ class EventbriteScraper
   def self.detect_category(title)
     title_lower = title.downcase
     
-    return 'ecologiser' if title_lower =~ /(écolo|environnement|nature|bio|durable|climat|zéro déchet)/
+    return 'ecologie' if title_lower =~ /(écolo|environnement|nature|bio|durable|climat|zéro déchet)/
     return 'formation' if title_lower =~ /(atelier|formation|workshop|cours|masterclass|séminaire)/
     return 'pratiquer' if title_lower =~ /(networking|meetup|café|apéro)/
     return 'decouvrir' if title_lower =~ /(concert|festival|expo)/

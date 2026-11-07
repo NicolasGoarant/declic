@@ -9,6 +9,7 @@ class Admin::OpportunitiesController < Admin::BaseController
 
     @q = params[:q].to_s.strip
     @cat = params[:category].to_s.strip
+    @cat = Categorie.cle_actuelle(@cat) if @cat.present? # ancien favori ?category=ecologiser
     @only_in = params[:only_inactive].present?
     @missing = params[:missing_coords].present?
     @flagged = params[:geocoding_flagged].present?

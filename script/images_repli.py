@@ -28,7 +28,7 @@ VIOLET_FONCE = (69, 39, 217)    # #4527d9
 BLANC = (255, 255, 255)
 
 CATEGORIES = [  # clé, libellé, couleur (Categorie::TOUTES)
-    ("ecologiser", "Écologiser", "#82C162"),
+    ("ecologie", "Écologie", "#82C162"),
     ("entreprendre", "Entreprendre", "#F8910E"),
     ("formation", "Se former", "#5A75E8"),
     ("benevolat", "S'engager", "#E85DAB"),

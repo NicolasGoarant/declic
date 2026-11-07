@@ -30,7 +30,7 @@ module Veille
     HORS_LIGNE           = "hors_ligne"
     # Catégorie (donc couleur du pin) déduite par le code, pour qu'elle ne contredise jamais la famille.
     CATEGORIE_PAR_FAMILLE = {
-      "s_engager" => "benevolat", "evenement_solidaire" => "benevolat", "agir_ecologie" => "ecologiser",
+      "s_engager" => "benevolat", "evenement_solidaire" => "benevolat", "agir_ecologie" => "ecologie",
       "entreprendre" => "entreprendre", "se_former" => "formation", "pratiquer" => "pratiquer",
       "rencontre" => "pratiquer", "lieu_collectif" => "pratiquer", "decouvrir" => "decouvrir",
       "petite_manifestation" => "decouvrir"
@@ -60,7 +60,7 @@ module Veille
     }.freeze
 
     SYSTEM_PROMPT = <<~TXT.freeze
-      Tu es assistant éditorial de Déclic, plateforme du Grand Nancy dont la promesse est « Change ta vie, en quelques clics » : aider chacun à s'engager, entreprendre, se former, écologiser, pratiquer, découvrir, et s'inspirer de ceux qui ont franchi le pas. On te donne un élément repéré sur une source publique. Tu le classes et tu le résumes. Un humain relira tout.
+      Tu es assistant éditorial de Déclic, plateforme du Grand Nancy dont la promesse est « Change ta vie, en quelques clics » : aider chacun à s'engager, entreprendre, se former, agir pour l'écologie, pratiquer, découvrir, et s'inspirer de ceux qui ont franchi le pas. On te donne un élément repéré sur une source publique. Tu le classes et tu le résumes. Un humain relira tout.
 
       PRINCIPE : tu décris plus que tu n'élimines. Un événement local ouvert au public reste dans la base, même si l'on y vient surtout pour écouter ou flâner : sa famille dit ce qu'il est, et l'humain décide de ce qu'il affiche. Hors ligne reste l'exception, réservée à la liste ci-dessous, dont fait partie l'actualité municipale qui ne propose rien à faire.
 

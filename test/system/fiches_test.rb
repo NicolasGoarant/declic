@@ -6,7 +6,7 @@ class FichesTest < ApplicationSystemTestCase
   setup do
     Geocoder::Lookup::Test.set_default_stub([]) # adresses non géocodées : fiches sans carte
     page.driver.browser.manage.window.resize_to(390, 844)
-    @base = { description: "Un atelier pour réparer ensemble.", category: "ecologiser", is_active: true,
+    @base = { description: "Un atelier pour réparer ensemble.", category: "ecologie", is_active: true,
               location: "MJC Lillebonne, 14 rue du Cheval Blanc, 54000 Nancy", organization: "MJC Lillebonne" }
   end
 
@@ -22,7 +22,7 @@ class FichesTest < ApplicationSystemTestCase
     visit opportunity_path(o)
 
     assert_selector "h1", text: "Repair Café"
-    assert_selector ".fch-badge", text: "Écologiser"
+    assert_selector ".fch-badge", text: "Écologie"
     assert_selector ".fch-publication", text: /Publiée le .* · aujourd'hui/
     assert_selector ".fch-pratique", text: "14h - 18h"
     assert_selector ".fch-pratique strong", text: "MJC Lillebonne"

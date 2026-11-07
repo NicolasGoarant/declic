@@ -9,7 +9,7 @@ class FichesPartageTest < ActionDispatch::IntegrationTest
   end
 
   test "opportunité sans photo : Open Graph et Twitter Card, image de repli de la catégorie en URL absolue" do
-    o = Opportunity.create!(title: "Repair Café", description: "**Réparer** " + ("ensemble " * 40), category: "ecologiser",
+    o = Opportunity.create!(title: "Repair Café", description: "**Réparer** " + ("ensemble " * 40), category: "ecologie",
                             is_active: true, latitude: 48.69, longitude: 6.18)
     DioramaTuiles.stub(:new, @tuiles) { get opportunity_url(o) }
 
@@ -20,7 +20,7 @@ class FichesPartageTest < ActionDispatch::IntegrationTest
     assert_operator resume.length, :<=, 150
     refute_includes resume, "**"
     image = css_select("meta[property='og:image']").first["content"]
-    assert_match %r{\Ahttp://www\.example\.com/assets/fallback-opportunity-ecologiser-.*\.jpg\z}, image
+    assert_match %r{\Ahttp://www\.example\.com/assets/fallback-opportunity-ecologie-.*\.jpg\z}, image
     assert_select "[data-controller=diorama][data-diorama-mini-value=true]"
     # iconePin (diorama_controller.js) anime .pin-vol : sans lui, la mini-carte reste vide.
     assert_select "template[data-diorama-target=modelePin] .pin-vol .pin-picto"

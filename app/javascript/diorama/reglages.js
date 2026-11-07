@@ -308,7 +308,7 @@ export const VUE = {
 // TAILLE UNIQUE : les PNG de app/assets/images/markers/ n'ont pas la même « boîte utile » (les pixels
 // non transparents) — mesurée sur les @2x (192 × 192) avec la bbox du canal alpha (script jetable,
 // PIL) :
-//   benevolat 171×151 (78,6 % de la hauteur), ecologiser 150×168 (87,5 %), entreprendre 154×175
+//   benevolat 171×151 (78,6 % de la hauteur), ecologie 150×168 (87,5 %), entreprendre 154×175
 //   (91,1 %), formation 135×118 (61,5 %), histoires 156×155 (80,7 %), pratiquer 160×153 (79,7 %), decouvrir 160×160 (83,3 %).
 // `fraction_utile` retient ce ratio par catégorie ; l'échelle à l'affichage est 1 / fraction_utile,
 // appliquée avec `transform-origin` au pied de l'icône (pin-picto, bouquet-fleur) pour qu'elle
@@ -316,7 +316,7 @@ export const VUE = {
 export const PINS = {
   hauteur_px: { large: 52, etroit: 44 }, // hauteur VISIBLE (encre), ordinateur / mobile
   fraction_utile: {
-    benevolat: 0.786, ecologiser: 0.875, entreprendre: 0.911,
+    benevolat: 0.786, ecologie: 0.875, entreprendre: 0.911,
     formation: 0.615, histoires: 0.807, pratiquer: 0.797, decouvrir: 0.833
   },
   tige_longueur_px: 60,   // partagée par les pins isolés et les fleurs des bouquets

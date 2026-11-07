@@ -40,12 +40,12 @@ class LaboOpportunitesTest < ActionDispatch::IntegrationTest
   end
 
   test "une opportunité active et géolocalisée apparaît dans les points (carte et grille)" do
-    opportunite("Repair Café", category: "ecologiser")
+    opportunite("Repair Café", category: "ecologie")
     visiter
 
     titres = points_json.map { |p| p["titre"] }
     assert_equal [ "Repair Café" ], titres
-    assert_equal "ecologiser", points_json.first["categorie"]
+    assert_equal "ecologie", points_json.first["categorie"]
     assert_kind_of Float, points_json.first["latitude"]
   end
 

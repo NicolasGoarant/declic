@@ -19,7 +19,7 @@ title,description,category,organization,location,time_commitment,latitude,longit
 
 **Catégories valides** :
 - `benevolat`
-- `ecologiser`
+- `ecologie` (anciennement `ecologiser`, encore accepté par `scripts/import_opportunities.rb`)
 - `formation`
 - `rencontres`
 - `entreprendre`
@@ -284,7 +284,7 @@ rake "declic:import_csv[data/vdsd_enriched.csv]"
 
 **Catégories valides** :
 - `benevolat`
-- `ecologiser`
+- `ecologie`
 - `formation`
 - `rencontres`
 - `entreprendre`

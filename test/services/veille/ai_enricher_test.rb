@@ -99,7 +99,7 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
 
   test "une source officielle reste une opportunité, quoi qu'en dise le modèle" do
     c, = enrich(candidat(origin: "agenda_nancy", declic_category: "decouvrir", item_type: "opportunite"),
-                type: "belle_histoire", categorie: "ecologiser")
+                type: "belle_histoire", categorie: "ecologie")
     assert_equal "opportunite", c.item_type
     assert_equal "decouvrir", c.declic_category
   end
@@ -165,7 +165,7 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
   end
 
   test "la catégorie se déduit de la famille" do
-    { "se_former" => "formation", "pratiquer" => "pratiquer", "agir_ecologie" => "ecologiser",
+    { "se_former" => "formation", "pratiquer" => "pratiquer", "agir_ecologie" => "ecologie",
       "s_engager" => "benevolat", "evenement_solidaire" => "benevolat", "entreprendre" => "entreprendre",
       "decouvrir" => "decouvrir", "petite_manifestation" => "decouvrir", "rencontre" => "pratiquer", "lieu_collectif" => "pratiquer" }.each do |famille, categorie|
       c, = enrich(candidat(origin: "agenda_nancy", declic_category: "formation"), famille: famille)

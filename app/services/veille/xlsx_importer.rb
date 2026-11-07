@@ -93,6 +93,7 @@ module Veille
       return nil if libelle.blank?
 
       norme = Text.normalize(libelle)
+      norme = Categorie.cle_actuelle(norme) # « Écologiser » des anciens tableurs
       Categorie::TOUTES.find { |c| c.cle != Categorie::HISTOIRES && [Text.normalize(c.libelle), c.cle].include?(norme) }&.cle
     end
 

@@ -24,7 +24,7 @@ class AdminFichesTest < ActionDispatch::IntegrationTest
     opportunite("A", category: "decouvrir", famille: "decouvrir")
     opportunite("B", category: "formation", famille: "se_former")
     opportunite("C", category: "benevolat")
-    opportunite("D", category: "ecologiser")
+    opportunite("D", category: "ecologie")
     get admin_opportunities_url, headers: @headers
     assert_response :success
     subtitles = css_select(".row-subtitle").map { |n| n.text.squish }
@@ -32,8 +32,17 @@ class AdminFichesTest < ActionDispatch::IntegrationTest
     assert_includes subtitles, "Se former (Se former)"
     assert_select ".cat-badge", text: "Découvrir"
     assert_includes subtitles, "S'engager"
-    assert_includes subtitles, "Écologiser"
+    assert_includes subtitles, "Écologie"
     assert_select "select[name=category] option", text: "Découvrir"
+  end
+
+  test "un ancien favori ?category=ecologiser filtre sur Écologie" do
+    opportunite("Jardin", category: "ecologie")
+    opportunite("Collecte", category: "benevolat")
+    get admin_opportunities_url(category: "ecologiser"), headers: @headers
+    assert_response :success
+    assert_match "Jardin", response.body
+    assert_no_match "Collecte", response.body
   end
 
   test "les formulaires s'affichent avec les nouveaux champs et sans highlights" do
@@ -60,7 +69,7 @@ class AdminFichesTest < ActionDispatch::IntegrationTest
 
   test "créer une opportunité datée écrit starts_on et, par le pont, les chaînes" do
     post admin_opportunities_url, headers: @headers, params: { opportunity: {
-      title: "Repair Café", category: "ecologiser", description: "Texte",
+      title: "Repair Café", category: "ecologie", description: "Texte",
       starts_on: "2026-02-14", start_time: "14:00", end_time: "18:00",
       programme_texte: "Diagnostic\n\nAtelier\n", audience: "Tous"
     } }

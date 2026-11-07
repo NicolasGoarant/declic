@@ -20,7 +20,7 @@ class Veille::XlsxImporterTest < ActiveSupport::TestCase
     velos = Veille::Candidate.find_by!(url: "https://exemple.fr/velos")
     assert_equal "a_verifier", velos.status
     assert_equal "opportunite", velos.item_type
-    assert_equal "ecologiser", velos.declic_category
+    assert_equal "ecologie", velos.declic_category
     assert_equal "Vandœuvre-lès-Nancy", velos.commune
     assert_equal Date.new(2027, 2, 14), velos.starts_on
     assert_equal "import_xlsx", velos.origin

@@ -18,7 +18,7 @@ end
 
 # ─── 10 datées (à venir, dans les 6 semaines) ──────────────────────────────────────────────
 opportunite(
-  category: "ecologiser", title: "Plantons ensemble des arbres au parc de la Pépinière",
+  category: "ecologie", title: "Plantons ensemble des arbres au parc de la Pépinière",
   organization: "Collectif Canopée Nancy", published_at: jour(-9),
   starts_on: jour(6), ends_on: jour(6), start_time: "09:00", end_time: "12:00",
   location: "Parc de la Pépinière, rue Sainte-Catherine, 54000 Nancy", address: "Rue Sainte-Catherine",
@@ -112,7 +112,7 @@ opportunite(
 )
 
 opportunite(
-  category: "ecologiser", title: "Balade végétale le long du canal",
+  category: "ecologie", title: "Balade végétale le long du canal",
   organization: "Les Herbes Folles", published_at: jour(-6),
   starts_on: jour(20), ends_on: jour(20), start_time: "10:00", end_time: "12:30",
   location: "Quai Claude-le-Lorrain, 54000 Nancy", address: "Quai Claude-le-Lorrain",
@@ -172,7 +172,7 @@ opportunite(
 
 # ─── 6 permanentes (schedule_text, sans dates) ─────────────────────────────────────────────
 opportunite(
-  category: "ecologiser", title: "Rejoignez le jardin partagé de Boudonville",
+  category: "ecologie", title: "Rejoignez le jardin partagé de Boudonville",
   organization: "Association Les Mains Vertes", published_at: jour(-60),
   schedule_text: "Ouvert toute l'année, permanences le samedi de 9 h à 12 h",
   location: "Jardin partagé de Boudonville, rue de Boudonville, 54000 Nancy", address: "Rue de Boudonville",
@@ -188,7 +188,7 @@ opportunite(
 )
 
 opportunite(
-  category: "ecologiser", title: "Transformez une cour d'immeuble en petit jardin",
+  category: "ecologie", title: "Transformez une cour d'immeuble en petit jardin",
   organization: "Nancy Cours Vertes (exemple)", published_at: jour(-45),
   schedule_text: "Permanence conseil sur rendez-vous, toute l'année",
   location: "Permanence, 8 rue de la Source, 54000 Nancy", address: "8 rue de la Source",

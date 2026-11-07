@@ -18,7 +18,7 @@ def thumb_for(o)
   when 'formation'    then 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&q=80&fit=crop'
   when 'pratiquer', 'decouvrir' then 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80&fit=crop'
   when 'entreprendre' then 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=80&fit=crop'
-  when 'ecologiser'   then 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80&fit=crop'
+  when 'ecologie'   then 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80&fit=crop'
   else                     'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&q=80&fit=crop'
   end
 end
@@ -61,7 +61,7 @@ end
   <button class="chip <%= 'is-active' if current_cat == 'toutes' %>" data-cat="toutes">🌍 Toutes</button>
   <button class="chip <%= 'is-active' if current_cat == 'entreprendre' %>" data-cat="entreprendre">🚀 Entreprendre</button>
   <button class="chip <%= 'is-active' if current_cat == 'benevolat' %>" data-cat="benevolat">❤️ Bénévolat</button>
-  <button class="chip <%= 'is-active' if current_cat == 'ecologiser' %>" data-cat="ecologiser">🌱 Écologiser</button>
+  <button class="chip <%= 'is-active' if current_cat == 'ecologie' %>" data-cat="ecologie">🌱 Écologie</button>
   <button class="chip <%= 'is-active' if current_cat == 'formation' %>" data-cat="formation">📘 Formation</button>
   <button class="chip <%= 'is-active' if current_cat == 'pratiquer' %>" data-cat="pratiquer">🛠️ Pratiquer</button>
   <button class="chip <%= 'is-active' if current_cat == 'decouvrir' %>" data-cat="decouvrir">🎭 Découvrir</button>
@@ -231,7 +231,7 @@ end
 .ops-badge[data-cat="benevolat"]   { color: #f43f5e;
 }
 .ops-badge[data-cat="entreprendre"]{ color: #f59e0b; }
-.ops-badge[data-cat="ecologiser"]  { color: #16a34a; }
+.ops-badge[data-cat="ecologie"]  { color: #16a34a; }
 .ops-badge[data-cat="formation"]   { color: #3b82f6; }
 .ops-badge[data-cat="pratiquer"]   { color: #facc15;
 }
@@ -297,11 +297,11 @@ function initOpsMap() {
   const layer = L.layerGroup().addTo(map);
 // CONFIG ICONES & COULEURS
   const colors = {
-    benevolat: '#f43f5e', ecologiser: '#16a34a', formation: '#3b82f6',
+    benevolat: '#f43f5e', ecologie: '#16a34a', formation: '#3b82f6',
     pratiquer: '#facc15', decouvrir: '#2AA7B8', entreprendre:'#f59e0b', default: '#4f46e5'
   };
   const emojis = {
-    benevolat: '❤️', ecologiser: '🌱', formation: '📘',
+    benevolat: '❤️', ecologie: '🌱', formation: '📘',
     pratiquer: '🛠️', decouvrir: '🎭', entreprendre:'🚀', default: '📍'
   };
   const iconFor = (c) => {

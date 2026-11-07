@@ -15,7 +15,7 @@ class GeolocAutoTest < ApplicationSystemTestCase
     @tuiles = DioramaTuiles.new(base: TuilesFactices::PREFIXE, sonde: TuilesFactices.sonde)
     base = { description: "Une initiative.", is_active: true, location: "Nancy" }
     Opportunity.create!(base.merge(title: "Maraude du nord", category: "benevolat", latitude: 48.6975, longitude: 6.1844))
-    Opportunity.create!(base.merge(title: "Jardin du sud", category: "ecologiser", latitude: 48.6900, longitude: 6.1844))
+    Opportunity.create!(base.merge(title: "Jardin du sud", category: "ecologie", latitude: 48.6900, longitude: 6.1844))
     Opportunity.create!(base.merge(title: "Atelier lointain", category: "formation", latitude: 48.7850, longitude: 6.1844))
   end
 

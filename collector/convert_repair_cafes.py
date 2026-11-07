@@ -15,7 +15,7 @@ for _, row in cafes.iterrows():
     # Mapping des colonnes
     title = row.get("Nom", "").strip()
     description = str(row.get("Notes", "")).strip()
-    category = str(row.get("Catégorie", "")).strip().lower() or "ecologiser"
+    category = str(row.get("Catégorie", "")).strip().lower() or "ecologie"
     organization = str(row.get("Organisation", "")).strip()
     location = str(row.get("Adresse", "")).strip()
     time_commitment = str(row.get("Calendrier", "")).strip()
@@ -25,7 +25,7 @@ for _, row in cafes.iterrows():
     out_row = {
         "title":          title,
         "description":    description,
-        "category":       category,          # ex: "ecologiser"
+        "category":       category,          # ex: "ecologie"
         "organization":   organization,
         "location":       location,
         "time_commitment": time_commitment,

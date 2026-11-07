@@ -57,7 +57,7 @@ class PagesController < ApplicationController
     [ "entreprendre", "pourquoi/entreprendre.webp", "Espace de travail partagé où des personnes échangent" ],
     [ "pratiquer", "pourquoi/pratiquer.webp", "Atelier d'artisanat partagé où plusieurs personnes travaillent" ]
   ].freeze
-  PINS_TERRITOIRE = %w[ecologiser benevolat pratiquer formation].freeze
+  PINS_TERRITOIRE = %w[ecologie benevolat pratiquer formation].freeze
 
   # Une vraie opportunité par catégorie, dans la Métropole, choisie pour écarter les pins les uns des
   # autres (et du centre) : chaque choix maximise sa distance au plus proche des points déjà posés.

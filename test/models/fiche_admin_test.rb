@@ -2,7 +2,7 @@ require "test_helper"
 
 class FicheAdminTest < ActiveSupport::TestCase
   def opportunite(**attributs)
-    Opportunity.new({ title: "Repair Café", description: "Texte", category: "ecologiser" }.merge(attributs))
+    Opportunity.new({ title: "Repair Café", description: "Texte", category: "ecologie" }.merge(attributs))
   end
 
   # --- Pont inverse starts_on / ends_on -> start_date / end_date ---

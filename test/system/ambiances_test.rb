@@ -14,7 +14,7 @@ class AmbiancesTest < ApplicationSystemTestCase
     page.driver.browser.manage.window.resize_to(1280, 900)
     @tuiles = DioramaTuiles.new(base: TuilesFactices::PREFIXE, sonde: TuilesFactices.sonde)
     Opportunity.create!(title: "Jardin partagé", description: "Une initiative.", is_active: true, location: "Nancy",
-                        category: "ecologiser", latitude: 48.6936, longitude: 6.1833)
+                        category: "ecologie", latitude: 48.6936, longitude: 6.1833)
     @scripts = []
   end
 

@@ -120,7 +120,7 @@ class NancyScraper
   def self.detect_category(title)
     title_lower = title.downcase
     
-    return 'ecologiser' if title_lower =~ /(écolo|environnement|nature|jardin|vélo|bio)/
+    return 'ecologie' if title_lower =~ /(écolo|environnement|nature|jardin|vélo|bio)/
     return 'formation' if title_lower =~ /(atelier|formation|cours|stage)/
     return 'decouvrir' if title_lower =~ /(concert|exposition|spectacle|festival)/
     return 'pratiquer' if title_lower =~ /(café|rencontre)/

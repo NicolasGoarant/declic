@@ -71,7 +71,7 @@ class HelloAssoScraper
   def self.detect_category(title)
     title_lower = title.downcase
     
-    return 'ecologiser' if title_lower =~ /(écolo|environnement|nature|bio|climat)/
+    return 'ecologie' if title_lower =~ /(écolo|environnement|nature|bio|climat)/
     return 'formation' if title_lower =~ /(formation|atelier|cours|apprentissage)/
     return 'pratiquer' if title_lower =~ /(rencontre|café|apéro|networking|meetup)/
     return 'benevolat' if title_lower =~ /(bénévol|solidaire|aide|don\b)/
