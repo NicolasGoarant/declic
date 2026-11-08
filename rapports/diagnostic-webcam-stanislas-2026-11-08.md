@@ -50,7 +50,7 @@ Ce que montre la recherche (sources non officielles, pas de plan trouvé) :
 - **Place Stanislas** : spectacle son et lumière / vidéo-mapping (21/11/2025 → 04/01/2026) et un sapin (21 m, source sans date précise).
 - Les emplacements semblent se répéter d'une édition à l'autre (les pages mélangent 2025 et 2026), sans confirmation officielle.
 
-Position dans le diorama : place Stanislas centrée en `lat 48.69355, lon 6.18325` (`reglages.js:272`), repère mosaïque niveau 8 en pixels (Lambert-93 dans nancy-3d). Le sapin se tient juste derrière (côté nord-ouest en image) la statue, à une quinzaine de mètres d'après la capture. **Les coordonnées pixel exactes ne sont pas calculées** : il faut projeter un point L93 mesuré sur le terrain ou sur l'orthophoto ; c'est une demi-heure de travail, pas un obstacle. Patinoire (Carrière) et marché (Charles III) devraient être placés à part, et ne sont pas vus par cette webcam.
+Position dans le diorama : place Stanislas centrée en `lat 48.69355, lon 6.18325` (`reglages.js:272`), repère mosaïque niveau 8 en pixels (Lambert-93 dans nancy-3d). Sur la capture, le sapin se tient juste derrière la statue de Stanislas, à gauche, à une quinzaine de mètres (estimation à l'œil, orientation non vérifiée). **Les coordonnées pixel exactes ne sont pas calculées** : il faut projeter un point L93 mesuré sur le terrain ou sur l'orthophoto ; c'est une demi-heure de travail, pas un obstacle. Patinoire (Carrière) et marché (Charles III) devraient être placés à part, et ne sont pas vus par cette webcam.
 
 ## 5. Assets à créer (style jeu vidéo actuel)
 
@@ -61,8 +61,6 @@ Position dans le diorama : place Stanislas centrée en `lat 48.69355, lon 6.1832
 | Patinoire | Carrière | 1 aplat blanc/bleuté au sol + bandes | Si la webcam de la Carrière est exploitée |
 | Grande roue | Carrière | 1 sprite roue (33 m) | Idem |
 | Chalets | Charles III | Une dizaine de petits toits ou 1 tuile répétable | Idem |
-
-Les pixels du sapin existant (arbres du diorama) sont à rapprocher du `masque-arbres` pour éviter un doublon : un sapin saisonnier posé sur une place vide dans le modèle.
 
 ## 6. Esquisse d'architecture (indicatif)
 
