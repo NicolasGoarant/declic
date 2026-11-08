@@ -20,6 +20,7 @@ import { OmbresNuages, Brouillard } from "diorama/voiles"
 import { Mobiles } from "diorama/mobiles"
 import { Vivants } from "diorama/vivants"
 import { Trains } from "diorama/trains"
+import { Occupations, jourANancy } from "diorama/occupations"
 import { chargerLampadaires, compterLampadaires } from "diorama/lampadaires"
 import { chargerMarquages } from "diorama/marquages"
 import { LAMPADAIRES, NUAGES, PINS } from "diorama/reglages"
@@ -644,6 +645,7 @@ export default class extends Controller {
       }
       this.mobiles?.majStyle() // le correctif d'occlusion des bateaux ne vaut que pour son style
       this.vivants?.majStyle() // celui des toits jv2, pour les vivants, aussi
+      this.majOccupations(this.carte && this.fond === "diorama" && this.rendu !== "blanche") // occlusion du nouveau style
       this.majCalques()
     }).catch((erreur) => {
       console.error("diorama : style indisponible", erreur)
@@ -1058,6 +1060,33 @@ export default class extends Controller {
     else delete this.element.dataset.moment
     this.majMobiles(ambiance)
     this.majVivants(ambiance)
+    this.majOccupations(ambiance)
+  }
+
+  // Les occupations saisonnières des places (diorama/occupations : sapin, grande roue, patinoire, marché de Noël), d'après
+  // config/diorama/occupations_places.yml : sur le diorama, maquette blanche comprise, du jour de début au jour de fin (date de
+  // Nancy). Des images fixes, sans animation : pas de condition d'appareil. Crochets : ?occupations=0 ne les pose pas,
+  // ?occupations-jour=AAAA-MM-JJ fait comme si l'on était ce jour-là (essais, captures).
+  majOccupations(ambiance) {
+    const q = new URLSearchParams(window.location.search)
+    const essai = q.get("occupations-jour")
+    const jour = /^\d{4}-\d{2}-\d{2}$/.test(essai || "") ? essai : jourANancy()
+    const voulu = Boolean(this.carte && this.fond === "diorama" && this.projection) && q.get("occupations") !== "0" &&
+                  (this.tuilesValue.occupations || []).length > 0
+    const style = this.rendu === "blanche" ? "blanche" : this.style
+    if (this.occupations && (!voulu || this.occupations.carte !== this.carte || this.occupations.jour !== jour ||
+                             this.occupations.style !== style)) {
+      this.occupations.detruire()
+      this.occupations = null
+    }
+    if (voulu && !this.occupations) {
+      // occlusion : la carte de propriété du style affiché (celle de l'ambiance, DioramaTuiles::CARTES_AMBIANCE), sinon toits-v1
+      const t = this.tuilesValue, cartes = t.cartes_ambiance?.[this.style] ?? t
+      const propriete = (x, y) => (this.estCouverte({ x, y, z: NIVEAU_REPERE }) ? this.url(cartes.propriete, `${NIVEAU_REPERE}/${x}/${y}.png`) : null)
+      this.occupations = new Occupations(this.L, this.carte, { projection: this.projection, liste: t.occupations, jour, propriete, style })
+      window.__dioramaOccupations = this.occupations
+    }
+    this.occupations?.majMoment(ambiance ? this.etat.moment : "jour", ambiance ? TEINTES_VIVANTS[this.etat.moment] || "" : "")
   }
 
   // Les voiles du ciel (diorama/voiles, 03/11/2026) : ombres de nuages de jour par temps nuageux, brouillard par temps de

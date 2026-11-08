@@ -449,3 +449,10 @@ export const MARQUAGES = {
   },
   bordures: { couleur: "#EDE9E0", opacite: 0.45, largeur_m: 0.25, largeur_min_px: 0.8 }
 }
+
+// Les OCCUPATIONS SAISONNIÈRES des places (diorama/occupations ; config/diorama/occupations_places.yml) : deux volets juste
+// sous les vivants (445) et au-dessus des bateaux (440). Opacité des lumières (guirlandes) selon le moment : éteintes de jour.
+export const OCCUPATIONS = {
+  z_index: 443,
+  lumieres: { jour: 0, "heure-doree": 0.35, aube: 0.5, "heure-bleue": 0.9, nuit: 1 }
+}

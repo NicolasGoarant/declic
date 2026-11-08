@@ -125,6 +125,8 @@ class DioramaTuiles
       arbres: ARBRES, arbres_styles: arbres_styles, lumieres: lampadaires(presents),
       feux: osm_mobilier("feux-tricolores.json"), marquages: osm_mobilier("marquages-osm.json"), mobiles: mobiles, vivants: vivants, trains: trains, nuit: nuit,
       ambiances: AMBIANCES.index_with { |nom| parametres_ambiance(nom) },
+      # sapin, grande roue, patinoire, marché de Noël… : config/diorama/occupations_places.yml (images servies par l'appli, pas R2)
+      occupations: DioramaOccupations.pour_js,
       disponibles: disponibles
     }
   end

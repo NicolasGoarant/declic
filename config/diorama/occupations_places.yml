@@ -1,0 +1,105 @@
+# OCCUPATIONS SAISONNIÈRES DES PLACES dans le diorama : sapin, grande roue, patinoire, marché de Noël…
+#
+# Chaque installation s'affiche d'elle-même, du jour `debut` au jour `fin` INCLUS (date de Nancy), aux niveaux de zoom
+# `zooms` du diorama (0 à 9 ; la vue d'accueil est au niveau 6). Rien d'autre à toucher : ajouter une installation (l'an
+# prochain, ou sur une autre place), c'est ajouter un bloc sous `installations:`. Le fichier est relu au démarrage de
+# l'application (un redéploiement suffit) ; DioramaOccupations le vérifie (test/models/diorama_occupations_test.rb).
+#
+# installations :
+#   id        identifiant unique (kebab-case), garder l'année : sapin-stanislas-2026
+#   nom, place  textes libres (infobulle de l'image)
+#   debut, fin  AAAA-MM-JJ. Chaque date a sa source dans `sources`, et `a_confirmer: true` si elle n'est pas officielle.
+#   position  lat, lon (WGS84) du pied de l'installation, et altitude_m du SOL (m, IGN : sans elle l'image flotte de
+#             ≈ 1,7 px de mosaïque par mètre d'écart à l'altitude de référence 231 m)
+#   sprite    une clé du catalogue `sprites:` ci-dessous
+#   zooms     niveaux où l'image se montre
+#
+# sprites : images de app/assets/images/ (fabriquées par script/occupations_sprites.py, qui imprime ancre et échelle).
+#   image      l'objet, peint en plein jour (la page l'assombrit le soir, comme les piétons et les bateaux)
+#   lumieres   facultatif : ampoules et halos, montrés de l'heure dorée à la nuit, sans assombrissement
+#   ancre_px   le point de l'image posé sur `position` (le pied, au sol)
+#   px_par_pixel_mosaique  px d'image par px de mosaïque du niveau 8 (4 : net jusqu'au niveau 9 sur écran dense)
+#   L'orientation est CUITE dans l'image (cap de l'axe de la place) : une autre place demande un autre rendu.
+
+sprites:
+  sapin:
+    image: diorama/occupations/sapin.png
+    lumieres: diorama/occupations/sapin-lumieres.png
+    ancre_px: [72.0, 215.7]
+    px_par_pixel_mosaique: 4
+    # RÉUTILISÉ : gabarit « conifère » de la bibliothèque d'arbres jeu-video-v2 (nancy-3d v18), 20 m × 4,3 m, plus guirlande et étoile
+  grande-roue:
+    image: diorama/occupations/grande-roue.png
+    lumieres: diorama/occupations/grande-roue-lumieres.png
+    ancre_px: [128.0, 264.0]
+    px_par_pixel_mosaique: 4
+    # CRÉÉ, provisoire : 33 m, plan de la roue dans l'axe de la Carrière (cap -26,8°) ; orientation réelle non vérifiée
+  patinoire:
+    image: diorama/occupations/patinoire.png
+    lumieres: diorama/occupations/patinoire-lumieres.png
+    ancre_px: [224.0, 160.0]
+    px_par_pixel_mosaique: 4
+    # CRÉÉ, provisoire : 40 m × 15 m (40 m au programme 2025 ; largeur déduite de 600 m², source non officielle), cap -26,8°
+  chalets:
+    image: diorama/occupations/chalets.png
+    lumieres: diorama/occupations/chalets-lumieres.png
+    ancre_px: [220.0, 156.0]
+    px_par_pixel_mosaique: 4
+    # CRÉÉ, provisoire : 60 chalets (programme 2025) en 5 rangées de 12, cap -28,1° ; disposition réelle inconnue
+
+installations:
+  - id: sapin-stanislas-2026
+    nom: Sapin de Noël
+    place: Place Stanislas
+    debut: 2026-11-06
+    fin: 2027-01-03
+    a_confirmer: true
+    sources:
+      debut: "Installé le 06/11/2026 (ICI Grand Est, 06/11/2026 : « le grand sapin […] est arrivé sur la place Stanislas », 20 m)"
+      fin: "Retrait NON ANNONCÉ : fin officielle des Fêtes de Saint-Nicolas, 03/01/2027 (saint-nicolas.nancy.fr)"
+      position: "Sapin relevé par le LiDAR HD du 03/12/2023 (nancy-3d pivot-v1 p01 : L93 934214,25 ; 6848439,75), sol 200,8 m (IGN RGE ALTI)"
+    position: { lat: 48.693615, lon: 6.182981, altitude_m: 200.8 }
+    sprite: sapin
+    zooms: [6, 7, 8, 9]
+
+  - id: grande-roue-carriere-2026
+    nom: Grande roue
+    place: Place de la Carrière
+    debut: 2026-11-20
+    fin: 2027-01-03
+    a_confirmer: true
+    sources:
+      debut: "Aucune date propre à la roue pour 2026 : début officiel des Fêtes, 20/11/2026 (saint-nicolas.nancy.fr) ; en 2025 la roue suivait les Fêtes (programme 2025 : 21/11 → 04/01)"
+      fin: "Idem : fin officielle des Fêtes, 03/01/2027"
+      position: "« au pied de l'Arc Héré » (programme officiel 2025 ; Destination Nancy, 27/03/2026) : axe de l'esplanade OSM (way 256714125), 16 m au nord de son bord sud ; sol 198 m (IGN)"
+    position: { lat: 48.695175, lon: 6.182147, altitude_m: 198.0 }
+    sprite: grande-roue
+    zooms: [6, 7, 8, 9]
+
+  - id: patinoire-carriere-2026
+    nom: Patinoire
+    place: Place de la Carrière
+    debut: 2026-11-20
+    fin: 2027-01-03
+    a_confirmer: true
+    sources:
+      debut: "Aucune date propre à la patinoire pour 2026 : début officiel des Fêtes, 20/11/2026 ; en 2025 elle suivait les Fêtes"
+      fin: "Idem : fin officielle des Fêtes, 03/01/2027"
+      position: "Carrière (programme 2025) ; « à l'arrière du Village de la Grande Roue » (JDS, non officiel) : axe de l'esplanade, centre à 58 m de son bord sud ; sol 198 m"
+    position: { lat: 48.695517, lon: 6.181912, altitude_m: 198.0 }
+    sprite: patinoire
+    zooms: [6, 7, 8, 9]
+
+  - id: marche-noel-charles-iii-2026
+    nom: Grand Village de Saint-Nicolas (marché de Noël)
+    place: Place Charles III
+    debut: 2026-11-20
+    fin: 2026-12-27
+    a_confirmer: true
+    sources:
+      debut: "20/11/2026 : Les Vitrines de Nancy, relayées par Evous (01/11/2026) et nancy-focus ; non publié par la Ville"
+      fin: "CONTRADICTOIRE : 27/12 (JDS, nancy-focus, agenda des Vitrines), 28/12 (présentation des Vitrines), 26/12 (corps de l'article JDS) ; 27/12 retenu (majorité)"
+      position: "Place Charles III (programme 2025) ; partie ouest, dégagée (OSM way 1008681477 ; la partie est porte un bâtiment), centre du contour ; sol 204 m (IGN)"
+    position: { lat: 48.689076, lon: 6.181860, altitude_m: 204.0 }
+    sprite: chalets
+    zooms: [6, 7, 8, 9]
