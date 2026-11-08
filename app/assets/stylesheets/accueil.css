@@ -520,6 +520,8 @@ body.acc-corps {
   animation: pin-apparait var(--pin-apparition-duree, 420ms) ease-out both;
   animation-delay: var(--pin-retard-apparition, 0ms);
 }
+/* Refait à une autre échelle de zoom (PINS.echelle_zoom) : le pin était déjà là, pas de second rebond. */
+.pin.pin-revu .pin-picto { animation: none; }
 .pin-tige {
   position: absolute; left: calc(var(--taille-icone) / 2 - 1px); top: calc(var(--taille-icone) - var(--pin-recouvrement, 4px));
   width: 2px; height: var(--tige-longueur, 44px); z-index: 1;

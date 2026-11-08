@@ -24,7 +24,7 @@ import { chargerLampadaires, compterLampadaires } from "diorama/lampadaires"
 import { chargerMarquages } from "diorama/marquages"
 import { LAMPADAIRES, NUAGES, PINS } from "diorama/reglages"
 import { voletHalo, haloPermis, TiltShift } from "diorama/vue"
-import { regrouper, eventail, FLEURS_MAX, respiration, echelleIcone, dispositionPin } from "diorama/bouquets"
+import { regrouper, eventail, FLEURS_MAX, respiration, echelleIcone, dispositionPin, echelleZoom } from "diorama/bouquets"
 import { chargerContour, creerDecoupe, poserSocle } from "diorama/contour"
 import {
   CLE_FOND, CLE_AMBIANCE, CLE_AUTO, CLE_CHOIX_SOUS, CLES_REGLAGES, CLE_BLANCHE, CLE_STYLE, lire, ecrire, fondDeDepart, styleDeDepart
@@ -185,6 +185,13 @@ export default class extends Controller {
 
   etroitEcran() { return window.matchMedia(ETROIT).matches }
 
+  // Les dimensions des pins au zoom courant : largeur d'écran (ETROIT) et échelle de zoom
+  // (PINS.echelle_zoom, selon l'écart au zoom maximal). La mini-carte d'une fiche garde la pleine taille.
+  disposition() {
+    const echelle = this.miniValue || !this.carte ? 1 : echelleZoom(this.carte.getMaxZoom() - this.carte.getZoom())
+    return dispositionPin(this.etroitEcran(), echelle)
+  }
+
   // ─── Petite carte d'une fiche ────────────────────────────────────────────────────────
   // Elle suit le fond choisi sur la carte. Diorama, et point dans son emprise (sur une dalle
   // publiée, dans la Métropole) : le diorama, figé, pin de la catégorie au centre. Sinon : le plan.
@@ -321,7 +328,7 @@ export default class extends Controller {
   poserPinMini(p, latlng, zoom) {
     this.L.marker(latlng, { icon: this.iconePin(p), title: p.titre, interactive: false, keyboard: false }).addTo(this.carte)
     this.carte.setView(latlng, zoom, { animate: false })
-    const { icone } = dispositionPin(this.etroitEcran())
+    const { icone } = this.disposition()
     this.carte.panBy([0, -icone], { animate: false })
   }
 
@@ -1215,9 +1222,12 @@ export default class extends Controller {
     this.indexApparition = (this.indexApparition ?? -1) + 1
     const retardApparition = Math.min(this.indexApparition * PINS.apparition.decalage_ms, PINS.apparition.decalage_max_ms)
     picto.style.setProperty("--pin-retard-apparition", `${retardApparition}ms`)
-    // Boîte : icône (52 bureau / 44 mobile) + tige (44) − recouvrement (4) jusqu'au pied, ancre au
-    // centre du socle (dispositionPin, diorama/bouquets.js).
-    const { icone, pied, hauteur } = dispositionPin(this.etroitEcran())
+    // Déjà dessiné à une autre échelle de zoom : pas de nouveau rebond d'apparition (accueil.css, .pin-revu).
+    pin.classList.toggle("pin-revu", !!p.dejaDessine)
+    p.dejaDessine = true
+    // Boîte : icône (52 bureau / 44 mobile, × échelle de zoom) + tige (60 × échelle) − recouvrement (4)
+    // jusqu'au pied, ancre au centre du socle (dispositionPin, diorama/bouquets.js).
+    const { icone, pied, hauteur } = this.disposition()
     return this.L.divIcon({ html: pin, className: "acc-pin", iconSize: [icone, hauteur], iconAnchor: [icone / 2, pied] })
   }
 
@@ -1235,6 +1245,19 @@ export default class extends Controller {
   // point affiché, où poser sa popup (pied + décalage jusqu'au haut de son icône).
   dessinerPins() {
     if (!this.calquePins) return
+    // Taille des pins selon le zoom (PINS.echelle_zoom) : si elle change, tous les marqueurs sont refaits
+    // (la géométrie Leaflet, iconSize et iconAnchor, suit la taille CSS posée ici sur le conteneur).
+    const disposition = this.disposition()
+    const empreinteTaille = `${disposition.icone}/${disposition.tige}`
+    if (empreinteTaille !== this.empreinteTaille) {
+      this.empreinteTaille = empreinteTaille
+      const s = this.carteTarget.style
+      s.setProperty("--taille-icone", `${disposition.icone}px`)
+      s.setProperty("--tige-longueur", `${disposition.tige}px`)
+      s.setProperty("--pin-pied", `${disposition.pied}px`)
+      this.points.forEach((p) => { p.marqueur = null })
+      this.oublierPins()
+    }
     const groupes = this.groupes(this.carte.getZoom())
     // Mêmes groupes que la dernière fois (fin de zoom sans effet sur le regroupement, filtre sans effet) : rien à refaire.
     const empreinte = groupes.map((g) => g.map((p) => p.id).join(",")).join("|")
@@ -1242,7 +1265,7 @@ export default class extends Controller {
     this.empreintePins = empreinte
     // Sinon, on ne touche qu'à ce qui change : un pin ou un bouquet identique garde son élément dans la page.
     this.ancres = new Map()
-    const { icone } = dispositionPin(this.etroitEcran())
+    const { icone, tige } = disposition
     const voulus = new Set(), bouquets = new Map()
     for (const groupe of groupes) {
       if (groupe.length === 1) {
@@ -1250,7 +1273,7 @@ export default class extends Controller {
         p.marqueur ||= this.L.marker(p.latlng, { icon: this.iconePin(p), title: p.titre, riseOnHover: true })
           .on("click", () => this.ouvrirPopup(p.id))
         voulus.add(p.marqueur)
-        this.ancres.set(p.id, { latlng: p.latlng, decalage: [0, -(icone + PINS.tige_longueur_px)] })
+        this.ancres.set(p.id, { latlng: p.latlng, decalage: [0, -(icone + tige)] })
       } else {
         const cle = groupe.map((p) => p.id).join(",")
         let b = this.bouquetsPoses?.get(cle)
@@ -1301,10 +1324,10 @@ export default class extends Controller {
       pixels.reduce((s, q) => s + q.x, 0) / pixels.length, pixels.reduce((s, q) => s + q.y, 0) / pixels.length
     ), zMax)
     const fleurs = this.ecarterGrandes(groupe.slice(0, FLEURS_MAX).sort((a, b) => a.latlng.lng - b.latlng.lng))
-    const { icone: tailleIcone } = dispositionPin(this.etroitEcran())
+    const { icone: tailleIcone, tige: longueurTige } = this.disposition()
     const el = document.createElement("div")
     el.className = "bouquet"
-    eventail(fleurs.length).forEach((t, i) => {
+    eventail(fleurs.length, longueurTige).forEach((t, i) => {
       const p = fleurs[i], cat = this.categorie(p.categorie)
       const tige = document.createElement("span")
       tige.className = "bouquet-tige"

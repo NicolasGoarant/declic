@@ -78,6 +78,32 @@ class CalquesTest < ApplicationSystemTestCase
     end
   end
 
+  # PINS.echelle_zoom : les pins rapetissent quand on dézoome, sans changer le regroupement ni
+  # dédoubler un marqueur, et retrouvent leur pleine taille au zoom maximal.
+  test "la taille des pins suit le zoom" do
+    sur_la_carte do
+      taille = lambda do |zoom|
+        execute_script("#{CONTROLEUR}.carte.setZoom(#{zoom}, { animate: false })")
+        sleep 0.3
+        evaluate_script(<<~JS)
+          (() => {
+            const c = #{CONTROLEUR}
+            const ids = [...document.querySelectorAll(".acc-pin .pin[data-id], .bouquet-fleur[data-id]")].map((el) => el.dataset.id)
+            return [parseFloat(getComputedStyle(c.carteTarget).getPropertyValue("--taille-icone")), ids.length, new Set(ids).size]
+          })()
+        JS
+      end
+      max = evaluate_script("#{CONTROLEUR}.carte.getMaxZoom()")
+      pleine, n1, u1 = taille.call(max)
+      reduite, n2, u2 = taille.call(max - 6)
+      assert_equal 52, pleine
+      assert_equal 27, reduite
+      assert_equal [2, 2], [n1, u1]
+      assert_equal n2, u2
+      assert_operator n2, :>=, 1
+    end
+  end
+
   test "un filtre de catégorie reste actif d'un fond à l'autre" do
     sur_la_carte do
       assert_equal %w[benevolat ecologie], categories_affichees

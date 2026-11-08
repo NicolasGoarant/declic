@@ -359,6 +359,12 @@ export const PINS = {
     formation: 0.615, histoires: 0.807, pratiquer: 0.797, decouvrir: 0.833
   },
   tige_longueur_px: 60,   // partagée par les pins isolés et les fleurs des bouquets
+  // Échelle selon le zoom (08/11/2026) : icône et tige rapetissent quand on dézoome, pour que les pins
+  // ne forment plus des amas illisibles. Clé : nombre de niveaux SOUS le zoom maximal de la carte
+  // (diorama : max 9, vue d'accueil 6 → écart 3 ; plan : max 19). Au-delà du dernier écart listé :
+  // la dernière valeur, plancher choisi pour que l'icône reste reconnaissable (23 px sur mobile, 27 sur ordinateur).
+  // Ni le socle ni le pied des bouquets ne changent : ils marquent le lieu exact. La mini-carte d'une fiche reste à 1.
+  echelle_zoom: [1, 1, 0.88, 0.75, 0.65, 0.58, 0.52],
   recouvrement_px: 4,     // l'icône mord légèrement sur la tige (pied commun aux deux tailles)
   socle: { largeur_px: 19, hauteur_px: 12.2 },
   // Éventail des bouquets (bouquets.js#eventail) : demi-angle (degrés) qui s'élargit avec le nombre de

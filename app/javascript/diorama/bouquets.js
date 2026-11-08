@@ -36,12 +36,20 @@ export function echelleIcone(cle) {
   return 1 / (PINS.fraction_utile[cle] ?? 1)
 }
 
+// Échelle des pins pour un écart de `ecart` niveaux sous le zoom maximal (PINS.echelle_zoom).
+export function echelleZoom(ecart) {
+  const table = PINS.echelle_zoom
+  return table[Math.min(Math.max(0, Math.round(ecart)), table.length - 1)]
+}
+
 // Dimensions du pin (avant l'échelle par catégorie), pour la géométrie Leaflet (iconSize, iconAnchor) :
-// dépendent de la largeur d'écran (PINS.hauteur_px), pas du zoom.
-export function dispositionPin(etroit) {
-  const icone = etroit ? PINS.hauteur_px.etroit : PINS.hauteur_px.large
-  const pied = icone + PINS.tige_longueur_px - PINS.recouvrement_px
-  return { icone, pied, hauteur: Math.ceil(pied + PINS.socle.hauteur_px / 2 + 1) }
+// dépendent de la largeur d'écran (PINS.hauteur_px) et de l'échelle de zoom (echelleZoom), arrondies
+// au pixel pour que la géométrie Leaflet et les variables CSS (--taille-icone, --tige-pin) coïncident.
+export function dispositionPin(etroit, echelle = 1) {
+  const icone = Math.round((etroit ? PINS.hauteur_px.etroit : PINS.hauteur_px.large) * echelle)
+  const tige = Math.round(PINS.tige_longueur_px * echelle)
+  const pied = icone + tige - PINS.recouvrement_px
+  return { icone, tige, pied, hauteur: Math.ceil(pied + PINS.socle.hauteur_px / 2 + 1) }
 }
 
 // elements : [{ x, y, … }] en pixels du zoom courant → groupes d'éléments (liaison simple : A près
@@ -79,8 +87,7 @@ export function regrouper(elements, seuil = SEUIL_BOUQUET_PX) {
 // Éventail de n tiges, toutes de la longueur des pins isolés (PINS.tige_longueur_px) : le demi-angle
 // s'élargit avec n (PINS.eventail) pour que les fleurs ne se chevauchent pas malgré la tige commune.
 // x, y : bout de la tige depuis le pied, en px (y négatif vers le haut).
-export function eventail(n) {
-  const longueur = PINS.tige_longueur_px
+export function eventail(n, longueur = PINS.tige_longueur_px) {
   if (n === 1) return [{ angle: 0, longueur, x: 0, y: -longueur }]
   const { demi_angle_base, demi_angle_pas, demi_angle_max } = PINS.eventail
   const demiAngle = Math.min(demi_angle_max, demi_angle_base + demi_angle_pas * (n - 1))
