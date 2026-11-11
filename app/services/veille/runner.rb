@@ -22,7 +22,7 @@ module Veille
 
     Rapport = Struct.new(:sources, :crees, :doublons, :hors_zone, :passes, :enrichis, :ecartes, :erreurs_ia,
                          :cout_usd, :restants, :plafond, :rediges, :redaction_bloquee, :erreurs_redaction,
-                         :a_rediger_restants, :tokens, keyword_init: true)
+                         :a_rediger_restants, :tokens, :prefiltre, keyword_init: true)
 
     def initialize(connecteurs: QUOTIDIEN, ingester: RawIngester.new, enricher: nil, redacteur: nil,
                    max: MAX_ENRICHIS, max_rediges: MAX_REDIGES, logger: Rails.logger, http: nil)
@@ -39,7 +39,8 @@ module Veille
     def run
       rapport = Rapport.new(sources: [], crees: 0, doublons: 0, hors_zone: 0, passes: 0,
                             enrichis: 0, ecartes: 0, erreurs_ia: 0, cout_usd: 0.0, restants: 0, plafond: false,
-                            rediges: 0, redaction_bloquee: 0, erreurs_redaction: 0, a_rediger_restants: 0, tokens: {})
+                            rediges: 0, redaction_bloquee: 0, erreurs_redaction: 0, a_rediger_restants: 0, tokens: {},
+                            prefiltre: Prefiltre::Bilan.vide)
       @depart_journal = Veille::AppelIa.maximum(:id).to_i
       collecter(rapport)
       enrichir(rapport)
@@ -53,7 +54,8 @@ module Veille
     def rattraper_redactions
       rapport = Rapport.new(sources: [], crees: 0, doublons: 0, hors_zone: 0, passes: 0,
                             enrichis: 0, ecartes: 0, erreurs_ia: 0, cout_usd: 0.0, restants: 0, plafond: false,
-                            rediges: 0, redaction_bloquee: 0, erreurs_redaction: 0, a_rediger_restants: 0, tokens: {})
+                            rediges: 0, redaction_bloquee: 0, erreurs_redaction: 0, a_rediger_restants: 0, tokens: {},
+                            prefiltre: Prefiltre::Bilan.vide)
       @depart_journal = Veille::AppelIa.maximum(:id).to_i
       rediger(rapport)
       journaliser(rapport)
@@ -67,13 +69,27 @@ module Veille
       @connecteurs.each do |klasse|
         resultat = (klasse.is_a?(Class) ? klasse.new(http: http) : klasse).call
         rapport.sources << resultat
-        bilan = @ingester.ingest(resultat.items)
+        bilan = @ingester.ingest(prefiltrer(resultat.items, rapport))
         rapport.crees     += bilan.crees.size
         rapport.doublons  += bilan.doublons
         rapport.hors_zone += bilan.hors_zone
         rapport.passes    += bilan.passes
         @log.info("[Veille] #{resultat.nom} : #{resultat.statut} — #{resultat.message} (#{bilan.crees.size} nouveau(x))")
       end
+    end
+
+    # Préfiltre en code (Veille::Prefiltre) des seuls flux de presse : ce qui ne touche ni le territoire ni un
+    # thème Déclic, ou relève d'une exclusion (sport, faits divers…), n'est même pas stocké, donc jamais envoyé à l'IA.
+    def prefiltrer(items, rapport)
+      presse, autres = Array(items).partition { |i| Candidate::ORIGINES_FLUX_PRESSE.include?(i.origin) }
+      return items if presse.empty?
+
+      bilan = Prefiltre.filtrer(presse)
+      rapport.prefiltre.recus += bilan.recus
+      rapport.prefiltre.retenus.concat(bilan.retenus)
+      rapport.prefiltre.ecartes += bilan.ecartes
+      bilan.motifs.each { |motif, n| rapport.prefiltre.motifs[motif] += n }
+      autres + bilan.retenus
     end
 
     def enrichir(rapport)
@@ -161,6 +177,9 @@ module Veille
       mesurer(r)
       jetons = r.tokens.map { |m, t| "#{m}=#{t[:appels]} appel(s) #{t[:entree]} entrée / #{t[:sortie]} sortie" }.join(" ; ")
       etat = r.sources.map { |s| "#{s.nom}=#{s.statut}" }.join(" ")
+      pf = r.prefiltre
+      @log.info("[Veille] préfiltre presse — reçus #{pf.recus}, retenus #{pf.retenus.size}, écartés #{pf.ecartes}" \
+                "#{" (#{pf.motifs.map { |m, n| "#{m} : #{n}" }.join(', ')})" if pf.ecartes.positive?}")
       @log.info("[Veille] bilan — nouveaux #{r.crees}, doublons #{r.doublons}, hors zone #{r.hors_zone}, " \
                 "passés #{r.passes}, enrichis #{r.enrichis}, écartés #{r.ecartes}, erreurs IA #{r.erreurs_ia}, " \
                 "récits rédigés #{r.rediges} (dont #{r.redaction_bloquee} à vérifier), erreurs rédaction #{r.erreurs_redaction}, " \

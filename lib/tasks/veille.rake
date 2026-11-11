@@ -80,6 +80,8 @@ namespace :veille do
     puts "  nouveaux éléments ingérés : #{rapport.crees}"
     puts "  doublons / hors zone / passés : #{rapport.doublons} / #{rapport.hors_zone} / #{rapport.passes}"
     puts "  enrichis (IA)             : #{rapport.enrichis} (dont #{rapport.ecartes} écartés), erreurs IA #{rapport.erreurs_ia}"
+    pf = rapport.prefiltre
+    puts "  préfiltre presse          : #{pf.recus} reçus, #{pf.retenus.size} retenus, #{pf.ecartes} écartés#{" (#{pf.motifs.map { |m, n| "#{m} : #{n}" }.join(', ')})" if pf.ecartes.positive?}"
     puts "  en attente d'enrichissement : #{rapport.restants}"
     puts "  récits rédigés (IA)       : #{rapport.rediges} (dont #{rapport.redaction_bloquee} à vérifier), erreurs #{rapport.erreurs_redaction}, en attente #{rapport.a_rediger_restants}"
     puts "  PLAFOND MENSUEL ATTEINT : plus aucun appel IA ce mois-ci" if rapport.plafond

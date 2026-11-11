@@ -32,6 +32,8 @@ module Veille
     # Contenus de presse, et annonces de communes retenues à la main (réseaux sociaux, sites sans
     # droit de réutilisation) : jamais envoyés à l'IA sans le geste explicite d'un humain.
     ORIGINES_PRESSE = %w[presse gazette commune_manuel].freeze
+    # Origines des flux RSS de presse lus par Connectors::FluxPresse (interrupteur VEILLE_PRESSE_ACTIVE).
+    ORIGINES_FLUX_PRESSE = %w[ici_lorraine france3_lorraine].freeze
 
     # status est renseigné dès la création (défaut "pending"), donc requis.
     enum :status,   STATUSES.index_by(&:itself),   validate: true

@@ -1,0 +1,60 @@
+# Préfiltre de la presse, appliqué en code AVANT tout appel IA (Veille::Prefiltre).
+# Un élément est retenu s'il évoque le territoire ET un thème Déclic, et s'il ne relève d'aucun
+# motif d'exclusion. Les mots sont comparés sans accents ni casse, sur mots entiers (« foot » ne
+# retient pas « football » : listez les deux). Une expression de plusieurs mots est cherchée telle quelle.
+# Ajuster ici : aucun changement de code nécessaire.
+
+# Écartés d'office, même si le reste convient.
+exclusions:
+  sport:
+    [football, foot, rugby, basket, handball, hand, volley, ligue 1, ligue 2, ligue des champions, as nancy lorraine,
+     asnl, sluc, sluc nancy, match, matches, championnat, tournoi de, victoire, defaite, classement, mercato,
+     tennis, cyclisme, tour de france, marathon, olympique, jeux olympiques, resultats sportifs]
+  faits_divers:
+    [fait divers, faits divers, accident, collision, incendie, cambriolage, braquage, agression, meurtre, homicide,
+     tue, tuee, mort, morte, blesse, blessee, garde a vue, interpelle, interpellation, tribunal, condamne, condamnation,
+     proces, vol a main armee, disparition inquietante, enquete ouverte, gendarmes, police, drame, bagarre,
+     trafic de drogue, stupefiants]
+  meteo:
+    [meteo, previsions, vigilance orange, vigilance rouge, vigilance jaune, canicule, orages, orage, neige, verglas,
+     tempete, pluie, gel, temperatures]
+  politique_nationale:
+    [elysee, matignon, assemblee nationale, senat, gouvernement, premier ministre, president de la republique,
+     macron, reforme des retraites, motion de censure, 49.3, legislatives, presidentielle, rassemblement national,
+     la france insoumise, budget de l etat, ministre]
+  horoscope:
+    [horoscope, astrologie, signe astrologique, belier, gemeaux, verseau]
+
+# Territoire : les 20 communes de la Métropole (Veille::GrandNancy) comptent d'office, plus ces expressions.
+territoire:
+  [grand nancy, metropole du grand nancy, metropole, meurthe et moselle, meurthe-et-moselle, lorraine, lorrain,
+   lorraine, lorrains, 54, pays de nancy, sud lorraine, nord lorraine, stanislas, place stanislas, plateau de haye,
+   bassin de nancy, toul, luneville, pont a mousson, pompey, frouard, champigneulles, dieulouard, liverdun,
+   saint nicolas de port, dombasle, neuves maisons, baccarat, longwy, briey, val de lorraine]
+
+# Thèmes Déclic : au moins un.
+themes:
+  engagement:
+    [engagement, engage, engagee, s engager, citoyen, citoyenne, citoyens, mobilisation, mobilise, volontaire,
+     volontariat, service civique, mecenat]
+  benevolat:
+    [benevole, benevoles, benevolat, coup de main, bonne volonte, appel a benevoles]
+  associations:
+    [association, associations, associatif, associative, collectif, ong, fondation, club service, secours populaire,
+     restos du coeur, croix rouge, banque alimentaire, emmaus, apprentis d auteuil]
+  entrepreneuriat:
+    [entrepreneur, entrepreneure, entrepreneuriat, entreprendre, creation d entreprise, createur, creatrice,
+     start up, startup, incubateur, reconversion, coworking, tiers lieu, tiers-lieu, pepiniere, economie sociale,
+     ess, scop, auto entrepreneur, formation, apprentissage]
+  solidarite:
+    [solidarite, solidaire, entraide, partage, don, dons, collecte, maraude, precarite, insertion, handicap,
+     inclusion, accueil des refugies, lien social, intergenerationnel, repas partage, epicerie solidaire]
+  ecologie:
+    [ecologie, ecologique, transition, biodiversite, potager, jardin partage, compost, recyclage, zero dechet,
+     repair cafe, reemploi, ressourcerie, velo, circuit court, amap]
+  portraits:
+    [portrait, rencontre avec, histoire de, parcours, il a quitte, elle a quitte, a tout change, change de vie,
+     passionne, passionnee, fondateur, fondatrice, a cree]
+  initiatives_locales:
+    [initiative, initiatives, projet local, tiers lieu, ouvre ses portes, inauguration, nouveau lieu, atelier,
+     ateliers, festival solidaire, marche de producteurs, cafe associatif, maison des associations, quartier]
