@@ -5,7 +5,7 @@
 #   flux           URL(s) exacte(s) du flux
 #   hotes          hôtes autorisés pour les liens d'articles (un lien étranger n'entre jamais)
 #   reutilisation  non_opposee : aucune opposition à la fouille de textes trouvée, flux public, robots.txt muet
-#                                pour un robot générique ; le connecteur lit (titre, lien, date, extrait du flux seulement)
+#                                pour un robot générique ; (plus aucune source ne l'est depuis le 11/11/2026) le connecteur lit (titre, lien, date, extrait du flux seulement)
 #                  restreinte  : conditions d'utilisation qui s'opposent expressément à la fouille de textes et de
 #                                données et à l'usage par IA ; le connecteur NE LIT PAS (voir Connectors::Presse,
 #                                lecture humaine /admin/veille/presse)
@@ -18,15 +18,15 @@ sources:
       - https://www.ici.fr/rss/lorraine-nord/a-la-une.xml
       - https://www.ici.fr/rss/sud-lorraine/a-la-une.xml
     hotes: [www.ici.fr]
-    reutilisation: non_opposee
-    note: "Mentions légales : reproduction interdite sans autorisation, mais aucune réserve de fouille de textes ; robots.txt ne bloque que GPTBot, ChatGPT-User, Google-Extended. À confirmer par le président."
+    reutilisation: restreinte
+    note: "Corrigé le 11/11/2026 (relecture de l'étape 5). CGU « Conditions générales d'utilisation de la plateforme dédiée à l'offre numérique de proximité - ICI » (https://www.ici.fr/mentions-legales), art. VII « Utilisation des contenus » : les contenus « ne peuvent pas être utilisés [...] à des fins d'entraînement ou de développement de tout logiciel ou système d'apprentissage automatique ou d'intelligence artificielle [...] sans l'autorisation écrite et préalable de RADIO FRANCE et de FRANCE TELEVISIONS, y compris lorsque le but poursuivi est non commercial » et « ne peuvent pas non plus être utilisés par des logiciels et/ou système d'intelligence artificielle pour générer du contenu » ; art. IX-1 : même interdiction, plus toute réutilisation sans accord écrit. Opposition : on ne lit pas."
   - nom: "France 3 Lorraine (Nancy)"
     origine: france3_lorraine
     flux:
       - https://france3-regions.franceinfo.fr/grand-est/meurthe-et-moselle/nancy/rss
     hotes: [france3-regions.franceinfo.fr, france3-regions.francetvinfo.fr]
-    reutilisation: non_opposee
-    note: "Flux Nancy actif (adresse canonique franceinfo.fr ; l’ancienne adresse francetvinfo.fr redirige, et son robots.txt redirigé est jugé illisible par Veille::RobotsPolicy) ; mentions légales de France Télévisions sans réserve de fouille trouvée ; robots.txt vide. À confirmer par le président."
+    reutilisation: restreinte
+    note: "Corrigé le 11/11/2026 (étape 5). CGU France Télévisions (https://www.francetelevisions.fr/cgu, relayées par https://www.franceinfo.fr/cgu.html), art. « 13. Politique de fouille de textes et de données (Text And Data Mining Policy) < TDM-RESERVATION: 1> » : « France Télévisions s'oppose à toutes opérations de moissonnage et de fouille de textes et de données au sens de l'article L. 122-5-3 du code de la propriété intellectuelle » ; 13.2 : « toute forme d'accès automatisé [...] dans le but d'extraire, copier, réutiliser, analyser ou entraîner un système algorithmique ou un modèle ou système d'intelligence artificielle, est interdite » sauf autorisation expresse, préalable et écrite. Opposition : on ne lit pas. Les flux RSS ne sont pas exclus de cette politique."
     categories_exclues: ["faits divers", "police", "justice", "sport", "météo", "politique", "élections"]
   - nom: "L'Est Républicain"
     origine: estrepublicain

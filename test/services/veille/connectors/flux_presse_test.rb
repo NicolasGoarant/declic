@@ -11,14 +11,22 @@ class Veille::ConnectorsFluxPresseTest < ActiveSupport::TestCase
 
   def fixture(nom) = File.read(Rails.root.join("test/fixtures/files/veille/#{nom}"))
 
+  # Mécanique du connecteur seule : on suppose ICI et France 3 autorisés par écrit (ils ne le sont pas, voir le
+  # registre ci-dessous), puisque Veille::AnnuairePresse.automatisables est vide depuis le 11/11/2026.
+  def sources_autorisees
+    Veille::AnnuairePresse.toutes.select { |s| %w[ici_lorraine france3_lorraine].include?(s.origine) }
+                          .each { |s| s.reutilisation = "non_opposee" }
+  end
+
   def lire(reponses)
-    Veille::Connectors::FluxPresse.new(http: FakeHttp.new(reponses), today: TODAY).call
+    Veille::Connectors::FluxPresse.new(sources: sources_autorisees, http: FakeHttp.new(reponses), today: TODAY).call
   end
 
   test "registre : les journaux dont les CGU s'opposent à la fouille de textes ne sont jamais lus" do
-    lues = Veille::AnnuairePresse.automatisables.map(&:origine)
-    assert_equal %w[france3_lorraine ici_lorraine], lues.sort
+    assert_empty Veille::AnnuairePresse.automatisables.map(&:origine), "aucune source de presse n'est lisible sans autorisation écrite"
     ecartees = Veille::AnnuairePresse.ecartees.map(&:origine)
+    assert_includes ecartees, "ici_lorraine"
+    assert_includes ecartees, "france3_lorraine"
     assert_includes ecartees, "estrepublicain"
     assert_includes ecartees, "republicain_lorrain"
     assert_includes ecartees, "vosges_matin"
