@@ -34,9 +34,20 @@ module Veille
           raise OrigineInterdite, "#{origine} : CGU opposées à la fouille de textes et à l'IA, aucune autorisation écrite déclarée."
         end
 
+        next histoires(n) if origine == "stories"
+
         tous = Veille::Candidate.where(origin: origine).order(:id).to_a
         retenus, autres = tous.partition { |c| Veille::Prefiltre.evaluer(titre: c.title, texte: c.full_text.presence || c.excerpt).retenu? }
         (retenus + autres).first(n)
+      end
+    end
+
+    # Belles Histoires déjà publiées (textes de Nicolas) : le type attendu est « belle_histoire ».
+    FauxCandidat = Struct.new(:title, :url, :origin, :full_text, :excerpt, :commune, :starts_on, :ends_on, :schedule_text, :published_on, keyword_init: true)
+
+    def histoires(n)
+      Story.where(is_active: true).order(:id).limit(n).map do |s|
+        FauxCandidat.new(title: s.title, url: s.source_url, origin: "stories", full_text: [s.chapo, s.body.to_s].join("\n\n"), excerpt: s.chapo, commune: s.city)
       end
     end
 
