@@ -204,7 +204,7 @@ bloquant met le brouillon « à vérifier » : `Validation` le refuse tant qu'il
 
 ### `Veille::Plafond` et le journal
 
-Budget mensuel d'après `veille_appels_ia`, réglable par `VEILLE_BUDGET_USD_MOIS` (15 $ par
+Budget mensuel d'après `veille_appels_ia`, réglable par `VEILLE_BUDGET_MENSUEL` (15 $ par
 défaut). Atteint, plus aucun appel ne part : `Veille::Plafond::Depasse`, journalisé, et le
 `Runner` s'arrête. `rake veille:cout[AAAA-MM]` donne l'état d'un mois.
 
@@ -307,7 +307,7 @@ candidats et les détache simplement.
 | Variable | Rôle |
 |---|---|
 | `ANTHROPIC_API_KEY` | obligatoire pour le classement et la rédaction |
-| `VEILLE_BUDGET_USD_MOIS` | plafond mensuel de l'API, en dollars (15 par défaut) |
+| `VEILLE_BUDGET_MENSUEL` | plafond mensuel de l'API, en dollars (15 par défaut) |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | authentification admin (HTTP Basic) |
 
 `ANTHROPIC_MODEL` n'est **pas** utilisé par la veille : chaque passe choisit
@@ -354,18 +354,18 @@ La fiche publiée est réécrite, avec un lien « Pour en savoir plus » vers la
 
 | Source | Flux | Décision |
 |---|---|---|
-| ICI Lorraine | `ici.fr/rss/{lorraine-nord,sud-lorraine}/a-la-une.xml` | **lue** (aucune opposition à la fouille trouvée ; à confirmer) |
-| France 3 Lorraine (Nancy) | `france3-regions.franceinfo.fr/grand-est/meurthe-et-moselle/nancy/rss` | **lue** (rubriques faits divers, sport, politique… écartées d'emblée) |
+| ICI Lorraine | `ici.fr/rss/{lorraine-nord,sud-lorraine}/a-la-une.xml` | **non lue** (11/11, étape 5) : CGU ICI art. VII et IX-1, usage par l'IA interdit sans accord écrit de Radio France et France Télévisions |
+| France 3 Lorraine (Nancy) | `france3-regions.franceinfo.fr/grand-est/meurthe-et-moselle/nancy/rss` | **non lue** (11/11, étape 5) : CGU France Télévisions art. 13 « Text And Data Mining Policy » : opposition expresse, IA comprise |
 | L'Est Républicain, Le Républicain Lorrain, Vosges Matin | flux existants | **non lus** : CGU « s'oppose à la fouille de textes et de données », usage IA compris (reste : lecture humaine `/admin/veille/presse`) |
 | Actu Nancy | aucun flux Nancy (404) | **non lu** : CGU identiques en esprit |
 
 ### Tri par IA (`Veille::AiEnricher`)
 
-- Modèle : `VEILLE_MODEL` (défaut `claude-sonnet-5-5`). Effort `low` (`VEILLE_EFFORT` pour changer ; non envoyé aux modèles antérieurs à la génération 5).
-- Escalade : si la confiance est entre **40 et 70 sur 100** (0,4 à 0,7), second passage avec `VEILLE_MODEL_ESCALADE` (défaut `claude-opus-5-5`) ; son avis remplace le premier, et un élément écarté au premier passage peut revenir dans la file. Désactivée si les deux modèles sont identiques.
+- Modèle : `VEILLE_MODEL` (défaut `claude-haiku-5-5`). Effort `low` (`VEILLE_EFFORT` pour changer ; non envoyé aux modèles antérieurs à la génération 5).
+- Escalade : si la confiance est entre **40 et 70 sur 100** (0,4 à 0,7), second passage avec `VEILLE_MODEL_ESCALADE` (défaut `claude-sonnet-5-5` ; Opus par configuration : `claude-opus-5-5`) ; son avis remplace le premier, et un élément écarté au premier passage peut revenir dans la file. Désactivée si les deux modèles sont identiques.
 - Sortie : type, famille (d'où la catégorie), commune et zone (appartenance au Grand Nancy), dates, confiance 0-100, résumé réécrit en deux phrases, motif. Le score est stocké sur 100 (0,55 = 55).
 - Le **doublon** n'est pas jugé par l'IA : `Candidate.doublon?` le fait avant tout appel (même URL ; ou même titre normalisé à la même date, ou à la même origine sans date).
-- Jetons : chaque appel est une ligne de `veille_appels_ia` (modèle, passe `enrichissement`/`escalade`/`redaction`, entrée, sortie, coût). Le journal de chaque exécution (`[Veille] bilan`) donne les jetons par modèle ; `/admin/veille` affiche la dépense du mois contre le plafond (`VEILLE_BUDGET_USD_MOIS`).
+- Jetons : chaque appel est une ligne de `veille_appels_ia` (modèle, passe `enrichissement`/`escalade`/`redaction`, entrée, sortie, coût). Le journal de chaque exécution (`[Veille] bilan`) donne les jetons par modèle ; `/admin/veille` affiche la dépense du mois contre le plafond (`VEILLE_BUDGET_MENSUEL`).
 
 ### Validation humaine
 
@@ -381,4 +381,11 @@ Boutons : **Valider** (publie, `Veille::Validation`), **Écarter**, **À vérifi
 | France Bénévolat | **écartée** | ni flux ni API ; HTML seul, `Crawl-delay: 10` ; JeVeuxAider (API Engagement) couvre déjà le bénévolat |
 | EFS (collectes de sang) | **écartée** | seule l'API cartographique interne du site existe, sans conditions de réutilisation publiées ; non sondée |
 
-Variables : `VEILLE_MODEL`, `VEILLE_MODEL_ESCALADE`, `VEILLE_EFFORT`, `VEILLE_BUDGET_USD_MOIS`.
+Variables : `VEILLE_MODEL`, `VEILLE_MODEL_ESCALADE`, `VEILLE_EFFORT`, `VEILLE_BUDGET_MENSUEL` (l'ancien nom `VEILLE_BUDGET_USD_MOIS` reste lu), `VEILLE_PRESSE_ACTIVE`.
+
+### Sécurisation, coût, mesure (étapes 0 à 7 du 11/11/2026)
+
+- **Préfiltre en code** (`Veille::Prefiltre`, `config/veille/prefiltre.yml`) : appliqué aux flux de presse avant stockage et avant tout appel IA. Retenu = territoire (20 communes du Grand Nancy, Meurthe-et-Moselle, Lorraine…) ET thème Déclic (engagement, bénévolat, associations, entrepreneuriat, solidarité, écologie, portraits, initiatives) ET aucune exclusion (sport, faits divers, météo, politique nationale, horoscope). Mots entiers, sans accents ni casse ; les listes se modifient sans toucher au code. Le journal du run donne : `[Veille] préfiltre presse — reçus N, retenus N, écartés N (motifs)`. Les autres sources (agenda, communes) ne sont pas préfiltrées.
+- **Plafond** : `VEILLE_BUDGET_MENSUEL` (15 $), calculé sur `veille_appels_ia`. Atteint : aucun appel ne part, les éléments restent `pending` sans enrichissement (« non triés ») et `/admin/veille` affiche un bandeau.
+- **Interrupteur** `VEILLE_PRESSE_ACTIVE` (défaut faux) : tant qu'il n'est pas `true`/`1`/`oui`, `FluxPresse` sort du job quotidien (`Runner.quotidien`) et les éléments de presse déjà stockés ne sont pas envoyés à l'IA. **Ne pas l'allumer** : les deux flux sont aujourd'hui `restreinte` (voir ci-dessus) et le connecteur n'a plus aucune source.
+- **Banc d'essai** : `rake veille:banc_essai` (clé dans `.env`) trie les mêmes candidats avec Haiku 5.5 puis Sonnet 5.5, écrit un CSV (types, scores, jetons, coût, colonne « avis de Nicolas ») et donne accord et coût pour 100 éléments. Refuse les origines de presse restreintes sauf `AUTORISATION_ECRITE=1`.
