@@ -1,0 +1,57 @@
+# Flux RSS de la presse locale lus par Veille::Connectors::FluxPresse (Belles Histoires surtout).
+# Établi le 11/11/2026 : existence du flux vérifiée par requête, robots.txt et conditions d'utilisation lus.
+#
+#   origine        clé stockée dans veille_candidates.origin (libellé : Veille::Candidate::ORIGINS)
+#   flux           URL(s) exacte(s) du flux
+#   hotes          hôtes autorisés pour les liens d'articles (un lien étranger n'entre jamais)
+#   reutilisation  non_opposee : aucune opposition à la fouille de textes trouvée, flux public, robots.txt muet
+#                                pour un robot générique ; le connecteur lit (titre, lien, date, extrait du flux seulement)
+#                  restreinte  : conditions d'utilisation qui s'opposent expressément à la fouille de textes et de
+#                                données et à l'usage par IA ; le connecteur NE LIT PAS (voir Connectors::Presse,
+#                                lecture humaine /admin/veille/presse)
+#                  sans_flux   : aucun flux local exploitable
+#   categories_exclues  rubriques du flux écartées avant tout appel IA (économie de jetons)
+sources:
+  - nom: "ICI Lorraine (Radio France)"
+    origine: ici_lorraine
+    flux:
+      - https://www.ici.fr/rss/lorraine-nord/a-la-une.xml
+      - https://www.ici.fr/rss/sud-lorraine/a-la-une.xml
+    hotes: [www.ici.fr]
+    reutilisation: non_opposee
+    note: "Mentions légales : reproduction interdite sans autorisation, mais aucune réserve de fouille de textes ; robots.txt ne bloque que GPTBot, ChatGPT-User, Google-Extended. À confirmer par le président."
+  - nom: "France 3 Lorraine (Nancy)"
+    origine: france3_lorraine
+    flux:
+      - https://france3-regions.franceinfo.fr/grand-est/meurthe-et-moselle/nancy/rss
+    hotes: [france3-regions.franceinfo.fr, france3-regions.francetvinfo.fr]
+    reutilisation: non_opposee
+    note: "Flux Nancy actif (adresse canonique franceinfo.fr ; l’ancienne adresse francetvinfo.fr redirige, et son robots.txt redirigé est jugé illisible par Veille::RobotsPolicy) ; mentions légales de France Télévisions sans réserve de fouille trouvée ; robots.txt vide. À confirmer par le président."
+    categories_exclues: ["faits divers", "police", "justice", "sport", "météo", "politique", "élections"]
+  - nom: "L'Est Républicain"
+    origine: estrepublicain
+    flux:
+      - https://www.estrepublicain.fr/edition-nancy-et-agglomeration/rss
+    hotes: [www.estrepublicain.fr]
+    reutilisation: restreinte
+    note: "CGU (/cgu) : « la Société s'oppose à la fouille de textes et de données sur l'ensemble du Site web », y compris collecte automatisée et usage par IA."
+  - nom: "Le Républicain Lorrain"
+    origine: republicain_lorrain
+    flux:
+      - https://www.republicain-lorrain.fr/rss
+    hotes: [www.republicain-lorrain.fr]
+    reutilisation: restreinte
+    note: "Mêmes CGU que L'Est Républicain (même groupe) : opposition expresse à la fouille de textes et de données."
+  - nom: "Vosges Matin"
+    origine: vosges_matin
+    flux:
+      - https://www.vosgesmatin.fr/rss
+    hotes: [www.vosgesmatin.fr]
+    reutilisation: restreinte
+    note: "Mêmes CGU que L'Est Républicain (même groupe). Hors Meurthe-et-Moselle de toute façon."
+  - nom: "Actu Nancy (actu.fr)"
+    origine: actu_nancy
+    flux: []
+    hotes: [actu.fr]
+    reutilisation: sans_flux
+    note: "Aucun flux Nancy (actu.fr/nancy/rss.xml : 404) ; seul le flux national existe. CGU : opposition expresse à la fouille de textes et de données."

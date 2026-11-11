@@ -23,6 +23,8 @@ module Veille
       "gazette"         => "La Gazette France",
       "presse"          => "Presse locale",
       "communes"        => "Sites des communes",
+      "ici_lorraine"    => "ICI Lorraine",
+      "france3_lorraine" => "France 3 Lorraine",
       "commune_manuel"  => "Commune (lecture manuelle)",
       "import_xlsx"     => "Repérage initial"
     }.freeze

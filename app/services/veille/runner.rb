@@ -16,9 +16,9 @@ module Veille
     # Transentreprise retiré le 03/11/2026 : ses mentions légales interdisent, sans autorisation écrite, la
     # collecte automatisée des annonces et la réutilisation de ses flux RSS (rapports/veille-entreprendre-2026-11-03.md).
     # Connecteur conservé, non lancé, comme la Gazette et JeVeuxAider.
-    QUOTIDIEN   = [Connectors::AgendaNancy, Connectors::Communes].freeze
+    QUOTIDIEN   = [Connectors::AgendaNancy, Connectors::Communes, Connectors::FluxPresse].freeze
     # Ordre de priorité du cahier des charges, pour répartir les 30 appels.
-    PRIORITE = %w[agenda_nancy communes].freeze
+    PRIORITE = %w[agenda_nancy communes ici_lorraine france3_lorraine].freeze
 
     Rapport = Struct.new(:sources, :crees, :doublons, :hors_zone, :passes, :enrichis, :ecartes, :erreurs_ia,
                          :cout_usd, :restants, :plafond, :rediges, :redaction_bloquee, :erreurs_redaction,
