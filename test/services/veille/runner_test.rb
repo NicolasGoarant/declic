@@ -277,4 +277,17 @@ class Veille::RunnerTest < ActiveSupport::TestCase
     runner([], enricher: enricher).run
     assert_equal ["Import manuel"], enricher.vus.map(&:title)
   end
+
+  test "plafond atteint : aucun appel IA, les éléments restent non triés (pending, sans enrichissement)" do
+    Veille::AppelIa.create!(passe: "enrichissement", modele: "m", statut: "ok", cout_usd: Veille::Plafond.budget)
+    enricher = Veille::AiEnricher.new(client: Object.new) # un appel réseau lèverait NoMethodError
+    items = 3.times.map { |i| item(title: "Élément #{i}", starts_on: Date.new(2026, 11, 20 + i)) }
+    rapport = runner([FauxConnecteur.new("Agenda", items: items)], enricher: enricher).run
+
+    assert rapport.plafond
+    assert_equal 0, rapport.enrichis
+    assert_equal 3, Veille::Candidate.a_enrichir.count
+    assert_equal ["pending"], Veille::Candidate.distinct.pluck(:status)
+    assert_nil Veille::Candidate.where.not(enriched_at: nil).first
+  end
 end

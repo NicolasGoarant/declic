@@ -9,10 +9,10 @@ module Veille
   #
   # Haiku suffit : tâche de classification sur un texte court, en lot.
   class AiEnricher < AiPass
-    # Modèle du tri : ENV["VEILLE_MODEL"] (Sonnet 5.5 par défaut). Seconde passe sur les scores
-    # incertains (40 à 70 sur 100, soit 0,4 à 0,7) : ENV["VEILLE_MODEL_ESCALADE"] (Opus 5.5 par défaut).
-    DEFAUT_MODEL    = "claude-sonnet-5-5"
-    DEFAUT_ESCALADE = "claude-opus-5-5"
+    # Modèle du tri : ENV["VEILLE_MODEL"] (Haiku 5.5 par défaut). Seconde passe sur les scores
+    # incertains (40 à 70 sur 100, soit 0,4 à 0,7) : ENV["VEILLE_MODEL_ESCALADE"] (Sonnet 5.5 par défaut ; Opus reste possible par configuration).
+    DEFAUT_MODEL    = "claude-haiku-5-5"
+    DEFAUT_ESCALADE = "claude-sonnet-5-5"
     MODEL        = DEFAUT_MODEL
     ESCALADE_MIN = 40
     ESCALADE_MAX = 70

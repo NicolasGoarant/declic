@@ -1,4 +1,11 @@
 <h1>Veille</h1>
+<% if @plafond.atteint? %>
+  <div role="alert" id="bandeau-plafond" style="margin:10px 0;padding:10px 14px;border:2px solid #b45309;background:#fffbeb;color:#78350f;border-radius:6px">
+    <strong>Plafond mensuel atteint</strong> : <%= number_with_precision(@plafond.depense, precision: 2) %> $ dépensés sur <%= number_with_precision(@plafond.budget, precision: 2) %> $.
+    Les appels IA sont arrêtés jusqu'au mois prochain (ou jusqu'à un plafond relevé par <code>VEILLE_BUDGET_MENSUEL</code>) :
+    <%= pluralize(@counts[:non_tries], "élément reste", "éléments restent") %> « non trié(s) ».
+  </div>
+<% end %>
 <p class="muted small" id="compteurs"><%= render "compteurs", counts: @counts %></p>
 
 <p style="margin:14px 0">

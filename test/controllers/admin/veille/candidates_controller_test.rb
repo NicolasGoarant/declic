@@ -358,6 +358,18 @@ module Admin
         assert_match %r{action="#{Regexp.escape(valider_admin_veille_candidate_path(o))}"}, response.body
         assert_no_match %r{action="#{Regexp.escape(valider_admin_veille_candidate_path(h))}"}, response.body
       end
+
+      test "un bandeau signale le plafond mensuel atteint et les éléments non triés" do
+        candidat(title: "En attente de tri")
+        get admin_veille_candidates_path, headers: auth
+        assert_no_match "bandeau-plafond", response.body
+
+        ::Veille::AppelIa.create!(passe: "enrichissement", modele: "m", statut: "ok", cout_usd: ::Veille::Plafond.budget + 1)
+        get admin_veille_candidates_path, headers: auth
+        assert_select "#bandeau-plafond", /Plafond mensuel atteint/
+        assert_match(/1 élément reste/, texte)
+        assert_match(/1 non trié\(s\)/, texte)
+      end
     end
   end
 end

@@ -31,11 +31,12 @@ class Veille::AiEnricherEscaladeTest < ActiveSupport::TestCase
     [c.reload, client]
   end
 
-  test "modèle par défaut : Sonnet 5.5 ; escalade par défaut : Opus 5.5" do
+  test "modèle par défaut : Haiku 5.5 ; escalade par défaut : Sonnet 5.5" do
     avec_env("VEILLE_MODEL" => nil, "VEILLE_MODEL_ESCALADE" => nil) do
-      assert_equal "claude-sonnet-5-5", Veille::AiEnricher.model
-      assert_equal "claude-opus-5-5", Veille::AiEnricher.model_escalade
+      assert_equal "claude-haiku-5-5", Veille::AiEnricher.model
+      assert_equal "claude-sonnet-5-5", Veille::AiEnricher.model_escalade
     end
+    avec_env("VEILLE_MODEL" => nil, "VEILLE_MODEL_ESCALADE" => "claude-opus-5-5") { assert_equal "claude-opus-5-5", Veille::AiEnricher.model_escalade }
   end
 
   test "VEILLE_MODEL et VEILLE_MODEL_ESCALADE changent les modèles appelés" do
@@ -62,7 +63,7 @@ class Veille::AiEnricherEscaladeTest < ActiveSupport::TestCase
       assert_equal 2, client.calls.size, "score #{score}"
       assert_equal 90, c.score
       assert_equal "Second avis. Deux.", c.summary
-      assert_match "Second avis (claude-opus-5-5, premier score #{score})", c.reason
+      assert_match "Second avis (claude-sonnet-5-5, premier score #{score})", c.reason
     end
   end
 

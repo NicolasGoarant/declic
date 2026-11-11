@@ -22,7 +22,7 @@ class Veille::JournalIaTest < ActiveSupport::TestCase
     assert_equal "enrichissement", appel.passe
     assert_equal Veille::AiEnricher::MODEL, appel.modele
     assert_equal [1_000_000, 100_000], [appel.input_tokens, appel.output_tokens]
-    assert_in_delta 3.0, appel.cout_usd.to_f, 0.0001
+    assert_in_delta 0.15, appel.cout_usd.to_f, 0.0001
     assert_not_nil appel.duree_ms
   end
 
@@ -42,7 +42,7 @@ class Veille::JournalIaTest < ActiveSupport::TestCase
     assert_raises(Veille::AiPass::ParseError) { enricher(text: "pas du json").enrich(c) }
     appel = c.appels_ia.sole
     assert_equal "illisible", appel.statut
-    assert_in_delta 3.0, appel.cout_usd.to_f, 0.0001
+    assert_in_delta 0.15, appel.cout_usd.to_f, 0.0001
   end
 
   test "le plafond mensuel bloque l'appel avant tout envoi et le journalise" do
@@ -67,11 +67,12 @@ class Veille::JournalIaTest < ActiveSupport::TestCase
     assert Veille::Plafond.atteint?(1.month.ago.to_date)
   end
 
-  test "le plafond vaut 15 $ par défaut et se règle par VEILLE_BUDGET_USD_MOIS" do
-    assert_equal 15.0, Veille::Plafond.budget
-    avec_env("VEILLE_BUDGET_USD_MOIS" => "2.5") { assert_equal 2.5, Veille::Plafond.budget }
-    avec_env("VEILLE_BUDGET_USD_MOIS" => "n'importe quoi") { assert_equal 15.0, Veille::Plafond.budget }
-    avec_env("VEILLE_BUDGET_USD_MOIS" => "0") { assert_equal 15.0, Veille::Plafond.budget }
+  test "le plafond vaut 15 $ par défaut et se règle par VEILLE_BUDGET_MENSUEL" do
+    avec_env("VEILLE_BUDGET_MENSUEL" => nil, "VEILLE_BUDGET_USD_MOIS" => nil) { assert_equal 15.0, Veille::Plafond.budget }
+    avec_env("VEILLE_BUDGET_MENSUEL" => "2.5") { assert_equal 2.5, Veille::Plafond.budget }
+    avec_env("VEILLE_BUDGET_MENSUEL" => "n'importe quoi") { assert_equal 15.0, Veille::Plafond.budget }
+    avec_env("VEILLE_BUDGET_MENSUEL" => "0") { assert_equal 15.0, Veille::Plafond.budget }
+    avec_env("VEILLE_BUDGET_MENSUEL" => nil, "VEILLE_BUDGET_USD_MOIS" => "3") { assert_equal 3.0, Veille::Plafond.budget }
   end
 
   test "supprimer un candidat conserve son journal" do

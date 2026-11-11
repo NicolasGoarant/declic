@@ -29,6 +29,7 @@ module Admin
         @candidates = @candidates.a_localiser if @filtres[:a_localiser].present?
 
         @counts = compteurs
+        @plafond = ::Veille::Cout.etat_du_mois
       end
 
       def show; end
@@ -213,7 +214,8 @@ module Admin
           a_localiser: ::Veille::Candidate.a_localiser.count,
           retenu:  ::Veille::Candidate.retenu.count,
           ecarte:  ::Veille::Candidate.ecarte.count,
-          publie:  ::Veille::Candidate.publie.count
+          publie:  ::Veille::Candidate.publie.count,
+          non_tries: ::Veille::Candidate.a_enrichir.count
         }
       end
     end
