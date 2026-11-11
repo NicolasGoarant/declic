@@ -290,4 +290,40 @@ class Veille::RunnerTest < ActiveSupport::TestCase
     assert_equal ["pending"], Veille::Candidate.distinct.pluck(:status)
     assert_nil Veille::Candidate.where.not(enriched_at: nil).first
   end
+
+  def avec_presse(valeur)
+    avant = ENV["VEILLE_PRESSE_ACTIVE"]
+    valeur.nil? ? ENV.delete("VEILLE_PRESSE_ACTIVE") : ENV["VEILLE_PRESSE_ACTIVE"] = valeur
+    yield
+  ensure
+    avant.nil? ? ENV.delete("VEILLE_PRESSE_ACTIVE") : ENV["VEILLE_PRESSE_ACTIVE"] = avant
+  end
+
+  test "VEILLE_PRESSE_ACTIVE : la presse est hors du job quotidien tant que l'interrupteur n'est pas vrai" do
+    [nil, "", "false", "0", "non"].each do |v|
+      avec_presse(v) do
+        assert_not Veille::Runner.presse_active?, v.inspect
+        assert_not_includes Veille::Runner.quotidien, Veille::Connectors::FluxPresse
+        assert_includes Veille::Runner.quotidien, Veille::Connectors::Communes
+      end
+    end
+    %w[true TRUE 1 oui].each do |v|
+      avec_presse(v) { assert_includes Veille::Runner.quotidien, Veille::Connectors::FluxPresse, v }
+    end
+  end
+
+  test "interrupteur éteint : les éléments de presse déjà stockés ne sont pas envoyés à l'IA" do
+    presse = Veille::Candidate.create!(origin: "ici_lorraine", url: "https://www.ici.fr/a", title: "Nancy : appel à bénévoles", fetched_at: Time.current)
+    agenda = Veille::Candidate.create!(origin: "agenda_nancy", url: "https://exemple.fr/b", title: "Concert", starts_on: Date.new(2026, 11, 20), fetched_at: Time.current)
+    avec_presse(nil) do
+      enricher = FauxEnricher.new
+      runner([], enricher: enricher).run
+      assert_equal [agenda], enricher.vus
+    end
+    avec_presse("true") do
+      enricher = FauxEnricher.new
+      runner([], enricher: enricher).run
+      assert_equal [presse], enricher.vus
+    end
+  end
 end

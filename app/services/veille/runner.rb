@@ -17,6 +17,14 @@ module Veille
     # collecte automatisée des annonces et la réutilisation de ses flux RSS (rapports/veille-entreprendre-2026-11-03.md).
     # Connecteur conservé, non lancé, comme la Gazette et JeVeuxAider.
     QUOTIDIEN   = [Connectors::AgendaNancy, Connectors::Communes, Connectors::FluxPresse].freeze
+    # Interrupteur de la presse (ICI Lorraine, France 3 Nancy) dans le job quotidien : éteint tant que
+    # ENV["VEILLE_PRESSE_ACTIVE"] n'est pas « true » (ou 1, oui, on).
+    PRESSE_VALEURS_ON = %w[true 1 oui yes on].freeze
+
+    def self.presse_active? = PRESSE_VALEURS_ON.include?(ENV["VEILLE_PRESSE_ACTIVE"].to_s.strip.downcase)
+
+    # Connecteurs du job quotidien selon l'interrupteur.
+    def self.quotidien = presse_active? ? QUOTIDIEN : QUOTIDIEN - [Connectors::FluxPresse]
     # Ordre de priorité du cahier des charges, pour répartir les 30 appels.
     PRIORITE = %w[agenda_nancy communes ici_lorraine france3_lorraine].freeze
 
@@ -24,7 +32,7 @@ module Veille
                          :cout_usd, :restants, :plafond, :rediges, :redaction_bloquee, :erreurs_redaction,
                          :a_rediger_restants, :tokens, :prefiltre, keyword_init: true)
 
-    def initialize(connecteurs: QUOTIDIEN, ingester: RawIngester.new, enricher: nil, redacteur: nil,
+    def initialize(connecteurs: self.class.quotidien, ingester: RawIngester.new, enricher: nil, redacteur: nil,
                    max: MAX_ENRICHIS, max_rediges: MAX_REDIGES, logger: Rails.logger, http: nil)
       @http       = http
       @connecteurs = connecteurs
@@ -93,7 +101,9 @@ module Veille
     end
 
     def enrichir(rapport)
-      file = Veille::Candidate.a_enrichir.to_a.sort_by do |c|
+      file = Veille::Candidate.a_enrichir.to_a
+      file.reject! { |c| Candidate::ORIGINES_FLUX_PRESSE.include?(c.origin) } unless self.class.presse_active?
+      file = file.sort_by do |c|
         [PRIORITE.index(c.origin) || PRIORITE.size, c.starts_on || Date.new(9999), c.id]
       end
       rapport.restants = [file.size - @max, 0].max
