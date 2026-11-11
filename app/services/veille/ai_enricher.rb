@@ -9,12 +9,19 @@ module Veille
   #
   # Haiku suffit : tâche de classification sur un texte court, en lot.
   class AiEnricher < AiPass
-    MODEL        = "claude-haiku-4-5-20251001"
+    # Modèle du tri : ENV["VEILLE_MODEL"] (Sonnet 5.5 par défaut). Seconde passe sur les scores
+    # incertains (40 à 70 sur 100, soit 0,4 à 0,7) : ENV["VEILLE_MODEL_ESCALADE"] (Opus 5.5 par défaut).
+    DEFAUT_MODEL    = "claude-sonnet-5-5"
+    DEFAUT_ESCALADE = "claude-opus-5-5"
+    MODEL        = DEFAUT_MODEL
+    ESCALADE_MIN = 40
+    ESCALADE_MAX = 70
     PASSE        = "enrichissement"
     TIMEOUT      = 30
     OPEN_TIMEOUT = 5
     RETRIES      = 1
-    MAX_TOKENS   = 1000
+    # Large : la réflexion adaptative des modèles 5.x compte dans max_tokens (une réponse tronquée est illisible).
+    MAX_TOKENS   = 4000
     # Plafond de texte envoyé : borne le coût, et une fiche d'agenda ou une annonce n'en demande pas plus.
     MAX_TEXTE    = 3_000
     # Citation maximale autorisée dans un résumé, en mots.
@@ -144,6 +151,17 @@ module Veille
       Réponds UNIQUEMENT par l'objet JSON demandé.
     TXT
 
+    def self.model          = ENV["VEILLE_MODEL"].presence || DEFAUT_MODEL
+    def self.model_escalade = ENV["VEILLE_MODEL_ESCALADE"].presence || DEFAUT_ESCALADE
+
+    # Effort bas : classer un texte court n'a pas besoin de réflexion longue. Réglable par VEILLE_EFFORT ;
+    # absent pour les modèles qui ne le connaissent pas (Haiku 4.5 et antérieurs).
+    def self.effort_pour(modele)
+      return nil unless modele.to_s.match?(/(sonnet|opus|haiku|fable)-5/)
+
+      ENV["VEILLE_EFFORT"].presence || "low"
+    end
+
     # Pur : paramètres de requête, sans réseau.
     def self.prompt_for(title:, text:, origin: nil, commune: nil, starts_on: nil, ends_on: nil, schedule_text: nil,
                         published_on: nil, today: nil)
@@ -162,16 +180,32 @@ module Veille
       json_schema_params(system: SYSTEM_PROMPT, user: lignes.join("\n"), schema: SCHEMA, max_tokens: MAX_TOKENS)
     end
 
+    def self.params_pour(modele, params)
+      effort = effort_pour(modele)
+      return params unless effort
+
+      params.merge(output_config: params[:output_config].merge(effort: effort))
+    end
+
     # Interroge le modèle, applique la réponse au candidat et l'enregistre.
     # Lève AnthropicClient::Error ou AiPass::ParseError : l'appelant décide.
     def enrich(candidate, today: Date.current)
-      result = run(self.class.prompt_for(
+      params = self.class.prompt_for(
         title: candidate.title, text: candidate.full_text.presence || candidate.excerpt, origin: candidate.origin,
         commune: candidate.commune, starts_on: candidate.starts_on, ends_on: candidate.ends_on,
         schedule_text: candidate.schedule_text, published_on: candidate.published_on, today: today
-      ), candidate: candidate)
+      )
+      result = run(self.class.params_pour(self.class.model, params), candidate: candidate)
       apply(candidate, result, today: today)
+      escalader(candidate, params, today: today)
       candidate
+    end
+
+    # Consommation de tous les appels du dernier #enrich (premier passage + escalade éventuelle).
+    def usages = @usages ||= []
+
+    def escalade_utile?(candidate)
+      candidate.score&.between?(ESCALADE_MIN, ESCALADE_MAX) && self.class.model_escalade != self.class.model
     end
 
     # Applique la réponse du modèle au candidat. Public et sans réseau : c'est là
@@ -227,6 +261,21 @@ module Veille
     end
 
     private
+
+    # Second passage, avec le modèle plus fort, sur un score incertain. Son avis remplace le premier ;
+    # un élément écarté au premier passage peut donc revenir dans la file.
+    def escalader(candidate, params, today:)
+      @usages = [usage]
+      return unless escalade_utile?(candidate)
+
+      modele = self.class.model_escalade
+      premier = candidate.score
+      result = run(self.class.params_pour(modele, params), candidate: candidate, model: modele, passe: "escalade")
+      @usages << usage
+      candidate.update!(status: "pending", discard_reason: nil) if candidate.ecarte?
+      apply(candidate, result, today: today)
+      candidate.update!(reason: "Second avis (#{modele}, premier score #{premier}) : #{candidate.reason}".squish.slice(0, 500))
+    end
 
     # Nom de lieu relevé par l'IA, utilisé comme « Adresse » (géocodée à la validation). Agenda Grand
     # Nancy seulement : la presse n'a pas de texte source lu automatiquement. Jamais d'écrasement d'une

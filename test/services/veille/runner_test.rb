@@ -22,6 +22,9 @@ class Veille::RunnerTest < ActiveSupport::TestCase
     def enrich(c)
       @vus << c
       c.update!(item_type: "opportunite", declic_category: "decouvrir", commune: "Nancy", summary: "R.", enriched_at: Time.current)
+      # Le coût du bilan est lu dans le journal des appels : la doublure y écrit comme le ferait AiPass.
+      Veille::AppelIa.create!(candidate: c, passe: "enrichissement", modele: "claude-haiku-4-5-20251001", statut: "ok",
+                              input_tokens: 1000, output_tokens: 200, cout_usd: 0.002)
     end
   end
 
@@ -87,6 +90,7 @@ class Veille::RunnerTest < ActiveSupport::TestCase
     # 1000 tokens d'entrée + 200 de sortie, tarif Haiku : 0,001 + 0,001 = 0,0020 USD
     assert_match(/coût estimé 0\.0020 USD/, io.string)
     assert_match(/enrichis 1/, io.string)
+    assert_match(/jetons : claude-haiku-4-5-20251001=1 appel\(s\) 1000 entrée \/ 200 sortie/, io.string)
   end
 
   test "une erreur d'API sur un élément n'empêche pas les suivants" do
@@ -96,6 +100,9 @@ class Veille::RunnerTest < ActiveSupport::TestCase
       appels += 1
       raise AnthropicClient::ConnectionError, "timeout" if appels == 1
       c.update!(item_type: "opportunite", declic_category: "decouvrir", commune: "Nancy", summary: "R.", enriched_at: Time.current)
+      # Le coût du bilan est lu dans le journal des appels : la doublure y écrit comme le ferait AiPass.
+      Veille::AppelIa.create!(candidate: c, passe: "enrichissement", modele: "claude-haiku-4-5-20251001", statut: "ok",
+                              input_tokens: 1000, output_tokens: 200, cout_usd: 0.002)
     end
     rapport = runner([FauxConnecteur.new("A", items: [item(title: "Un"), item(title: "Deux")])], enricher: enricher).run
 
@@ -253,7 +260,7 @@ class Veille::RunnerTest < ActiveSupport::TestCase
   end
 
   test "la veille quotidienne ne lance ni la presse, ni la Gazette, ni JeVeuxAider, ni Transentreprise" do
-    assert_equal [Veille::Connectors::AgendaNancy, Veille::Connectors::Communes], Veille::Runner::QUOTIDIEN
+    assert_equal [Veille::Connectors::AgendaNancy, Veille::Connectors::Communes, Veille::Connectors::FluxPresse], Veille::Runner::QUOTIDIEN
     assert_not_includes Veille::Runner::QUOTIDIEN, Veille::Connectors::Transentreprise
   end
 

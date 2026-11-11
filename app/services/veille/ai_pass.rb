@@ -13,6 +13,9 @@ module Veille
   class AiPass
     class ParseError < StandardError; end
 
+    # Modèle de la passe. Surchargeable par classe (AiEnricher lit ENV["VEILLE_MODEL"]).
+    def self.model = self::MODEL
+
     # Consommation du dernier appel : { "input_tokens" => n, "output_tokens" => n }.
     attr_reader :usage
 
@@ -44,7 +47,7 @@ module Veille
 
     def client
       @client ||= AnthropicClient.new(
-        model:        self.class::MODEL,
+        model:        self.class.model,
         timeout:      self.class::TIMEOUT,
         open_timeout: self.class::OPEN_TIMEOUT,
         retries:      self.class::RETRIES
@@ -54,11 +57,14 @@ module Veille
     # Envoie la requête et rend le hash parsé. Chaque appel est journalisé
     # (Veille::AppelIa) avec sa consommation et son coût estimé, qu'il réussisse
     # ou non ; le plafond mensuel est vérifié avant tout envoi.
-    def run(params, candidate: nil)
+    # `model:` et `passe:` servent à l'escalade : même requête, autre modèle, autre ligne de journal.
+    def run(params, candidate: nil, model: nil, passe: nil)
+      @modele_appel = model || self.class.model
+      @passe_appel  = passe || self.class::PASSE
       verifier_plafond(candidate)
       debut = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       begin
-        response = client.messages(**params)
+        response = client.messages(**params, model: @modele_appel)
       rescue AnthropicClient::Error => e
         journaliser(candidate, "erreur_api", debut, erreur: "#{e.class.name.demodulize} : #{e.message.slice(0, 300)}")
         raise
@@ -87,9 +93,9 @@ module Veille
 
     def journaliser(candidate, statut, debut, usage: nil, erreur: nil)
       Veille::AppelIa.create!(
-        candidate: candidate, passe: self.class::PASSE, modele: self.class::MODEL, statut: statut,
+        candidate: candidate, passe: @passe_appel || self.class::PASSE, modele: @modele_appel || self.class.model, statut: statut,
         input_tokens: usage.to_h["input_tokens"].to_i, output_tokens: usage.to_h["output_tokens"].to_i,
-        cout_usd: Veille::Cout.estimer(self.class::MODEL, usage), erreur: erreur,
+        cout_usd: Veille::Cout.estimer(@modele_appel || self.class.model, usage), erreur: erreur,
         duree_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - debut) * 1000).round
       )
     end

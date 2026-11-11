@@ -7,7 +7,7 @@ require_relative "fake_anthropic_client"
 class Veille::JournalIaTest < ActiveSupport::TestCase
   include VeilleSupport
 
-  USAGE = { "input_tokens" => 1_000_000, "output_tokens" => 100_000 }.freeze # Haiku : 1 $ + 0,5 $
+  USAGE = { "input_tokens" => 1_000_000, "output_tokens" => 100_000 }.freeze # Sonnet 5.5 : 2 $ + 1 $
 
   def enricher(text: reponse_ia.to_json, raise_with: nil, usage: USAGE)
     Veille::AiEnricher.new(client: FakeAnthropicClient.new(text: text, raise_with: raise_with, usage: usage))
@@ -22,7 +22,7 @@ class Veille::JournalIaTest < ActiveSupport::TestCase
     assert_equal "enrichissement", appel.passe
     assert_equal Veille::AiEnricher::MODEL, appel.modele
     assert_equal [1_000_000, 100_000], [appel.input_tokens, appel.output_tokens]
-    assert_in_delta 1.5, appel.cout_usd.to_f, 0.0001
+    assert_in_delta 3.0, appel.cout_usd.to_f, 0.0001
     assert_not_nil appel.duree_ms
   end
 
@@ -42,7 +42,7 @@ class Veille::JournalIaTest < ActiveSupport::TestCase
     assert_raises(Veille::AiPass::ParseError) { enricher(text: "pas du json").enrich(c) }
     appel = c.appels_ia.sole
     assert_equal "illisible", appel.statut
-    assert_in_delta 1.5, appel.cout_usd.to_f, 0.0001
+    assert_in_delta 3.0, appel.cout_usd.to_f, 0.0001
   end
 
   test "le plafond mensuel bloque l'appel avant tout envoi et le journalise" do

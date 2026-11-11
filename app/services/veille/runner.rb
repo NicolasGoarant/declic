@@ -22,7 +22,7 @@ module Veille
 
     Rapport = Struct.new(:sources, :crees, :doublons, :hors_zone, :passes, :enrichis, :ecartes, :erreurs_ia,
                          :cout_usd, :restants, :plafond, :rediges, :redaction_bloquee, :erreurs_redaction,
-                         :a_rediger_restants, keyword_init: true)
+                         :a_rediger_restants, :tokens, keyword_init: true)
 
     def initialize(connecteurs: QUOTIDIEN, ingester: RawIngester.new, enricher: nil, redacteur: nil,
                    max: MAX_ENRICHIS, max_rediges: MAX_REDIGES, logger: Rails.logger, http: nil)
@@ -39,7 +39,8 @@ module Veille
     def run
       rapport = Rapport.new(sources: [], crees: 0, doublons: 0, hors_zone: 0, passes: 0,
                             enrichis: 0, ecartes: 0, erreurs_ia: 0, cout_usd: 0.0, restants: 0, plafond: false,
-                            rediges: 0, redaction_bloquee: 0, erreurs_redaction: 0, a_rediger_restants: 0)
+                            rediges: 0, redaction_bloquee: 0, erreurs_redaction: 0, a_rediger_restants: 0, tokens: {})
+      @depart_journal = Veille::AppelIa.maximum(:id).to_i
       collecter(rapport)
       enrichir(rapport)
       rediger(rapport)
@@ -52,7 +53,8 @@ module Veille
     def rattraper_redactions
       rapport = Rapport.new(sources: [], crees: 0, doublons: 0, hors_zone: 0, passes: 0,
                             enrichis: 0, ecartes: 0, erreurs_ia: 0, cout_usd: 0.0, restants: 0, plafond: false,
-                            rediges: 0, redaction_bloquee: 0, erreurs_redaction: 0, a_rediger_restants: 0)
+                            rediges: 0, redaction_bloquee: 0, erreurs_redaction: 0, a_rediger_restants: 0, tokens: {})
+      @depart_journal = Veille::AppelIa.maximum(:id).to_i
       rediger(rapport)
       journaliser(rapport)
       rapport
@@ -105,7 +107,6 @@ module Veille
 
     def enrichir_un(candidat, rapport)
       enricher.enrich(candidat)
-      rapport.cout_usd += Cout.estimer(AiEnricher::MODEL, enricher.usage)
       rapport.enrichis += 1
 
       rapport.ecartes += 1 if candidat.ecarte?
@@ -122,7 +123,6 @@ module Veille
       d_affilee = 0
       file.first(@max_rediges).each do |candidat|
         redacteur.draft(candidat)
-        rapport.cout_usd += Cout.estimer(Redaction::Brouillon::MODEL, redacteur.usage)
         rapport.rediges += 1
         rapport.redaction_bloquee += 1 if candidat.draft_status == "a_verifier"
         d_affilee = 0
@@ -148,12 +148,23 @@ module Veille
     def enricher = @enricher ||= AiEnricher.new
     def redacteur = @redacteur ||= Redaction::Brouillon.new
 
+    # Jetons et coût de CETTE exécution, lus dans le journal des appels (premier passage, escalade et
+    # rédaction compris, y compris les appels en erreur), par modèle.
+    def mesurer(r)
+      appels = Veille::AppelIa.where("id > ?", @depart_journal.to_i)
+      r.tokens = appels.group(:modele).pluck(:modele, Arel.sql("COUNT(*)"), Arel.sql("SUM(input_tokens)"), Arel.sql("SUM(output_tokens)"))
+                       .to_h { |m, n, i, o| [m, { appels: n, entree: i.to_i, sortie: o.to_i }] }
+      r.cout_usd = appels.sum(:cout_usd).to_f
+    end
+
     def journaliser(r)
+      mesurer(r)
+      jetons = r.tokens.map { |m, t| "#{m}=#{t[:appels]} appel(s) #{t[:entree]} entrée / #{t[:sortie]} sortie" }.join(" ; ")
       etat = r.sources.map { |s| "#{s.nom}=#{s.statut}" }.join(" ")
       @log.info("[Veille] bilan — nouveaux #{r.crees}, doublons #{r.doublons}, hors zone #{r.hors_zone}, " \
                 "passés #{r.passes}, enrichis #{r.enrichis}, écartés #{r.ecartes}, erreurs IA #{r.erreurs_ia}, " \
                 "récits rédigés #{r.rediges} (dont #{r.redaction_bloquee} à vérifier), erreurs rédaction #{r.erreurs_redaction}, " \
-                "en attente d'enrichissement #{r.restants}#{' · PLAFOND MENSUEL ATTEINT' if r.plafond} · coût estimé #{format('%.4f', r.cout_usd)} USD · #{etat}")
+                "en attente d'enrichissement #{r.restants}#{' · PLAFOND MENSUEL ATTEINT' if r.plafond} · coût estimé #{format('%.4f', r.cout_usd)} USD · jetons : #{jetons.presence || 'aucun'} · #{etat}")
     end
   end
 end

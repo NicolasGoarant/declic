@@ -6,7 +6,7 @@ module Veille
   class AppelIa < ApplicationRecord
     self.table_name = "veille_appels_ia"
 
-    PASSES  = %w[enrichissement redaction].freeze
+    PASSES  = %w[enrichissement escalade redaction].freeze
     STATUTS = %w[ok erreur_api illisible refuse_controle plafond].freeze
 
     belongs_to :candidate, class_name: "Veille::Candidate", optional: true, inverse_of: :appels_ia

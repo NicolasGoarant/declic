@@ -5,7 +5,13 @@ module Veille
   # million de tokens (entrée, sortie) : Haiku 4.5 = 1 / 5 ; les modèles Sonnet
   # sont comptés à 3 / 15, estimation prudente à revoir si la grille change.
   module Cout
-    TARIFS = { "haiku" => [1.0, 5.0], "sonnet" => [3.0, 15.0] }.freeze
+    # La première clé contenue dans le nom du modèle gagne : les générations 5.5 d'abord (grille du 03/11/2026,
+    # Haiku 5.5 : 0,10 / 0,50 ; Sonnet 5.5 : 2 / 10 ; Opus 5.5 : 4 / 20), puis les anciens modèles, comptés
+    # large. Un modèle inconnu est compté au tarif Sonnet ancien, estimation prudente.
+    TARIFS = {
+      "haiku-5" => [0.10, 0.50], "sonnet-5-5" => [2.0, 10.0], "opus-5-5" => [4.0, 20.0],
+      "haiku" => [1.0, 5.0], "sonnet" => [3.0, 15.0], "opus" => [5.0, 25.0]
+    }.freeze
 
     Etat = Struct.new(:mois, :depense, :budget, :appels, :par_passe, :par_statut, :par_modele, keyword_init: true) do
       def reste = [budget - depense, 0.0].max
