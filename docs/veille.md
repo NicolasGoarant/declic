@@ -338,3 +338,47 @@ test intégré à Faraday, les passes IA via une doublure de client
 - Le récit de la fiche créée n'est qu'une amorce, à développer dans `/admin/stories`.
 - Les trois idées de sources à reprendre (JSON-LD `Event`, CCI et Lorr'Up, dates françaises) sont
   décrites dans `docs/veille-auto.md`.
+
+---
+
+## Sources et tri, version 2 (branche `veille-sources-v2`, 11/11/2026)
+
+### Presse locale : flux RSS, conditions de réutilisation d'abord
+
+`config/veille/flux_presse.yml` (`Veille::AnnuairePresse`) dit, source par source, si le flux existe et si les
+conditions d'utilisation du journal permettent de le lire. `Connectors::FluxPresse` ne lit que les sources
+`reutilisation: non_opposee`. Il stocke le titre, le lien d'origine, la date, la source et l'extrait fourni par le flux
+(400 caractères au plus) ; il n'ouvre jamais l'article. Le type (belle histoire ou opportunité) est tranché par l'IA selon
+la règle éditoriale (un récit sans horaires ni appel à agir = belle histoire ; ce qui appelle à agir = opportunité).
+La fiche publiée est réécrite, avec un lien « Pour en savoir plus » vers la source (`Veille::Validation`).
+
+| Source | Flux | Décision |
+|---|---|---|
+| ICI Lorraine | `ici.fr/rss/{lorraine-nord,sud-lorraine}/a-la-une.xml` | **lue** (aucune opposition à la fouille trouvée ; à confirmer) |
+| France 3 Lorraine (Nancy) | `france3-regions.franceinfo.fr/grand-est/meurthe-et-moselle/nancy/rss` | **lue** (rubriques faits divers, sport, politique… écartées d'emblée) |
+| L'Est Républicain, Le Républicain Lorrain, Vosges Matin | flux existants | **non lus** : CGU « s'oppose à la fouille de textes et de données », usage IA compris (reste : lecture humaine `/admin/veille/presse`) |
+| Actu Nancy | aucun flux Nancy (404) | **non lu** : CGU identiques en esprit |
+
+### Tri par IA (`Veille::AiEnricher`)
+
+- Modèle : `VEILLE_MODEL` (défaut `claude-sonnet-5-5`). Effort `low` (`VEILLE_EFFORT` pour changer ; non envoyé aux modèles antérieurs à la génération 5).
+- Escalade : si la confiance est entre **40 et 70 sur 100** (0,4 à 0,7), second passage avec `VEILLE_MODEL_ESCALADE` (défaut `claude-opus-5-5`) ; son avis remplace le premier, et un élément écarté au premier passage peut revenir dans la file. Désactivée si les deux modèles sont identiques.
+- Sortie : type, famille (d'où la catégorie), commune et zone (appartenance au Grand Nancy), dates, confiance 0-100, résumé réécrit en deux phrases, motif. Le score est stocké sur 100 (0,55 = 55).
+- Le **doublon** n'est pas jugé par l'IA : `Candidate.doublon?` le fait avant tout appel (même URL ; ou même titre normalisé à la même date, ou à la même origine sans date).
+- Jetons : chaque appel est une ligne de `veille_appels_ia` (modèle, passe `enrichissement`/`escalade`/`redaction`, entrée, sortie, coût). Le journal de chaque exécution (`[Veille] bilan`) donne les jetons par modèle ; `/admin/veille` affiche la dépense du mois contre le plafond (`VEILLE_BUDGET_USD_MOIS`).
+
+### Validation humaine
+
+Rien ne se publie seul : tout arrive « à valider » (`pending`) dans `/admin/veille` avec source, score IA, résumé et lien d'origine.
+Boutons : **Valider** (publie, `Veille::Validation`), **Écarter**, **À vérifier**, **Aperçu**, et l'écran de la fiche pour modifier avant de publier.
+
+### Sources d'opportunités examinées
+
+| Source | Décision | Raison |
+|---|---|---|
+| Agenda de la Ville de Nancy / Métropole | déjà en place (`AgendaNancy`) | l'API mutualisée n'expose que l'entité `vdn` ; les autres entités répondent 500 |
+| HelloAsso | **écartée** | pas d'API de découverte publique (OAuth réservé aux organisations, 401) ; pages de recherche en 403 et interdites par robots.txt |
+| France Bénévolat | **écartée** | ni flux ni API ; HTML seul, `Crawl-delay: 10` ; JeVeuxAider (API Engagement) couvre déjà le bénévolat |
+| EFS (collectes de sang) | **écartée** | seule l'API cartographique interne du site existe, sans conditions de réutilisation publiées ; non sondée |
+
+Variables : `VEILLE_MODEL`, `VEILLE_MODEL_ESCALADE`, `VEILLE_EFFORT`, `VEILLE_BUDGET_USD_MOIS`.
