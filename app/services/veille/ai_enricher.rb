@@ -346,9 +346,10 @@ module Veille
     # Seules les opportunités ont une catégorie : une belle histoire se suffit à elle-même.
     def categorie_pour(type, candidate, famille)
       return nil if type == "belle_histoire"
-      return candidate.declic_category if SOURCES_CATEGORIE_FIXE.include?(candidate.origin) && candidate.declic_category.present?
+      actuelle = candidate.declic_category.presence_in(::Opportunity::CATEGORIES) # une catégorie retirée (« rencontres ») n'est jamais reprise
+      return actuelle if SOURCES_CATEGORIE_FIXE.include?(candidate.origin) && actuelle
 
-      CATEGORIE_PAR_FAMILLE[famille] || candidate.declic_category.presence || "decouvrir"
+      CATEGORIE_PAR_FAMILLE[famille] || actuelle || "decouvrir"
     end
 
     # Garde-fou : une date plus d'un an avant la publication de la source est une année inventée

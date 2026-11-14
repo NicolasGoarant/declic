@@ -207,6 +207,15 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
     assert_equal "Événement passé", c.discard_reason
   end
 
+  test "le tri IA reclasse un candidat de l'ancienne catégorie « rencontres », famille connue ou non" do
+    [ [ "agenda_nancy", "decouvrir", "decouvrir" ], [ "agenda_nancy", "inconnue", "decouvrir" ], [ "jeveuxaider", "inconnue", "decouvrir" ] ].each do |origine, famille, attendue|
+      c = candidat(origin: origine, item_type: "opportunite")
+      c.update_column(:declic_category, "rencontres")
+      c, = enrich(c, famille: famille)
+      assert_equal attendue, c.declic_category, "#{origine}/#{famille}"
+    end
+  end
+
   test "la catégorie se déduit de la famille" do
     { "se_former" => "formation", "pratiquer" => "pratiquer", "agir_ecologie" => "ecologie",
       "s_engager" => "benevolat", "evenement_solidaire" => "benevolat", "entreprendre" => "entreprendre",
