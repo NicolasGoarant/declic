@@ -27,8 +27,9 @@
     <p class="meta"><span aria-hidden="true">▤</span> <%= carte.source || "—" %> · <span class="ajoute">Ajouté le <%= I18n.l(carte.cree_le.to_date, format: "%-d/%m/%Y") %></span></p>
     <% resume = carte.resume.to_s.squish %>
     <% if resume.present? %><p class="extrait"><%= truncate(resume, length: 220) %></p><% end %>
-    <% if carte.candidat? && carte.raison %><p class="raison">↳ <%= truncate(carte.raison, length: 120) %></p><% end %>
-    <% if carte.candidat? && statut == "ecarte" && r.discard_reason.present? %><p class="raison"><%= truncate(r.discard_reason, length: 90) %></p><% end %>
+    <%# Raison IA : le verdict motivé (motif du modèle ; pour un écarté, la raison de l'écart), 120 caractères, texte complet en infobulle. %>
+    <% raison_ia = carte.candidat? ? (statut == "ecarte" ? r.discard_reason.presence || carte.raison : carte.raison) : nil %>
+    <% if raison_ia.present? %><p class="raison" title="<%= raison_ia %>"><strong>Raison IA :</strong> <%= truncate(raison_ia, length: 120) %></p><% end %>
     <div class="indices">
       <% if carte.candidat? %>
         <span class="pastille fiabilite <%= carte.fiabilite %>" title="Fiabilité de la source">Fiabilité : <%= libelle_fiabilite(carte.fiabilite) %></span>

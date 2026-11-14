@@ -41,7 +41,8 @@
           <span class="badge a-classer" style="background:#111827;color:#fff">À classer</span>
           <% if @candidate.score %><span class="small muted">· score <%= @candidate.score %></span><% end %>
         <% end %>
-        <div class="small muted" style="margin-top:4px"><%= @candidate.reason %></div>
+        <% raison_ia = (@candidate.ecarte? ? @candidate.discard_reason.presence : nil) || @candidate.reason %>
+        <% if raison_ia.present? %><div class="small muted raison-ia" style="margin-top:4px" title="<%= raison_ia %>"><strong>Raison IA :</strong> <%= raison_ia %></div><% end %>
       </dd>
 
       <dt>Résumé reformulé</dt>

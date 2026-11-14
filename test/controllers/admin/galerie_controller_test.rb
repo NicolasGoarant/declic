@@ -30,6 +30,27 @@ module Admin
     def texte = CGI.unescapeHTML(response.body)
 
 
+    test "la carte affiche « Raison IA » (120 car., texte complet en infobulle) pour proposé, à vérifier et écarté" do
+      long = "Motif détaillé de l'IA. " * 10
+      @propose.update!(reason: long)
+      @verifier.update!(reason: "Score faible (35) : motif court")
+      get admin_galerie_path(statut: "tous"), headers: auth
+      assert_response :success
+
+      assert_select "#candidate_#{@propose.id} p.raison[title=?]", long do |p|
+        assert_match(/Raison IA :/, p.text)
+        assert_operator p.text.length, :<=, 135
+      end
+      assert_select "#candidate_#{@verifier.id} p.raison", /Score faible \(35\)/
+      assert_select "#candidate_#{@ecarte.id} p.raison", /Hors périmètre Déclic : loisir/
+    end
+
+    test "l'éditeur du candidat affiche la Raison IA" do
+      @propose.update!(reason: "Score faible (35) : motif")
+      get admin_veille_candidate_path(@propose), headers: auth
+      assert_select ".raison-ia", /Raison IA : Score faible \(35\) : motif/
+    end
+
     test "l'accès est protégé comme /admin/veille" do
       get admin_galerie_path
       assert_response :unauthorized
