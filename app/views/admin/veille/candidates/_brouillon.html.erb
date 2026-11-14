@@ -47,6 +47,7 @@
   <% end %>
 
   <%= form_with url: enregistrer_brouillon_admin_veille_candidate_path(candidate), method: :patch do |f| %>
+    <%= hidden_field_tag :retour, params[:retour] if params[:retour].present? %>
     <label for="recit">Récit (modifiable)</label>
     <%= f.text_area :recit, id: "recit", value: ::Veille::Redaction::Brouillon.sans_mentions(candidate.draft_body), rows: 9 %>
     <p class="small muted">Les mentions « Source » et « Accord de la personne » sont ajoutées par le code : elles ne se modifient pas ici.</p>
@@ -54,6 +55,7 @@
   <% end %>
 
   <%= form_with url: accord_admin_veille_candidate_path(candidate), method: :patch do |f| %>
+    <%= hidden_field_tag :retour, params[:retour] if params[:retour].present? %>
     <label class="small" style="display:flex;gap:8px;align-items:center">
       <%= check_box_tag :obtenu, "1", candidate.accord_obtenu?, id: "accord_obtenu" %>
       <span>
@@ -66,7 +68,7 @@
 
   <% if candidate.pending? || candidate.retenu? || candidate.a_verifier? %>
     <%= button_to "Valider et publier", valider_admin_veille_candidate_path(candidate), method: :post,
-                  class: "btn", disabled: controles.bloque? || !candidate.accord_obtenu?,
+                  class: "btn", disabled: controles.bloque? || !candidate.accord_obtenu?, params: enchainement_params,
                   form: { data: { turbo_confirm: "Créer la fiche et publier ce récit en ligne ?" } } %>
   <% end %>
 <% elsif error.blank? %>

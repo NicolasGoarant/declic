@@ -22,23 +22,46 @@
     <div class="small muted">
       <%= [carte.categorie, carte.commune].compact.join(" · ").presence || "—" %><br>
       <%= carte.date ? I18n.l(carte.date, format: "%-d/%m/%Y") : "sans date" %> · <%= carte.source || "—" %>
+      <% if carte.famille %> · <%= carte.famille %><% end %>
       <% if carte.score %> · <strong class="score <%= carte.score >= 70 ? 'haut' : (carte.score >= 40 ? 'moyen' : 'bas') %>">IA <%= carte.score %></strong><% end %>
     </div>
+    <% if carte.candidat? %>
+      <div style="margin-top:6px">
+        <span class="badge fiabilite <%= carte.fiabilite %>" title="Fiabilité de la source">fiabilité <%= carte.fiabilite %></span>
+        <% if carte.a_localiser %><span class="badge no">à localiser</span><% end %>
+        <% if carte.recit %><span class="badge <%= carte.recit == 'redige' ? 'ok' : 'no' %>">récit <%= { "redige" => "rédigé", "a_verifier" => "à vérifier", "a_reprendre" => "à reprendre" }[carte.recit] %></span><% end %>
+      </div>
+      <% resume = carte.resume.to_s %>
+      <% if resume.present? %><p class="small" style="margin:6px 0 0"><%= truncate(resume, length: 200) %></p><% end %>
+      <% if carte.raison %><p class="raison">↳ <%= truncate(carte.raison, length: 160) %></p><% end %>
+    <% end %>
   </div>
   <div class="pied">
     <% if carte.candidat? %>
       <% c = r %>
       <% if c.pending? || c.a_verifier? || c.retenu? %>
-        <% if c.item_type.present? %><%= link_to "Aperçu", admin_veille_candidate_path(c, anchor: "apercu", retour: retour), class: "btn secondary", data: { turbo_frame: "_top" } %><% end %>
-        <%= link_to "Modifier", admin_veille_candidate_path(c, retour: retour), class: "btn secondary", data: { turbo_frame: "_top" } %>
-        <% if carte.statut == "non_trie" %>
+        <% if c.a_localiser? %>
+          <%= link_to "Localiser →", admin_veille_candidate_path(c, retour: retour), class: "btn", data: { turbo_frame: "_top" } %>
+        <% elsif carte.statut == "non_trie" %>
           <%# Garde-fou : tant que le tri IA n'est pas passé, l'extraction n'est pas fiable : on relit, on ne valide pas. %>
           <%= link_to "Relire", admin_veille_candidate_path(c, retour: retour), class: "btn", data: { turbo_frame: "_top" } %>
-        <% elsif c.item_type.present? && !c.histoire? && !c.a_localiser? %>
+        <% elsif c.histoire? && c.item_type.present? && (c.pending? || c.a_verifier?) %>
+          <%# Un récit se relit avant d'être validé : l'écran du candidat montre le brouillon et ses contrôles. %>
+          <%= link_to "Relire le récit →", admin_veille_candidate_path(c, retour: retour), class: "btn", data: { turbo_frame: "_top" } %>
+        <% elsif c.item_type.present? && (c.pending? || c.a_verifier?) %>
           <%= button_to "Valider", valider_admin_veille_candidate_path(c), method: :post, class: "btn",
                         form: { data: { turbo: false, turbo_confirm: "Créer la fiche et la publier en ligne ?" } } %>
+        <% elsif c.pending? %>
+          <%= button_to "Retenir", retenir_admin_veille_candidate_path(c), method: :patch, class: "btn", form: { data: { turbo: false } } %>
+        <% else %>
+          <%= link_to "Rédiger →", admin_veille_candidate_path(c, retour: retour), class: "btn", data: { turbo_frame: "_top" } %>
         <% end %>
+        <% if c.item_type.present? %><%= link_to "Aperçu", admin_veille_candidate_path(c, anchor: "apercu", retour: retour), class: "btn secondary", data: { turbo_frame: "_top" } %><% end %>
+        <%= link_to "Modifier", admin_veille_candidate_path(c, retour: retour), class: "btn secondary", data: { turbo_frame: "_top" } %>
         <%= button_to "Écarter", ecarter_admin_veille_candidate_path(c), method: :patch, class: "btn secondary", form: { data: { turbo: false } } %>
+        <% unless c.a_verifier? %>
+          <%= button_to "À vérifier", a_verifier_admin_veille_candidate_path(c), method: :patch, class: "btn secondary", form: { data: { turbo: false } } %>
+        <% end %>
       <% else %>
         <%= button_to "Reprendre", retenir_admin_veille_candidate_path(c), method: :patch, class: "btn secondary", form: { data: { turbo: false } } %>
         <% if c.discard_reason.present? %><span class="small muted"><%= truncate(c.discard_reason, length: 90) %></span><% end %>

@@ -2,6 +2,11 @@
 module AdminFichesHelper
   EXTRAIT_ADMIN_LONGUEUR = 140
 
+  # Valider / Écarter depuis l'écran d'un candidat ouvert depuis la galerie : enchaîner sur le candidat suivant.
+  def enchainement_params
+    params[:retour].present? ? { enchainer: 1, retour: params[:retour] } : {}
+  end
+
   # Numéros de page à afficher : première, dernière, et deux voisines de chaque côté de la page courante ;
   # nil = « … ». Composant partagé (voir admin/shared/_pagination).
   def numeros_pagination(page, pages)

@@ -29,7 +29,7 @@ module Admin
       test "/admin/veille liste la file : lien d'origine, résumé reformulé, badge de fiabilité" do
         c = enrichi(title: "Forum de la formation", url: "https://exemple.fr/forum")
 
-        get "/admin/veille", headers: auth
+        get admin_galerie_path(statut: "a_relire"), headers: auth
 
         assert_response :success
         assert_includes texte, "Forum de la formation"
@@ -40,21 +40,17 @@ module Admin
         assert_includes response.body, valider_admin_veille_candidate_path(c)
       end
 
-      test "filtre par type, catégorie et source" do
+      test "filtre par type et catégorie (via la galerie)" do
         enrichi(title: "Opp formation", origin: "formation")
         enrichi(title: "Histoire écolo", item_type: "belle_histoire", declic_category: nil, origin: "presse")
 
-        get "/admin/veille", params: { type: "belle_histoire" }, headers: auth
+        get admin_galerie_path(type: "belle_histoire"), headers: auth
         assert_includes texte, "Histoire écolo"
         assert_not_includes texte, "Opp formation"
 
-        get "/admin/veille", params: { categorie: "formation" }, headers: auth
+        get admin_galerie_path(categorie: "Se former"), headers: auth
         assert_includes texte, "Opp formation"
         assert_not_includes texte, "Histoire écolo"
-
-        get "/admin/veille", params: { origine: "presse" }, headers: auth
-        assert_includes texte, "Histoire écolo"
-        assert_not_includes texte, "Opp formation"
       end
 
       test "une belle histoire n'affiche ni catégorie ni filtre de catégorie" do
@@ -62,13 +58,11 @@ module Admin
         enrichi(title: "Opp", origin: "formation")
 
         get "/admin/veille", params: { type: "belle_histoire", categorie: "formation" }, headers: auth
-        assert_includes texte, "Histoire", "un filtre de catégorie resté dans l'URL est ignoré"
-        assert_select "select[name=categorie]", count: 0
-        assert_select "th", text: /Thématique|thématique/, count: 0
+        assert_redirected_to admin_galerie_path(statut: "a_relire", tri: "score", type: "belle_histoire"),
+                             "un filtre de catégorie resté dans l'URL est ignoré pour une belle histoire"
+        get admin_galerie_path(type: "belle_histoire"), headers: auth
+        assert_includes texte, "Histoire"
         assert_not_includes texte, "Thématique"
-
-        get "/admin/veille", params: { type: "opportunite" }, headers: auth
-        assert_select "select[name=categorie]", count: 1
 
         get "/admin/veille/candidates/#{histoire.id}", headers: auth
         assert_response :success
@@ -79,7 +73,7 @@ module Admin
         enrichi(title: "Ancien", fetched_at: Time.zone.local(2026, 1, 1), created_at: Time.zone.local(2026, 1, 1))
         enrichi(title: "Récent", fetched_at: Time.zone.local(2026, 10, 1))
 
-        get "/admin/veille", params: { depuis: "2026-09-01" }, headers: auth
+        get admin_galerie_path(depuis: "2026-09-01"), headers: auth
         assert_includes texte, "Récent"
         assert_not_includes texte, "Ancien"
       end
@@ -179,12 +173,10 @@ module Admin
         histoire = enrichi(item_type: "belle_histoire", title: "Le jardin de Léa", draft_body: "Un récit.")
         publie = enrichi(title: "Déjà en ligne", status: "publie")
 
-        get "/admin/veille", headers: auth
-        assert_select "tr##{dom_id(a_valider)} a[href=?]", "#{admin_veille_candidate_path(a_valider)}#apercu", text: "Aperçu"
-        assert_select "tr##{dom_id(histoire)} a[href=?]", "#{admin_veille_candidate_path(histoire)}#apercu", text: "Aperçu"
-
-        get "/admin/veille", params: { status: "publie" }, headers: auth
-        assert_select "tr##{dom_id(publie)} a", text: "Aperçu", count: 0
+        get admin_galerie_path, headers: auth
+        assert_select "article#candidate_#{a_valider.id} a[href*=?]", "#apercu", text: "Aperçu"
+        assert_select "article#candidate_#{histoire.id} a[href*=?]", "#apercu", text: "Aperçu"
+        assert_select "article#candidate_#{publie.id}", 0
       end
 
       test "l'aperçu d'une belle histoire rend la page Belle Histoire" do
@@ -248,16 +240,15 @@ module Admin
         assert_equal ["Nancy", "pending"], [c.reload.commune, c.status]
       end
 
-      test "l'onglet Publiés dit si la fiche est encore en ligne" do
+      test "la galerie dit si la fiche publiée est encore en ligne" do
         c = enrichi(url: "https://exemple.fr/en-ligne")
         post valider_admin_veille_candidate_path(c), headers: auth
-        get "/admin/veille", params: { status: "publie" }, headers: auth
-        assert_includes texte, "en ligne"
-        assert_not_includes texte, "brouillon créé"
+        get admin_galerie_path(statut: "en_ligne"), headers: auth
+        assert_select "article .badge.s-en_ligne"
 
         c.reload.opportunity.update!(is_active: false)
-        get "/admin/veille", params: { status: "publie" }, headers: auth
-        assert_includes texte, "retirée du site"
+        get admin_galerie_path(statut: "retire"), headers: auth
+        assert_select "article .badge.s-retire"
       end
 
       test "Valider un élément incomplet explique ce qui manque et ne crée rien" do
@@ -280,8 +271,8 @@ module Admin
         assert_equal "ecarte", a.reload.status
         assert_equal "a_verifier", b.reload.status
 
-        get "/admin/veille", params: { status: "a_verifier" }, headers: auth
-        assert_includes response.body, dom_id_for(b)
+        get admin_galerie_path(statut: "a_verifier"), headers: auth
+        assert_select "article#candidate_#{b.id}"
       end
 
       test "Marquer à vérifier en turbo stream remplace la ligne" do

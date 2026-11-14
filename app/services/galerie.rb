@@ -13,19 +13,22 @@
 #   ecarte     candidat écarté (visible seulement via le filtre)
 # Les candidats « publie » ne sont pas listés : leur fiche l'est déjà.
 class Galerie
+  # « À relire » : préréglage (proposé + à vérifier), l'ancienne file de relecture.
+  A_RELIRE = %w[propose a_verifier].freeze
   STATUTS = {
-    "en_ligne" => "En ligne", "propose" => "Proposé (à valider)", "a_verifier" => "À vérifier",
+    "a_relire" => "À relire (proposé + à vérifier)", "en_ligne" => "En ligne", "propose" => "Proposé (à valider)", "a_verifier" => "À vérifier",
     "non_trie" => "Non trié", "retire" => "Retirée du site", "ecarte" => "Écarté"
   }.freeze
   TYPES   = { "opportunite" => "Opportunité", "belle_histoire" => "Belle Histoire" }.freeze
   PAR_PAGE = 48
 
-  Carte = Struct.new(:cle, :type, :statut, :record, :titre, :resume, :categorie, :commune, :date, :source, :score, :cree_le, :cle_categorie, keyword_init: true) do
+  Carte = Struct.new(:cle, :type, :statut, :record, :titre, :resume, :categorie, :commune, :date, :source, :score, :cree_le, :cle_categorie,
+                     :raison, :fiabilite, :a_localiser, :famille, :recit, :collecte_le, keyword_init: true) do
     def candidat? = record.is_a?(Veille::Candidate)
     def histoire? = type == "belle_histoire"
   end
 
-  Filtres = Struct.new(:type, :statut, :categorie, :commune, :source, :q, :tri, :page, keyword_init: true)
+  Filtres = Struct.new(:type, :statut, :categorie, :commune, :source, :q, :tri, :page, :depuis, :a_localiser, keyword_init: true)
 
   attr_reader :filtres
 
@@ -35,7 +38,8 @@ class Galerie
     @filtres = Filtres.new(
       type: p[:type].presence_in(TYPES.keys), statut: p[:statut].presence_in(STATUTS.keys),
       categorie: p[:categorie].presence, commune: p[:commune].presence, source: p[:source].presence,
-      q: p[:q].to_s.strip.presence, tri: p[:tri] == "score" ? "score" : "date", page: [p[:page].to_i, 1].max
+      q: p[:q].to_s.strip.presence, tri: p[:tri] == "score" ? "score" : "date", page: [p[:page].to_i, 1].max,
+      depuis: (Date.iso8601(p[:depuis].to_s) rescue nil), a_localiser: p[:a_localiser].present? ? "1" : nil
     )
   end
 
@@ -47,7 +51,10 @@ class Galerie
   def compteurs
     @compteurs ||= begin
       comptes = Hash.new(0)
-      cartes_brutes.each { |c| comptes[[c.statut, c.type]] += 1 }
+      cartes_brutes.each do |c|
+        comptes[[c.statut, c.type]] += 1
+        comptes[["a_relire", c.type]] += 1 if A_RELIRE.include?(c.statut)
+      end
       STATUTS.keys.index_with do |statut|
         { total: TYPES.keys.sum { |t| comptes[[statut, t]] } + comptes[[statut, nil]],
           "opportunite" => comptes[[statut, "opportunite"]], "belle_histoire" => comptes[[statut, "belle_histoire"]] }
@@ -64,6 +71,12 @@ class Galerie
   def page = [filtres.page, pages].min
   def page_cartes = cartes.slice((page - 1) * PAR_PAGE, PAR_PAGE) || []
 
+  # Page (dans la sélection filtrée) où se trouve une carte ; nil si elle n'y figure pas.
+  def page_de(cle)
+    i = cartes.index { |c| c.cle == cle }
+    i && (i / PAR_PAGE) + 1
+  end
+
   # Valeurs proposées par les filtres (sur l'ensemble, pas sur la sélection).
   def categories = cartes_brutes.filter_map(&:categorie).uniq.sort
   def communes   = cartes_brutes.filter_map(&:commune).uniq.sort_by { |c| I18n.transliterate(c).downcase }
@@ -73,7 +86,14 @@ class Galerie
 
   def filtrer(cartes)
     f = filtres
-    cartes = cartes.select { |c| f.statut ? c.statut == f.statut : c.statut != "ecarte" }
+    cartes = cartes.select do |c|
+      if f.statut == "a_relire" then A_RELIRE.include?(c.statut)
+      elsif f.statut then c.statut == f.statut
+      else c.statut != "ecarte"
+      end
+    end
+    cartes = cartes.select { |c| c.collecte_le && c.collecte_le.to_date >= f.depuis } if f.depuis
+    cartes = cartes.select(&:a_localiser) if f.a_localiser
     cartes = cartes.select { |c| c.type == f.type } if f.type
     cartes = cartes.select { |c| c.categorie == f.categorie } if f.categorie
     cartes = cartes.select { |c| c.commune == f.commune } if f.commune
@@ -101,7 +121,7 @@ class Galerie
     Opportunity.all.map do |o|
       Carte.new(cle: "opportunity_#{o.id}", type: "opportunite", statut: publiques.include?(o.id) ? "en_ligne" : "retire", record: o,
                 titre: o.title, resume: o.description, categorie: Categorie.trouver(o.category)&.libelle, commune: o.city.presence,
-                date: o.date_debut, source: o.source.presence, score: nil, cree_le: o.created_at, cle_categorie: o.category)
+                date: o.date_debut, source: o.source.presence, score: nil, cree_le: o.created_at, cle_categorie: o.category, collecte_le: o.created_at)
     end
   end
 
@@ -109,7 +129,7 @@ class Galerie
     Story.all.map do |s|
       Carte.new(cle: "story_#{s.id}", type: "belle_histoire", statut: s.is_active ? "en_ligne" : "retire", record: s,
                 titre: s.title, resume: s.chapo, categorie: nil, commune: s.city.presence,
-                date: s.happened_on || s.source_published_on, source: s.source_name.presence, score: nil, cree_le: s.created_at, cle_categorie: Categorie::HISTOIRES)
+                date: s.happened_on || s.source_published_on, source: s.source_name.presence, score: nil, cree_le: s.created_at, cle_categorie: Categorie::HISTOIRES, collecte_le: s.created_at)
     end
   end
 
@@ -118,7 +138,11 @@ class Galerie
       Carte.new(cle: "candidate_#{c.id}", type: c.item_type.presence, statut: statut_candidat(c), record: c,
                 titre: c.title.presence || "(sans titre)", resume: c.summary.presence || c.excerpt, categorie: (c.histoire? ? nil : c.categorie_label),
                 commune: c.commune.presence, date: c.starts_on || c.published_on, source: c.source_label, score: c.score, cree_le: c.created_at,
-                cle_categorie: (c.histoire? ? Categorie::HISTOIRES : c.declic_category.presence))
+                cle_categorie: (c.histoire? ? Categorie::HISTOIRES : c.declic_category.presence),
+                raison: c.reason.presence, fiabilite: c.reliability || "basse", a_localiser: c.a_localiser?,
+                famille: (Opportunity::FAMILLES.fetch(c.famille, c.famille.to_s.humanize) if c.famille.present?),
+                recit: (c.draft_status if c.histoire? && c.draft_status != "aucun"),
+                collecte_le: [ c.fetched_at, c.created_at ].compact.max)
     end
   end
 

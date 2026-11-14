@@ -50,8 +50,7 @@ module Admin
 
       test "la file de relecture ne montre pas la liste de veille" do
         get "/admin/veille", headers: auth
-        assert_response :success
-        assert_not_includes response.body, "Veille presse manuelle"
+        assert_redirected_to admin_galerie_path(statut: "a_relire", tri: "score")
       end
 
       test "exige l'authentification" do

@@ -16,7 +16,7 @@ class AdminAccesTest < ActionDispatch::IntegrationTest
     chemins.map { |c| get(c); response.status }
   end
 
-  CHEMINS = %w[/admin/galerie /admin/veille].freeze
+  CHEMINS = %w[/admin/galerie /admin/veille/sources].freeze
 
   def identifiants(user, pass)
     { "HTTP_AUTHORIZATION" => ActionController::HttpAuthentication::Basic.encode_credentials(user, pass) }

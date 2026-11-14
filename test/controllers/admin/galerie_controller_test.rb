@@ -152,5 +152,44 @@ module Admin
       patch admin_opportunity_path(@opportunite.reload), params: { retour: "/admin/galerie?page=2", opportunity: { title: "Titre ter" } }, headers: auth
       assert_redirected_to "/admin/galerie?page=2"
     end
+
+    # ---- Enchaînement des candidats depuis l'écran d'édition ----
+    def liste = admin_galerie_path(statut: "a_relire", tri: "score")
+
+    test "l'écran d'un candidat propose Précédent et Suivant dans la liste filtrée" do
+      get admin_veille_candidate_path(@propose, retour: liste), headers: auth
+      assert_select "a[href=?]", liste, text: "← Retour à la galerie"
+      assert_select "a[href^=?]", admin_veille_candidate_path(@verifier), text: "Suivant →"
+      assert_select "a", text: "← Précédent", count: 0
+      assert_match "1 sur 2", texte
+
+      get admin_veille_candidate_path(@verifier, retour: liste), headers: auth
+      assert_select "a[href^=?]", admin_veille_candidate_path(@propose), text: "← Précédent"
+      assert_select "a", text: "Suivant →", count: 0
+    end
+
+    test "après Écarter depuis l'écran du candidat : candidat suivant, puis galerie en fin de liste" do
+      patch ecarter_admin_veille_candidate_path(@propose), params: { enchainer: 1, retour: liste }, headers: auth
+      assert @propose.reload.ecarte?
+      assert_response :see_other
+      assert_match %r{\A#{Regexp.escape(admin_veille_candidate_path(@verifier))}\?}, response.location.sub("http://www.example.com", "")
+
+      patch ecarter_admin_veille_candidate_path(@verifier), params: { enchainer: 1, retour: liste }, headers: auth
+      assert_redirected_to liste
+    end
+
+    test "après Valider depuis l'écran du candidat : candidat suivant" do
+      patch ecarter_admin_veille_candidate_path(@verifier), headers: auth # un seul candidat à relire restera : @propose
+      get admin_veille_candidate_path(@propose, retour: liste), headers: auth
+      assert_select "a", text: "Suivant →", count: 0
+      post valider_admin_veille_candidate_path(@propose), params: { enchainer: 1, retour: liste }, headers: auth
+      assert_redirected_to liste
+      assert @propose.reload.publie?
+    end
+
+    test "Valider avec suivant : redirige vers le candidat suivant" do
+      post valider_admin_veille_candidate_path(@propose), params: { enchainer: 1, retour: liste }, headers: auth
+      assert_match %r{\A#{Regexp.escape(admin_veille_candidate_path(@verifier))}\?}, response.location.sub("http://www.example.com", "")
+    end
   end
 end

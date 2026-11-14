@@ -7,6 +7,7 @@ module Admin
   class GalerieController < Admin::Veille::BaseController
     def index
       @galerie = ::Galerie.new(params)
+      @plafond = ::Veille::Cout.etat_du_mois
     end
   end
 end

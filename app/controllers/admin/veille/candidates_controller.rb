@@ -8,31 +8,19 @@ module Admin
     class CandidatesController < BaseController
       before_action :set_candidate, except: :index
 
-      # La file de tri : par défaut les candidats en attente, meilleur score
-      # d'abord. Les autres statuts sont accessibles en onglets — sans quoi
-      # un candidat retenu deviendrait injoignable, la file ne listant que
-      # les pending.
+      # La liste de relecture a fusionné dans la galerie : /admin/veille y renvoie, avec le préréglage « À relire »
+      # (ou l'équivalent du statut demandé). Les écrans d'un candidat (show, apercu…) ne changent pas d'adresse.
       def index
-        @status = params[:status].presence_in(::Veille::Candidate::STATUSES) || "pending"
-        @filtres = params.permit(:type, :categorie, :origine, :depuis, :a_localiser).to_h.symbolize_keys
-        @filtres.delete(:categorie) if @filtres[:type] == "belle_histoire" # une histoire n'a pas de catégorie
-
-        base =
-          if @status == "pending"
-            ::Veille::Candidate.file_de_tri
-          else
-            ::Veille::Candidate.where(status: @status).order(updated_at: :desc)
-          end
-        @candidates = base.par_type(@filtres[:type]).par_categorie(@filtres[:categorie])
-                          .par_origine(@filtres[:origine]).collectes_depuis(date_filtre(@filtres[:depuis]))
-                          .includes(:source, :story, :opportunity)
-        @candidates = @candidates.a_localiser if @filtres[:a_localiser].present?
-
-        @counts = compteurs
-        @plafond = ::Veille::Cout.etat_du_mois
+        statut = { "pending" => "a_relire", "a_verifier" => "a_verifier", "retenu" => "propose", "ecarte" => "ecarte" }.fetch(params[:status].to_s, "a_relire")
+        categorie = Categorie.trouver(params[:categorie])&.libelle if params[:categorie].present? && params[:type] != "belle_histoire"
+        filtres = { statut: statut, tri: "score", type: params[:type].presence_in(::Galerie::TYPES.keys), categorie: categorie,
+                    depuis: params[:depuis].presence, a_localiser: params[:a_localiser].presence }.compact
+        redirect_to admin_galerie_path(filtres)
       end
 
-      def show; end
+      def show
+        @voisins = voisins_dans_la_liste
+      end
 
       # Aperçu de ce que « Valider » publierait : les VRAIES vues publiques (opportunities/show,
       # stories/show, layout fiche) rendues sur la fiche que construit Validation, sans rien
@@ -63,10 +51,13 @@ module Admin
 
       # « Valider » : crée la fiche (Opportunity ou Story) et la met en ligne.
       def valider
+        suite = suite_apres_decision
         fiche = ::Veille::Validation.new(@candidate).call
-        redirect_back fallback_location: admin_veille_root_path, **avis_publication(fiche)
+        return redirect_to(suite, status: :see_other, **avis_publication(fiche)) if suite
+
+        redirect_back fallback_location: admin_galerie_path, **avis_publication(fiche)
       rescue ::Veille::Validation::Incomplet => e
-        redirect_back fallback_location: admin_veille_root_path, alert: e.message
+        redirect_back fallback_location: admin_galerie_path, alert: e.message
       rescue ActiveRecord::RecordInvalid => e
         redirect_back fallback_location: admin_veille_root_path,
                       alert: "Création impossible : #{e.record.errors.full_messages.to_sentence}"
@@ -164,18 +155,46 @@ module Admin
         nil
       end
 
+      # Candidats de la liste filtrée d'où l'on vient (paramètre `retour` : une adresse de la galerie), dans son
+      # ordre : le candidat courant, ses voisins, et la page de la galerie où se trouve chacun.
+      def voisins_dans_la_liste
+        retour = retour_admin(nil) or return nil
+        requete = Rack::Utils.parse_nested_query(URI.parse(retour).query.to_s)
+        galerie = ::Galerie.new(requete)
+        cartes = galerie.cartes.select(&:candidat?)
+        i = cartes.index { |c| c.record.id == @candidate.id } or return nil
+
+        lien = lambda do |carte|
+          next unless carte
+          page = galerie.page_de(carte.cle)
+          admin_veille_candidate_path(carte.record, retour: admin_galerie_path(requete.merge("page" => page.to_s)))
+        end
+        { position: i + 1, total: cartes.size, precedent: (lien.call(cartes[i - 1]) if i.positive?), suivant: lien.call(cartes[i + 1]),
+          liste: retour }
+      end
+
+      # Après Valider ou Écarter depuis l'écran du candidat (`enchainer`) : le candidat suivant de la liste, ou la
+      # galerie (mêmes filtres, même page) en fin de liste. nil hors enchaînement : les appelants gardent leur retour.
+      def suite_apres_decision
+        return unless params[:enchainer].present?
+
+        voisins_dans_la_liste&.dig(:suivant) || retour_admin(admin_galerie_path)
+      end
+
       def set_candidate
         @candidate = ::Veille::Candidate.find(params[:id])
       end
 
       def trancher(status, notice)
+        suite = suite_apres_decision
         @candidate.update!(status: status)
         @counts = compteurs
+        return redirect_to(suite, notice: notice, status: :see_other) if suite
 
         respond_to do |format|
           # La ligne disparaît de la file sans rechargement.
           format.turbo_stream
-          format.html { redirect_back fallback_location: admin_veille_candidates_path, notice: notice, status: :see_other }
+          format.html { redirect_back fallback_location: admin_galerie_path, notice: notice, status: :see_other }
         end
       end
 

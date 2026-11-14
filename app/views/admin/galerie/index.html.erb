@@ -22,6 +22,8 @@
   .badge.s-non_trie{background:#f1f5f9;color:#475569}
   .badge.s-retire,.badge.s-ecarte{background:#fee2e2;color:#991b1b}
   .galerie-pages{display:flex;gap:8px;align-items:center;justify-content:center;margin:8px 0 24px}
+  .filtres .case-filtre{display:flex;align-items:center;gap:4px;padding-bottom:8px}
+  .carte-galerie .raison{margin-top:6px;font-size:12px;color:#64748b}
   .filtres input[type=search]{padding:6px;border:1px solid #cbd5e1;border-radius:6px;min-width:180px}
 </style>
 
@@ -35,6 +37,10 @@
     <%= link_to "➕ Nouvelle Belle Histoire", new_admin_story_path(retour: request.fullpath), class: "btn" %>
   </div>
 </div>
+
+<% if @plafond&.atteint? %>
+  <%= render "admin/shared/bandeau_plafond", plafond: @plafond, non_tries: @galerie.compteurs["non_trie"][:total] %>
+<% end %>
 
 <turbo-frame id="galerie" data-turbo-action="advance">
   <%= render "admin/galerie/contenu", galerie: @galerie %>

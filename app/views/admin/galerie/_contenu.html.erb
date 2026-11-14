@@ -1,5 +1,5 @@
 <% f = galerie.filtres %>
-<% base = { type: f.type, categorie: f.categorie, commune: f.commune, source: f.source, q: f.q, tri: f.tri }.compact_blank %>
+<% base = { type: f.type, categorie: f.categorie, commune: f.commune, source: f.source, q: f.q, tri: f.tri, depuis: f.depuis, a_localiser: f.a_localiser }.compact_blank %>
 
 <div class="galerie-compteurs" id="compteurs-galerie">
   <% Galerie::STATUTS.each do |statut, libelle| %>
@@ -30,6 +30,12 @@
   </label>
   <label>Source
     <%= select_tag :source, options_for_select([["Toutes", ""]] + galerie.sources, f.source) %>
+  </label>
+  <label>Collecté depuis le
+    <%= date_field_tag :depuis, f.depuis %>
+  </label>
+  <label class="case-filtre">
+    <%= check_box_tag :a_localiser, "1", f.a_localiser.present? %> À localiser seulement
   </label>
   <label>Tri
     <%= select_tag :tri, options_for_select([["Plus récents", "date"], ["Score IA", "score"]], f.tri) %>

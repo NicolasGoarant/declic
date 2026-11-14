@@ -78,7 +78,7 @@ module Admin
         faible = candidat(score: 20, title: "Compte rendu du conseil")
         fort   = candidat(score: 95, title: "Le potager de Madame Durand")
 
-        get admin_veille_candidates_path, headers: auth
+        get admin_galerie_path(tri: "score"), headers: auth
         assert_response :success
 
         assert_match fort.title, response.body
@@ -91,7 +91,7 @@ module Admin
       test "la file affiche titre, chapeau, source, date, score et motif" do
         c = candidat(published_on: Date.new(2026, 3, 14))
 
-        get admin_veille_candidates_path, headers: auth
+        get admin_galerie_path(tri: "score"), headers: auth
 
         assert_match c.title, response.body
         assert_match "Trente familles cultivent", response.body
@@ -104,21 +104,41 @@ module Admin
       test "le lien vers l'article s'ouvre dans un nouvel onglet" do
         c = candidat
 
-        get admin_veille_candidates_path, headers: auth
+        get admin_galerie_path(tri: "score"), headers: auth
         lien = response.body[/<a\b[^>]*href="#{Regexp.escape(c.url)}"[^>]*>/]
         assert lien, "le lien vers l'article doit être présent"
         assert_match 'target="_blank"', lien
         assert_match 'rel="noopener noreferrer"', lien
       end
 
-      test "les candidats déjà tranchés ne sont pas dans la file" do
-        retenu = candidat(status: "retenu", title: "Déjà retenu")
+      test "les candidats écartés ne sont pas dans la galerie sans le filtre Écartés" do
+        ecarte = candidat(status: "ecarte", title: "Déjà écarté")
 
+        get admin_galerie_path(tri: "score"), headers: auth
+        assert_no_match ecarte.title, response.body
+
+        get admin_galerie_path(statut: "ecarte"), headers: auth
+        assert_match ecarte.title, response.body
+      end
+
+      test "/admin/veille renvoie vers la galerie, préréglage « À relire »" do
         get admin_veille_candidates_path, headers: auth
-        assert_no_match retenu.title, response.body
+        assert_redirected_to admin_galerie_path(statut: "a_relire", tri: "score")
+        get admin_veille_candidates_path(status: "ecarte", type: "opportunite", categorie: "formation"), headers: auth
+        assert_redirected_to admin_galerie_path(statut: "ecarte", tri: "score", type: "opportunite", categorie: "Se former")
+      end
 
-        get admin_veille_candidates_path(status: "retenu"), headers: auth
-        assert_match retenu.title, response.body
+      test "le préréglage « À relire » : proposés et à vérifier, ni non triés ni écartés" do
+        propose = candidat(item_type: "opportunite", commune: "Nancy", enriched_at: Time.current, title: "Proposé")
+        verifier = candidat(item_type: "opportunite", commune: "Nancy", enriched_at: Time.current, status: "a_verifier", title: "Vérifier")
+        brut = candidat(title: "Brut")
+        ecarte = candidat(status: "ecarte", enriched_at: Time.current, title: "Rejeté")
+        get admin_galerie_path(statut: "a_relire"), headers: auth
+        assert_match propose.title, response.body
+        assert_match verifier.title, response.body
+        assert_no_match brut.title, response.body
+        assert_no_match ecarte.title, response.body
+        assert_select "#compteurs-galerie a.on strong", text: "2"
       end
 
       # ----------------------------------------------------------------
@@ -147,11 +167,11 @@ module Admin
         assert_equal "ecarte", c.reload.status
       end
 
-      test "sans Turbo, Retenir redirige vers la file" do
+      test "sans Turbo, Retenir redirige vers la galerie" do
         c = candidat
 
         patch retenir_admin_veille_candidate_path(c), headers: auth
-        assert_redirected_to admin_veille_candidates_path
+        assert_redirected_to admin_galerie_path
         assert_equal "retenu", c.reload.status
       end
 
@@ -350,11 +370,11 @@ module Admin
       end
 
       test "la file renvoie vers l'écran de relecture pour une belle histoire, et garde Valider pour une opportunité" do
-        h = histoire(status: "pending", title: "Histoire en file")
+        h = histoire(status: "pending", title: "Histoire en file", enriched_at: Time.current)
         o = candidat(item_type: "opportunite", status: "pending", title: "Opportunité en file", summary: "R.", commune: "Nancy", enriched_at: Time.current)
         brut = candidat(item_type: "opportunite", status: "pending", title: "Brut non trié", summary: "R.", commune: "Nancy", enriched_at: nil)
 
-        get admin_veille_candidates_path, headers: auth
+        get admin_galerie_path, headers: auth
         assert_match "Relire le récit", texte
         assert_match %r{action="#{Regexp.escape(valider_admin_veille_candidate_path(o))}"}, response.body
         assert_no_match %r{action="#{Regexp.escape(valider_admin_veille_candidate_path(h))}"}, response.body
@@ -364,14 +384,14 @@ module Admin
 
       test "un bandeau signale le plafond mensuel atteint et les éléments non triés" do
         candidat(title: "En attente de tri")
-        get admin_veille_candidates_path, headers: auth
+        get admin_galerie_path, headers: auth
         assert_no_match "bandeau-plafond", response.body
 
         ::Veille::AppelIa.create!(passe: "enrichissement", modele: "m", statut: "ok", cout_usd: ::Veille::Plafond.budget + 1)
-        get admin_veille_candidates_path, headers: auth
+        get admin_galerie_path, headers: auth
         assert_select "#bandeau-plafond", /Plafond mensuel atteint/
         assert_match(/1 élément reste/, texte)
-        assert_match(/1 non trié\(s\)/, texte)
+        assert_match(/« non trié\(s\) »/, texte)
       end
     end
   end
