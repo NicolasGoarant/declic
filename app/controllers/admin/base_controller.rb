@@ -4,9 +4,17 @@ class Admin::BaseController < ApplicationController
 
   private
 
+  # Interrupteur local : authentification sautée seulement en développement ET si
+  # ADMIN_SANS_MOT_DE_PASSE=1 (.env local). Toute autre combinaison la conserve.
+  def admin_sans_mot_de_passe?
+    Rails.env.development? && ENV["ADMIN_SANS_MOT_DE_PASSE"] == "1"
+  end
+
   # Identifiants absents ou vides -> 403 partout, développement compris : un admin
   # sans mot de passe configuré ne doit jamais s'ouvrir par erreur.
   def http_basic_authenticate
+    return if admin_sans_mot_de_passe?
+
     user = ENV["ADMIN_USERNAME"].to_s
     pass = ENV["ADMIN_PASSWORD"].to_s
     return head(:forbidden) if user.empty? || pass.empty?

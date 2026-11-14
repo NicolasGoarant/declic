@@ -309,6 +309,7 @@ candidats et les détache simplement.
 | `ANTHROPIC_API_KEY` | obligatoire pour le classement et la rédaction |
 | `VEILLE_BUDGET_MENSUEL` | plafond mensuel de l'API, en dollars (15 par défaut) |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | authentification admin (HTTP Basic) |
+| `ADMIN_SANS_MOT_DE_PASSE` | `1` : supprime l'authentification sur `/admin/*` **en développement uniquement** (sans effet en test et en production). Réservée au `.env` local ; redémarrer le serveur pour la prendre en compte |
 
 `ANTHROPIC_MODEL` n'est **pas** utilisé par la veille : chaque passe choisit
 son modèle explicitement.
