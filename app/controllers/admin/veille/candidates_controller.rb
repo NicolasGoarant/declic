@@ -8,6 +8,10 @@ module Admin
     class CandidatesController < BaseController
       before_action :set_candidate, except: :index
 
+      # Champs modifiables à la main avant de valider (la commune a son propre traitement). Les dates et horaires
+      # sont reportés tels quels sur la fiche à la validation.
+      CHAMPS_EDITION = %i[title schedule_text summary adresse starts_on ends_on start_time end_time].freeze
+
       # La liste de relecture a fusionné dans la galerie : /admin/veille y renvoie, avec le préréglage « À relire »
       # (ou l'équivalent du statut demandé). Les écrans d'un candidat (show, apercu…) ne changent pas d'adresse.
       def index
@@ -117,8 +121,11 @@ module Admin
         @candidate.classer(params[:item_type], params[:declic_category]) if params[:item_type].present?
         return localiser if @candidate.a_localiser? && params[:commune].to_s.strip.present?
 
-        @candidate.update!(params.permit(:title, :schedule_text, :commune, :adresse, :summary).to_h.compact)
+        @candidate.update!(params.permit(:commune, *CHAMPS_EDITION).to_h.compact)
         redirect_to admin_veille_candidate_path(@candidate, retour: retour_admin(nil)), status: :see_other, notice: "Modifications enregistrées."
+      rescue ActiveRecord::RecordInvalid => e
+        redirect_to admin_veille_candidate_path(@candidate, retour: retour_admin(nil)), status: :see_other,
+                    alert: "Enregistrement refusé : #{e.record.errors.full_messages.to_sentence}"
       end
 
       # Mini-formulaire des cartes « À classer » (et bloc Classement de l'écran du candidat) : type, et catégorie pour
@@ -145,7 +152,7 @@ module Admin
                              alert: "« #{saisie} » n'est pas une commune du périmètre : rien n'a été enregistré ni publié."
         end
 
-        @candidate.update!(params.permit(:title, :schedule_text, :summary, :adresse).to_h.compact.merge(commune: ::Veille::Territoire.canonique(saisie)))
+        @candidate.update!(params.permit(*CHAMPS_EDITION).to_h.compact.merge(commune: ::Veille::Territoire.canonique(saisie)))
         fiche = ::Veille::Validation.new(@candidate).call
         redirect_to admin_veille_candidate_path(@candidate), status: :see_other, **avis_publication(fiche)
       rescue ::Veille::Validation::Incomplet => e

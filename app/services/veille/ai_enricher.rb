@@ -227,13 +227,22 @@ module Veille
       famille = famille_pour(type, candidate, result)
       debut   = date_plausible(parse_date(result["date_debut"]), candidate) || candidate.starts_on
       fin     = date_plausible(parse_date(result["date_fin"]), candidate)   || candidate.ends_on
+      # Repli : ce que le texte dit en français quand ni la source ni le modèle n'ont rien donné. Une date passée
+      # trouvée ainsi est ignorée (une date d'archive citée dans un article ne doit pas écarter l'élément).
+      lu = Veille::DatesFrancais.analyser("#{candidate.title}. #{candidate.full_text.presence || candidate.excerpt}".slice(0, 3000),
+                                          reference: candidate.published_on || today)
+      if debut.nil? && fin.nil?
+        debut = lu.starts_on if lu.starts_on && lu.starts_on >= today
+        fin   = lu.ends_on   if lu.ends_on && lu.ends_on >= today
+      end
 
       attrs = {
         adresse: lieu_pour(candidate, result, commune),
         item_type: type, famille: famille, role_public: result["role_public"].presence, zone: result["zone"].presence,
         declic_category: (manuel ? candidate.declic_category : categorie_pour(type, candidate, famille)), commune: commune || candidate.commune,
         starts_on: debut, ends_on: fin,
-        schedule_text: (debut || fin ? nil : (result["regime"].presence || candidate.schedule_text)),
+        start_time: candidate.start_time || lu.start_time, end_time: candidate.end_time || lu.end_time,
+        schedule_text: result["regime"].presence || candidate.schedule_text.presence || lu.periodicite,
         score: Integer(result["confiance"], exception: false)&.clamp(0, 100),
         reason: result["motif"].to_s.strip.presence,
         enriched_at: Time.current

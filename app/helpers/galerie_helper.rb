@@ -14,7 +14,7 @@ module GalerieHelper
 
   # Badge de catégorie aux couleurs du site public. Clé absente de Categorie (ancienne taxonomie) : badge gris qui
   # le dit, pour qu'elle soit reclassée plutôt que passée sous silence.
-  def badge_categorie(cle)
+  def pastille_categorie(cle)
     return if cle.blank?
 
     categorie = Categorie.trouver(cle)

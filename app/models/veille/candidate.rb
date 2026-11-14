@@ -64,6 +64,8 @@ module Veille
     validates :reliability,     inclusion: { in: RELIABILITY }, allow_nil: true
     validates :draft_status,    inclusion: { in: DRAFT_STATUSES }
 
+    validate :fin_apres_debut
+
     before_validation :set_normalized_title
     validates :score, numericality: {
       only_integer:             true,
@@ -167,6 +169,10 @@ module Veille
     end
 
     private
+
+    def fin_apres_debut
+      errors.add(:ends_on, "ne peut pas précéder le début") if starts_on && ends_on && ends_on < starts_on
+    end
 
     def set_normalized_title
       self.normalized_title = Veille::Text.normalize(title).presence

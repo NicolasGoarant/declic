@@ -272,5 +272,77 @@ module Admin
       patch completer_admin_veille_candidate_path(@propose), params: { item_type: "opportunite", declic_category: "ecologie", title: "Autre titre" }, headers: auth
       assert_not @propose.reload.classement_manuel?
     end
+
+    # ---- Dates d'événement : créneau, tri, filtre Période ----
+
+    def creer_opportunite(titre, **dates)
+      Opportunity.create!({ title: titre, description: "x", category: "decouvrir", city: "Nancy", location: "Nancy",
+                            latitude: 48.69, longitude: 6.18, is_active: true }.merge(dates))
+    end
+
+    test "la carte affiche la date de l'événement, la périodicité et, à part, la date d'ajout" do
+      candidat("Chefs-d'œuvre", enriched_at: Time.current, item_type: "opportunite", commune: "Nancy", declic_category: "decouvrir",
+               starts_on: Date.new(2026, 10, 10), ends_on: Date.new(2027, 3, 28), schedule_text: "tous les samedis et dimanches",
+               start_time: Time.utc(2000, 1, 1, 11), end_time: Time.utc(2000, 1, 1, 12))
+      candidat("Visites épicées", enriched_at: Time.current, item_type: "opportunite", commune: "Nancy", starts_on: Date.new(2026, 11, 28))
+      get admin_galerie_path, headers: auth
+      assert_select "article:has(h3:contains('Chefs-d')) .creneau strong", text: "Du 10 oct. 2026 au 28 mars 2027"
+      assert_select "article:has(h3:contains('Chefs-d')) .creneau .small", text: "tous les samedis et dimanches, 11h-12h"
+      assert_select "article:has(h3:contains('Visites')) .creneau strong", text: "Sam. 28 nov. 2026"
+      assert_select "article:has(h3:contains('Visites')) .ajoute", text: /\Aajouté le #{Time.current.strftime('%-d/%m/%Y')}\z/
+      assert_select "article:has(h3:contains('Opportunité en ligne')) .creneau strong", text: "Sans date limite"
+    end
+
+    test "tri par date de l'événement : en cours ou à venir d'abord, puis sans date, puis terminés" do
+      creer_opportunite("Dans un mois", starts_on: Date.current + 30)
+      creer_opportunite("Demain", starts_on: Date.current + 1)
+      creer_opportunite("Terminé hier", starts_on: Date.current - 5, ends_on: Date.current - 1)
+      creer_opportunite("En cours", starts_on: Date.current - 3, ends_on: Date.current + 60)
+      get admin_galerie_path(tri: "evenement", statut: ""), headers: auth
+      titres = css_select("article h3").map { |n| n.text.strip }
+      ordre = ["En cours", "Demain", "Dans un mois"].map { |t| titres.index(t) }
+      assert_equal ordre.sort, ordre, "du plus proche au plus lointain"
+      assert_operator titres.index("Dans un mois"), :<, titres.index("Opportunité en ligne"), "les offres sans date viennent après"
+      assert_operator titres.index("Opportunité en ligne"), :<, titres.index("Terminé hier") if titres.include?("Terminé hier")
+    end
+
+    test "filtre Période : en cours, à venir, terminés" do
+      creer_opportunite("Dans un mois", starts_on: Date.current + 30)
+      creer_opportunite("Terminé hier", starts_on: Date.current - 5, ends_on: Date.current - 1)
+      creer_opportunite("En cours", starts_on: Date.current - 3, ends_on: Date.current + 60)
+      get admin_galerie_path(periode: "a_venir", statut: ""), headers: auth
+      assert_match "Dans un mois", texte
+      assert_no_match(/En cours<|Terminé hier/, texte.gsub(/<option[^>]*>[^<]*<\/option>/, ""))
+      get admin_galerie_path(periode: "termine", statut: "retire"), headers: auth
+      assert_match "Terminé hier", texte
+      get admin_galerie_path(periode: "en_cours", statut: ""), headers: auth
+      assert_match "En cours", texte
+      assert_match "Opportunité en ligne", texte, "une offre sans date est en cours"
+      assert_no_match(/Portrait en ligne/, texte, "une Belle Histoire n'a pas de période")
+    end
+
+    test "écran du candidat : début, fin, heures et périodicité modifiables, reportés sur la fiche à la validation" do
+      @propose.update!(summary: "Une phrase. Une autre.")
+      get admin_veille_candidate_path(@propose), headers: auth
+      %w[starts_on ends_on start_time end_time schedule_text].each { |champ| assert_select "fieldset.creneau [name=#{champ}]" }
+
+      patch completer_admin_veille_candidate_path(@propose), headers: auth,
+            params: { starts_on: "2026-12-05", ends_on: "2026-12-06", start_time: "10:00", end_time: "12:30", schedule_text: "chaque jour" }
+      c = @propose.reload
+      assert_equal [Date.new(2026, 12, 5), Date.new(2026, 12, 6)], [c.starts_on, c.ends_on]
+      assert_equal ["10:00", "12:30"], [c.start_time, c.end_time].map { |t| t.strftime("%H:%M") }
+
+      Geocoder::Lookup::Test.add_stub("Nancy", [{ "latitude" => 48.6937, "longitude" => 6.1834, "address" => "Nancy" }])
+      post valider_admin_veille_candidate_path(@propose), headers: auth
+      opp = c.reload.opportunity
+      assert_equal [Date.new(2026, 12, 6), "chaque jour"], [opp.ends_on, opp.schedule_text]
+      assert_equal "10h - 12h30", opp.horaire_affiche
+    end
+
+    test "une fin avant le début est refusée" do
+      patch completer_admin_veille_candidate_path(@propose), headers: auth, params: { starts_on: "2026-12-06", ends_on: "2026-12-05" }
+      assert_match "Enregistrement refusé", flash[:alert]
+      assert_nil @propose.reload.starts_on
+    end
   end
 end

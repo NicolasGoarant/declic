@@ -30,6 +30,29 @@ class Veille::ValidationTest < ActiveSupport::TestCase
     assert_nil c.full_text, "le texte brut est effacé une fois la fiche créée"
   end
 
+  test "les dates, heures et périodicité du candidat passent à la fiche, qui reste en ligne jusqu'à la fin du créneau" do
+    c = candidat(item_type: "opportunite", declic_category: "decouvrir", commune: "Nancy", summary: "Deux phrases. Voilà.",
+                 starts_on: Date.new(2026, 10, 10), ends_on: Date.new(2027, 3, 28), schedule_text: "tous les samedis et dimanches",
+                 start_time: Time.utc(2000, 1, 1, 11), end_time: Time.utc(2000, 1, 1, 12))
+
+    opp = Veille::Validation.new(c).call.reload
+
+    assert_equal [Date.new(2026, 10, 10), Date.new(2027, 3, 28)], [opp.starts_on, opp.ends_on]
+    assert_equal ["11:00", "12:00"], [opp.start_time, opp.end_time].map { |t| t.strftime("%H:%M") }
+    assert_equal "tous les samedis et dimanches", opp.schedule_text
+    en_ligne = ->(jour) { Opportunity.publiques(Time.find_zone("Europe/Paris").local(*jour, 12)).exists?(opp.id) }
+    assert en_ligne.([2027, 3, 28]), "encore en ligne le dernier jour"
+    assert_not en_ligne.([2027, 3, 30]), "retirée une fois le créneau terminé"
+  end
+
+  test "l'aperçu montre les mêmes dates que la fiche publiée" do
+    c = candidat(item_type: "opportunite", commune: "Nancy", summary: "Deux phrases. Voilà.", starts_on: Date.new(2026, 11, 27),
+                 ends_on: Date.new(2026, 11, 29), start_time: Time.utc(2000, 1, 1, 9, 30))
+    apercu = Veille::Validation.new(c).apercu
+    assert_equal [Date.new(2026, 11, 27), Date.new(2026, 11, 29)], [apercu.starts_on, apercu.ends_on]
+    assert_equal "9h30", apercu.horaire_affiche
+  end
+
   test "avec une adresse trouvée, le repère va à l'adresse et non au centre de la commune" do
     Veille::AdresseBan.client = Class.new { def get(*, **) = { features: [{ geometry: { coordinates: [6.2011, 48.6803] }, properties: { score: 0.95, type: "housenumber", city: "Nancy", label: "x" } }] }.to_json }.new
     c = candidat(item_type: "opportunite", commune: "Nancy", adresse: "12 rue Exemple", summary: "Une phrase. Une autre.")

@@ -41,11 +41,14 @@ module Veille
                  ev["free"] ? "Gratuit" : nil, ev["reservation"] ? "Sur réservation" : nil]
                 .compact_blank.join(". ")
 
+        # L'agenda donne début et fin ; son texte de date (« Jusqu'au 28 mars, tous les samedis de 11h à 12h »)
+        # apporte les heures et la périodicité, et sert de repli aux dates absentes.
+        quand = Veille::DatesFrancais.analyser([ ev["duringDateText"], ev["beforeDateText"] ].compact_blank.join(". "), reference: today)
         Item.new(
           origin: origin, url: format(DETAIL, ev["uuid"]), title: Veille::Text.plain(ev["name"]),
           text: Veille::Text.plain(texte), published_on: parse_date(ev["publicationDate"]),
-          starts_on: parse_date(ev["startDate"]), ends_on: parse_date(ev["endDate"]),
-          commune: ville, category_hint: categorie, type_hint: "opportunite", reliability: "haute"
+          starts_on: parse_date(ev["startDate"]) || quand.starts_on, ends_on: parse_date(ev["endDate"]) || quand.ends_on,
+          start_time: quand.start_time, end_time: quand.end_time, schedule_text: quand.periodicite, commune: ville, category_hint: categorie, type_hint: "opportunite", reliability: "haute"
         )
       end
     end

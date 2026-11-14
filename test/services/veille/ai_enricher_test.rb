@@ -95,6 +95,29 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
     assert_equal "formation", c.declic_category
   end
 
+  test "la périodicité de la source est gardée en même temps que les dates" do
+    c = candidat(starts_on: Date.new(2026, 10, 10), ends_on: Date.new(2027, 3, 28), schedule_text: "tous les samedis et dimanches",
+                 start_time: Time.utc(2000, 1, 1, 11), end_time: Time.utc(2000, 1, 1, 12))
+    c, = enrich(c)
+    assert_equal "tous les samedis et dimanches", c.schedule_text
+    assert_equal [Date.new(2026, 10, 10), Date.new(2027, 3, 28)], [c.starts_on, c.ends_on]
+    assert_equal "11:00", c.start_time.strftime("%H:%M")
+  end
+
+  test "repli : sans date de la source ni du modèle, le texte français est lu" do
+    c = candidat(origin: "presse", full_text: "Visites épicées au jardin. Dimanche 13 décembre à 14h30. Sur réservation.", published_on: Date.new(2026, 10, 1))
+    c, = enrich(c)
+    assert_equal Date.new(2026, 12, 13), c.starts_on
+    assert_equal "14:30", c.start_time.strftime("%H:%M")
+  end
+
+  test "repli : une date déjà passée citée dans le texte n'écarte pas l'élément" do
+    c = candidat(origin: "presse", full_text: "Fondé le 3 mars 2019, l'atelier ouvre ses portes aux voisins.")
+    c, = enrich(c)
+    assert_nil c.starts_on
+    assert_equal "pending", c.status
+  end
+
   test "une belle histoire est reconnue (source de presse)" do
     c, = enrich(candidat(origin: "presse"), type: "belle_histoire", categorie: nil)
     assert_equal "belle_histoire", c.item_type

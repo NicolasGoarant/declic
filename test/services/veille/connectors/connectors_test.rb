@@ -31,6 +31,20 @@ class Veille::ConnectorsTest < ActiveSupport::TestCase
     assert_match %r{\Ahttps://www\.nancy\.fr/agenda/details-agenda\?uuid=}, don.url
   end
 
+  test "agenda : le texte de date apporte heures et périodicité, et complète les dates absentes" do
+    ev = { "name" => "Chefs-d'œuvre de l'École de Nancy", "mainCategory" => { "name" => "Activité - Animation" }, "uuid" => "y",
+           "startDate" => "2026-10-10", "endDate" => "2027-03-28", "place" => { "city" => { "name" => "Nancy" } },
+           "duringDateText" => "Jusqu'au 28 mars 2027, tous les samedis et dimanches de 11h à 12h" }
+    i = Veille::Connectors::AgendaNancy.new(http: FakeHttp.new, today: TODAY).item_pour(ev)
+    assert_equal [Date.new(2026, 10, 10), Date.new(2027, 3, 28)], [i.starts_on, i.ends_on]
+    assert_equal "tous les samedis et dimanches", i.schedule_text
+    assert_equal ["11:00", "12:00"], [i.start_time, i.end_time].map { |t| t.strftime("%H:%M") }
+
+    sans_fin = ev.except("startDate", "endDate").merge("duringDateText" => "Du 13 au 17 novembre")
+    j = Veille::Connectors::AgendaNancy.new(http: FakeHttp.new, today: TODAY).item_pour(sans_fin)
+    assert_equal [Date.new(2026, 11, 13), Date.new(2026, 11, 17)], [j.starts_on, j.ends_on]
+  end
+
   # --- JeVeuxAider / API Engagement --------------------------------------------
   class FakeApi
     attr_reader :params

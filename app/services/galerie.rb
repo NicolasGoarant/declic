@@ -22,23 +22,48 @@ class Galerie
   TYPES   = { "opportunite" => "Opportunité", "belle_histoire" => "Belle Histoire" }.freeze
   PAR_PAGE = 48
 
-  Carte = Struct.new(:cle, :type, :statut, :record, :titre, :resume, :categorie, :commune, :date, :source, :score, :cree_le, :cle_categorie,
+  PERIODES = { "en_cours" => "En cours", "a_venir" => "À venir", "termine" => "Terminés" }.freeze
+  TRIS = %w[date score evenement].freeze
+
+  # debut / fin / heure_debut / heure_fin / periodicite : la date de l'ÉVÉNEMENT (starts_on, ends_on, horaires et
+  # périodicité de la fiche ou du candidat). cree_le : la date d'ajout, affichée à part.
+  Carte = Struct.new(:cle, :type, :statut, :record, :titre, :resume, :categorie, :commune, :debut, :fin, :heure_debut, :heure_fin,
+                     :periodicite, :source, :score, :cree_le, :cle_categorie,
                      :raison, :fiabilite, :a_localiser, :famille, :recit, :collecte_le, keyword_init: true) do
     def candidat? = record.is_a?(Veille::Candidate)
     def histoire? = type == "belle_histoire"
+
+    def creneau
+      return nil if histoire? && debut.nil?
+
+      Veille::Creneau.pour(debut: debut, fin: fin, heure_debut: heure_debut, heure_fin: heure_fin, periodicite: periodicite)
+    end
+
+    # en_cours / a_venir / termine ; une offre sans date est « en cours ». Les Belles Histoires n'ont pas de période.
+    def periode(aujourdhui)
+      return nil if histoire?
+      return "en_cours" if debut.nil? && fin.nil?
+
+      premier = debut || fin
+      dernier = fin || debut
+      return "termine" if dernier < aujourdhui
+
+      premier > aujourdhui ? "a_venir" : "en_cours"
+    end
   end
 
-  Filtres = Struct.new(:type, :statut, :categorie, :commune, :source, :q, :tri, :page, :depuis, :a_localiser, keyword_init: true)
+  Filtres = Struct.new(:type, :statut, :categorie, :commune, :source, :q, :tri, :page, :depuis, :a_localiser, :periode, keyword_init: true)
 
   attr_reader :filtres
 
   def initialize(params = {})
+    @aujourdhui = Time.current.in_time_zone(ConversionDates::FUSEAU).to_date # (les tests figent le jour avec travel_to)
     p = params.respond_to?(:to_unsafe_h) ? params.to_unsafe_h : params.to_h
     p = p.with_indifferent_access
     @filtres = Filtres.new(
       type: p[:type].presence_in(TYPES.keys), statut: p[:statut].presence_in(STATUTS.keys),
       categorie: p[:categorie].presence, commune: p[:commune].presence, source: p[:source].presence,
-      q: p[:q].to_s.strip.presence, tri: p[:tri] == "score" ? "score" : "date", page: [p[:page].to_i, 1].max,
+      q: p[:q].to_s.strip.presence, tri: p[:tri].presence_in(TRIS) || "date", periode: p[:periode].presence_in(PERIODES.keys), page: [p[:page].to_i, 1].max,
       depuis: (Date.iso8601(p[:depuis].to_s) rescue nil), a_localiser: p[:a_localiser].present? ? "1" : nil
     )
   end
@@ -94,6 +119,7 @@ class Galerie
     end
     cartes = cartes.select { |c| c.collecte_le && c.collecte_le.to_date >= f.depuis } if f.depuis
     cartes = cartes.select(&:a_localiser) if f.a_localiser
+    cartes = cartes.select { |c| c.periode(@aujourdhui) == f.periode } if f.periode
     cartes = cartes.select { |c| c.type == f.type } if f.type
     cartes = cartes.select { |c| c.categorie == f.categorie } if f.categorie
     cartes = cartes.select { |c| c.commune == f.commune } if f.commune
@@ -105,12 +131,25 @@ class Galerie
     cartes
   end
 
-  # Plus récent d'abord (date d'ajout) ; par score : les candidats les mieux notés d'abord, les fiches sans score à la fin.
+  # Plus récent d'abord (date d'ajout) ; par score : les candidats les mieux notés d'abord, les fiches sans score à la fin ;
+  # par événement : en cours ou à venir (le plus proche d'abord), puis les offres sans date, puis les terminés (le plus
+  # récent d'abord), puis les Belles Histoires.
   def trier(cartes)
     if filtres.tri == "score"
       cartes.sort_by { |c| [c.score ? 0 : 1, -c.score.to_i, -c.cree_le.to_i] }
+    elsif filtres.tri == "evenement"
+      cartes.sort_by { |c| cle_evenement(c) }
     else
       cartes.sort_by { |c| -c.cree_le.to_i }
+    end
+  end
+
+  def cle_evenement(c)
+    case c.periode(@aujourdhui)
+    when "en_cours" then c.debut.nil? && c.fin.nil? ? [ 1, 0, -c.cree_le.to_i ] : [ 0, [ c.debut || c.fin, @aujourdhui ].max.jd, -c.cree_le.to_i ]
+    when "a_venir"  then [ 0, (c.debut || c.fin).jd, -c.cree_le.to_i ]
+    when "termine"  then [ 2, -(c.fin || c.debut).jd, -c.cree_le.to_i ]
+    else [ 3, 0, -c.cree_le.to_i ]
     end
   end
 
@@ -121,7 +160,8 @@ class Galerie
     Opportunity.all.map do |o|
       Carte.new(cle: "opportunity_#{o.id}", type: "opportunite", statut: publiques.include?(o.id) ? "en_ligne" : "retire", record: o,
                 titre: o.title, resume: o.description, categorie: Categorie.trouver(o.category)&.libelle, commune: o.city.presence,
-                date: o.date_debut, source: o.source.presence, score: nil, cree_le: o.created_at, cle_categorie: o.category, collecte_le: o.created_at)
+                debut: o.date_debut, fin: o.date_fin, heure_debut: o.start_time, heure_fin: o.end_time, periodicite: o.schedule_text,
+                source: o.source.presence, score: nil, cree_le: o.created_at, cle_categorie: o.category, collecte_le: o.created_at)
     end
   end
 
@@ -129,7 +169,7 @@ class Galerie
     Story.all.map do |s|
       Carte.new(cle: "story_#{s.id}", type: "belle_histoire", statut: s.is_active ? "en_ligne" : "retire", record: s,
                 titre: s.title, resume: s.chapo, categorie: nil, commune: s.city.presence,
-                date: s.happened_on || s.source_published_on, source: s.source_name.presence, score: nil, cree_le: s.created_at, cle_categorie: Categorie::HISTOIRES, collecte_le: s.created_at)
+                debut: s.happened_on || s.source_published_on, source: s.source_name.presence, score: nil, cree_le: s.created_at, cle_categorie: Categorie::HISTOIRES, collecte_le: s.created_at)
     end
   end
 
@@ -137,7 +177,8 @@ class Galerie
     Veille::Candidate.where.not(status: "publie").includes(:source).map do |c|
       Carte.new(cle: "candidate_#{c.id}", type: c.item_type.presence, statut: statut_candidat(c), record: c,
                 titre: c.title.presence || "(sans titre)", resume: c.summary.presence || c.excerpt, categorie: (c.histoire? ? nil : c.categorie_label),
-                commune: c.commune.presence, date: c.starts_on || c.published_on, source: c.source_label, score: c.score, cree_le: c.created_at,
+                commune: c.commune.presence, debut: c.starts_on, fin: c.ends_on, heure_debut: c.start_time, heure_fin: c.end_time,
+                periodicite: c.schedule_text, source: c.source_label, score: c.score, cree_le: c.created_at,
                 cle_categorie: (c.histoire? ? Categorie::HISTOIRES : c.declic_category.presence),
                 raison: c.reason.presence, fiabilite: c.reliability || "basse", a_localiser: c.a_localiser?,
                 famille: (Opportunity::FAMILLES.fetch(c.famille, c.famille.to_s.humanize) if c.famille.present?),

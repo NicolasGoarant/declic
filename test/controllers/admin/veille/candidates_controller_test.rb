@@ -88,15 +88,16 @@ module Admin
                         "le meilleur score doit apparaître en premier"
       end
 
-      test "la file affiche titre, chapeau, source, date, score et motif" do
-        c = candidat(published_on: Date.new(2026, 3, 14))
+      test "la file affiche titre, chapeau, source, date de l'événement, score et motif" do
+        c = candidat(published_on: Date.new(2026, 1, 5), starts_on: Date.new(2026, 3, 14))
 
         get admin_galerie_path(tri: "score"), headers: auth
 
         assert_match c.title, response.body
         assert_match "Trente familles cultivent", response.body
         assert_match "exemple.fr", response.body
-        assert_match "14/03/2026", response.body
+        assert_match "Sam. 14 mars 2026", response.body
+        assert_no_match(/Sam\. 3 janv|5\/01\/2026/, response.body, "la date de publication n'est pas celle de l'événement")
         assert_match "87", response.body
         assert_match "Personne nommée et initiative concrète.", response.body
       end

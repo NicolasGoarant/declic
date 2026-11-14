@@ -34,7 +34,7 @@
       <dd>
         <% if @candidate.item_type %>
           <span class="badge"><%= @candidate.histoire? ? "Belle Histoire" : "Opportunité" %></span>
-          <%= badge_categorie(@candidate.declic_category) unless @candidate.histoire? %>
+          <%= pastille_categorie(@candidate.declic_category) unless @candidate.histoire? %>
           <span class="small"><%= @candidate.commune.presence || "commune ?" %></span>
           <% if @candidate.score %><span class="small muted">· confiance IA <%= @candidate.score %></span><% end %>
         <% else %>
@@ -78,8 +78,23 @@
         <%= f.text_field :adresse, value: @candidate.adresse, placeholder: "12 rue Saint-Dizier" %>
         <p class="small muted">Avec l'adresse, le repère se pose sur la carte à l'endroit exact ; sinon, au centre de la commune.</p>
         <% unless @candidate.histoire? %>
-          <%= f.label :schedule_text, "Horaires / périodicité (facultatif)" %>
-          <%= f.text_field :schedule_text, value: @candidate.schedule_text %>
+          <fieldset class="creneau" style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;margin:0 0 12px">
+            <legend class="small"><strong>Date de l'événement</strong></legend>
+            <%= f.label :starts_on, "Début" %>
+            <%= f.date_field :starts_on, value: @candidate.starts_on %>
+            <%= f.label :ends_on, "Fin (vide pour un seul jour)" %>
+            <%= f.date_field :ends_on, value: @candidate.ends_on %>
+            <%= f.label :start_time, "Heure de début (facultatif)" %>
+            <%= f.time_field :start_time, value: @candidate.start_time&.strftime("%H:%M") %>
+            <%= f.label :end_time, "Heure de fin (facultatif)" %>
+            <%= f.time_field :end_time, value: @candidate.end_time&.strftime("%H:%M") %>
+            <%= f.label :schedule_text, "Périodicité (facultatif)" %>
+            <%= f.text_field :schedule_text, value: @candidate.schedule_text, placeholder: "tous les samedis et dimanches" %>
+            <p class="small muted" style="margin:4px 0 0">
+              Sans date : offre permanente (« Sans date limite »). À la validation, ces champs alimentent la fiche, qui reste en ligne jusqu'à la fin du créneau.
+              Aujourd'hui : <strong><%= Veille::Creneau.pour(debut: @candidate.starts_on, fin: @candidate.ends_on, heure_debut: @candidate.start_time, heure_fin: @candidate.end_time, periodicite: @candidate.schedule_text).then { |c| [ c.date, c.periodicite ].compact.join(" — ") } %></strong>
+            </p>
+          </fieldset>
         <% end %>
         <%= f.label :summary, @candidate.histoire? ? "Chapeau (tes mots)" : "Texte de la fiche (tes mots)" %>
         <%= f.text_area :summary, value: @candidate.summary %>

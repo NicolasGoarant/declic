@@ -18,17 +18,21 @@
   <div class="corps">
     <% if carte.type %>
       <span class="badge t-<%= carte.type %>"><%= Galerie::TYPES[carte.type] %></span>
-      <% unless carte.histoire? %><%= badge_categorie(carte.cle_categorie) || tag.span("catégorie ?", class: "badge no") %><% end %>
+      <% unless carte.histoire? %><%= pastille_categorie(carte.cle_categorie) || tag.span("catégorie ?", class: "badge no") %><% end %>
     <% else %>
       <span class="badge a-classer">À classer</span>
     <% end %>
     <span class="badge s-<%= carte.statut %>"><%= Galerie::STATUTS[carte.statut] %></span>
     <h3><%= carte.titre %></h3>
+    <% creneau = carte.creneau %>
+    <% if creneau %>
+      <p class="creneau"><strong><%= creneau.date %></strong><% if creneau.periodicite %><br><span class="small"><%= creneau.periodicite %></span><% end %></p>
+    <% end %>
     <div class="small muted">
-      <%= carte.commune || "—" %><br>
-      <%= carte.date ? I18n.l(carte.date, format: "%-d/%m/%Y") : "sans date" %> · <%= carte.source || "—" %>
+      <%= carte.commune || "—" %> · <%= carte.source || "—" %>
       <% if carte.famille %> · <%= carte.famille %><% end %>
       <% if carte.score %> · <strong class="score <%= carte.score >= 70 ? 'haut' : (carte.score >= 40 ? 'moyen' : 'bas') %>">IA <%= carte.score %></strong><% end %>
+      <br><span class="ajoute">ajouté le <%= I18n.l(carte.cree_le.to_date, format: "%-d/%m/%Y") %></span>
     </div>
     <% if carte.candidat? && carte.type.nil? && (r.pending? || r.a_verifier?) %>
       <%# Classement rapide, sans JavaScript : une Belle Histoire ignore la catégorie. %>
