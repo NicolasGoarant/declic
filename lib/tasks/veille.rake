@@ -113,6 +113,16 @@ namespace :veille do
     afficher_rapport(Veille::Runner.new(connecteurs: Veille::Runner.quotidien).run)
   end
 
+  desc "Tri IA seul des candidats non triés (aucune collecte, aucune rédaction, rien n'est publié) — reprenable. Plafond : VEILLE_BUDGET_MENSUEL en ligne de commande. MAX=n pour borner (tous par défaut)."
+  task trier: :environment do
+    $stdout.sync = true
+    logger = Logger.new($stdout, formatter: proc { |sev, t, _, msg| "#{t.strftime('%H:%M:%S')} #{sev[0]} #{msg}\n" })
+    max = Integer(ENV["MAX"], exception: false) || 10_000
+    puts "→ #{Veille::Candidate.a_enrichir.count} candidat(s) à trier · dépensé ce mois #{format('%.4f', Veille::Plafond.depense)} $ · plafond #{format('%.2f', Veille::Plafond.budget)} $ · presse #{Veille::Runner.presse_active? ? 'ACTIVE' : 'inactive'}"
+    rapport = Veille::Runner.new(connecteurs: [], max: max, logger: logger).trier
+    puts "  triés #{rapport.enrichis} (dont #{rapport.ecartes} écartés) · erreurs IA #{rapport.erreurs_ia} · restants #{Veille::Candidate.a_enrichir.count} · coût du run #{format('%.4f', rapport.cout_usd)} $#{' · PLAFOND ATTEINT' if rapport.plafond}"
+  end
+
   desc "Rattrapage : rédige le récit des belles histoires enrichies qui n'en ont pas — rake veille:rediger (LIMITE=n pour borner)"
   task rediger: :environment do
     limite = Integer(ENV["LIMITE"], exception: false) if ENV["LIMITE"].present?

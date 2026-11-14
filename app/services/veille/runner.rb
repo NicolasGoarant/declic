@@ -70,6 +70,19 @@ module Veille
       rapport
     end
 
+    # Tri seul : enrichit la file des non triés (a_enrichir), sans collecter ni rédiger. Reprenable : un candidat
+    # trié a `enriched_at` et sort de la file ; plafond atteint ou erreurs d'affilée = arrêt propre.
+    def trier
+      rapport = Rapport.new(sources: [], crees: 0, doublons: 0, hors_zone: 0, passes: 0,
+                            enrichis: 0, ecartes: 0, erreurs_ia: 0, cout_usd: 0.0, restants: 0, plafond: false,
+                            rediges: 0, redaction_bloquee: 0, erreurs_redaction: 0, a_rediger_restants: 0, tokens: {},
+                            prefiltre: Prefiltre::Bilan.vide)
+      @depart_journal = Veille::AppelIa.maximum(:id).to_i
+      enrichir(rapport)
+      journaliser(rapport)
+      rapport
+    end
+
     private
 
     def collecter(rapport)
@@ -134,6 +147,7 @@ module Veille
     def enrichir_un(candidat, rapport)
       enricher.enrich(candidat)
       rapport.enrichis += 1
+      @log.info("[Veille] trié ##{candidat.id} (#{candidat.origin}) → #{candidat.status}, #{candidat.item_type || '-'}/#{candidat.declic_category || '-'}, score #{candidat.score.inspect}#{" · écarté : #{candidat.discard_reason}" if candidat.ecarte?}")
 
       rapport.ecartes += 1 if candidat.ecarte?
     end
