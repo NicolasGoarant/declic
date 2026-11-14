@@ -1,0 +1,63 @@
+# Déploiement de `veille-sources-v2` (14/11/2026)
+
+**Constat du 14/11 (lecture seule).** `www.declic.site` = **`declic-nancy-paris-eu`** (v34, `4a71796`, pipeline `declic-veille`, Heroku Scheduler installé, tâche non créée). `declic-nancy-paris` (US, v369, legacy, sans clé IA) porte `declic.site`, `declic.fr`, `www.declic.fr` et **partage la même base Neon et le même bucket** : une migration jouée par l'app EU vaut pour les deux. **On ne déploie jamais l'app US.** La branche a 38 commits d'avance sur `main` et 0 de retard (fusion en avance rapide). 3 migrations à jouer, toutes additives (colonnes) : `20261114100000`, `20261114110000`, `20261114120000` ; durée : moins d'une seconde (100 lignes par table). Elles s'exécutent en phase `release` (`Procfile`) ; si elle échoue, l'ancien code reste en ligne.
+
+Notation : `EU=declic-nancy-paris-eu`, `US=declic-nancy-paris`.
+
+## 0. Avant de pousser
+```
+git switch veille-sources-v2 && bin/rails test            # 654 verts attendus
+bin/rails veille:exporter_candidats                        # tmp/candidats-veille-AAAA-MM-JJ.json (148 candidats, non versionné)
+pg_dump "$(heroku config:get DATABASE_URL -a $EU)" -Fc -f ~/Documents/declic_sauvegardes/declic-prod-avant-veille-v2-$(date +%F).dump   # seul filet : ni pg:backups ni retour arrière de migration
+```
+Variables (une seule fois ; chaque `config:set` redémarre le web) :
+```
+read -rs K && heroku config:set ANTHROPIC_API_KEY="$K" -a $EU; unset K    # la nouvelle (finit par EwAA) ; la prod porte encore l'ancienne (KAAA)
+heroku config:set VEILLE_BUDGET_MENSUEL=15 VEILLE_PRESSE_ACTIVE=false -a $EU
+heroku config:get ANTHROPIC_API_KEY -a $EU | grep -o '.\{4\}$'              # EwAA
+```
+`ADMIN_SANS_MOT_DE_PASSE` ne doit exister ni sur EU ni sur US (absente le 14/11) ; ne jamais la créer.
+
+## 1. Fusion, push, build
+```
+git switch main && git merge --ff-only veille-sources-v2
+git push https://git.heroku.com/declic-nancy-paris-eu.git main:main      # jamais le remote dokku-test, jamais l'app US
+heroku releases -a $EU -n 3 && heroku releases:output -a $EU              # v35 « Deploy … » ; sortie de db:migrate (3 migrations « migrated »)
+heroku logs -n 100 -a $EU | grep -iE "error|H1[0-9]|R1[0-9]"             # rien attendu
+git push origin main                                                       # GitHub (33 commits de retard, facultatif)
+```
+Vérifier ensuite `heroku run -a $EU "bin/rails runner 'puts ActiveRecord::Base.connection.migration_context.current_version'"` → `20261114120000`, et que l'app US répond (`curl -sI https://declic-nancy-paris-bb639ed6aeca.herokuapp.com | head -1` → 200 : elle tourne sur la base migrée, les colonnes ajoutées ont une valeur par défaut).
+
+## 2. Journal des coûts du banc
+```
+heroku run -a $EU "rake veille:reporter_banc CSV=rapports/banc-essai-2026-11-11.csv DATE=2026-11-11"   # 52 appels, ≈ 0,42 $
+heroku run -a $EU "rake veille:reporter_banc CSV=rapports/banc-essai-2026-11-14.csv DATE=2026-11-14"   # 52 appels, ≈ 0,46 $ (2e banc ; décision à confirmer)
+```
+Idempotent par date (rien reporté si déjà fait). Le tri réel du 14/11 (1,77 $, 235 appels) n'est pas reporté : il a été payé en local.
+
+## 3. Candidats triés en local (sans repayer l'IA)
+Le fichier n'est pas dans le slug : on l'envoie par l'entrée standard.
+```
+heroku run --no-tty -a $EU "rake veille:importer_candidats FICHIER=- DRY_RUN=1" < tmp/candidats-veille-2026-11-14.json
+#   attendu (simulation sur les 100 URL de la prod) : 70 créé(s), 78 ignoré(s), 0 refusé(s)
+heroku run --no-tty -a $EU "rake veille:importer_candidats FICHIER=-" < tmp/candidats-veille-2026-11-14.json
+```
+Idempotent (clé : URL, puis même titre + même date), jamais d'écrasement, aucune fiche, aucune publication. Sans `full_text` : pour **Valider** une fiche importée, la rédaction repart de l'extrait.
+
+## 4. Heroku Scheduler (à la main, le CLI ne crée pas la tâche)
+`heroku addons:open scheduler -a $EU` → *Add job* : commande `rake veille:quotidien`, fréquence **Every day**, heure creuse **05:00 UTC** (06:00/07:00 à Nancy), dyno Standard-1X. Rien sur l'app US.
+
+## 5. Contrôles après déploiement
+- `https://www.declic.site/admin/galerie` (Basic auth) : 200 ; compteurs par statut (70 candidats importés, 15 en attente existants) ; bandeau de plafond absent.
+- Accueil, carte, une fiche : inchangés (≈ 136 fiches publiques, 51 belles histoires).
+- Coût du mois : `heroku run -a $EU "rake veille:cout"` → ≈ 0,48 $ déjà journalisés + 0,42 $ (+ 0,46 $) du banc.
+- Lendemain du premier passage du Scheduler : `heroku logs -a $EU --ps scheduler` et `rake veille:cout`.
+
+## 6. Retour arrière
+```
+heroku rollback v34 -a $EU        # code seul : les 3 colonnes restent, l'ancien code les ignore (valeurs par défaut)
+```
+Neutraliser le Scheduler : supprimer le job dans le tableau de bord (ou `heroku config:set VEILLE_BUDGET_MENSUEL=0 -a $EU` : plafond à zéro, plus aucun appel IA). Les candidats importés se retirent par un `DELETE` ciblé (aucune fiche créée). Restauration de la base seulement depuis le dump du §0 (`pg_restore` ≥ 18) : elle vaut pour les deux apps.
+
+## 7. Fiche de test à supprimer
+« TEST variantes WebP (à supprimer) » : **absente de la production** (aucune fiche de ce titre, ni « test » ni « variante », parmi 174 opportunités et 51 belles histoires, vérifié le 14/11 sur la base partagée). Locale : id 343, doublon de la 323 — supprimée en local. Rien à supprimer en prod ; si elle apparaissait, le faire à la main dans `/admin/opportunities`.
