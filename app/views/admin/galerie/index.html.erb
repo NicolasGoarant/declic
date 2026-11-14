@@ -25,8 +25,16 @@
   .filtres input[type=search]{padding:6px;border:1px solid #cbd5e1;border-radius:6px;min-width:180px}
 </style>
 
-<h1>Galerie</h1>
-<p class="muted small">Belles Histoires et Opportunités en ligne, et éléments proposés par la veille.</p>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+  <div>
+    <h1>Galerie</h1>
+    <p class="muted small">Belles Histoires et Opportunités en ligne, et éléments proposés par la veille.</p>
+  </div>
+  <div class="actions">
+    <%= link_to "➕ Nouvelle opportunité", new_admin_opportunity_path(retour: request.fullpath), class: "btn" %>
+    <%= link_to "➕ Nouvelle Belle Histoire", new_admin_story_path(retour: request.fullpath), class: "btn" %>
+  </div>
+</div>
 
 <turbo-frame id="galerie" data-turbo-action="advance">
   <%= render "admin/galerie/contenu", galerie: @galerie %>

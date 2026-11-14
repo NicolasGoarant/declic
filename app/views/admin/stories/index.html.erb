@@ -75,7 +75,7 @@
           <td class="text-right">
             <div class="action-links">
               <%= link_to "✏️", edit_admin_story_path(s) %>
-              <%= button_to "🗑️", admin_story_path(s), method: :delete, data: { confirm: "Supprimer ?" }, class: "btn-delete" %>
+              <%= button_to "🗑️", admin_story_path(s), method: :delete, form: { data: { turbo_confirm: "Supprimer ?" } }, onclick: "return confirm('Supprimer ?')", class: "btn-delete" %>
             </div>
           </td>
         </tr>

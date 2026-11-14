@@ -48,7 +48,7 @@ class Admin::OpportunitiesController < Admin::BaseController
 
     if @opportunity.save
       appliquer_galerie(@opportunity)
-      redirect_to admin_opportunities_path, notice: "Opportunité créée ✅"
+      redirect_to retour_admin(admin_opportunities_path), notice: "Opportunité créée ✅"
     else
       render :new, status: :unprocessable_entity
     end
@@ -62,7 +62,7 @@ class Admin::OpportunitiesController < Admin::BaseController
 
     if @opportunity.save
       appliquer_galerie(@opportunity)
-      redirect_to admin_opportunities_path, notice: "Opportunité mise à jour ✅"
+      redirect_to retour_admin(admin_opportunities_path), notice: "Opportunité mise à jour ✅"
     else
       render :edit, status: :unprocessable_entity
     end

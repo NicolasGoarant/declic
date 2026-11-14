@@ -19,7 +19,7 @@
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;margin:0;background:#fafafa;color:#0f172a}
     header{position:sticky;top:0;background:#111827;color:#fff;padding:10px 16px;z-index:10}
     header a{color:#fff;text-decoration:none;margin-right:12px}
-    header a.on{text-decoration:underline}
+    header a.on{text-decoration:none;background:#374151;border-radius:6px;padding:4px 8px;margin-right:8px;font-weight:600}
     .container{max-width:1200px;margin:0 auto;padding:16px}
     h1{font-size:20px;margin:16px 0 4px}
     .table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e7eb}
@@ -63,9 +63,15 @@
     dl.meta{margin:0;font-size:14px}
     dl.meta dt{font-weight:600;color:#475569;margin-top:10px;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
     dl.meta dd{margin:2px 0 0}
+    /* Écrans de fiches (listes et formulaires) : leurs propres styles, sans les règles de formulaire de la Veille. */
+    body[data-turbo="false"] label{display:revert;font-size:revert;font-weight:revert;margin:revert}
+    body[data-turbo="false"] input[type=text],body[data-turbo="false"] input[type=url],body[data-turbo="false"] select,body[data-turbo="false"] textarea{width:revert;box-sizing:revert;padding:revert;border:revert;border-radius:revert;font:revert}
+    body[data-turbo="false"] textarea{min-height:revert;resize:revert}
+    .admin-form input[type=text],.admin-form input[type=url],.admin-form input[type=email],.admin-form input[type=number],.admin-form input[type=date],.admin-form input[type=time],.admin-form select,.admin-form textarea{width:100%;box-sizing:border-box;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:14px}
+    .admin-form label{font-size:13px;font-weight:600;margin:10px 0 4px;display:block}
   </style>
 </head>
-<body>
+<body<%= raw(' data-turbo="false"') if %w[opportunities stories].include?(controller_name) %>>
   <header>
     <div class="container">
       <strong>Veille</strong>
@@ -80,8 +86,10 @@
       <%= link_to "Sources", admin_veille_sources_path,
                   class: ("on" if controller_name == "sources") %>
       <span class="muted">|</span>
-      <%= link_to "Opportunités", admin_opportunities_path %>
-      <%= link_to "Histoires", admin_stories_path %>
+      <%= link_to "Fiches Opportunités", admin_opportunities_path,
+                  class: ("on" if controller_name == "opportunities") %>
+      <%= link_to "Fiches Belles Histoires", admin_stories_path,
+                  class: ("on" if controller_name == "stories") %>
     </div>
   </header>
 

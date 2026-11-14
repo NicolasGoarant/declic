@@ -1,8 +1,19 @@
 # app/controllers/admin/base_controller.rb
 class Admin::BaseController < ApplicationController
+  # Un seul habillage pour toute l'administration : barre sombre de la Veille.
+  layout "veille"
+
   before_action :http_basic_authenticate
 
   private
+
+  # Retour demandé par l'écran d'origine (galerie avec ses filtres et sa page) : chemin
+  # interne à /admin uniquement, jamais une adresse extérieure.
+  def retour_admin(defaut)
+    retour = params[:retour].to_s
+    retour.match?(%r{\A/admin(/|\?|\z)}) && !retour.start_with?("//") ? retour : defaut
+  end
+  helper_method :retour_admin
 
   # Interrupteur local : authentification sautée seulement en développement ET si
   # ADMIN_SANS_MOT_DE_PASSE=1 (.env local). Toute autre combinaison la conserve.

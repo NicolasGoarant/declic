@@ -91,7 +91,7 @@
           <td class="text-right">
             <div class="action-links">
               <%= link_to "✏️", edit_admin_opportunity_path(o) %>
-              <%= button_to "🗑️", admin_opportunity_path(o), method: :delete, data: { confirm: "Supprimer ?" }, class: "btn-delete" %>
+              <%= button_to "🗑️", admin_opportunity_path(o), method: :delete, form: { data: { turbo_confirm: "Supprimer ?" } }, onclick: "return confirm('Supprimer ?')", class: "btn-delete" %>
             </div>
           </td>
         </tr>

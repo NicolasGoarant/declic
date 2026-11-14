@@ -3,6 +3,7 @@
 
 <%= form_with model: [ :admin, @opportunity ], local: true,
               html: { multipart: true, class: "admin-form" } do |f| %>
+  <%= hidden_field_tag :retour, params[:retour] if params[:retour].present? %>
   <%= render "admin/shared/erreurs", record: @opportunity %>
   <%= render "admin/opportunities/form/import" %>
 

@@ -51,7 +51,7 @@ class Admin::StoriesController < Admin::BaseController
 
     if @story.errors.none? && @story.save
       appliquer_galerie(@story)
-      redirect_to admin_stories_path, notice: "Histoire créée."
+      redirect_to retour_admin(admin_stories_path), notice: "Histoire créée."
     else
       flash.now[:alert] = @story.errors.full_messages.to_sentence
       render :new, status: :unprocessable_entity
@@ -72,7 +72,7 @@ class Admin::StoriesController < Admin::BaseController
 
     if @story.errors.none? && @story.save
       appliquer_galerie(@story)
-      redirect_to admin_stories_path(request.query_parameters), notice: "Histoire mise à jour."
+      redirect_to retour_admin(admin_stories_path(request.query_parameters.except("retour"))), notice: "Histoire mise à jour."
     else
       flash.now[:alert] = @story.errors.full_messages.to_sentence
       render :edit, status: :unprocessable_entity

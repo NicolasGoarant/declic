@@ -1,3 +1,3 @@
-<%= link_to "← Retour", admin_opportunities_path(request.query_parameters) %>
+<%= link_to "← Retour", retour_admin(admin_opportunities_path(request.query_parameters.except("retour"))) %>
 Éditer : <%= @opportunity.title %>
 <%= render 'form' %>
