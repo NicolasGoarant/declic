@@ -185,4 +185,27 @@ class Veille::FiabilisationTest < ActiveSupport::TestCase
     runner(enricher).trier
     assert_equal [a.id, b.id].sort, enricher.vus.sort
   end
+
+  # --- Étape 2 (rattrapage) : tâche idempotente ------------------------------------------------------------
+
+  test "SeuilVerification : à blanc ne change rien, puis déplace une seule fois, sans toucher écartés ni classés à la main" do
+    bas   = candidat(score: 35, enriched_at: Time.current, reason: "Motif.")
+    haut  = candidat(score: 80, enriched_at: Time.current)
+    main  = candidat(score: 10, enriched_at: Time.current, classement_manuel: true)
+    ecart = candidat(score: 10, enriched_at: Time.current, status: "ecarte", discard_reason: "x")
+    illisible = candidat(score: 60, enriched_at: Time.current)
+    Veille::AppelIa.create!(candidate: illisible, passe: "escalade", modele: "m", statut: "illisible")
+
+    a_blanc = Veille::SeuilVerification.appliquer(dry_run: true)
+    assert_equal [bas.id], a_blanc[:score_faible]
+    assert_equal [illisible.id], a_blanc[:second_avis_illisible]
+    assert_equal "pending", bas.reload.status
+
+    Veille::SeuilVerification.appliquer
+    assert_equal "a_verifier", bas.reload.status
+    assert_equal "Score faible (35) : Motif.", bas.reason
+    assert_equal "a_verifier", illisible.reload.status
+    assert_equal %w[pending pending ecarte], [haut, main, ecart].map { |c| c.reload.status }
+    assert_equal 0, Veille::SeuilVerification.appliquer.values.sum(&:size), "idempotent"
+  end
 end

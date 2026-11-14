@@ -98,7 +98,8 @@ namespace :veille do
     puts "── Bilan ───────────────────────────────────────────"
     puts "  nouveaux éléments ingérés : #{rapport.crees}"
     puts "  doublons / hors zone / passés : #{rapport.doublons} / #{rapport.hors_zone} / #{rapport.passes}"
-    puts "  enrichis (IA)             : #{rapport.enrichis} (dont #{rapport.ecartes} écartés), erreurs IA #{rapport.erreurs_ia}"
+    puts "  écartés avant IA          : #{rapport.avant_ia_passes} passés, #{rapport.avant_ia_doublons} doublons de catalogue (aucun appel)"
+    puts "  enrichis (IA)             : #{rapport.enrichis} (dont #{rapport.ecartes} écartés, #{rapport.a_verifier} à vérifier), erreurs IA #{rapport.erreurs_ia}"
     pf = rapport.prefiltre
     puts "  préfiltre presse          : #{pf.recus} reçus, #{pf.retenus.size} retenus, #{pf.ecartes} écartés#{" (#{pf.motifs.map { |m, n| "#{m} : #{n}" }.join(', ')})" if pf.ecartes.positive?}"
     puts "  en attente d'enrichissement : #{rapport.restants}"
@@ -113,6 +114,31 @@ namespace :veille do
     afficher_rapport(Veille::Runner.new(connecteurs: Veille::Runner.quotidien).run)
   end
 
+  desc "Passe en « À vérifier » les proposés dont le score est sous VEILLE_SEUIL_VERIF (50) ou dont le second avis est illisible. Aucun appel IA, idempotent ; DRY_RUN=1 pour compter seulement."
+  task appliquer_seuil: :environment do
+    sec = ENV["DRY_RUN"].present?
+    bilan = Veille::SeuilVerification.appliquer(dry_run: sec)
+    puts "Seuil #{Veille::AiEnricher.seuil_verification} #{'(à blanc) ' if sec}: #{bilan[:score_faible].size} score faible, #{bilan[:second_avis_illisible].size} second avis illisible, #{bilan.values.sum(&:size)} candidat(s) #{sec ? 'concerné(s)' : 'passé(s) à vérifier'}."
+    bilan.each { |cle, ids| puts "  #{cle} : #{ids.join(', ')}" if ids.any? }
+  end
+
+  desc "Formations : retire le menu du site des textes enregistrés et regroupe les quasi-doublons (« Doublon de #id », écartés). Aucun appel IA, idempotent ; DRY_RUN=1 pour compter seulement."
+  task regrouper_formations: :environment do
+    sec = ENV["DRY_RUN"].present?
+    nettoyes = 0
+    Veille::Candidate.where(origin: Veille::Formations::ORIGINE).find_each do |c|
+      utile = Veille::Formations.contenu_utile(c.full_text)
+      next if utile == c.full_text.to_s
+
+      nettoyes += 1
+      c.update_columns(full_text: utile) unless sec
+    end
+    doublons = Veille::Formations.doublons.select { |c, ref| c.discard_reason.present? || c.pending? && c.id != ref.id }
+    doublons = doublons.reject { |c, ref| c.discard_reason == Veille::Formations.raison_doublon(ref.id) }
+    doublons.each { |c, ref| c.update!(status: "ecarte", discard_reason: Veille::Formations.raison_doublon(ref.id)) } unless sec
+    puts "Formations #{'(à blanc) ' if sec}: #{nettoyes} texte(s) sans menu, #{doublons.size} doublon(s) écarté(s) : #{doublons.map { |c, ref| "##{c.id}→##{ref.id}" }.join(' ')}"
+  end
+
   desc "Tri IA seul des candidats non triés (aucune collecte, aucune rédaction, rien n'est publié) — reprenable. Plafond : VEILLE_BUDGET_MENSUEL en ligne de commande. MAX=n pour borner (tous par défaut)."
   task trier: :environment do
     $stdout.sync = true
@@ -120,7 +146,8 @@ namespace :veille do
     max = Integer(ENV["MAX"], exception: false) || 10_000
     puts "→ #{Veille::Candidate.a_enrichir.count} candidat(s) à trier · dépensé ce mois #{format('%.4f', Veille::Plafond.depense)} $ · plafond #{format('%.2f', Veille::Plafond.budget)} $ · presse #{Veille::Runner.presse_active? ? 'ACTIVE' : 'inactive'}"
     rapport = Veille::Runner.new(connecteurs: [], max: max, logger: logger).trier
-    puts "  triés #{rapport.enrichis} (dont #{rapport.ecartes} écartés) · erreurs IA #{rapport.erreurs_ia} · restants #{Veille::Candidate.a_enrichir.count} · coût du run #{format('%.4f', rapport.cout_usd)} $#{' · PLAFOND ATTEINT' if rapport.plafond}"
+    puts "  écartés avant IA : #{rapport.avant_ia_passes} passés, #{rapport.avant_ia_doublons} doublons de catalogue (aucun appel)"
+    puts "  triés #{rapport.enrichis} (dont #{rapport.ecartes} écartés, #{rapport.a_verifier} à vérifier) · erreurs IA #{rapport.erreurs_ia} · restants #{Veille::Candidate.a_enrichir.count} · coût du run #{format('%.4f', rapport.cout_usd)} $#{' · PLAFOND ATTEINT' if rapport.plafond}"
   end
 
   desc "Rattrapage : rédige le récit des belles histoires enrichies qui n'en ont pas — rake veille:rediger (LIMITE=n pour borner)"
