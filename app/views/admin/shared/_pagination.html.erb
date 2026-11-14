@@ -1,7 +1,9 @@
-<%# Pagination des listes d'administration : Précédent / numéros / Suivant, « Page X sur Y » et total.
-    Locals : page, pages, total (nombre de résultats), chemin (lambda page -> URL, filtres conservés). %>
+<%# Pagination des listes d'administration : « 1 - 48 sur N » (si par_page), Précédent / numéros / Suivant.
+    Locals : page, pages, total (nombre de résultats), chemin (lambda page -> URL, filtres conservés), par_page (facultatif :
+    affiche la plage ; nil quand la plage est déjà dite à côté). %>
 <nav class="pagination-admin" aria-label="Pagination">
-  <% if page > 1 %><%= link_to "← Précédent", chemin.call(page - 1), class: "btn secondary" %><% else %><span class="btn secondary inactif" aria-disabled="true">← Précédent</span><% end %>
+  <% if local_assigns[:par_page] %><span class="plage"><%= plage_affichee(page, total, par_page) %></span><% end %>
+  <% if page > 1 %><%= link_to "‹ Précédent", chemin.call(page - 1), class: "btn secondary" %><% else %><span class="btn secondary inactif" aria-disabled="true">‹ Précédent</span><% end %>
   <span class="numeros">
     <% numeros_pagination(page, pages).each do |n| %>
       <% if n.nil? %><span class="muted">…</span>
@@ -9,6 +11,5 @@
       <% else %><%= link_to n, chemin.call(n), class: "btn secondary" %><% end %>
     <% end %>
   </span>
-  <% if page < pages %><%= link_to "Suivant →", chemin.call(page + 1), class: "btn secondary" %><% else %><span class="btn secondary inactif" aria-disabled="true">Suivant →</span><% end %>
-  <span class="muted small">Page <%= page %> sur <%= pages %> · <%= pluralize(total, "résultat") %></span>
+  <% if page < pages %><%= link_to "Suivant ›", chemin.call(page + 1), class: "btn secondary" %><% else %><span class="btn secondary inactif" aria-disabled="true">Suivant ›</span><% end %>
 </nav>

@@ -22,6 +22,10 @@ class Galerie
   TYPES   = { "opportunite" => "Opportunité", "belle_histoire" => "Belle Histoire" }.freeze
   PAR_PAGE = 48
 
+  # Statut « tous » : sans filtre de statut (les écartés eux-mêmes y figurent), pour le compteur Total.
+  TOUS = "tous"
+  FIABILITES = { "haute" => "Haute", "moyenne" => "Moyenne", "basse" => "Basse" }.freeze
+
   PERIODES = { "en_cours" => "En cours", "a_venir" => "À venir", "termine" => "Terminés" }.freeze
   TRIS = %w[date score evenement].freeze
 
@@ -52,7 +56,7 @@ class Galerie
     end
   end
 
-  Filtres = Struct.new(:type, :statut, :categorie, :commune, :source, :q, :tri, :page, :depuis, :a_localiser, :periode, keyword_init: true)
+  Filtres = Struct.new(:type, :statut, :categorie, :commune, :source, :q, :tri, :page, :depuis, :a_localiser, :periode, :fiabilite, keyword_init: true)
 
   attr_reader :filtres
 
@@ -61,7 +65,7 @@ class Galerie
     p = params.respond_to?(:to_unsafe_h) ? params.to_unsafe_h : params.to_h
     p = p.with_indifferent_access
     @filtres = Filtres.new(
-      type: p[:type].presence_in(TYPES.keys), statut: p[:statut].presence_in(STATUTS.keys),
+      type: p[:type].presence_in(TYPES.keys), statut: p[:statut].presence_in(STATUTS.keys + [ TOUS ]), fiabilite: p[:fiabilite].presence_in(FIABILITES.keys),
       categorie: p[:categorie].presence, commune: p[:commune].presence, source: p[:source].presence,
       q: p[:q].to_s.strip.presence, tri: p[:tri].presence_in(TRIS) || "date", periode: p[:periode].presence_in(PERIODES.keys), page: [p[:page].to_i, 1].max,
       depuis: (Date.iso8601(p[:depuis].to_s) rescue nil), a_localiser: p[:a_localiser].present? ? "1" : nil
@@ -91,6 +95,8 @@ class Galerie
     @cartes ||= trier(filtrer(cartes_brutes))
   end
 
+  # Total de la base, tous statuts confondus (compteur « Total » du bandeau).
+  def total_general = cartes_brutes.size
   def total = cartes.size
   def pages = [(total.to_f / PAR_PAGE).ceil, 1].max
   def page = [filtres.page, pages].min
@@ -113,6 +119,7 @@ class Galerie
     f = filtres
     cartes = cartes.select do |c|
       if f.statut == "a_relire" then A_RELIRE.include?(c.statut)
+      elsif f.statut == TOUS then true
       elsif f.statut then c.statut == f.statut
       else c.statut != "ecarte"
       end
@@ -124,6 +131,7 @@ class Galerie
     cartes = cartes.select { |c| c.categorie == f.categorie } if f.categorie
     cartes = cartes.select { |c| c.commune == f.commune } if f.commune
     cartes = cartes.select { |c| c.source == f.source } if f.source
+    cartes = cartes.select { |c| c.fiabilite == f.fiabilite } if f.fiabilite
     if f.q
       mot = normaliser(f.q)
       cartes = cartes.select { |c| normaliser("#{c.titre} #{c.resume}").include?(mot) }

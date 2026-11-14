@@ -1,94 +1,100 @@
-<%# Les liens et formulaires qui quittent la galerie sortent de la Turbo Frame (_top / turbo: false). %>
+<%# Carte de la galerie. Visuel = toujours l'illustration de repli de la catégorie (aucune image de source). Les liens et
+    formulaires qui quittent la galerie sortent de la Turbo Frame (_top / turbo: false). %>
 <% r = carte.record %>
 <% retour = request.fullpath %>
-<article class="carte-galerie" id="<%= carte.cle %>">
-  <div class="vignette">
-    <%# Point d'extension : une photo de la fiche prime sur le repli illustré. Les images des sites sources restent
-        chez leurs éditeurs (droits) : un candidat n'a donc pas de photo, seulement le repli de sa catégorie. %>
-    <% url = carte.candidat? ? nil : vignette_admin_url(r) %>
-    <% repli = url ? nil : visuel_repli(carte.cle_categorie, taille: 56) %>
-    <% if url %>
-      <img src="<%= url %>" alt="" loading="lazy">
-    <% elsif repli %>
-      <%= repli %>
-    <% else %>
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg>
-    <% end %>
+<% statut = carte.statut %>
+<% estompee = %w[ecarte retire].include?(statut) %>
+<% top = { turbo_frame: "_top" } %>
+<% fiche_inactive = !carte.candidat? && !r.is_active %>
+<article class="carte-galerie <%= 'estompee' if estompee %>" id="<%= carte.cle %>">
+  <div class="visuel">
+    <%= illustration_repli(carte.cle_categorie) %>
+    <%= pastille_statut(statut) %>
+    <span class="pastille type"><%= carte.type ? Galerie::TYPES[carte.type] : "Non classé" %></span>
+    <label class="coche"><input type="checkbox" class="case-carte" name="cles[]" value="<%= carte.cle %>" form="selection-groupee" aria-label="Sélectionner « <%= carte.titre %> »"></label>
   </div>
   <div class="corps">
-    <% if carte.type %>
-      <span class="badge t-<%= carte.type %>"><%= Galerie::TYPES[carte.type] %></span>
-      <% unless carte.histoire? %><%= pastille_categorie(carte.cle_categorie) || tag.span("catégorie ?", class: "badge no") %><% end %>
-    <% else %>
-      <span class="badge a-classer">À classer</span>
-    <% end %>
-    <span class="badge s-<%= carte.statut %>"><%= Galerie::STATUTS[carte.statut] %></span>
-    <h3><%= carte.titre %></h3>
-    <% creneau = carte.creneau %>
-    <% if creneau %>
-      <p class="creneau"><strong><%= creneau.date %></strong><% if creneau.periodicite %><br><span class="small"><%= creneau.periodicite %></span><% end %></p>
-    <% end %>
-    <div class="small muted">
-      <%= carte.commune || "—" %> · <%= carte.source || "—" %>
-      <% if carte.famille %> · <%= carte.famille %><% end %>
-      <% if carte.score %> · <strong class="score <%= carte.score >= 70 ? 'haut' : (carte.score >= 40 ? 'moyen' : 'bas') %>">IA <%= carte.score %></strong><% end %>
-      <br><span class="ajoute">ajouté le <%= I18n.l(carte.cree_le.to_date, format: "%-d/%m/%Y") %></span>
+    <div class="titre-ligne">
+      <h3><%= carte.titre %></h3>
+      <% unless carte.histoire? %><%= pastille_categorie(carte.cle_categorie) if carte.cle_categorie %><% end %>
     </div>
-    <% if carte.candidat? && carte.type.nil? && (r.pending? || r.a_verifier?) %>
-      <%# Classement rapide, sans JavaScript : une Belle Histoire ignore la catégorie. %>
-      <%= form_with url: classer_admin_veille_candidate_path(r), method: :patch, class: "classer", data: { turbo: false } do |f| %>
-        <%= f.select :item_type, options_types_classement, { prompt: "Type" }, { required: true, "aria-label": "Type" } %>
-        <%= f.select :declic_category, options_categories_opportunite, { prompt: "Catégorie" }, { "aria-label": "Catégorie (opportunité)" } %>
-        <%= f.submit "OK", class: "btn" %>
+    <% creneau = carte.creneau %>
+    <p class="creneau">
+      <strong><%= creneau ? creneau.date : "Article (sans date)" %></strong>
+      <% if creneau&.periodicite %><br><span class="small"><%= creneau.periodicite %></span><% end %>
+    </p>
+    <p class="meta"><span aria-hidden="true">⌖</span> <%= carte.commune || "—" %></p>
+    <p class="meta"><span aria-hidden="true">▤</span> <%= carte.source || "—" %> · <span class="ajoute">Ajouté le <%= I18n.l(carte.cree_le.to_date, format: "%-d/%m/%Y") %></span></p>
+    <% resume = carte.resume.to_s.squish %>
+    <% if resume.present? %><p class="extrait"><%= truncate(resume, length: 220) %></p><% end %>
+    <% if carte.candidat? && carte.raison %><p class="raison">↳ <%= truncate(carte.raison, length: 120) %></p><% end %>
+    <% if carte.candidat? && statut == "ecarte" && r.discard_reason.present? %><p class="raison"><%= truncate(r.discard_reason, length: 90) %></p><% end %>
+    <div class="indices">
+      <% if carte.candidat? %>
+        <span class="pastille fiabilite <%= carte.fiabilite %>" title="Fiabilité de la source">Fiabilité : <%= libelle_fiabilite(carte.fiabilite) %></span>
+        <% if carte.score %><span class="score-ia <%= carte.score >= 70 ? 'haut' : (carte.score >= 40 ? 'moyen' : 'bas') %>">✦ Score IA : <%= carte.score %>/100</span><% end %>
+        <% if carte.a_localiser %><span class="pastille alerte">à localiser</span><% end %>
+        <% if carte.recit %><span class="pastille alerte">récit <%= { "redige" => "rédigé", "a_verifier" => "à vérifier", "a_reprendre" => "à reprendre" }[carte.recit] %></span><% end %>
       <% end %>
-    <% end %>
-    <% if carte.candidat? %>
-      <div style="margin-top:6px">
-        <span class="badge fiabilite <%= carte.fiabilite %>" title="Fiabilité de la source">fiabilité <%= carte.fiabilite %></span>
-        <% if carte.a_localiser %><span class="badge no">à localiser</span><% end %>
-        <% if carte.recit %><span class="badge <%= carte.recit == 'redige' ? 'ok' : 'no' %>">récit <%= { "redige" => "rédigé", "a_verifier" => "à vérifier", "a_reprendre" => "à reprendre" }[carte.recit] %></span><% end %>
-      </div>
-      <% resume = carte.resume.to_s %>
-      <% if resume.present? %><p class="small" style="margin:6px 0 0"><%= truncate(resume, length: 200) %></p><% end %>
-      <% if carte.raison %><p class="raison">↳ <%= truncate(carte.raison, length: 160) %></p><% end %>
-    <% end %>
+    </div>
   </div>
   <div class="pied">
     <% if carte.candidat? %>
       <% c = r %>
-      <% if c.pending? || c.a_verifier? || c.retenu? %>
-        <% if c.a_localiser? %>
-          <%= link_to "Localiser →", admin_veille_candidate_path(c, retour: retour), class: "btn", data: { turbo_frame: "_top" } %>
-        <% elsif carte.statut == "non_trie" %>
-          <%# Garde-fou : tant que le tri IA n'est pas passé, l'extraction n'est pas fiable : on relit, on ne valide pas. %>
-          <%= link_to "Relire", admin_veille_candidate_path(c, retour: retour), class: "btn", data: { turbo_frame: "_top" } %>
-        <% elsif c.histoire? && c.item_type.present? && (c.pending? || c.a_verifier?) %>
-          <%# Un récit se relit avant d'être validé : l'écran du candidat montre le brouillon et ses contrôles. %>
-          <%= link_to "Relire le récit →", admin_veille_candidate_path(c, retour: retour), class: "btn", data: { turbo_frame: "_top" } %>
-        <% elsif c.item_type.present? && (c.pending? || c.a_verifier?) %>
-          <%= button_to "Valider", valider_admin_veille_candidate_path(c), method: :post, class: "btn",
-                        form: { data: { turbo: false, turbo_confirm: "Créer la fiche et la publier en ligne ?" } } %>
-        <% elsif c.pending? %>
-          <%= button_to "Retenir", retenir_admin_veille_candidate_path(c), method: :patch, class: "btn", form: { data: { turbo: false } } %>
-        <% else %>
-          <%= link_to "Rédiger →", admin_veille_candidate_path(c, retour: retour), class: "btn", data: { turbo_frame: "_top" } %>
-        <% end %>
-        <% if c.item_type.present? %><%= link_to "Aperçu", admin_veille_candidate_path(c, anchor: "apercu", retour: retour), class: "btn secondary", data: { turbo_frame: "_top" } %><% end %>
-        <%= link_to "Modifier", admin_veille_candidate_path(c, retour: retour), class: "btn secondary", data: { turbo_frame: "_top" } %>
-        <%= button_to "Écarter", ecarter_admin_veille_candidate_path(c), method: :patch, class: "btn secondary", form: { data: { turbo: false } } %>
-        <% unless c.a_verifier? %>
-          <%= button_to "À vérifier", a_verifier_admin_veille_candidate_path(c), method: :patch, class: "btn secondary", form: { data: { turbo: false } } %>
-        <% end %>
+      <% if statut == "ecarte" %>
+        <%= link_to "Relire", admin_veille_candidate_path(c, retour: retour), class: "btn secondaire", data: top %>
+        <%= button_to "↻ Réactiver", retenir_admin_veille_candidate_path(c), method: :patch, class: "btn secondaire", form: { class: "bouton", data: { turbo: false } } %>
       <% else %>
-        <%= button_to "Reprendre", retenir_admin_veille_candidate_path(c), method: :patch, class: "btn secondary", form: { data: { turbo: false } } %>
-        <% if c.discard_reason.present? %><span class="small muted"><%= truncate(c.discard_reason, length: 90) %></span><% end %>
+        <%= link_to (c.a_localiser? ? "Localiser" : "Relire"), admin_veille_candidate_path(c, retour: retour), class: "btn sombre", data: top %>
+        <% classe = c.item_type.present? %>
+        <% if !classe %>
+          <details class="menu menu-classer">
+            <summary class="btn classer-btn">Classer ▾</summary>
+            <div class="menu-corps"><%= render "admin/galerie/classement", c: c %></div>
+          </details>
+        <% elsif statut == "non_trie" %>
+          <button type="button" class="btn vert" disabled title="Pas encore trié par l'IA : relis l'élément avant de le publier.">✓ Publier</button>
+        <% elsif c.histoire? %>
+          <button type="button" class="btn vert" disabled title="Un récit se relit et se rédige avant publication : ouvre « Relire ».">✓ Publier</button>
+        <% else %>
+          <%= button_to "✓ Publier", valider_admin_veille_candidate_path(c), method: :post, class: "btn vert", form: { class: "bouton", data: { turbo: false } } %>
+        <% end %>
+        <%= button_to "✕ Écarter", ecarter_admin_veille_candidate_path(c), method: :patch, class: "btn secondaire", form: { class: "bouton", data: { turbo: false } } %>
       <% end %>
-      <%= link_to "Source ↗", c.url, class: "btn secondary", target: "_blank", rel: "noopener noreferrer", data: { turbo_frame: "_top" } %>
+      <details class="menu menu-plus">
+        <summary class="btn secondaire plus" aria-label="Autres actions" title="Autres actions">⋮</summary>
+        <div class="menu-corps">
+          <% if statut != "ecarte" %>
+            <% unless c.item_type.present? %><button type="button" disabled title="Classe d'abord le type et la catégorie.">✓ Publier (classer d'abord)</button><% end %>
+            <%= link_to "Modifier", admin_veille_candidate_path(c, retour: retour), data: top %>
+            <% unless c.a_verifier? %><%= button_to "À vérifier", a_verifier_admin_veille_candidate_path(c), method: :patch, form: { class: "bouton", data: { turbo: false } } %><% end %>
+            <% if c.item_type.present? %><%= link_to "Aperçu", admin_veille_candidate_path(c, anchor: "apercu", retour: retour), data: top %><% end %>
+          <% end %>
+          <%= link_to "Voir la source ↗", c.url, target: "_blank", rel: "noopener noreferrer", data: top %>
+          <% if c.item_type.present? && statut != "ecarte" %>
+            <p class="menu-titre">Changer le type ou la catégorie</p>
+            <%= render "admin/galerie/classement", c: c %>
+          <% end %>
+        </div>
+      </details>
     <% else %>
-      <% if carte.statut == "en_ligne" %>
-        <%= link_to "Voir sur le site", (carte.histoire? ? story_path(r) : opportunity_path(r)), class: "btn", target: "_blank", rel: "noopener", data: { turbo_frame: "_top" } %>
+      <% modifier = (carte.histoire? ? edit_admin_story_path(r, retour: retour) : edit_admin_opportunity_path(r, retour: retour)) %>
+      <% bascule = (carte.histoire? ? toggle_active_admin_story_path(r) : toggle_active_admin_opportunity_path(r)) %>
+      <% if statut == "en_ligne" %>
+        <%= link_to "Modifier", modifier, class: "btn sombre", data: top %>
+        <%= button_to "Retirer", bascule, method: :patch, class: "btn secondaire", form: { class: "bouton", data: { turbo: false } } %>
+      <% else %>
+        <%= link_to "Modifier", modifier, class: "btn secondaire", data: top %>
+        <%= button_to "↻ Réactiver", bascule, method: :patch, class: "btn secondaire", form: { class: "bouton", data: { turbo: false } } if fiche_inactive %>
       <% end %>
-      <%= link_to "Modifier", (carte.histoire? ? edit_admin_story_path(r, retour: retour) : edit_admin_opportunity_path(r, retour: retour)), class: "btn secondary", data: { turbo_frame: "_top" } %>
+      <% if statut == "en_ligne" %>
+        <details class="menu menu-plus">
+          <summary class="btn secondaire plus" aria-label="Autres actions" title="Autres actions">⋮</summary>
+          <div class="menu-corps">
+            <%= link_to "Voir sur le site ↗", (carte.histoire? ? story_path(r) : opportunity_path(r)), target: "_blank", rel: "noopener", data: top %>
+          </div>
+        </details>
+      <% end %>
     <% end %>
   </div>
 </article>

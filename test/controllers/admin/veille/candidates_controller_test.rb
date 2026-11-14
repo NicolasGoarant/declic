@@ -139,7 +139,7 @@ module Admin
         assert_match verifier.title, response.body
         assert_no_match brut.title, response.body
         assert_no_match ecarte.title, response.body
-        assert_select "#compteurs-galerie a.on strong", text: "2"
+        assert_select "nav.pagination-admin .plage", text: "1 - 2 sur 2", count: 2
       end
 
       # ----------------------------------------------------------------
@@ -376,7 +376,8 @@ module Admin
         brut = candidat(item_type: "opportunite", status: "pending", title: "Brut non trié", summary: "R.", commune: "Nancy", enriched_at: nil)
 
         get admin_galerie_path, headers: auth
-        assert_match "Relire le récit", texte
+        assert_select "article:has(h3:contains('Histoire en file')) button[disabled]", text: /Publier/ # un récit se relit d'abord
+        assert_select "article:has(h3:contains('Histoire en file')) a", text: "Relire"
         assert_match %r{action="#{Regexp.escape(valider_admin_veille_candidate_path(o))}"}, response.body
         assert_no_match %r{action="#{Regexp.escape(valider_admin_veille_candidate_path(h))}"}, response.body
         # Garde-fou : un candidat non trié par l'IA se relit, il ne se valide pas.

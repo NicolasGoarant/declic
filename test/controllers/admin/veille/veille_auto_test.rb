@@ -35,7 +35,7 @@ module Admin
         assert_includes texte, "Forum de la formation"
         assert_includes texte, "Un résumé reformulé."
         assert_includes response.body, %(href="https://exemple.fr/forum")
-        assert_includes response.body, "badge fiabilite haute"
+        assert_includes response.body, "pastille fiabilite haute"
         assert_includes texte, "Se former"
         assert_includes response.body, valider_admin_veille_candidate_path(c)
       end
@@ -244,11 +244,11 @@ module Admin
         c = enrichi(url: "https://exemple.fr/en-ligne")
         post valider_admin_veille_candidate_path(c), headers: auth
         get admin_galerie_path(statut: "en_ligne"), headers: auth
-        assert_select "article .badge.s-en_ligne"
+        assert_select "article .pastille.statut.s-en_ligne"
 
         c.reload.opportunity.update!(is_active: false)
         get admin_galerie_path(statut: "retire"), headers: auth
-        assert_select "article .badge.s-retire"
+        assert_select "article .pastille.statut.s-retire"
       end
 
       test "Valider un élément incomplet explique ce qui manque et ne crée rien" do

@@ -1,0 +1,12 @@
+<%# Classement en un ou deux clics, sans bouton « OK » : un bouton par choix. Belle Histoire = 1 clic ; opportunité = la catégorie
+    choisie fixe aussi le type. Aucune catégorie requise pour une Belle Histoire (PATCH classer, comme l'écran du candidat). %>
+<%= form_with url: classer_admin_veille_candidate_path(c), method: :patch, class: "choix-classement", data: { turbo: false } do %>
+  <%= hidden_field_tag :item_type, "belle_histoire" %>
+  <button type="submit" class="choix"><span class="point" style="background:<%= Categorie::PAR_CLE[Categorie::HISTOIRES].couleur %>"></span>Belle Histoire</button>
+<% end %>
+<%= form_with url: classer_admin_veille_candidate_path(c), method: :patch, class: "choix-classement", data: { turbo: false } do %>
+  <%= hidden_field_tag :item_type, "opportunite" %>
+  <% Categorie::TOUTES.reject { |k| k.cle == Categorie::HISTOIRES }.each do |k| %>
+    <button type="submit" name="declic_category" value="<%= k.cle %>" class="choix"><span class="point" style="background:<%= k.couleur %>"></span>Opportunité · <%= k.libelle %></button>
+  <% end %>
+<% end %>

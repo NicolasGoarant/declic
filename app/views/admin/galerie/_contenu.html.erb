@@ -1,50 +1,41 @@
 <% f = galerie.filtres %>
-<% base = { type: f.type, categorie: f.categorie, commune: f.commune, source: f.source, q: f.q, tri: f.tri, depuis: f.depuis, a_localiser: f.a_localiser, periode: f.periode }.compact_blank %>
+<% base = { type: f.type, categorie: f.categorie, commune: f.commune, source: f.source, fiabilite: f.fiabilite, q: f.q, tri: f.tri, depuis: f.depuis, a_localiser: f.a_localiser, periode: f.periode }.compact_blank %>
+<% plus_actifs = [ f.commune, f.periode, f.depuis, f.a_localiser ].any?(&:present?) %>
 
 <div class="galerie-compteurs" id="compteurs-galerie">
-  <% Galerie::STATUTS.each do |statut, libelle| %>
-    <% c = galerie.compteurs[statut] %>
-    <%= link_to admin_galerie_path(base.merge(statut: statut)), class: ("on" if f.statut == statut) do %>
-      <span class="small muted"><%= libelle %></span>
-      <strong><%= c[:total] %></strong>
-      <span class="small muted"><%= c["opportunite"] %> opportunité(s) · <%= c["belle_histoire"] %> histoire(s)</span>
+  <% GalerieHelper::COMPTEURS.each do |statut, libelle, couleur| %>
+    <%= link_to admin_galerie_path(base.merge(statut: statut)), class: ("on" if f.statut == statut), style: "--accent:#{couleur}" do %>
+      <span class="compteur-libelle"><%= libelle %></span>
+      <strong><%= galerie.compteurs[statut][:total] %></strong>
     <% end %>
+  <% end %>
+  <%= link_to admin_galerie_path(base.merge(statut: Galerie::TOUS)), class: "total #{'on' if f.statut == Galerie::TOUS}", style: "--accent:#111827" do %>
+    <span class="compteur-libelle">Total</span>
+    <strong><%= galerie.total_general %></strong>
   <% end %>
 </div>
 
-<%= form_with url: admin_galerie_path, method: :get, class: "filtres", data: { turbo_action: "advance" } do |form| %>
-  <label>Recherche
-    <%= search_field_tag :q, f.q, placeholder: "titre ou résumé" %>
-  </label>
-  <label>Type
-    <%= select_tag :type, options_for_select([["Tous", ""]] + Galerie::TYPES.map { |k, v| [v, k] }, f.type) %>
-  </label>
-  <label>Statut
-    <%= select_tag :statut, options_for_select([["Tous sauf écartés", ""]] + Galerie::STATUTS.map { |k, v| [v, k] }, f.statut) %>
-  </label>
-  <label>Catégorie
-    <%= select_tag :categorie, options_for_select([["Toutes", ""]] + galerie.categories, f.categorie) %>
-  </label>
-  <label>Commune
-    <%= select_tag :commune, options_for_select([["Toutes", ""]] + galerie.communes, f.commune) %>
-  </label>
-  <label>Source
-    <%= select_tag :source, options_for_select([["Toutes", ""]] + galerie.sources, f.source) %>
-  </label>
-  <label>Période
-    <%= select_tag :periode, options_for_select([["Toutes", ""]] + Galerie::PERIODES.map { |k, v| [v, k] }, f.periode) %>
-  </label>
-  <label>Collecté depuis le
-    <%= date_field_tag :depuis, f.depuis %>
-  </label>
-  <label class="case-filtre">
-    <%= check_box_tag :a_localiser, "1", f.a_localiser.present? %> À localiser seulement
-  </label>
-  <label>Tri
-    <%= select_tag :tri, options_for_select([["Plus récents (ajout)", "date"], ["Date de l'événement (prochains d'abord)", "evenement"], ["Score IA", "score"]], f.tri) %>
-  </label>
-  <%= submit_tag "Filtrer", class: "btn", name: nil %>
-  <%= link_to "Réinitialiser", admin_galerie_path, class: "btn secondary" %>
+<%= form_with url: admin_galerie_path, method: :get, class: "filtres-galerie", data: { turbo_action: "advance" } do |form| %>
+  <div class="ligne-filtres">
+    <%= search_field_tag :q, f.q, placeholder: "Rechercher un titre, un lieu, un mot-clé…", "aria-label": "Recherche (titre, lieu, mot-clé)", class: "recherche" %>
+    <%= select_tag :statut, options_for_select([ [ "Statut", "" ] ] + Galerie::STATUTS.map { |k, v| [ v, k ] } + [ [ "Tous les statuts", Galerie::TOUS ] ], f.statut), "aria-label": "Statut" %>
+    <%= select_tag :type, options_for_select([ [ "Type", "" ] ] + Galerie::TYPES.map { |k, v| [ v, k ] }, f.type), "aria-label": "Type" %>
+    <%= select_tag :categorie, options_for_select([ [ "Catégorie", "" ] ] + galerie.categories, f.categorie), "aria-label": "Catégorie" %>
+    <%= select_tag :source, options_for_select([ [ "Source", "" ] ] + galerie.sources, f.source), "aria-label": "Source" %>
+    <%= select_tag :fiabilite, options_for_select([ [ "Fiabilité", "" ] ] + Galerie::FIABILITES.map { |k, v| [ v, k ] }, f.fiabilite), "aria-label": "Fiabilité" %>
+    <%= submit_tag "Filtrer", class: "btn", name: nil %>
+    <%= select_tag :tri, options_for_select([ [ "Tri : Plus récents", "date" ], [ "Tri : Score IA", "score" ], [ "Tri : Date d'événement", "evenement" ] ], f.tri), "aria-label": "Tri", class: "tri" %>
+  </div>
+  <details class="plus-filtres" <%= "open" if plus_actifs %>>
+    <summary>Plus de filtres<%= " (actifs)" if plus_actifs %></summary>
+    <div class="ligne-filtres">
+      <label>Commune <%= select_tag :commune, options_for_select([ [ "Toutes", "" ] ] + galerie.communes, f.commune) %></label>
+      <label>Période <%= select_tag :periode, options_for_select([ [ "Toutes", "" ] ] + Galerie::PERIODES.map { |k, v| [ v, k ] }, f.periode) %></label>
+      <label>Collecté depuis le <%= date_field_tag :depuis, f.depuis %></label>
+      <label class="case-filtre"><%= check_box_tag :a_localiser, "1", f.a_localiser.present? %> À localiser seulement</label>
+      <%= link_to "Réinitialiser", admin_galerie_path, class: "btn secondary" %>
+    </div>
+  </details>
 <% end %>
 
 <% chemin = ->(n) { admin_galerie_path(base.merge(statut: f.statut, page: n).compact_blank) } %>
@@ -53,9 +44,31 @@
   <p class="muted small">0 résultat</p>
   <div class="vide"><strong>Aucun élément ne correspond à ces filtres.</strong></div>
 <% else %>
-  <%= render "admin/shared/pagination", page: galerie.page, pages: galerie.pages, total: galerie.total, chemin: chemin %>
+  <%# Actions groupées : les cases des cartes (form="selection-groupee") sont hors du formulaire ; pas de JavaScript requis,
+      Stimulus ajoute seulement « tout sélectionner » et le décompte. %>
+  <div class="barre-outils" data-controller="galerie-selection">
+    <%= form_with url: admin_actions_galerie_path, method: :post, id: "selection-groupee", class: "selection-groupee", data: { turbo: false } do %>
+      <%= hidden_field_tag :retour, request.fullpath %>
+      <label class="tout"><input type="checkbox" data-galerie-selection-target="toutes" data-action="galerie-selection#basculer" hidden aria-label="Tout sélectionner"> <span data-galerie-selection-target="libelle">Cochez des cartes</span></label>
+      <span class="groupees">Actions groupées :</span>
+      <button type="submit" name="action_groupee" value="publier" class="btn vert">✓ Publier</button>
+      <button type="submit" name="action_groupee" value="ecarter" class="btn secondary">✕ Écarter</button>
+      <details class="menu menu-classer">
+        <summary class="btn secondary">Classer ▾</summary>
+        <div class="menu-corps">
+          <button type="submit" name="action_groupee" value="classer:belle_histoire">Belle Histoire</button>
+          <% options_categories_opportunite.each do |libelle, cle| %>
+            <button type="submit" name="action_groupee" value="classer:opportunite:<%= cle %>">Opportunité · <%= libelle %></button>
+          <% end %>
+        </div>
+      </details>
+    <% end %>
+    <%= render "admin/shared/pagination", page: galerie.page, pages: galerie.pages, total: galerie.total, chemin: chemin, par_page: Galerie::PAR_PAGE %>
+  </div>
   <div class="galerie-grille">
     <%= render partial: "admin/galerie/carte", collection: galerie.page_cartes, as: :carte %>
   </div>
-  <%= render "admin/shared/pagination", page: galerie.page, pages: galerie.pages, total: galerie.total, chemin: chemin %>
+  <div class="barre-outils bas">
+    <%= render "admin/shared/pagination", page: galerie.page, pages: galerie.pages, total: galerie.total, chemin: chemin, par_page: Galerie::PAR_PAGE %>
+  </div>
 <% end %>

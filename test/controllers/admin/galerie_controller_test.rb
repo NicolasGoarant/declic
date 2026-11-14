@@ -29,6 +29,7 @@ module Admin
 
     def texte = CGI.unescapeHTML(response.body)
 
+
     test "l'accès est protégé comme /admin/veille" do
       get admin_galerie_path
       assert_response :unauthorized
@@ -53,10 +54,10 @@ module Admin
       assert_match "À vérifier cuisine", texte
       assert_match "Non trié brut", texte
       assert_no_match(/Écarté loisir/, texte)
-      %w[s-en_ligne s-propose s-a_verifier s-non_trie].each { |classe| assert_select "article .badge.#{classe}" }
-      assert_select "article .badge.t-opportunite"
-      assert_select "article .badge.t-belle_histoire"
-      assert_match "IA 77", texte
+      %w[s-en_ligne s-propose s-a_verifier s-non_trie].each { |classe| assert_select "article .pastille.statut.#{classe}" }
+      assert_select "article .pastille.type", text: "Opportunité"
+      assert_select "article .pastille.type", text: "Belle Histoire"
+      assert_match "Score IA : 77/100", texte
     end
 
     test "les compteurs donnent le total et le détail par type" do
@@ -95,7 +96,7 @@ module Admin
 
     test "actions des cartes : fiche en ligne vs candidats" do
       get admin_galerie_path, headers: auth
-      assert_select "a[href=?]", story_path(@histoire), text: "Voir sur le site"
+      assert_select "a[href=?]", story_path(@histoire), text: "Voir sur le site ↗"
       assert_select "form[action=?]", valider_admin_veille_candidate_path(@propose)
       assert_select "form[action=?]", ecarter_admin_veille_candidate_path(@propose)
       assert_select "a[href^=?]", admin_veille_candidate_path(@propose), text: "Aperçu"
@@ -130,13 +131,13 @@ module Admin
       assert_select "nav.pagination-admin", 2
       get admin_galerie_path(page: 2), headers: auth
       assert_select "nav.pagination-admin", 2
-      assert_select "nav.pagination-admin", text: /Page 2 sur 2 · 55 résultats/, count: 2
-      assert_select "nav.pagination-admin a[href^=?]", "/admin/galerie?page=1", text: "← Précédent", count: 2
+      assert_select "nav.pagination-admin", text: /49 - 55 sur 55/, count: 2
+      assert_select "nav.pagination-admin a[href^=?]", "/admin/galerie?page=1", text: "‹ Précédent", count: 2
     end
 
     test "les cartes sans photo montrent le repli illustré de la catégorie, et gardent le retour" do
       get admin_galerie_path(statut: "en_ligne"), headers: auth
-      assert_select "article .vignette .visuel-repli", 2
+      assert_select "article .visuel svg.illustration-repli", 2
       assert_select "a[href*=?]", "retour=%2Fadmin%2Fgalerie", text: "Modifier"
     end
 
@@ -221,19 +222,8 @@ module Admin
     test "badge de type et de catégorie aux couleurs du site public ; la Belle Histoire n'a que le type" do
       get admin_galerie_path, headers: auth
       assert_select "article .badge.cat[style*='#82C162']", text: "Écologie"
-      assert_select "article:has(.badge.t-belle_histoire) .badge.cat", 0
-      assert_select "article:has(.badge.t-belle_histoire) .badge.t-belle_histoire", text: "Belle Histoire"
-    end
-
-    test "un candidat non classé affiche « À classer » et un mini-formulaire sans JavaScript" do
-      get admin_galerie_path, headers: auth
-      assert_select "article .badge.a-classer", text: "À classer"
-      assert_select "form.classer[action=?]", classer_admin_veille_candidate_path(@non_trie) do
-        assert_select "select[name=item_type]"
-        assert_select "select[name=declic_category]"
-        assert_select "input[type=submit][value=OK]"
-      end
-      assert_select "form.classer[onsubmit], form.classer [onchange], form.classer [onclick]", 0
+      assert_select "article:has(.pastille.type:contains('Belle Histoire')) .badge.cat", 0
+      assert_select "article:has(.pastille.type:contains('Belle Histoire')) .pastille.type", text: "Belle Histoire"
     end
 
     test "classer une opportunité enregistre type et catégorie, et les verrouille face à l'IA" do
@@ -289,7 +279,7 @@ module Admin
       assert_select "article:has(h3:contains('Chefs-d')) .creneau strong", text: "Du 10 oct. 2026 au 28 mars 2027"
       assert_select "article:has(h3:contains('Chefs-d')) .creneau .small", text: "tous les samedis et dimanches, 11h-12h"
       assert_select "article:has(h3:contains('Visites')) .creneau strong", text: "Sam. 28 nov. 2026"
-      assert_select "article:has(h3:contains('Visites')) .ajoute", text: /\Aajouté le #{Time.current.strftime('%-d/%m/%Y')}\z/
+      assert_select "article:has(h3:contains('Visites')) .ajoute", text: /\AAjouté le #{Time.current.strftime('%-d/%m/%Y')}\z/
       assert_select "article:has(h3:contains('Opportunité en ligne')) .creneau strong", text: "Sans date limite"
     end
 
@@ -365,6 +355,121 @@ module Admin
       end
       get admin_galerie_path, headers: auth
       assert_select ".creneau", /14h/
+    end
+
+    # ---- Refonte d'après la maquette : compteurs, états de carte, menu ⋮, actions groupées ----
+
+    def carte(titre) = "article:has(h3:contains('#{titre}'))"
+
+    test "les compteurs du bandeau sont ceux de la base, un par statut réel, et chacun filtre la liste" do
+      attendu = {
+        "non_trie" => ::Veille::Candidate.where(status: "pending", enriched_at: nil).count,
+        "propose" => ::Veille::Candidate.where(status: %w[pending retenu]).where.not(enriched_at: nil).count,
+        "a_verifier" => ::Veille::Candidate.where(status: "a_verifier").count,
+        "en_ligne" => Opportunity.publiques.count + Story.where(is_active: true).count,
+        "ecarte" => ::Veille::Candidate.where(status: "ecarte").count,
+        "retire" => (Opportunity.count - Opportunity.publiques.count) + Story.where(is_active: false).count
+      }
+      get admin_galerie_path, headers: auth
+      GalerieHelper::COMPTEURS.each do |statut, libelle, _|
+        assert_select "#compteurs-galerie a[href*='statut=#{statut}']", text: /#{libelle}\s*#{attendu[statut]}\z/
+        assert_equal attendu[statut], ::Galerie.new.compteurs[statut][:total], statut
+      end
+      assert_select "#compteurs-galerie a.total strong", text: attendu.values.sum.to_s
+      get admin_galerie_path(statut: "tous"), headers: auth
+      assert_select "nav.pagination-admin .plage", text: "1 - #{attendu.values.sum} sur #{attendu.values.sum}", count: 2
+    end
+
+    test "le filtre de fiabilité ne garde que les candidats de cette fiabilité" do
+      @propose.update!(reliability: "haute")
+      get admin_galerie_path(fiabilite: "haute"), headers: auth
+      assert_match "Proposé jardin", texte
+      assert_no_match(/Non trié brut/, texte)
+    end
+
+    test "candidat non classé : Publier inactif, Classer en boutons sans OK ni JavaScript" do
+      get admin_galerie_path, headers: auth
+      assert_select carte("Non trié brut") do
+        assert_select "form[action=?]", valider_admin_veille_candidate_path(@non_trie), 0
+        assert_select "button[disabled]", text: /Publier/
+        assert_select "details.menu-classer summary", text: /Classer/
+        assert_select "form.choix-classement[action=?]", classer_admin_veille_candidate_path(@non_trie)
+        assert_select "button[name=declic_category]", 6
+        assert_select "input[type=submit][value=OK], select", 0
+        assert_select "[onclick], [onchange], [onsubmit]", 0
+      end
+    end
+
+    test "le menu ⋮ est un details/summary sans JavaScript, avec Modifier, À vérifier et Voir la source" do
+      get admin_galerie_path, headers: auth
+      assert_select carte("Proposé jardin") do
+        assert_select "details.menu-plus > summary[aria-label='Autres actions']"
+        assert_select "details.menu-plus a", text: "Modifier"
+        assert_select "details.menu-plus form[action=?]", a_verifier_admin_veille_candidate_path(@propose)
+        assert_select "details.menu-plus a[target=_blank]", text: /Voir la source/
+        assert_select "details.menu-plus form.choix-classement"
+        assert_select "[onclick]", 0
+      end
+      assert_select ".galerie-grille script, .galerie-grille [onclick]", 0 # rien d'exécutable dans les cartes
+    end
+
+    test "une carte écartée est estompée et propose Réactiver ; une fiche retirée aussi" do
+      @opportunite.update!(is_active: false)
+      get admin_galerie_path(statut: "ecarte"), headers: auth
+      assert_select "#{carte('Écarté loisir')}.estompee"
+      assert_select "#{carte('Écarté loisir')} form[action=?]", retenir_admin_veille_candidate_path(@ecarte), text: /Réactiver/
+      get admin_galerie_path(statut: "retire"), headers: auth
+      assert_select "#{carte('Opportunité en ligne')}.estompee form[action=?]", toggle_active_admin_opportunity_path(@opportunite), text: /Réactiver/
+    end
+
+    test "une fiche en ligne affiche Modifier et Retirer" do
+      get admin_galerie_path(statut: "en_ligne"), headers: auth
+      assert_select carte("Opportunité en ligne") do
+        assert_select "a", text: "Modifier"
+        assert_select "form[action=?]", toggle_active_admin_opportunity_path(@opportunite), text: "Retirer"
+      end
+    end
+
+    test "le visuel est toujours l'illustration de repli : aucune image de source, une scène par catégorie" do
+      get admin_galerie_path(statut: "tous"), headers: auth
+      assert_select "article img", 0
+      assert_select "article .visuel svg.illustration-repli", css_select("article.carte-galerie").size
+      scenes = (Categorie::TOUTES.map(&:cle) + [ nil ]).map { |cle| ApplicationController.helpers.illustration_repli(cle) }
+      assert_equal scenes.size, scenes.uniq.size
+    end
+
+    test "actions groupées : Publier saute les non classés et donne le décompte" do
+      post admin_actions_galerie_path, params: { cles: [ @propose.then { |c| "candidate_#{c.id}" }, @non_trie.then { |c| "candidate_#{c.id}" } ], action_groupee: "publier", retour: "/admin/galerie?page=1" }, headers: auth
+      assert_redirected_to "/admin/galerie?page=1"
+      assert_equal "1 publiée, 1 ignorée : non classées", flash[:notice]
+      assert @propose.reload.publie?
+      assert @non_trie.reload.pending?
+    end
+
+    test "actions groupées : Écarter et Classer" do
+      post admin_actions_galerie_path, params: { cles: [ @propose.then { |c| "candidate_#{c.id}" }, @verifier.then { |c| "candidate_#{c.id}" } ], action_groupee: "ecarter" }, headers: auth
+      assert_equal "2 écartées", flash[:notice]
+      assert [ @propose, @verifier ].all? { |c| c.reload.ecarte? }
+
+      post admin_actions_galerie_path, params: { cles: [ @non_trie.then { |c| "candidate_#{c.id}" } ], action_groupee: "classer:opportunite:formation" }, headers: auth
+      assert_equal "1 classée", flash[:notice]
+      assert_equal %w[opportunite formation], @non_trie.reload.then { |c| [ c.item_type, c.declic_category ] }
+      assert @non_trie.classement_manuel?
+    end
+
+    test "actions groupées : sans sélection, ou action inconnue, rien n'est modifié" do
+      post admin_actions_galerie_path, params: { action_groupee: "publier" }, headers: auth
+      assert_match "Coche d'abord", flash[:alert]
+      post admin_actions_galerie_path, params: { cles: [ @propose.then { |c| "candidate_#{c.id}" } ], action_groupee: "supprimer" }, headers: auth
+      assert_equal "Action groupée inconnue.", flash[:alert]
+      assert @propose.reload.pending?
+    end
+
+    test "les cases sont des cases HTML standard liées au formulaire groupé, et « tout sélectionner » est un ajout Stimulus" do
+      get admin_galerie_path, headers: auth
+      assert_select "form#selection-groupee[method=post][action=?]", admin_actions_galerie_path
+      assert_select "article input.case-carte[type=checkbox][form=selection-groupee][name='cles[]']", css_select("article.carte-galerie").size
+      assert_select ".barre-outils[data-controller=galerie-selection] input[data-galerie-selection-target=toutes][hidden]"
     end
   end
 end

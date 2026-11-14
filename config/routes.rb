@@ -68,6 +68,7 @@ Rails.application.routes.draw do
     root to: "opportunities#index"
 
     get "galerie", to: "galerie#index" # fiches en ligne + candidats de la veille, vus ensemble
+    post "galerie/actions", to: "galerie#actions", as: :actions_galerie # Publier / Écarter / Classer sur la sélection
 
     resources :opportunities, except: [:show] do
       member do
