@@ -60,7 +60,9 @@ module Veille
 
     validates :url, presence: true, uniqueness: true
     validates :item_type,       inclusion: { in: ITEM_TYPES },  allow_nil: true
-    validates :declic_category, inclusion: { in: ::Opportunity::CATEGORIES }, allow_nil: true
+    # Contrôlée seulement quand elle change : d'anciens candidats portent une catégorie disparue (« rencontres »),
+    # ils doivent rester enregistrables (écarter, dater…) ; Validation et l'aperçu demandent alors de les reclasser.
+    validates :declic_category, inclusion: { in: ::Opportunity::CATEGORIES }, allow_nil: true, if: :will_save_change_to_declic_category?
     validates :reliability,     inclusion: { in: RELIABILITY }, allow_nil: true
     validates :draft_status,    inclusion: { in: DRAFT_STATUSES }
 
@@ -123,6 +125,7 @@ module Veille
     # Ce qui empêche de bâtir l'aperçu de la fiche (nil si rien ne manque).
     def manque_pour_apercu
       return "élément non classé" if item_type.blank?
+      return "la catégorie « #{declic_category} » n'existe plus : reclasse l'élément" if categorie_obsolete?
       return "la commune n'est pas renseignée" if commune.blank?
       return "le récit n'est pas rédigé" if histoire? && draft_body.blank?
 
@@ -143,6 +146,7 @@ module Veille
     end
 
     def a_classer? = item_type.blank?
+    def categorie_obsolete? = opportunite? && declic_category.present? && !::Opportunity::CATEGORIES.include?(declic_category)
     def opportunite?    = item_type == "opportunite"
     def histoire?       = item_type == "belle_histoire"
     def enriched?       = enriched_at.present?

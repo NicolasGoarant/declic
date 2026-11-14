@@ -29,6 +29,8 @@ module Veille
       manques << "le résumé reformulé" if @c.summary.blank?
       raise Incomplet, "Il manque #{manques.to_sentence} : complète l'élément (ou écarte-le)." if manques.any?
 
+      raise Incomplet, "La catégorie « #{@c.declic_category} » n'existe plus : reclasse l'élément (bloc Classement)." if @c.categorie_obsolete?
+
       verifier_recit if @c.histoire?
       @point = point_precis
 

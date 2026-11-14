@@ -45,6 +45,17 @@ class Veille::ValidationTest < ActiveSupport::TestCase
     assert_not en_ligne.([2027, 3, 30]), "retirée une fois le créneau terminé"
   end
 
+  test "un candidat à l'ancienne catégorie « rencontres » reste enregistrable mais ne se valide pas avant d'être reclassé" do
+    c = candidat(item_type: "opportunite", commune: "Nancy", summary: "Deux phrases. Voilà.")
+    c.update_columns(declic_category: "rencontres")
+    c.reload.update!(status: "a_verifier") # pas bloqué par la validation du modèle
+    assert_match "n'existe plus", c.manque_pour_apercu
+    erreur = assert_raises(Veille::Validation::Incomplet) { Veille::Validation.new(c).call }
+    assert_match "reclasse", erreur.message
+    c.classer("opportunite", "pratiquer").save!
+    assert_equal "pratiquer", Veille::Validation.new(c).call.category
+  end
+
   test "l'aperçu montre les mêmes dates que la fiche publiée" do
     c = candidat(item_type: "opportunite", commune: "Nancy", summary: "Deux phrases. Voilà.", starts_on: Date.new(2026, 11, 27),
                  ends_on: Date.new(2026, 11, 29), start_time: Time.utc(2000, 1, 1, 9, 30))
