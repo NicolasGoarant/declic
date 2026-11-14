@@ -215,5 +215,62 @@ module Admin
       get admin_veille_candidate_path(@propose), headers: auth
       assert_select "header > .container a.on", text: "Galerie"
     end
+
+    # ---- Classement : badges, mini-formulaire, écran du candidat ----
+
+    test "badge de type et de catégorie aux couleurs du site public ; la Belle Histoire n'a que le type" do
+      get admin_galerie_path, headers: auth
+      assert_select "article .badge.cat[style*='#82C162']", text: "Écologie"
+      assert_select "article:has(.badge.t-belle_histoire) .badge.cat", 0
+      assert_select "article:has(.badge.t-belle_histoire) .badge.t-belle_histoire", text: "Belle Histoire"
+    end
+
+    test "un candidat non classé affiche « À classer » et un mini-formulaire sans JavaScript" do
+      get admin_galerie_path, headers: auth
+      assert_select "article .badge.a-classer", text: "À classer"
+      assert_select "form.classer[action=?]", classer_admin_veille_candidate_path(@non_trie) do
+        assert_select "select[name=item_type]"
+        assert_select "select[name=declic_category]"
+        assert_select "input[type=submit][value=OK]"
+      end
+      assert_select "form.classer[onsubmit], form.classer [onchange], form.classer [onclick]", 0
+    end
+
+    test "classer une opportunité enregistre type et catégorie, et les verrouille face à l'IA" do
+      patch classer_admin_veille_candidate_path(@non_trie), params: { item_type: "opportunite", declic_category: "formation" }, headers: auth
+      c = @non_trie.reload
+      assert_equal %w[opportunite formation], [c.item_type, c.declic_category]
+      assert c.classement_manuel?
+    end
+
+    test "classer une Belle Histoire ignore la catégorie" do
+      patch classer_admin_veille_candidate_path(@non_trie), params: { item_type: "belle_histoire", declic_category: "formation" }, headers: auth
+      assert_equal ["belle_histoire", nil], [@non_trie.reload.item_type, @non_trie.declic_category]
+    end
+
+    test "classer une opportunité sans catégorie est refusé" do
+      patch classer_admin_veille_candidate_path(@non_trie), params: { item_type: "opportunite", declic_category: "" }, headers: auth
+      assert_nil @non_trie.reload.item_type
+      assert_equal "Choisis une catégorie pour une opportunité.", flash[:alert]
+    end
+
+    test "l'écran d'un candidat non classé propose le bloc Classement, sans aperçu ; une fois classé, l'aperçu apparaît" do
+      @non_trie.update!(commune: "Nancy", summary: "Un atelier de réparation.")
+      get admin_veille_candidate_path(@non_trie), headers: auth
+      assert_select "fieldset.classement select[name=item_type]"
+      assert_select "fieldset.classement select[name=declic_category]"
+      assert_match "élément non classé", texte
+      assert_select "iframe[title='Aperçu de la fiche']", 0
+
+      patch completer_admin_veille_candidate_path(@non_trie), params: { item_type: "opportunite", declic_category: "ecologie", commune: "Nancy" }, headers: auth
+      follow_redirect!(headers: auth)
+      assert_select "iframe[title='Aperçu de la fiche']"
+      assert @non_trie.reload.classement_manuel?
+    end
+
+    test "réenregistrer l'écran sans toucher au classement ne le verrouille pas" do
+      patch completer_admin_veille_candidate_path(@propose), params: { item_type: "opportunite", declic_category: "ecologie", title: "Autre titre" }, headers: auth
+      assert_not @propose.reload.classement_manuel?
+    end
   end
 end

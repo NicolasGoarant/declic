@@ -104,6 +104,7 @@ Rails.application.routes.draw do
           patch :accord # accord de la personne obtenu / retiré
           get   :apercu # rendu de la fiche publique telle que « Valider » la publierait, sans rien enregistrer
           patch :completer # commune et résumé saisis à la main (article de presse retenu)
+          patch :classer # type et catégorie posés à la main (prioritaires sur le tri IA)
         end
       end
 

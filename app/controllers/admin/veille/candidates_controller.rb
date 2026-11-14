@@ -114,10 +114,24 @@ module Admin
       # été classé par l'IA : la saisie de sa commune le publie, sans autre geste. La presse reste
       # sur son propre circuit (texte collé, récit, accord, puis « Valider »).
       def completer
+        @candidate.classer(params[:item_type], params[:declic_category]) if params[:item_type].present?
         return localiser if @candidate.a_localiser? && params[:commune].to_s.strip.present?
 
         @candidate.update!(params.permit(:title, :schedule_text, :commune, :adresse, :summary).to_h.compact)
         redirect_to admin_veille_candidate_path(@candidate, retour: retour_admin(nil)), status: :see_other, notice: "Modifications enregistrées."
+      end
+
+      # Mini-formulaire des cartes « À classer » (et bloc Classement de l'écran du candidat) : type, et catégorie pour
+      # une opportunité. Le classement posé à la main n'est plus modifié par le tri IA.
+      def classer
+        if params[:item_type] == "opportunite" && params[:declic_category].blank?
+          return redirect_back fallback_location: admin_galerie_path, alert: "Choisis une catégorie pour une opportunité."
+        end
+
+        @candidate.classer(params[:item_type], params[:declic_category]).save!
+        redirect_back fallback_location: admin_galerie_path, status: :see_other, notice: "Classé : #{@candidate.title.presence || 'élément'}."
+      rescue ActiveRecord::RecordInvalid => e
+        redirect_back fallback_location: admin_galerie_path, alert: "Classement refusé : #{e.record.errors.full_messages.to_sentence}"
       end
 
       private

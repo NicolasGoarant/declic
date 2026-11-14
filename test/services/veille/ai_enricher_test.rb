@@ -75,6 +75,26 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
     assert_nil c.starts_on
   end
 
+  test "un classement posé à la main reste prioritaire lors d'un nouveau tri IA" do
+    c = candidat(origin: "presse", item_type: "opportunite", declic_category: "ecologie", classement_manuel: true)
+    c, = enrich(c, type: "belle_histoire", famille: "se_former", categorie: "formation", commune: "Laxou")
+    assert_equal "opportunite", c.item_type
+    assert_equal "ecologie", c.declic_category
+    assert_equal "pending", c.status
+  end
+
+  test "un candidat classé à la main n'est pas écarté comme hors périmètre" do
+    c = candidat(origin: "presse", item_type: "opportunite", declic_category: "decouvrir", classement_manuel: true)
+    c, = enrich(c, famille: "hors_perimetre", motif: "Simple visite.")
+    assert_equal "pending", c.status
+    assert_nil c.discard_reason
+  end
+
+  test "sans classement manuel, le tri IA reclasse" do
+    c, = enrich(candidat(origin: "presse", item_type: "belle_histoire"), type: "opportunite", famille: "se_former")
+    assert_equal "formation", c.declic_category
+  end
+
   test "une belle histoire est reconnue (source de presse)" do
     c, = enrich(candidat(origin: "presse"), type: "belle_histoire", categorie: nil)
     assert_equal "belle_histoire", c.item_type

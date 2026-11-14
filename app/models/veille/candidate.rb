@@ -127,6 +127,20 @@ module Veille
       "le résumé n'est pas renseigné" if opportunite? && summary.blank? && excerpt.blank?
     end
 
+    # Classement posé à la main (écran du candidat ou mini-formulaire de la galerie). Une Belle Histoire n'a pas de
+    # catégorie. Rien n'est enregistré ici. Le classement ne devient « manuel » (donc prioritaire sur le tri IA) que
+    # s'il change : réenregistrer l'écran sans y toucher laisse la main à l'IA.
+    def classer(type, categorie)
+      type = type.presence
+      categorie = type == "belle_histoire" ? nil : categorie.presence
+      changement = type && (type != item_type || categorie != declic_category)
+      self.item_type = type
+      self.declic_category = categorie
+      self.classement_manuel = true if changement
+      self
+    end
+
+    def a_classer? = item_type.blank?
     def opportunite?    = item_type == "opportunite"
     def histoire?       = item_type == "belle_histoire"
     def enriched?       = enriched_at.present?

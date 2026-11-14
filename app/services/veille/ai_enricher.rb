@@ -220,6 +220,8 @@ module Veille
       type = result["type"].to_s
       type = "opportunite" if SOURCES_OPPORTUNITES.include?(candidate.origin) && candidate.item_type != "belle_histoire"
       type = candidate.item_type.presence || "opportunite" unless Veille::Candidate::ITEM_TYPES.include?(type)
+      manuel = candidate.classement_manuel? && candidate.item_type.present?
+      type = candidate.item_type if manuel # un classement posé à la main reste prioritaire
 
       commune = localiser(candidate, result)
       famille = famille_pour(type, candidate, result)
@@ -229,7 +231,7 @@ module Veille
       attrs = {
         adresse: lieu_pour(candidate, result, commune),
         item_type: type, famille: famille, role_public: result["role_public"].presence, zone: result["zone"].presence,
-        declic_category: categorie_pour(type, candidate, famille), commune: commune || candidate.commune,
+        declic_category: (manuel ? candidate.declic_category : categorie_pour(type, candidate, famille)), commune: commune || candidate.commune,
         starts_on: debut, ends_on: fin,
         schedule_text: (debut || fin ? nil : (result["regime"].presence || candidate.schedule_text)),
         score: Integer(result["confiance"], exception: false)&.clamp(0, 100),
@@ -245,12 +247,17 @@ module Veille
         attrs[:summary] = resume.presence
       end
 
-      if famille == HORS_PERIMETRE
+      if manuel
+        # Retenu par un humain : ni « hors ligne » ni « hors périmètre » ne l'écartent (le territoire et les dates, si).
+      elsif famille == HORS_PERIMETRE
         attrs[:discard_reason] = "Hors périmètre Déclic : #{attrs[:reason] || 'loisir sans engagement, apprentissage, rencontre ni écologie'}".squish
         attrs[:status] = "ecarte"
       elsif famille == HORS_LIGNE
         attrs[:discard_reason] = "Hors ligne éditoriale : #{attrs[:reason] || 'hors de la ligne de Déclic'}".squish
         attrs[:status] = "ecarte"
+      end
+      if attrs[:status] == "ecarte"
+        # déjà écarté pour sa famille
       elsif commune ? !Veille::Territoire.admis?(commune, type) : commune_nommee?(candidate, result)
         perimetre = type == "opportunite" ? "Meurthe-et-Moselle" : "Grand Est"
         attrs[:discard_reason] = "Hors #{perimetre}"

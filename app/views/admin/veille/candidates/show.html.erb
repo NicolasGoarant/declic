@@ -34,10 +34,11 @@
       <dd>
         <% if @candidate.item_type %>
           <span class="badge"><%= @candidate.histoire? ? "Belle Histoire" : "Opportunité" %></span>
-          <span class="small"><%= [ (@candidate.categorie_label unless @candidate.histoire?), @candidate.commune.presence || "commune ?" ].compact.join(" · ") %></span>
+          <%= badge_categorie(@candidate.declic_category) unless @candidate.histoire? %>
+          <span class="small"><%= @candidate.commune.presence || "commune ?" %></span>
           <% if @candidate.score %><span class="small muted">· confiance IA <%= @candidate.score %></span><% end %>
         <% else %>
-          <span class="muted">non classé</span>
+          <span class="badge a-classer" style="background:#111827;color:#fff">À classer</span>
           <% if @candidate.score %><span class="small muted">· score <%= @candidate.score %></span><% end %>
         <% end %>
         <div class="small muted" style="margin-top:4px"><%= @candidate.reason %></div>
@@ -53,7 +54,7 @@
       <dd><span class="badge"><%= @candidate.status %></span></dd>
     </dl>
 
-    <% modifiable = !@candidate.publie? && !@candidate.ecarte? && (@candidate.item_type.present? || @candidate.presse?) %>
+    <% modifiable = !@candidate.publie? && !@candidate.ecarte? %>
     <% if modifiable %>
       <h2 style="margin-top:20px">Modifier avant de valider</h2>
       <% if @candidate.a_localiser? %>
@@ -61,6 +62,14 @@
       <% end %>
       <%= form_with url: completer_admin_veille_candidate_path(@candidate), method: :patch do |f| %>
         <%= hidden_field_tag :retour, params[:retour] if params[:retour].present? %>
+        <fieldset class="classement" style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;margin:0 0 12px">
+          <legend class="small"><strong>Classement</strong><%= " (posé à la main : l'IA ne le change plus)" if @candidate.classement_manuel? %></legend>
+          <%= f.label :item_type, "Type" %>
+          <%= f.select :item_type, options_types_classement, { include_blank: "— non classé —", selected: @candidate.item_type } %>
+          <%= f.label :declic_category, "Catégorie (opportunité seulement)" %>
+          <%= f.select :declic_category, options_categories_opportunite, { include_blank: "— choisir —", selected: @candidate.declic_category } %>
+          <p class="small muted" style="margin:4px 0 0">Une Belle Histoire n'a pas de catégorie. L'aperçu apparaît dès que le classement est enregistré.</p>
+        </fieldset>
         <%= f.label :title, "Titre" %>
         <%= f.text_field :title, value: @candidate.title %>
         <%= f.label :commune, "Commune" %>
