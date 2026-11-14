@@ -20,4 +20,12 @@ namespace :veille do
     puts "Accord de type : #{r[:accord_pct]} % sur #{r[:compares]} éléments comparés ; écart moyen de score : #{r[:ecart_score_moyen]} points"
     puts format("Coût mesuré pour 100 éléments : %s %.4f $ · %s %.4f $", banc.modele_a, r[:cout_a_100], banc.modele_b, r[:cout_b_100])
   end
+
+  desc "Reporte dans le journal des coûts les appels d'un banc déjà lancé — rake veille:reporter_banc CSV=rapports/banc-essai-2026-11-11.csv DATE=2026-11-11"
+  task reporter_banc: :environment do
+    csv  = ENV.fetch("CSV")
+    date = Date.iso8601(ENV.fetch("DATE"))
+    n = Veille::BancEssai.reporter(csv, date: date)
+    puts n.zero? ? "Rien reporté (déjà fait pour le #{date}, ou CSV vide)." : "#{n} appels reportés (origine banc_essai, #{date}). Dépense du mois : #{format('%.4f', Veille::Plafond.depense(date))} $."
+  end
 end

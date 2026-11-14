@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Veille
-  # Une ligne du journal par appel à l'API Anthropic. Écrite par AiPass#run, jamais
+  # Une ligne du journal par appel à l'API Anthropic. Écrite par Veille::JournalIa (point unique), jamais
   # à la main : c'est la trace qui fonde le plafond mensuel et l'état de dépense.
   class AppelIa < ApplicationRecord
     self.table_name = "veille_appels_ia"

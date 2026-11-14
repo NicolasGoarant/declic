@@ -92,10 +92,9 @@ module Veille
     end
 
     def journaliser(candidate, statut, debut, usage: nil, erreur: nil)
-      Veille::AppelIa.create!(
+      Veille::JournalIa.enregistrer(
         candidate: candidate, passe: @passe_appel || self.class::PASSE, modele: @modele_appel || self.class.model, statut: statut,
-        input_tokens: usage.to_h["input_tokens"].to_i, output_tokens: usage.to_h["output_tokens"].to_i,
-        cout_usd: Veille::Cout.estimer(@modele_appel || self.class.model, usage), erreur: erreur,
+        usage: usage, erreur: erreur,
         duree_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - debut) * 1000).round
       )
     end

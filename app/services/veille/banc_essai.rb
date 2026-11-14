@@ -5,7 +5,8 @@ require "csv"
 module Veille
   # Banc d'essai : trie les mêmes éléments avec deux modèles, séparément, et exporte un CSV comparatif
   # (type et score de chacun, jetons et coût de chaque appel, colonne vide « avis de Nicolas »).
-  # N'écrit rien en base, ne publie rien : les appels passent directement par AnthropicClient.
+  # Ne publie rien et n'écrit aucun candidat ; seuls les appels sont journalisés (Veille::JournalIa, origine « banc_essai »),
+  # donc comptés dans le plafond mensuel.
   #
   # Les éléments viennent des candidats déjà en base (Veille::Candidate), jamais d'un flux lu pour l'occasion.
   # Les origines dont les CGU s'opposent à la fouille de textes et à l'IA (Veille::AnnuairePresse.ecartees)
@@ -61,13 +62,15 @@ module Veille
         starts_on: candidat.starts_on, ends_on: candidat.ends_on, schedule_text: candidat.schedule_text,
         published_on: candidat.published_on, today: @today
       )
-      reponse = client(modele).messages(**Veille::AiEnricher.params_pour(modele, params), model: modele)
+      reponse = Veille::JournalIa.appeler(passe: "enrichissement", modele: modele, origine: "banc_essai") do
+        client(modele).messages(**Veille::AiEnricher.params_pour(modele, params), model: modele)
+      end
       res = Veille::AiPass.parse_response(AnthropicClient.extract_text(reponse))
       usage = reponse["usage"]
       type = res["hors_ligne"] || res["famille"] == Veille::AiEnricher::HORS_LIGNE ? "hors ligne" : res["type"]
       Essai.new(type: type, score: res["confiance"].to_i.clamp(0, 100), entree: usage["input_tokens"].to_i,
                 sortie: usage["output_tokens"].to_i, cout: Veille::Cout.estimer(modele, usage))
-    rescue AnthropicClient::AuthenticationError
+    rescue AnthropicClient::AuthenticationError, Veille::Plafond::Depasse
       raise
     rescue AnthropicClient::Error, Veille::AiPass::ParseError => e
       Essai.new(erreur: "#{e.class.name.demodulize} : #{e.message.slice(0, 120)}", entree: 0, sortie: 0, cout: 0.0)
@@ -95,6 +98,23 @@ module Veille
         lignes.each do |l|
           cellule = ->(e) { [e.type || e.erreur, e.score, "#{e.entree}/#{e.sortie}", format("%.5f", e.cout)] }
           csv << [l.candidat.title, l.candidat.url, l.candidat.origin, *cellule.(l.a), *cellule.(l.b), accord?(l) ? "oui" : "non", ""]
+        end
+      end
+    end
+
+    # Reporte dans le journal les appels d'un banc déjà lancé (jetons et coûts lus dans son CSV), avec l'origine « banc_essai »,
+    # datés de `date`. Sans effet si le journal contient déjà des appels « banc_essai » à cette date. Rend le nombre de lignes créées.
+    def self.reporter(chemin, date:, modele_a: "claude-haiku-5-5", modele_b: "claude-sonnet-5-5")
+      return 0 if Veille::AppelIa.where(origine: "banc_essai", created_at: date.beginning_of_day..date.end_of_day).exists?
+
+      moment = date.to_time.change(hour: 12)
+      CSV.read(chemin, headers: true).sum do |l|
+        [[modele_a, "Haiku"], [modele_b, "Sonnet"]].count do |modele, nom|
+          entree, sortie = l["jetons #{nom} (entrée/sortie)"].to_s.split("/").map(&:to_i)
+          erreur = l["type #{nom}"].to_s.include?(" : ") ? l["type #{nom}"] : nil
+          Veille::JournalIa.enregistrer(passe: "enrichissement", modele: modele, statut: erreur ? "erreur_api" : "ok", origine: "banc_essai",
+                                        usage: { "input_tokens" => entree, "output_tokens" => sortie }, erreur: erreur,
+                                        cout_usd: l["coût #{nom} ($)"].to_f, cree_le: moment)
         end
       end
     end
