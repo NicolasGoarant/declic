@@ -70,6 +70,7 @@
     <div class="container">
       <strong>Veille</strong>
       <span class="muted">—</span>
+      <%= link_to "Galerie", admin_galerie_path, class: ("on" if controller_name == "galerie") %>
       <%= link_to "Relecture", admin_veille_candidates_path,
                   class: ("on" if controller_name == "candidates") %>
       <%= link_to "Presse", admin_veille_presse_path,

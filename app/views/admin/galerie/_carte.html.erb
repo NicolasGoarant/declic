@@ -1,0 +1,45 @@
+<%# Les liens et formulaires qui quittent la galerie sortent de la Turbo Frame (_top / turbo: false). %>
+<% r = carte.record %>
+<article class="carte-galerie" id="<%= carte.cle %>">
+  <div class="vignette">
+    <% url = carte.candidat? ? nil : vignette_admin_url(r) %>
+    <% if url %>
+      <img src="<%= url %>" alt="" loading="lazy">
+    <% else %>
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg>
+    <% end %>
+  </div>
+  <div class="corps">
+    <% if carte.type %><span class="badge t-<%= carte.type %>"><%= Galerie::TYPES[carte.type] %></span><% else %><span class="badge no">Non classé</span><% end %>
+    <span class="badge s-<%= carte.statut %>"><%= Galerie::STATUTS[carte.statut] %></span>
+    <h3><%= carte.titre %></h3>
+    <div class="small muted">
+      <%= [carte.categorie, carte.commune].compact.join(" · ").presence || "—" %><br>
+      <%= carte.date ? I18n.l(carte.date, format: "%-d/%m/%Y") : "sans date" %> · <%= carte.source || "—" %>
+      <% if carte.score %> · <strong class="score <%= carte.score >= 70 ? 'haut' : (carte.score >= 40 ? 'moyen' : 'bas') %>">IA <%= carte.score %></strong><% end %>
+    </div>
+  </div>
+  <div class="pied">
+    <% if carte.candidat? %>
+      <% c = r %>
+      <% if c.pending? || c.a_verifier? || c.retenu? %>
+        <% if c.item_type.present? %><%= link_to "Aperçu", admin_veille_candidate_path(c, anchor: "apercu"), class: "btn secondary", data: { turbo_frame: "_top" } %><% end %>
+        <%= link_to "Modifier", admin_veille_candidate_path(c), class: "btn secondary", data: { turbo_frame: "_top" } %>
+        <% if c.item_type.present? && !c.histoire? && !c.a_localiser? %>
+          <%= button_to "Valider", valider_admin_veille_candidate_path(c), method: :post, class: "btn",
+                        form: { data: { turbo: false, turbo_confirm: "Créer la fiche et la publier en ligne ?" } } %>
+        <% end %>
+        <%= button_to "Écarter", ecarter_admin_veille_candidate_path(c), method: :patch, class: "btn secondary", form: { data: { turbo: false } } %>
+      <% else %>
+        <%= button_to "Reprendre", retenir_admin_veille_candidate_path(c), method: :patch, class: "btn secondary", form: { data: { turbo: false } } %>
+        <% if c.discard_reason.present? %><span class="small muted"><%= truncate(c.discard_reason, length: 90) %></span><% end %>
+      <% end %>
+      <%= link_to "Source ↗", c.url, class: "btn secondary", target: "_blank", rel: "noopener noreferrer", data: { turbo_frame: "_top" } %>
+    <% else %>
+      <% if carte.statut == "en_ligne" %>
+        <%= link_to "Voir sur le site", (carte.histoire? ? story_path(r) : opportunity_path(r)), class: "btn", target: "_blank", rel: "noopener", data: { turbo_frame: "_top" } %>
+      <% end %>
+      <%= link_to "Modifier", (carte.histoire? ? edit_admin_story_path(r) : edit_admin_opportunity_path(r)), class: "btn secondary", data: { turbo_frame: "_top" } %>
+    <% end %>
+  </div>
+</article>

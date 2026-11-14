@@ -1,0 +1,57 @@
+<% f = galerie.filtres %>
+<% base = { type: f.type, categorie: f.categorie, commune: f.commune, source: f.source, q: f.q, tri: f.tri }.compact_blank %>
+
+<div class="galerie-compteurs" id="compteurs-galerie">
+  <% Galerie::STATUTS.each do |statut, libelle| %>
+    <% c = galerie.compteurs[statut] %>
+    <%= link_to admin_galerie_path(base.merge(statut: statut)), class: ("on" if f.statut == statut) do %>
+      <span class="small muted"><%= libelle %></span>
+      <strong><%= c[:total] %></strong>
+      <span class="small muted"><%= c["opportunite"] %> opportunité(s) · <%= c["belle_histoire"] %> histoire(s)</span>
+    <% end %>
+  <% end %>
+</div>
+
+<%= form_with url: admin_galerie_path, method: :get, class: "filtres", data: { turbo_action: "advance" } do |form| %>
+  <label>Recherche
+    <%= search_field_tag :q, f.q, placeholder: "titre ou résumé" %>
+  </label>
+  <label>Type
+    <%= select_tag :type, options_for_select([["Tous", ""]] + Galerie::TYPES.map { |k, v| [v, k] }, f.type) %>
+  </label>
+  <label>Statut
+    <%= select_tag :statut, options_for_select([["Tous sauf écartés", ""]] + Galerie::STATUTS.map { |k, v| [v, k] }, f.statut) %>
+  </label>
+  <label>Catégorie
+    <%= select_tag :categorie, options_for_select([["Toutes", ""]] + galerie.categories, f.categorie) %>
+  </label>
+  <label>Commune
+    <%= select_tag :commune, options_for_select([["Toutes", ""]] + galerie.communes, f.commune) %>
+  </label>
+  <label>Source
+    <%= select_tag :source, options_for_select([["Toutes", ""]] + galerie.sources, f.source) %>
+  </label>
+  <label>Tri
+    <%= select_tag :tri, options_for_select([["Plus récents", "date"], ["Score IA", "score"]], f.tri) %>
+  </label>
+  <%= submit_tag "Filtrer", class: "btn", name: nil %>
+  <%= link_to "Réinitialiser", admin_galerie_path, class: "btn secondary" %>
+<% end %>
+
+<p class="muted small"><%= pluralize(galerie.total, "élément") %><%= " · page #{galerie.page}/#{galerie.pages}" if galerie.pages > 1 %></p>
+
+<% if galerie.total.zero? %>
+  <div class="vide"><strong>Aucun élément ne correspond à ces filtres.</strong></div>
+<% else %>
+  <div class="galerie-grille">
+    <%= render partial: "admin/galerie/carte", collection: galerie.page_cartes, as: :carte %>
+  </div>
+
+  <% if galerie.pages > 1 %>
+    <nav class="galerie-pages" aria-label="Pagination">
+      <% if galerie.page > 1 %><%= link_to "← Précédent", admin_galerie_path(base.merge(statut: f.statut, page: galerie.page - 1).compact_blank), class: "btn secondary" %><% end %>
+      <span class="muted small">Page <%= galerie.page %> sur <%= galerie.pages %></span>
+      <% if galerie.page < galerie.pages %><%= link_to "Suivant →", admin_galerie_path(base.merge(statut: f.statut, page: galerie.page + 1).compact_blank), class: "btn secondary" %><% end %>
+    </nav>
+  <% end %>
+<% end %>

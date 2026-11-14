@@ -175,7 +175,7 @@ module Admin
         respond_to do |format|
           # La ligne disparaît de la file sans rechargement.
           format.turbo_stream
-          format.html { redirect_to admin_veille_candidates_path, notice: notice }
+          format.html { redirect_back fallback_location: admin_veille_candidates_path, notice: notice, status: :see_other }
         end
       end
 

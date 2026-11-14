@@ -1,0 +1,33 @@
+<%# Galerie : fiches en ligne et candidats de la veille. Filtres et pagination dans une Turbo Frame (pas de rechargement complet). %>
+<style>
+  .galerie-compteurs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0 16px}
+  .galerie-compteurs a{display:block;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;color:inherit;text-decoration:none}
+  .galerie-compteurs a.on{border-color:#111827;box-shadow:0 0 0 1px #111827}
+  .galerie-compteurs strong{display:block;font-size:22px;line-height:1.1}
+  .galerie-grille{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:0 0 16px}
+  @media (max-width:900px){.galerie-grille{grid-template-columns:minmax(0,1fr)}}
+  .carte-galerie{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+  .carte-galerie .vignette{aspect-ratio:16/9;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#94a3b8;overflow:hidden}
+  .carte-galerie .vignette img{width:100%;height:100%;object-fit:cover;display:block}
+  .carte-galerie .corps{padding:12px 14px;flex:1}
+  .carte-galerie h3{font-size:15px;line-height:1.3;margin:6px 0 4px}
+  .carte-galerie .pied{padding:10px 14px;border-top:1px solid #f1f5f9;display:flex;flex-wrap:wrap;gap:6px}
+  .carte-galerie .pied form{margin:0}
+  .carte-galerie .btn{padding:5px 10px;font-size:13px}
+  .badge.t-opportunite{background:#e0f2fe;color:#075985}
+  .badge.t-belle_histoire{background:#ede9fe;color:#5b21b6}
+  .badge.s-en_ligne{background:#dcfce7;color:#166534}
+  .badge.s-propose{background:#fef9c3;color:#854d0e}
+  .badge.s-a_verifier{background:#ffedd5;color:#9a3412}
+  .badge.s-non_trie{background:#f1f5f9;color:#475569}
+  .badge.s-retire,.badge.s-ecarte{background:#fee2e2;color:#991b1b}
+  .galerie-pages{display:flex;gap:8px;align-items:center;justify-content:center;margin:8px 0 24px}
+  .filtres input[type=search]{padding:6px;border:1px solid #cbd5e1;border-radius:6px;min-width:180px}
+</style>
+
+<h1>Galerie</h1>
+<p class="muted small">Belles Histoires et Opportunités en ligne, et éléments proposés par la veille.</p>
+
+<turbo-frame id="galerie" data-turbo-action="advance">
+  <%= render "admin/galerie/contenu", galerie: @galerie %>
+</turbo-frame>

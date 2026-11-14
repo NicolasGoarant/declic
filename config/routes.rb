@@ -67,6 +67,8 @@ Rails.application.routes.draw do
   namespace :admin do
     root to: "opportunities#index"
 
+    get "galerie", to: "galerie#index" # fiches en ligne + candidats de la veille, vus ensemble
+
     resources :opportunities, except: [:show] do
       member do
         patch :toggle_active
