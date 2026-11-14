@@ -1,7 +1,7 @@
 # Rapport — sécurité, coût et qualité du tri (veille-sources-v2, 11/11/2026)
 
 ## En tête : deux constats
-1. **Clé API : rien à purger.** `git log --all -p -G'sk-ant-…'` : aucune clé réelle dans l'historique de aucune branche (seul un exemple `sk-ant-...` dans `lib/tasks/ai.rake`). `.env` est ignoré et n'a jamais été commité ; aucune clé dans l'arbre de travail. Les clés vivent dans `.env` (ANTHROPIC_API_KEY, MAPTILER_KEY, MAPBOX_TOKEN, ADMIN_*). Reste l'**À FAIRE de NOTES.md** : la clé affichée en clair le 02/11 est à régénérer (je ne peux pas savoir si `.env`, modifié le 03/11, contient la nouvelle).
+1. **Clé API : rien à purger.** `git log --all -p -G'sk-ant-…'` : aucune clé réelle dans l'historique de aucune branche (seul un exemple `sk-ant-...` dans `lib/tasks/ai.rake`). `.env` est ignoré et n'a jamais été commité ; aucune clé dans l'arbre de travail. Les clés vivent dans `.env` (ANTHROPIC_API_KEY, MAPTILER_KEY, MAPBOX_TOKEN, ADMIN_*). Clé affichée en clair le 02/11 : **régénérée le 11/11** (`.env` modifié le 11/11 à 19:19, la clé se termine par `EwAA`). Reste à vérifier la valeur sur Heroku et à supprimer l'ancienne clé dans la Console Anthropic.
    `NOTES.md` n'est **pas** dans `.gitignore` : il est suivi (c'est la mémoire de travail commitée, et il ne contient aucun secret). Pas modifié ; à décider.
 2. **Les CGU d'ICI et de France 3 s'opposent à l'usage par IA : mon classement précédent (« non opposée ») était faux.** Corrigé : les deux flux sont `restreinte`, le connecteur n'a plus aucune source, le banc d'essai n'a **pas** été lancé sur ces flux.
 
