@@ -51,6 +51,9 @@
         <% elsif candidate.histoire? && candidate.item_type.present? && (candidate.pending? || candidate.a_verifier?) %>
           <%# Un récit se relit avant d'être validé : l'écran du candidat montre le brouillon et ses contrôles. %>
           <%= link_to "Relire le récit →", admin_veille_candidate_path(candidate), class: "btn" %>
+        <% elsif candidate.pending? && !candidate.enriched? %>
+          <%# Garde-fou : pas de Valider avant le passage du tri IA. %>
+          <%= link_to "Relire →", admin_veille_candidate_path(candidate), class: "btn" %>
         <% elsif candidate.item_type.present? && (candidate.pending? || candidate.a_verifier?) %>
           <%= button_to "Valider", valider_admin_veille_candidate_path(candidate), method: :post, class: "btn",
                         form: { data: { turbo_confirm: "Créer la fiche et la publier en ligne ?" } } %>

@@ -1,10 +1,16 @@
 <%# Les liens et formulaires qui quittent la galerie sortent de la Turbo Frame (_top / turbo: false). %>
 <% r = carte.record %>
+<% retour = request.fullpath %>
 <article class="carte-galerie" id="<%= carte.cle %>">
   <div class="vignette">
+    <%# Point d'extension : une photo de la fiche prime sur le repli illustré. Les images des sites sources restent
+        chez leurs éditeurs (droits) : un candidat n'a donc pas de photo, seulement le repli de sa catégorie. %>
     <% url = carte.candidat? ? nil : vignette_admin_url(r) %>
+    <% repli = url ? nil : visuel_repli(carte.cle_categorie, taille: 56) %>
     <% if url %>
       <img src="<%= url %>" alt="" loading="lazy">
+    <% elsif repli %>
+      <%= repli %>
     <% else %>
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg>
     <% end %>
@@ -23,9 +29,12 @@
     <% if carte.candidat? %>
       <% c = r %>
       <% if c.pending? || c.a_verifier? || c.retenu? %>
-        <% if c.item_type.present? %><%= link_to "Aperçu", admin_veille_candidate_path(c, anchor: "apercu"), class: "btn secondary", data: { turbo_frame: "_top" } %><% end %>
-        <%= link_to "Modifier", admin_veille_candidate_path(c), class: "btn secondary", data: { turbo_frame: "_top" } %>
-        <% if c.item_type.present? && !c.histoire? && !c.a_localiser? %>
+        <% if c.item_type.present? %><%= link_to "Aperçu", admin_veille_candidate_path(c, anchor: "apercu", retour: retour), class: "btn secondary", data: { turbo_frame: "_top" } %><% end %>
+        <%= link_to "Modifier", admin_veille_candidate_path(c, retour: retour), class: "btn secondary", data: { turbo_frame: "_top" } %>
+        <% if carte.statut == "non_trie" %>
+          <%# Garde-fou : tant que le tri IA n'est pas passé, l'extraction n'est pas fiable : on relit, on ne valide pas. %>
+          <%= link_to "Relire", admin_veille_candidate_path(c, retour: retour), class: "btn", data: { turbo_frame: "_top" } %>
+        <% elsif c.item_type.present? && !c.histoire? && !c.a_localiser? %>
           <%= button_to "Valider", valider_admin_veille_candidate_path(c), method: :post, class: "btn",
                         form: { data: { turbo: false, turbo_confirm: "Créer la fiche et la publier en ligne ?" } } %>
         <% end %>
@@ -39,7 +48,7 @@
       <% if carte.statut == "en_ligne" %>
         <%= link_to "Voir sur le site", (carte.histoire? ? story_path(r) : opportunity_path(r)), class: "btn", target: "_blank", rel: "noopener", data: { turbo_frame: "_top" } %>
       <% end %>
-      <%= link_to "Modifier", (carte.histoire? ? edit_admin_story_path(r) : edit_admin_opportunity_path(r)), class: "btn secondary", data: { turbo_frame: "_top" } %>
+      <%= link_to "Modifier", (carte.histoire? ? edit_admin_story_path(r, retour: retour) : edit_admin_opportunity_path(r, retour: retour)), class: "btn secondary", data: { turbo_frame: "_top" } %>
     <% end %>
   </div>
 </article>

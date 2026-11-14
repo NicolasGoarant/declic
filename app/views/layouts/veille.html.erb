@@ -69,6 +69,11 @@
     body[data-turbo="false"] textarea{min-height:revert;resize:revert}
     .admin-form input[type=text],.admin-form input[type=url],.admin-form input[type=email],.admin-form input[type=number],.admin-form input[type=date],.admin-form input[type=time],.admin-form select,.admin-form textarea{width:100%;box-sizing:border-box;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:14px}
     .admin-form label{font-size:13px;font-weight:600;margin:10px 0 4px;display:block}
+    .pagination-admin{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin:10px 0 16px}
+    .pagination-admin .numeros{display:flex;gap:4px;align-items:center}
+    .pagination-admin .btn{padding:5px 10px;font-size:13px}
+    .pagination-admin .btn.courante{background:#111827;color:#fff}
+    .pagination-admin .inactif{opacity:.45;cursor:default}
   </style>
 </head>
 <body<%= raw(' data-turbo="false"') if %w[opportunities stories].include?(controller_name) %>>

@@ -2,6 +2,16 @@
 module AdminFichesHelper
   EXTRAIT_ADMIN_LONGUEUR = 140
 
+  # Numéros de page à afficher : première, dernière, et deux voisines de chaque côté de la page courante ;
+  # nil = « … ». Composant partagé (voir admin/shared/_pagination).
+  def numeros_pagination(page, pages)
+    garde = ([ 1, pages ] + ((page - 2)..(page + 2)).to_a).select { |n| n.between?(1, pages) }.uniq.sort
+    garde.each_with_object([]) do |n, liste|
+      liste << nil if liste.any? && liste.last && n - liste.last > 1
+      liste << n
+    end
+  end
+
   # URL de la vignette de Une : variante `mini` (128 px) de la couverture quand libvips la sert, sinon l'original,
   # sinon l'ancienne image (upload ou URL). nil sans image : la cellule montre alors un pavé vide.
   def vignette_admin_url(fiche)

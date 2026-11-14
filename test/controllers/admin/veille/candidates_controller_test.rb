@@ -351,12 +351,15 @@ module Admin
 
       test "la file renvoie vers l'écran de relecture pour une belle histoire, et garde Valider pour une opportunité" do
         h = histoire(status: "pending", title: "Histoire en file")
-        o = candidat(item_type: "opportunite", status: "pending", title: "Opportunité en file", summary: "R.", commune: "Nancy")
+        o = candidat(item_type: "opportunite", status: "pending", title: "Opportunité en file", summary: "R.", commune: "Nancy", enriched_at: Time.current)
+        brut = candidat(item_type: "opportunite", status: "pending", title: "Brut non trié", summary: "R.", commune: "Nancy", enriched_at: nil)
 
         get admin_veille_candidates_path, headers: auth
         assert_match "Relire le récit", texte
         assert_match %r{action="#{Regexp.escape(valider_admin_veille_candidate_path(o))}"}, response.body
         assert_no_match %r{action="#{Regexp.escape(valider_admin_veille_candidate_path(h))}"}, response.body
+        # Garde-fou : un candidat non trié par l'IA se relit, il ne se valide pas.
+        assert_no_match %r{action="#{Regexp.escape(valider_admin_veille_candidate_path(brut))}"}, response.body
       end
 
       test "un bandeau signale le plafond mensuel atteint et les éléments non triés" do

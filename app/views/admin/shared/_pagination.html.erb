@@ -1,0 +1,14 @@
+<%# Pagination des listes d'administration : Précédent / numéros / Suivant, « Page X sur Y » et total.
+    Locals : page, pages, total (nombre de résultats), chemin (lambda page -> URL, filtres conservés). %>
+<nav class="pagination-admin" aria-label="Pagination">
+  <% if page > 1 %><%= link_to "← Précédent", chemin.call(page - 1), class: "btn secondary" %><% else %><span class="btn secondary inactif" aria-disabled="true">← Précédent</span><% end %>
+  <span class="numeros">
+    <% numeros_pagination(page, pages).each do |n| %>
+      <% if n.nil? %><span class="muted">…</span>
+      <% elsif n == page %><span class="btn courante" aria-current="page"><%= n %></span>
+      <% else %><%= link_to n, chemin.call(n), class: "btn secondary" %><% end %>
+    <% end %>
+  </span>
+  <% if page < pages %><%= link_to "Suivant →", chemin.call(page + 1), class: "btn secondary" %><% else %><span class="btn secondary inactif" aria-disabled="true">Suivant →</span><% end %>
+  <span class="muted small">Page <%= page %> sur <%= pages %> · <%= pluralize(total, "résultat") %></span>
+</nav>

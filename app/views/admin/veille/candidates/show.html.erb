@@ -1,4 +1,4 @@
-<p class="small"><%= link_to "← Retour à la file", admin_veille_candidates_path(status: @candidate.status) %></p>
+<p class="small"><%= link_to (params[:retour].present? ? "← Retour à la galerie" : "← Retour à la file"), retour_admin(admin_veille_candidates_path(status: @candidate.status)) %></p>
 <h1><%= @candidate.title.presence || "(sans titre)" %></h1>
 
 <div class="cols">
@@ -49,6 +49,7 @@
         <p class="small muted"><%= @candidate.histoire? ? "La commune enregistrée, le récit pourra être rédigé puis publié." : "Dès que la commune est enregistrée, la fiche est publiée en ligne." %></p>
       <% end %>
       <%= form_with url: completer_admin_veille_candidate_path(@candidate), method: :patch do |f| %>
+        <%= hidden_field_tag :retour, params[:retour] if params[:retour].present? %>
         <%= f.label :title, "Titre" %>
         <%= f.text_field :title, value: @candidate.title %>
         <%= f.label :commune, "Commune" %>

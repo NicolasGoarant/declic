@@ -126,7 +126,7 @@ module Admin
         return localiser if @candidate.a_localiser? && params[:commune].to_s.strip.present?
 
         @candidate.update!(params.permit(:title, :schedule_text, :commune, :adresse, :summary).to_h.compact)
-        redirect_to admin_veille_candidate_path(@candidate), status: :see_other, notice: "Modifications enregistrées."
+        redirect_to admin_veille_candidate_path(@candidate, retour: retour_admin(nil)), status: :see_other, notice: "Modifications enregistrées."
       end
 
       private

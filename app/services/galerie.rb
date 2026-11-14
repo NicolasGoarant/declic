@@ -20,7 +20,7 @@ class Galerie
   TYPES   = { "opportunite" => "Opportunité", "belle_histoire" => "Belle Histoire" }.freeze
   PAR_PAGE = 48
 
-  Carte = Struct.new(:cle, :type, :statut, :record, :titre, :resume, :categorie, :commune, :date, :source, :score, :cree_le, keyword_init: true) do
+  Carte = Struct.new(:cle, :type, :statut, :record, :titre, :resume, :categorie, :commune, :date, :source, :score, :cree_le, :cle_categorie, keyword_init: true) do
     def candidat? = record.is_a?(Veille::Candidate)
     def histoire? = type == "belle_histoire"
   end
@@ -101,7 +101,7 @@ class Galerie
     Opportunity.all.map do |o|
       Carte.new(cle: "opportunity_#{o.id}", type: "opportunite", statut: publiques.include?(o.id) ? "en_ligne" : "retire", record: o,
                 titre: o.title, resume: o.description, categorie: Categorie.trouver(o.category)&.libelle, commune: o.city.presence,
-                date: o.date_debut, source: o.source.presence, score: nil, cree_le: o.created_at)
+                date: o.date_debut, source: o.source.presence, score: nil, cree_le: o.created_at, cle_categorie: o.category)
     end
   end
 
@@ -109,7 +109,7 @@ class Galerie
     Story.all.map do |s|
       Carte.new(cle: "story_#{s.id}", type: "belle_histoire", statut: s.is_active ? "en_ligne" : "retire", record: s,
                 titre: s.title, resume: s.chapo, categorie: nil, commune: s.city.presence,
-                date: s.happened_on || s.source_published_on, source: s.source_name.presence, score: nil, cree_le: s.created_at)
+                date: s.happened_on || s.source_published_on, source: s.source_name.presence, score: nil, cree_le: s.created_at, cle_categorie: Categorie::HISTOIRES)
     end
   end
 
@@ -117,7 +117,8 @@ class Galerie
     Veille::Candidate.where.not(status: "publie").includes(:source).map do |c|
       Carte.new(cle: "candidate_#{c.id}", type: c.item_type.presence, statut: statut_candidat(c), record: c,
                 titre: c.title.presence || "(sans titre)", resume: c.summary.presence || c.excerpt, categorie: (c.histoire? ? nil : c.categorie_label),
-                commune: c.commune.presence, date: c.starts_on || c.published_on, source: c.source_label, score: c.score, cree_le: c.created_at)
+                commune: c.commune.presence, date: c.starts_on || c.published_on, source: c.source_label, score: c.score, cree_le: c.created_at,
+                cle_categorie: (c.histoire? ? Categorie::HISTOIRES : c.declic_category.presence))
     end
   end
 

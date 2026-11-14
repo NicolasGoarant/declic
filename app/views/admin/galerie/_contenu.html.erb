@@ -38,20 +38,15 @@
   <%= link_to "Réinitialiser", admin_galerie_path, class: "btn secondary" %>
 <% end %>
 
-<p class="muted small"><%= pluralize(galerie.total, "élément") %><%= " · page #{galerie.page}/#{galerie.pages}" if galerie.pages > 1 %></p>
+<% chemin = ->(n) { admin_galerie_path(base.merge(statut: f.statut, page: n).compact_blank) } %>
 
 <% if galerie.total.zero? %>
+  <p class="muted small">0 résultat</p>
   <div class="vide"><strong>Aucun élément ne correspond à ces filtres.</strong></div>
 <% else %>
+  <%= render "admin/shared/pagination", page: galerie.page, pages: galerie.pages, total: galerie.total, chemin: chemin %>
   <div class="galerie-grille">
     <%= render partial: "admin/galerie/carte", collection: galerie.page_cartes, as: :carte %>
   </div>
-
-  <% if galerie.pages > 1 %>
-    <nav class="galerie-pages" aria-label="Pagination">
-      <% if galerie.page > 1 %><%= link_to "← Précédent", admin_galerie_path(base.merge(statut: f.statut, page: galerie.page - 1).compact_blank), class: "btn secondary" %><% end %>
-      <span class="muted small">Page <%= galerie.page %> sur <%= galerie.pages %></span>
-      <% if galerie.page < galerie.pages %><%= link_to "Suivant →", admin_galerie_path(base.merge(statut: f.statut, page: galerie.page + 1).compact_blank), class: "btn secondary" %><% end %>
-    </nav>
-  <% end %>
+  <%= render "admin/shared/pagination", page: galerie.page, pages: galerie.pages, total: galerie.total, chemin: chemin %>
 <% end %>

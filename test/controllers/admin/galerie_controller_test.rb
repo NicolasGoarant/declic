@@ -98,8 +98,8 @@ module Admin
       assert_select "a[href=?]", story_path(@histoire), text: "Voir sur le site"
       assert_select "form[action=?]", valider_admin_veille_candidate_path(@propose)
       assert_select "form[action=?]", ecarter_admin_veille_candidate_path(@propose)
-      assert_select "a[href=?]", admin_veille_candidate_path(@propose, anchor: "apercu"), text: "Aperçu"
-      assert_select "a[href=?]", admin_veille_candidate_path(@propose), text: "Modifier"
+      assert_select "a[href^=?]", admin_veille_candidate_path(@propose), text: "Aperçu"
+      assert_select "a[href^=?]", admin_veille_candidate_path(@propose), text: "Modifier"
     end
 
     test "pagination de 48 éléments" do
@@ -114,6 +114,43 @@ module Admin
       patch ecarter_admin_veille_candidate_path(@propose), headers: auth.merge("HTTP_REFERER" => admin_galerie_url)
       assert_redirected_to admin_galerie_url
       assert @propose.reload.ecarte?
+    end
+
+    test "candidat non trié : Relire à la place de Valider ; candidat trié : Valider" do
+      get admin_galerie_path, headers: auth
+      assert_select "a", text: "Relire"
+      assert_select "form[action=?]", valider_admin_veille_candidate_path(@non_trie), 0
+      assert_select "form[action=?]", valider_admin_veille_candidate_path(@propose)
+      assert_select "a[href*=?]", admin_veille_candidate_path(@non_trie), text: "Relire"
+    end
+
+    test "pagination en haut et en bas, avec total, filtres conservés" do
+      50.times { |i| candidat("Lot #{i}") }
+      get admin_galerie_path(statut: "non_trie"), headers: auth
+      assert_select "nav.pagination-admin", 2
+      get admin_galerie_path(page: 2), headers: auth
+      assert_select "nav.pagination-admin", 2
+      assert_select "nav.pagination-admin", text: /Page 2 sur 2 · 55 résultats/, count: 2
+      assert_select "nav.pagination-admin a[href^=?]", "/admin/galerie?page=1", text: "← Précédent", count: 2
+    end
+
+    test "les cartes sans photo montrent le repli illustré de la catégorie, et gardent le retour" do
+      get admin_galerie_path(statut: "en_ligne"), headers: auth
+      assert_select "article .vignette .visuel-repli", 2
+      assert_select "a[href*=?]", "retour=%2Fadmin%2Fgalerie", text: "Modifier"
+    end
+
+    test "boutons de création en tête de page" do
+      get admin_galerie_path, headers: auth
+      assert_select "a", text: /Nouvelle opportunité/
+      assert_select "a", text: /Nouvelle Belle Histoire/
+    end
+
+    test "retour accepté seulement vers /admin" do
+      patch admin_opportunity_path(@opportunite), params: { retour: "https://evil.example/", opportunity: { title: "Titre bis" } }, headers: auth
+      assert_redirected_to admin_opportunities_path
+      patch admin_opportunity_path(@opportunite.reload), params: { retour: "/admin/galerie?page=2", opportunity: { title: "Titre ter" } }, headers: auth
+      assert_redirected_to "/admin/galerie?page=2"
     end
   end
 end

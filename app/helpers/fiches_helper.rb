@@ -8,6 +8,22 @@ module FichesHelper
     Categorie.trouver(cle) || Categorie.trouver(Categorie::HISTOIRES)
   end
 
+  # Fond du visuel de repli d'une fiche sans photo : la couleur de la catégorie, éclaircie, avec un halo blanc
+  # derrière l'icône. Source unique : page publique (fiches/_galerie) et vignettes de la galerie d'administration.
+  def fond_repli(couleur)
+    "background: radial-gradient(circle at 50% 45%, #fff 0 22%, transparent 60%), color-mix(in srgb, #{couleur} 28%, #fff)"
+  end
+
+  # Visuel de repli complet (fond + icône de la catégorie), pour les vignettes. `cle` : clé de Categorie ;
+  # nil si la fiche n'est pas classée (l'appelant montre alors un pavé neutre).
+  def visuel_repli(cle, taille: 56)
+    cat = Categorie.trouver(cle)
+    return unless cat
+
+    tag.span(icone_categorie(cat, taille: taille, style: "filter: drop-shadow(0 4px 8px rgba(29,26,43,.2))"),
+             class: "visuel-repli", style: "#{fond_repli(cat.couleur)}; display:grid; place-items:center; width:100%; height:100%")
+  end
+
   # Texte noir ou blanc selon la clarté de la couleur (même règle que diorama#encreSur).
   def encre_sur(hexa)
     r, v, b = [ 1, 3, 5 ].map { |i| hexa[i, 2].to_i(16) / 255.0 }

@@ -91,7 +91,7 @@
 .fch-galerie-diapo img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .fch-galerie-vide {
   position: absolute; inset: 0; display: grid; place-items: center;
-  background: radial-gradient(circle at 50% 45%, var(--blanc) 0 22%, transparent 60%), color-mix(in srgb, var(--c) 28%, var(--blanc));
+  /* fond : helper fond_repli (en ligne, partagé avec la galerie d'administration) */
 }
 .fch-galerie-vide img { width: 120px; height: 120px; filter: drop-shadow(0 8px 14px rgba(29, 26, 43, 0.2)); }
 .fch-galerie-compteur {
