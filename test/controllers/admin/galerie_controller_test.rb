@@ -191,5 +191,29 @@ module Admin
       post valider_admin_veille_candidate_path(@propose), params: { enchainer: 1, retour: liste }, headers: auth
       assert_match %r{\A#{Regexp.escape(admin_veille_candidate_path(@verifier))}\?}, response.location.sub("http://www.example.com", "")
     end
+
+    # ---- Navigation ----
+    test "navigation principale resserrée, sans « Relecture », entrée active surlignée" do
+      get admin_galerie_path, headers: auth
+      assert_select "header > .container a", text: "Relecture", count: 0
+      assert_select "header > .container a.on", text: "Galerie"
+      assert_select "header > .container a", text: "Sources"
+      assert_select "header nav.sous-nav", 0
+    end
+
+    test "Presse, Communes et Sources collectées : seconde rangée d'onglets sous « Sources »" do
+      { "/admin/veille/presse" => "Presse", "/admin/veille/communes" => "Communes", "/admin/veille/sources" => "Sources collectées" }.each do |chemin, onglet|
+        get chemin, headers: auth
+        assert_response :success
+        assert_select "header > .container a.on", text: "Sources"
+        assert_select "header nav.sous-nav a.on", text: onglet
+        assert_select "header nav.sous-nav a", 3
+      end
+    end
+
+    test "l'écran d'un candidat garde « Galerie » surlignée" do
+      get admin_veille_candidate_path(@propose), headers: auth
+      assert_select "header > .container a.on", text: "Galerie"
+    end
   end
 end

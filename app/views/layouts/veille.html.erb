@@ -20,6 +20,10 @@
     header{position:sticky;top:0;background:#111827;color:#fff;padding:10px 16px;z-index:10}
     header a{color:#fff;text-decoration:none;margin-right:12px}
     header a.on{text-decoration:none;background:#374151;border-radius:6px;padding:4px 8px;margin-right:8px;font-weight:600}
+    header .sous-nav{border-top:1px solid #374151;margin-top:8px}
+    header .sous-nav .container{padding:8px 16px 0}
+    header .sous-nav a{color:#d1d5db;padding:4px 10px;border-radius:6px 6px 0 0;margin-right:4px}
+    header .sous-nav a.on{background:#fafafa;color:#111827;font-weight:600}
     .container{max-width:1200px;margin:0 auto;padding:16px}
     h1{font-size:20px;margin:16px 0 4px}
     .table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e7eb}
@@ -81,21 +85,25 @@
     <div class="container">
       <strong>Veille</strong>
       <span class="muted">—</span>
-      <%= link_to "Galerie", admin_galerie_path, class: ("on" if controller_name == "galerie") %>
-      <%= link_to "Relecture", admin_veille_candidates_path,
-                  class: ("on" if controller_name == "candidates") %>
-      <%= link_to "Presse", admin_veille_presse_path,
-                  class: ("on" if controller_name == "presse") %>
-      <%= link_to "Communes", admin_veille_communes_path,
-                  class: ("on" if controller_name == "communes") %>
-      <%= link_to "Sources", admin_veille_sources_path,
-                  class: ("on" if controller_name == "sources") %>
+      <% section_sources = %w[presse communes sources].include?(controller_name) %>
+      <%= link_to "Galerie", admin_galerie_path, class: ("on" if %w[galerie candidates].include?(controller_name)) %>
+      <%= link_to "Sources", admin_veille_sources_path, class: ("on" if section_sources) %>
       <span class="muted">|</span>
       <%= link_to "Fiches Opportunités", admin_opportunities_path,
                   class: ("on" if controller_name == "opportunities") %>
       <%= link_to "Fiches Belles Histoires", admin_stories_path,
                   class: ("on" if controller_name == "stories") %>
     </div>
+    <% if section_sources %>
+      <%# Seconde rangée : onglets de la section Sources (liens simples, aucun JavaScript en ligne : CSP). %>
+      <nav class="sous-nav" aria-label="Sources">
+        <div class="container">
+          <%= link_to "Presse", admin_veille_presse_path, class: ("on" if controller_name == "presse") %>
+          <%= link_to "Communes", admin_veille_communes_path, class: ("on" if controller_name == "communes") %>
+          <%= link_to "Sources collectées", admin_veille_sources_path, class: ("on" if controller_name == "sources") %>
+        </div>
+      </nav>
+    <% end %>
   </header>
 
   <div class="container">
