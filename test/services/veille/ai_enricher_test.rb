@@ -187,6 +187,14 @@ class Veille::AiEnricherTest < ActiveSupport::TestCase
     end
   end
 
+  test "hors_perimetre écarte avec une raison distincte de « Hors ligne éditoriale »" do
+    c, = enrich(candidat, famille: "hors_perimetre", hors_ligne: false, motif: "Simple visite.")
+    assert_equal "ecarte", c.status
+    assert_equal "hors_perimetre", c.famille
+    assert_match(/\AHors périmètre Déclic/, c.discard_reason)
+    assert_no_match(/Hors ligne éditoriale/, c.discard_reason)
+  end
+
   test "une famille de récit sur une opportunité forcée n'est pas gardée" do
     c, = enrich(candidat(origin: "agenda_nancy", item_type: "opportunite"), type: "belle_histoire", famille: "portrait")
     assert_equal "opportunite", c.item_type

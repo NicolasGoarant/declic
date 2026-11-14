@@ -67,7 +67,10 @@ module Veille
       end
       res = Veille::AiPass.parse_response(AnthropicClient.extract_text(reponse))
       usage = reponse["usage"]
-      type = res["hors_ligne"] || res["famille"] == Veille::AiEnricher::HORS_LIGNE ? "hors ligne" : res["type"]
+      type = if res["hors_ligne"] || res["famille"] == Veille::AiEnricher::HORS_LIGNE then "hors ligne"
+             elsif res["famille"] == Veille::AiEnricher::HORS_PERIMETRE then "hors périmètre"
+             else res["type"]
+             end
       Essai.new(type: type, score: res["confiance"].to_i.clamp(0, 100), entree: usage["input_tokens"].to_i,
                 sortie: usage["output_tokens"].to_i, cout: Veille::Cout.estimer(modele, usage))
     rescue AnthropicClient::AuthenticationError, Veille::Plafond::Depasse

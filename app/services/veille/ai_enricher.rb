@@ -35,6 +35,8 @@ module Veille
     FAMILLES_HISTOIRE    = %w[reconversion creation resilience engagement vocation portrait].freeze
     FAMILLES_OPPORTUNITE = ::Opportunity::FAMILLES.keys.freeze
     HORS_LIGNE           = "hors_ligne"
+    # Hors périmètre Déclic : loisir ou sortie sans engagement, apprentissage, rencontre ni écologie. Écarté, raison distincte de « Hors ligne éditoriale ».
+    HORS_PERIMETRE       = "hors_perimetre"
     # Catégorie (donc couleur du pin) déduite par le code, pour qu'elle ne contredise jamais la famille.
     CATEGORIE_PAR_FAMILLE = {
       "s_engager" => "benevolat", "evenement_solidaire" => "benevolat", "agir_ecologie" => "ecologie",
@@ -50,7 +52,7 @@ module Veille
       properties: {
         type:        { type: "string", enum: Veille::Candidate::ITEM_TYPES },
         role_public: { type: "string", enum: %w[contributeur apprenant participant spectateur lecteur] },
-        famille:     { type: "string", enum: FAMILLES_HISTOIRE + FAMILLES_OPPORTUNITE + [HORS_LIGNE] },
+        famille:     { type: "string", enum: FAMILLES_HISTOIRE + FAMILLES_OPPORTUNITE + [HORS_LIGNE, HORS_PERIMETRE] },
         zone:        { type: "string", enum: %w[grand_nancy bassin_nancy grand_est ailleurs inconnue] },
         commune:     { type: "string" },
         lieu:        { type: "string" },
@@ -69,7 +71,7 @@ module Veille
     SYSTEM_PROMPT = <<~TXT.freeze
       Tu es assistant éditorial de Déclic, plateforme du Grand Nancy dont la promesse est « Change ta vie, en quelques clics » : aider chacun à s'engager, entreprendre, se former, agir pour l'écologie, pratiquer, découvrir, et s'inspirer de ceux qui ont franchi le pas. On te donne un élément repéré sur une source publique. Tu le classes et tu le résumes. Un humain relira tout.
 
-      PRINCIPE : tu décris plus que tu n'élimines. Un événement local ouvert au public reste dans la base, même si l'on y vient surtout pour écouter ou flâner : sa famille dit ce qu'il est, et l'humain décide de ce qu'il affiche. Hors ligne reste l'exception, réservée à la liste ci-dessous, dont fait partie l'actualité municipale qui ne propose rien à faire.
+      PRINCIPE : tu décris plus que tu n'élimines. Un événement local ouvert au public reste dans la base, même si l'on y vient surtout pour écouter ou flâner : sa famille dit ce qu'il est, et l'humain décide de ce qu'il affiche. Hors ligne reste l'exception, réservée à la liste ci-dessous, dont fait partie l'actualité municipale qui ne propose rien à faire. Un événement daté, où le lecteur peut se rendre, s'inscrire ou participer à un moment précis, n'est jamais hors ligne : c'est une opportunité éventuelle. Seule la règle HORS PÉRIMÈTRE DÉCLIC peut encore l'écarter.
 
       ANNONCE OU ACTUALITÉ : les sources communales mélangent les deux, et le texte est souvent tronqué. Avant tout, demande-toi si le titre annonce quelque chose à quoi le lecteur peut se rendre, s'inscrire ou participer (une conférence, un défilé, une expo-vente, un atelier, un appel à bénévoles, des inscriptions ouvertes) ou s'il informe seulement. Sont de l'actualité, donc hors_ligne, même sans autre détail : « Route de Bosserville : fermée du 19 au 23/10 » (travaux), « Le dernier Journal de Maxéville est arrivé » (parution), « Prime Air Bois » (dispositif d'aide), « Maxéville : Ville Libre sans Tabac » (engagement de la commune), « Police municipale : arrivée d'un nouvel agent », un arrêté, une campagne de prévention. Sont aussi hors_ligne les comptes rendus au passé (« Un succès bien brassé pour la Fête de la bière », « Chantiers jeunes : coup de neuf… » où six jeunes « ont participé », « Les jeunes du CME à la découverte du Sénat »). Un texte maigre n'est pas une raison de garder : seul un titre qui annonce un rendez-vous ou un appel à agir se garde, à confiance basse.
 
@@ -135,6 +137,10 @@ module Veille
       - fiche de catalogue d'un organisme de formation : une fiche par diplôme, titre ou stage (bac pro, BTS, licence, titre professionnel, habilitation électrique, logiciel), destinée aux élèves en filière ou aux salariés envoyés par leur entreprise. Reste valable une offre présentée comme une porte d'entrée pour un adulte qui veut changer de voie.
       - aucune action possible : le texte rend compte d'une actualité (lancement, bilan, succès passé) sans rien que le lecteur puisse faire. Une date et un lieu suffisent, car y aller est une action, même pour écouter. Une activité régulière ouverte au public suffit aussi, même sans date ni contact. Un texte d'agenda n'entre donc jamais dans ce cas.
       Tout événement au profit d'une cause reste valable, même si l'on y écoute ou l'on y dîne : rôle contributeur, famille evenement_solidaire. Un vide-grenier au profit d'une cause est un evenement_solidaire ; sans cause, c'est une petite_manifestation, jamais hors ligne.
+
+      HORS PÉRIMÈTRE DÉCLIC (famille = « hors_perimetre », hors_ligne = false)
+      Un loisir ou une sortie culturelle qui n'a AUCUNE dimension d'engagement (agir, aider, donner, contribuer), d'apprentissage (acquérir un savoir-faire utile), de rencontre (échange, débat, rendez-vous avec des acteurs locaux) ni d'écologie (climat, énergie, mobilité, nature, jardin, réemploi) est hors périmètre : visite ou exposition à regarder, animation ou bricolage pour passer le temps, atelier créatif de pur loisir, spectacle de saison. Ce n'est pas de l'actualité (donc pas hors ligne) : c'est un événement réel qui n'entre pas dans la promesse de Déclic, et il est écarté. Dès qu'une des quatre dimensions est présente, même discrète (don de sang, fête de l'énergie, jardinage, mobilité, santé collective), garde-le avec sa famille habituelle. En cas de doute, garde et baisse la confiance.
+      Exemples, titres seuls : « Don de sang festif » et « Fête de l'Énergie et du Climat » sont gardés ; « Visite flash de l'exposition Émile Gallé » et « Lanternes effrayantes » sont hors périmètre.
 
       ZONE (lieu d'ancrage réel, pas celui de la source) : grand_nancy (les 20 communes de la Métropole), bassin_nancy (reste de la Meurthe-et-Moselle : Toul, Lunéville, Pont-à-Mousson, Pompey…), grand_est (reste de la Lorraine et du Grand Est : Metz, Épinal, Bar-le-Duc, Strasbourg…), ailleurs, inconnue. La zone décrit ; elle n'écarte rien.
 
@@ -239,7 +245,10 @@ module Veille
         attrs[:summary] = resume.presence
       end
 
-      if famille == HORS_LIGNE
+      if famille == HORS_PERIMETRE
+        attrs[:discard_reason] = "Hors périmètre Déclic : #{attrs[:reason] || 'loisir sans engagement, apprentissage, rencontre ni écologie'}".squish
+        attrs[:status] = "ecarte"
+      elsif famille == HORS_LIGNE
         attrs[:discard_reason] = "Hors ligne éditoriale : #{attrs[:reason] || 'hors de la ligne de Déclic'}".squish
         attrs[:status] = "ecarte"
       elsif commune ? !Veille::Territoire.admis?(commune, type) : commune_nommee?(candidate, result)
@@ -306,6 +315,7 @@ module Veille
     def famille_pour(type, candidate, result)
       famille = result["famille"].to_s
       return HORS_LIGNE if result["hors_ligne"] == true || famille == HORS_LIGNE
+      return HORS_PERIMETRE if famille == HORS_PERIMETRE
       return famille if type == "belle_histoire" && FAMILLES_HISTOIRE.include?(famille)
       return nil if type == "belle_histoire"
       return "petite_manifestation" if famille != "evenement_solidaire" && brocante_d_agenda?(candidate)
