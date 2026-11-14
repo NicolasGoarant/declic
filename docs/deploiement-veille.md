@@ -61,3 +61,13 @@ Neutraliser le Scheduler : supprimer le job dans le tableau de bord (ou `heroku 
 
 ## 7. Fiche de test à supprimer
 « TEST variantes WebP (à supprimer) » : **absente de la production** (aucune fiche de ce titre, ni « test » ni « variante », parmi 174 opportunités et 51 belles histoires, vérifié le 14/11 sur la base partagée). Locale : id 343, doublon de la 323 — supprimée en local. Rien à supprimer en prod ; si elle apparaissait, le faire à la main dans `/admin/opportunities`.
+
+## 8. Déroulé réel (14/11/2026)
+- Sauvegarde : `~/Documents/sauvegardes-declic/declic-prod-2026-11-14.sql.gz` (pg_dump **18** requis : `/usr/lib/postgresql/18/bin/pg_dump`, le 16 refuse le serveur Neon 18 ; dump SQL texte, à restaurer avec `psql`).
+- Répétition : base locale `declic_prod_copy` (restauration + 3 migrations + import 70/78/0), appli sur le port 3010 avec `DATABASE_URL=postgresql:///declic_prod_copy` ; toutes les pages en 200. `db:migrate` sur Postgres réécrit `db/schema.rb` : `git checkout db/schema.rb`. Aucune catégorie périmée en prod (174 fiches valides).
+- Déploiement : tests 654 verts, `main:main` vers `declic-nancy-paris-eu` = **v36** (3 migrations en release, OK) ; v37 = `VEILLE_BUDGET_MENSUEL=15`, `VEILLE_PRESSE_ACTIVE=false` (v35 = clé API, pas du code : retour arrière = v34).
+- Prod : `reporter_banc` ×2 (52 + 52 appels), import 70 créés / 78 ignorés / 0 refusé (simulation identique).
+- Contrôles : pages publiques 200, `/admin/*` 401 sans identifiants, journaux sans erreur (un scan bot `/wp-admin`).
+- Essai `veille:quotidien` à la main (`VEILLE_BUDGET_MENSUEL=4.40` sur la commande = plafond ~3 $ de plus, presse inactive) : 160 éléments retenus par les sources (agenda 117, communes 43), 84 nouveaux, 76 doublons, 30 triés (1 écarté, 14 à vérifier), 54 en attente (limite de 30 par passage), 0 erreur IA, coût **0,455 $**. Statuts après : pending 95, à vérifier 16, écartés 58, publiés 85 (254 candidats). Dépense du mois : 1,82 $ / 15 $.
+- Domaines : `declic.fr`/`www.declic.fr` pointent vers un autre site (OVH, mobilier urbain), `declic.site` vers OVH avec HTTPS en échec (reset TLS) : l'app US ne sert que son URL herokuapp ; ne pas la mettre à jour.
+- GitHub : `origin/main` poussé (01767ab). Scheduler non créé (à faire par Nicolas).
