@@ -17,6 +17,7 @@ module Veille
     ESCALADE_MIN = 40
     ESCALADE_MAX = 70
     PASSE        = "enrichissement"
+    RELANCE_SI_TRONQUE = true
     TIMEOUT      = 30
     OPEN_TIMEOUT = 5
     RETRIES      = 1
@@ -46,6 +47,13 @@ module Veille
     }.freeze
     # Rubrique de l'Agenda Grand Nancy : signal sûr, indépendant du modèle.
     RUBRIQUE_BROCANTE = /\bbrocante\b/i
+
+    # Score IA en dessous duquel un candidat proposé passe en « À vérifier » (VEILLE_SEUIL_VERIF, 50 par défaut).
+    SEUIL_VERIF_DEFAUT = 50
+
+    def self.seuil_verification
+      Integer(ENV["VEILLE_SEUIL_VERIF"].presence || SEUIL_VERIF_DEFAUT, exception: false) || SEUIL_VERIF_DEFAUT
+    end
 
     SCHEMA = {
       type: "object",
@@ -197,14 +205,44 @@ module Veille
     # Lève AnthropicClient::Error ou AiPass::ParseError : l'appelant décide.
     def enrich(candidate, today: Date.current)
       params = self.class.prompt_for(
-        title: candidate.title, text: candidate.full_text.presence || candidate.excerpt, origin: candidate.origin,
+        title: candidate.title, text: texte_utile(candidate), origin: candidate.origin,
         commune: candidate.commune, starts_on: candidate.starts_on, ends_on: candidate.ends_on,
         schedule_text: candidate.schedule_text, published_on: candidate.published_on, today: today
       )
       result = run(self.class.params_pour(self.class.model, params), candidate: candidate)
       apply(candidate, result, today: today)
+      @premier_verdict = verdict(candidate)
+      @second_avis = nil
       escalader(candidate, params, today: today)
+      a_verifier_si_douteux(candidate)
       candidate
+    end
+
+    # Texte envoyé au modèle : pour un catalogue de formation, sans le menu du site.
+    def texte_utile(candidate)
+      texte = candidate.full_text.presence
+      texte = Veille::Formations.contenu_utile(texte) if texte && candidate.origin == Veille::Formations::ORIGINE
+      texte || candidate.excerpt
+    end
+
+    # Ce que « divergence » compare entre les deux passes : écarté ou non, type, catégorie.
+    def verdict(candidate) = [candidate.ecarte?, candidate.item_type, candidate.declic_category]
+
+    def verdict_lisible(v) = v[0] ? "écarté" : "#{v[1]}/#{v[2] || '-'}"
+
+    # Un proposé douteux n'est pas publiable sans relecture : À vérifier, avec la raison en tête du motif.
+    # Les écartés, les classés à la main et les candidats déjà « à vérifier » ne bougent pas.
+    def a_verifier_si_douteux(candidate)
+      return unless candidate.pending? && !candidate.classement_manuel?
+
+      raison =
+        if @second_avis == :illisible then "Second avis illisible"
+        elsif @second_avis.is_a?(Array) && @second_avis != verdict(candidate) then "Haiku et Sonnet divergent (#{verdict_lisible(@second_avis)} puis #{verdict_lisible(verdict(candidate))})"
+        elsif candidate.score && candidate.score < self.class.seuil_verification then "Score faible (#{candidate.score})"
+        end
+      return unless raison
+
+      candidate.update!(status: "a_verifier", reason: "#{raison} : #{candidate.reason}".squish.slice(0, 500))
     end
 
     # Consommation de tous les appels du dernier #enrich (premier passage + escalade éventuelle).
@@ -295,11 +333,20 @@ module Veille
 
       modele = self.class.model_escalade
       premier = candidate.score
-      result = run(self.class.params_pour(modele, params), candidate: candidate, model: modele, passe: "escalade")
+      avant = @premier_verdict
+      begin
+        result = run(self.class.params_pour(modele, params), candidate: candidate, model: modele, passe: "escalade")
+      rescue AiPass::ParseError => e
+        # Le premier avis reste appliqué ; le candidat sera « à vérifier » (a_verifier_si_douteux).
+        @second_avis = :illisible
+        Rails.logger.warn("[Veille] second avis illisible ##{candidate.id} : #{e.message.slice(0, 150)}")
+        return
+      end
       @usages << usage
       candidate.update!(status: "pending", discard_reason: nil) if candidate.ecarte?
       apply(candidate, result, today: today)
-      candidate.update!(reason: "Second avis (#{modele}, premier score #{premier}) : #{candidate.reason}".squish.slice(0, 500))
+      @second_avis = avant
+      candidate.update!(reason: "Second avis (#{modele}, premier score #{premier}, premier verdict #{verdict_lisible(avant)}) : #{candidate.reason}".squish.slice(0, 500))
     end
 
     # Nom de lieu relevé par l'IA, utilisé comme « Adresse » (géocodée à la validation). Agenda Grand

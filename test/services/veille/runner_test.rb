@@ -29,7 +29,7 @@ class Veille::RunnerTest < ActiveSupport::TestCase
   end
 
   def runner(connecteurs, enricher: FauxEnricher.new, max: 30)
-    Veille::Runner.new(connecteurs: connecteurs, enricher: enricher, redacteur: Object.new, max: max, http: Object.new,
+    Veille::Runner.new(connecteurs: connecteurs, enricher: enricher, redacteur: Object.new, max: max, http: Object.new, today: Date.new(2026, 10, 13),
                        ingester: Veille::RawIngester.new(today: Date.new(2026, 10, 13)))
   end
 

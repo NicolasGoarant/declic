@@ -30,10 +30,11 @@ module Veille
 
     Rapport = Struct.new(:sources, :crees, :doublons, :hors_zone, :passes, :enrichis, :ecartes, :erreurs_ia,
                          :cout_usd, :restants, :plafond, :rediges, :redaction_bloquee, :erreurs_redaction,
-                         :a_rediger_restants, :tokens, :prefiltre, keyword_init: true)
+                         :a_rediger_restants, :tokens, :prefiltre, :avant_ia_passes, :avant_ia_doublons, :a_verifier, keyword_init: true)
 
     def initialize(connecteurs: self.class.quotidien, ingester: RawIngester.new, enricher: nil, redacteur: nil,
-                   max: MAX_ENRICHIS, max_rediges: MAX_REDIGES, logger: Rails.logger, http: nil)
+                   max: MAX_ENRICHIS, max_rediges: MAX_REDIGES, logger: Rails.logger, http: nil, today: Date.current)
+      @today      = today
       @http       = http
       @connecteurs = connecteurs
       @ingester   = ingester
@@ -45,10 +46,7 @@ module Veille
     end
 
     def run
-      rapport = Rapport.new(sources: [], crees: 0, doublons: 0, hors_zone: 0, passes: 0,
-                            enrichis: 0, ecartes: 0, erreurs_ia: 0, cout_usd: 0.0, restants: 0, plafond: false,
-                            rediges: 0, redaction_bloquee: 0, erreurs_redaction: 0, a_rediger_restants: 0, tokens: {},
-                            prefiltre: Prefiltre::Bilan.vide)
+      rapport = nouveau_rapport
       @depart_journal = Veille::AppelIa.maximum(:id).to_i
       collecter(rapport)
       enrichir(rapport)
@@ -60,10 +58,7 @@ module Veille
     # Rattrapage : rédige les récits en attente (belles histoires déjà enrichies) sans rien collecter
     # ni enrichir. Mêmes plafonds et mêmes arrêts que l'exécution normale.
     def rattraper_redactions
-      rapport = Rapport.new(sources: [], crees: 0, doublons: 0, hors_zone: 0, passes: 0,
-                            enrichis: 0, ecartes: 0, erreurs_ia: 0, cout_usd: 0.0, restants: 0, plafond: false,
-                            rediges: 0, redaction_bloquee: 0, erreurs_redaction: 0, a_rediger_restants: 0, tokens: {},
-                            prefiltre: Prefiltre::Bilan.vide)
+      rapport = nouveau_rapport
       @depart_journal = Veille::AppelIa.maximum(:id).to_i
       rediger(rapport)
       journaliser(rapport)
@@ -73,10 +68,7 @@ module Veille
     # Tri seul : enrichit la file des non triés (a_enrichir), sans collecter ni rédiger. Reprenable : un candidat
     # trié a `enriched_at` et sort de la file ; plafond atteint ou erreurs d'affilée = arrêt propre.
     def trier
-      rapport = Rapport.new(sources: [], crees: 0, doublons: 0, hors_zone: 0, passes: 0,
-                            enrichis: 0, ecartes: 0, erreurs_ia: 0, cout_usd: 0.0, restants: 0, plafond: false,
-                            rediges: 0, redaction_bloquee: 0, erreurs_redaction: 0, a_rediger_restants: 0, tokens: {},
-                            prefiltre: Prefiltre::Bilan.vide)
+      rapport = nouveau_rapport
       @depart_journal = Veille::AppelIa.maximum(:id).to_i
       enrichir(rapport)
       journaliser(rapport)
@@ -84,6 +76,13 @@ module Veille
     end
 
     private
+
+    def nouveau_rapport
+      Rapport.new(sources: [], crees: 0, doublons: 0, hors_zone: 0, passes: 0,
+                  enrichis: 0, ecartes: 0, erreurs_ia: 0, cout_usd: 0.0, restants: 0, plafond: false,
+                  rediges: 0, redaction_bloquee: 0, erreurs_redaction: 0, a_rediger_restants: 0, tokens: {},
+                  prefiltre: Prefiltre::Bilan.vide, avant_ia_passes: 0, avant_ia_doublons: 0, a_verifier: 0)
+    end
 
     def collecter(rapport)
       http = @http || Veille::Http.new
@@ -116,6 +115,9 @@ module Veille
     def enrichir(rapport)
       file = Veille::Candidate.a_enrichir.to_a
       file.reject! { |c| Candidate::ORIGINES_FLUX_PRESSE.include?(c.origin) } unless self.class.presse_active?
+      # Sans appel IA : événements passés et doublons de catalogue sont écartés ici, avant la mesure du reste à faire.
+      file, avant = AvantIa.appliquer(file, today: @today, logger: @log)
+      rapport.avant_ia_passes, rapport.avant_ia_doublons = avant[:passes], avant[:doublons]
       file = file.sort_by do |c|
         [PRIORITE.index(c.origin) || PRIORITE.size, c.starts_on || Date.new(9999), c.id]
       end
@@ -150,6 +152,7 @@ module Veille
       @log.info("[Veille] trié ##{candidat.id} (#{candidat.origin}) → #{candidat.status}, #{candidat.item_type || '-'}/#{candidat.declic_category || '-'}, score #{candidat.score.inspect}#{" · écarté : #{candidat.discard_reason}" if candidat.ecarte?}")
 
       rapport.ecartes += 1 if candidat.ecarte?
+      rapport.a_verifier += 1 if candidat.a_verifier?
     end
 
     # Étape séparée de l'enrichissement : un récit qui échoue (incident d'API) reste
@@ -205,7 +208,7 @@ module Veille
       @log.info("[Veille] préfiltre presse — reçus #{pf.recus}, retenus #{pf.retenus.size}, écartés #{pf.ecartes}" \
                 "#{" (#{pf.motifs.map { |m, n| "#{m} : #{n}" }.join(', ')})" if pf.ecartes.positive?}")
       @log.info("[Veille] bilan — nouveaux #{r.crees}, doublons #{r.doublons}, hors zone #{r.hors_zone}, " \
-                "passés #{r.passes}, enrichis #{r.enrichis}, écartés #{r.ecartes}, erreurs IA #{r.erreurs_ia}, " \
+                "passés #{r.passes}, écartés avant IA #{r.avant_ia_passes} passés + #{r.avant_ia_doublons} doublons, enrichis #{r.enrichis}, écartés #{r.ecartes}, à vérifier #{r.a_verifier}, erreurs IA #{r.erreurs_ia}, " \
                 "récits rédigés #{r.rediges} (dont #{r.redaction_bloquee} à vérifier), erreurs rédaction #{r.erreurs_redaction}, " \
                 "en attente d'enrichissement #{r.restants}#{' · PLAFOND MENSUEL ATTEINT' if r.plafond} · coût estimé #{format('%.4f', r.cout_usd)} USD · jetons : #{jetons.presence || 'aucun'} · #{etat}")
     end

@@ -63,14 +63,15 @@ class Veille::AiEnricherEscaladeTest < ActiveSupport::TestCase
       assert_equal 2, client.calls.size, "score #{score}"
       assert_equal 90, c.score
       assert_equal "Second avis. Deux.", c.summary
-      assert_match "Second avis (claude-sonnet-5-5, premier score #{score})", c.reason
+      assert_match "Second avis (claude-sonnet-5-5, premier score #{score}, premier verdict", c.reason
     end
   end
 
   test "un élément écarté au premier passage revient dans la file si l'escalade le juge pertinent" do
     c, = enrichir(candidat, reponse_ia(confiance: 50, hors_ligne: true, motif: "Actualité."),
                             reponse_ia(confiance: 85, hors_ligne: false))
-    assert_equal "pending", c.status
+    assert_equal "a_verifier", c.status, "Haiku écartait, Sonnet garde : divergence, donc à vérifier"
+    assert_match "divergent", c.reason
     assert_nil c.discard_reason
   end
 

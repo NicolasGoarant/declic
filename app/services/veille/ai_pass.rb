@@ -13,6 +13,10 @@ module Veille
   class AiPass
     class ParseError < StandardError; end
 
+    # Une réponse illisible parce que coupée à max_tokens est retentée une fois, même modèle, limite doublée (jusqu'à ce plafond).
+    MAX_TOKENS_RELANCE = 16_000
+    RELANCE_SI_TRONQUE = false
+
     # Modèle de la passe. Surchargeable par classe (AiEnricher lit ENV["VEILLE_MODEL"]).
     def self.model = self::MODEL
 
@@ -58,7 +62,7 @@ module Veille
     # (Veille::AppelIa) avec sa consommation et son coût estimé, qu'il réussisse
     # ou non ; le plafond mensuel est vérifié avant tout envoi.
     # `model:` et `passe:` servent à l'escalade : même requête, autre modèle, autre ligne de journal.
-    def run(params, candidate: nil, model: nil, passe: nil)
+    def run(params, candidate: nil, model: nil, passe: nil, relance: false)
       @modele_appel = model || self.class.model
       @passe_appel  = passe || self.class::PASSE
       verifier_plafond(candidate)
@@ -73,11 +77,22 @@ module Veille
       begin
         parsed = self.class.parse_response(AnthropicClient.extract_text(response))
       rescue ParseError => e
+        if !relance && self.class::RELANCE_SI_TRONQUE && tronquee?(response, params)
+          plus = [params[:max_tokens].to_i * 2, MAX_TOKENS_RELANCE].min
+          journaliser(candidate, "illisible", debut, usage: @usage,
+                      erreur: "Réponse tronquée à #{params[:max_tokens]} jetons : nouvelle tentative (même modèle) à #{plus} jetons")
+          return run(params.merge(max_tokens: plus), candidate: candidate, model: model, passe: passe, relance: true)
+        end
         journaliser(candidate, "illisible", debut, usage: @usage, erreur: e.message.slice(0, 300))
         raise
       end
       @appel = journaliser(candidate, "ok", debut, usage: @usage)
       parsed
+    end
+
+    # Réponse coupée par la limite de jetons (la réflexion des modèles 5.x compte dans max_tokens).
+    def tronquee?(response, _params)
+      response["stop_reason"] == "max_tokens"
     end
 
     # Dernier appel journalisé (pour que l'appelant requalifie son statut, par
