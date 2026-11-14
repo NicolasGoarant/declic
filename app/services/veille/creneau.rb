@@ -56,9 +56,10 @@ module Veille
 
     # « 11h-12h », « 9h30 » ; nil sans heure de début (une heure de fin seule ne dit rien).
     def horaires(debut, fin)
-      return nil unless debut
+      debut = Heure.lire(debut) or return nil
+      fin = Heure.lire(fin)
 
-      [ debut, (fin if fin && fin != debut) ].compact.map { |t| t.min.zero? ? "#{t.hour}h" : format("%dh%02d", t.hour, t.min) }.join("-")
+      [ debut, (fin if fin && fin != debut) ].compact.map { |t| Heure.afficher(t) }.join("-")
     end
 
     # Périodicité puis horaires sur une ligne ; les horaires déjà dits dans la périodicité ne sont pas répétés.

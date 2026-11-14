@@ -69,6 +69,15 @@ module Veille
     validate :fin_apres_debut
 
     before_validation :set_normalized_title
+
+    # Heures : toujours un Time (voir Veille::Heure), quelle que soit la forme reçue (« 14h30 », « 14:00 »…).
+    def start_time=(valeur)
+      super(Veille::Heure.lire(valeur))
+    end
+
+    def end_time=(valeur)
+      super(Veille::Heure.lire(valeur))
+    end
     validates :score, numericality: {
       only_integer:             true,
       greater_than_or_equal_to: 0,

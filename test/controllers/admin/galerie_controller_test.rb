@@ -344,5 +344,27 @@ module Admin
       assert_match "Enregistrement refusé", flash[:alert]
       assert_nil @propose.reload.starts_on
     end
+
+    test "répond 200 sur toutes les pages, tous préréglages et tris, avec des candidats de toutes origines et des heures" do
+      Opportunity.create!(title: "Atelier du soir", description: "x", category: "decouvrir", city: "Nancy", location: "Nancy", latitude: 48.69, longitude: 6.18,
+                          is_active: true, starts_on: Date.current + 3, start_time: "18:30", end_time: "20:00")
+      30.times { |i| candidat("Agenda #{i}", origin: "agenda_nancy", enriched_at: Time.current, item_type: "opportunite", declic_category: "decouvrir", score: i,
+                              starts_on: Date.current + i, start_time: [ "14h", "9h30", "14:00", nil ][i % 4], end_time: [ "16:00", nil ][i % 2]) }
+      12.times { |i| candidat("JeVeuxAider #{i}", origin: "jeveuxaider", enriched_at: Time.current, item_type: "opportunite", declic_category: "benevolat", starts_on: Date.current, ends_on: Date.current + 40, schedule_text: "tous les samedis de 10h à 12h") }
+      12.times { |i| candidat("Import #{i}", origin: "xlsx", enriched_at: Time.current, item_type: "opportunite").update_column(:declic_category, "rencontres") } # catégorie retirée
+      12.times { |i| candidat("Non classé #{i}") }
+
+      [ {}, { statut: "a_relire", tri: "score" }, { tri: "evenement" }, { statut: "non_trie" }, { periode: "a_venir" }, { periode: "en_cours" }, { type: "opportunite" } ].each do |filtres|
+        premiere = get(admin_galerie_path(filtres), headers: auth) && response.status
+        assert_equal 200, premiere, filtres.inspect
+        pages = Galerie.new(filtres).pages
+        (1..pages).each do |n|
+          get admin_galerie_path(filtres.merge(page: n)), headers: auth
+          assert_response :success, "#{filtres.inspect} page #{n}"
+        end
+      end
+      get admin_galerie_path, headers: auth
+      assert_select ".creneau", /14h/
+    end
   end
 end

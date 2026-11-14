@@ -1,6 +1,25 @@
 # frozen_string_literal: true
 
 namespace :veille do
+  desc "Remet au format heure (Time du 01/01/2000) les start_time / end_time des candidats et des opportunités mal enregistrés. Idempotent ; DRY_RUN=1 pour compter seulement."
+  task normaliser_heures: :environment do
+    sec = ENV["DRY_RUN"].present?
+    rapport = Hash.new(0)
+    [ ::Veille::Candidate, ::Opportunity ].each do |modele|
+      modele.where.not(start_time: nil).or(modele.where.not(end_time: nil)).find_each do |r|
+        rapport[:examinees] += 1
+        brut = %w[start_time end_time].to_h { |c| [ c, r.read_attribute_before_type_cast(c) ] }
+        conforme = brut.values.all? { |v| v.nil? || v.to_s.match?(/\A2000-01-01 \d{2}:\d{2}:\d{2}(\.\d+)?\z/) }
+        next rapport[:deja_conformes] += 1 if conforme
+
+        corrige = brut.transform_values { |v| Veille::Heure.lire(v) }
+        rapport[:corrigees] += 1
+        r.update_columns(start_time: corrige["start_time"], end_time: corrige["end_time"]) unless sec
+      end
+    end
+    puts "Heures #{'(à blanc) ' if sec}: #{rapport[:examinees]} examinées, #{rapport[:deja_conformes]} déjà conformes, #{rapport[:corrigees]} corrigées."
+  end
+
   desc "Importe une liste d'URL (une par ligne) en candidats — rake veille:import[fichier.txt]. Le classement se fait à la prochaine veille:quotidien."
   task :import, [:fichier] => :environment do |_t, args|
     fichier = args[:fichier].presence || abort("❌ Usage : rake veille:import[chemin/vers/urls.txt]")

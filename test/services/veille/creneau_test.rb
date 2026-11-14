@@ -50,4 +50,20 @@ class Veille::CreneauTest < ActiveSupport::TestCase
     assert_equal "Toute l'année", annee.date
     assert_nil annee.periodicite
   end
+
+  test "les heures en chaîne, en Time ou absentes" do
+    jour = d(2026, 12, 13)
+    { "14:00" => "14h", "14h" => "14h", "14h30" => "14h30", "9h00" => "9h" }.each do |texte, attendu|
+      assert_equal "Dim. 13 déc. 2026 · #{attendu}", Veille::Creneau.pour(debut: jour, heure_debut: texte).date, texte
+    end
+    assert_equal "Dim. 13 déc. 2026", Veille::Creneau.pour(debut: jour, heure_debut: nil).date
+    assert_equal "Dim. 13 déc. 2026", Veille::Creneau.pour(debut: jour, heure_fin: "16h").date # fin seule : rien
+    assert_equal "Dim. 13 déc. 2026 · 14h-16h30", Veille::Creneau.pour(debut: jour, heure_debut: "14:00", heure_fin: t(16, 30)).date
+    assert_equal "Dim. 13 déc. 2026 · 14h", Veille::Creneau.pour(debut: jour, heure_debut: "14h", heure_fin: "14:00").date # heures égales
+  end
+
+  test "une heure illisible est ignorée, la page reste affichée" do
+    assert_equal "Dim. 13 déc. 2026", Veille::Creneau.pour(debut: d(2026, 12, 13), heure_debut: "bientôt").date
+    assert_equal "Dim. 13 déc. 2026 · 14h", Veille::Creneau.pour(debut: d(2026, 12, 13), heure_debut: "14h", heure_fin: "???").date
+  end
 end
