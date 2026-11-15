@@ -9,10 +9,13 @@ module Veille
     :schedule_text, :commune, :category_hint, :type_hint, :reliability, :start_time, :end_time,
     keyword_init: true
   ) do
+    # Le texte stocké ne garde ni mots relatifs (« Aujourd'hui ») ni segments en double : voir Veille::TextesRelatifs.
+    def texte_net = Veille::TextesRelatifs.nettoyer(text, starts_on: starts_on, ends_on: ends_on)
+
     def to_candidate_attributes(source: nil, now: Time.current)
       {
-        origin: origin, url: url, title: title.to_s.squish.slice(0, 250), full_text: text,
-        excerpt: text.to_s.squish.slice(0, 400), published_on: published_on,
+        origin: origin, url: url, title: title.to_s.squish.slice(0, 250), full_text: texte_net,
+        excerpt: texte_net.to_s.squish.slice(0, 400), published_on: published_on,
         starts_on: starts_on, ends_on: ends_on, schedule_text: schedule_text, start_time: start_time, end_time: end_time,
         commune: commune, declic_category: category_hint, item_type: type_hint,
         reliability: reliability, fetched_at: now, source: source

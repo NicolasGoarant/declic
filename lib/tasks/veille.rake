@@ -198,4 +198,23 @@ namespace :veille do
     puts "Onglets lus : #{bilan.onglets.join(' | ').presence || 'aucun (noms attendus : « Opportunités », « Belles Histoires - pistes »)'}"
     puts "créés #{bilan.crees} · déjà connus #{bilan.doublons} · lignes ignorées #{bilan.ignores}"
   end
+
+  desc "Textes des candidats non publiés : retire les mots relatifs (Aujourd'hui, Ce soir…, remplacés par la date absolue pour un événement d'un jour) et les segments en double. Ne touche ni aux publiés, ni à un full_text collé à la main ou récupéré sur la page. Idempotent ; DRY_RUN=1 pour compter seulement."
+  task nettoyer_textes: :environment do
+    sec = ENV["DRY_RUN"].present?
+    touches = []
+    Veille::Candidate.where.not(status: "publie").find_each do |c|
+      net = ->(t) { Veille::TextesRelatifs.nettoyer(t, starts_on: c.starts_on, ends_on: c.ends_on) }
+      brut = c.full_text.to_s
+      # full_text est dans sa forme de collecte quand l'extrait en est la copie tronquée ; sinon il a été collé ou remplacé : on n'y touche pas.
+      collecte = brut.present? && brut.squish.slice(0, 400) == c.excerpt.to_s.squish
+      full = collecte ? net.call(brut) : brut
+      extrait = collecte ? full.squish.slice(0, 400) : net.call(c.excerpt.to_s).squish.slice(0, 400)
+      next if full == brut && extrait == c.excerpt.to_s
+
+      touches << c.id
+      c.update_columns(full_text: full.presence, excerpt: extrait.presence) unless sec
+    end
+    puts "Textes #{'(à blanc) ' if sec}: #{touches.size} candidat(s) #{sec ? 'à nettoyer' : 'nettoyé(s)'}#{" : #{touches.first(30).join(', ')}#{' …' if touches.size > 30}" if touches.any?}"
+  end
 end

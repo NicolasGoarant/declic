@@ -36,8 +36,9 @@ module Veille
         return nil if ville.present? && !Veille::Territoire.meurthe_et_moselle?(ville)
 
         lieu = ev.dig("place", "name")
-        texte = [ev["name"], rubrique, Array(ev["subCategories"]).map { |s| s["name"] }.join(", "),
-                 lieu && "Lieu : #{lieu}", ville && "Commune : #{ville}", ev["duringDateText"].presence || ev["beforeDateText"],
+        sous_rubriques = Array(ev["subCategories"]).map { |s| s["name"] }.reject { |n| n == rubrique }
+        texte = [ev["name"], rubrique, sous_rubriques.join(", "),
+                 lieu && "Lieu : #{lieu}", ville && "Commune : #{ville}", texte_de_date(ev),
                  ev["free"] ? "Gratuit" : nil, ev["reservation"] ? "Sur réservation" : nil]
                 .compact_blank.join(". ")
 
@@ -50,6 +51,25 @@ module Veille
           starts_on: parse_date(ev["startDate"]) || quand.starts_on, ends_on: parse_date(ev["endDate"]) || quand.ends_on,
           start_time: quand.start_time, end_time: quand.end_time, schedule_text: quand.periodicite, commune: ville, category_hint: categorie, type_hint: "opportunite", reliability: "haute"
         )
+      end
+
+      RELATIF = /\A\s*(?:aujourd['’]hui|demain|hier|ce\s+soir|cette\s+semaine|ce\s+week-end)/i
+
+      private
+
+      # `duringDateText` est écrit pour le jour même (« Aujourd'hui à 15h » : 196 événements sur 348) : on n'en
+      # garde que l'horaire. Pour un événement à plusieurs dates (dateList, ou début ≠ fin), la liste des
+      # occurrences n'existe que dans `beforeDateText` (« Mercredis 9 décembre, 13 janvier… ») : on la garde, suivie
+      # de l'horaire. Pour un seul jour, Veille::TextesRelatifs (appelé par Item) pose la date absolue.
+      def texte_de_date(ev)
+        pendant, avant = ev["duringDateText"].presence, ev["beforeDateText"].presence
+        return pendant || avant unless pendant&.match?(RELATIF)
+
+        plusieurs = Array(ev["dateList"]).size > 1 || (ev["endDate"].present? && ev["endDate"].to_s[0, 10] != ev["startDate"].to_s[0, 10])
+        return pendant unless plusieurs && avant
+
+        horaire = Veille::TextesRelatifs.nettoyer(pendant)
+        horaire.present? && !avant.match?(/\d\s?h/) ? "#{avant} #{horaire}" : avant
       end
     end
   end
