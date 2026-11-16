@@ -1,7 +1,7 @@
 require "application_system_test_case"
 require "minitest/mock"
 
-# Le circuit complet dans un vrai navigateur : le geste dans /admin/veille met la fiche en ligne, et
+# Le circuit complet dans un vrai navigateur : le geste dans la galerie d'administration met la fiche en ligne, et
 # elle apparaît sur la carte publique, masquée tant que le visiteur n'active pas sa bascule.
 class VeillePublicationTest < ApplicationSystemTestCase
   setup do
@@ -23,7 +23,7 @@ class VeillePublicationTest < ApplicationSystemTestCase
     serveur = Capybara.current_session.server
     # Identifiants dans l'URL une seule fois : Chrome les retient, et une page dont l'adresse les porte
     # empêcherait Turbo de prendre en charge le formulaire (comme chez un vrai administrateur, ils n'y sont pas).
-    visit "http://veille-test:secret-de-test@#{serveur.host}:#{serveur.port}/admin/veille"
+    visit "http://veille-test:secret-de-test@#{serveur.host}:#{serveur.port}/admin/galerie"
     visit chemin
     # La confirmation de « Valider » est portée par Turbo, chargé en module après la page.
     Timeout.timeout(Capybara.default_max_wait_time) { sleep 0.05 until evaluate_script("!!window.Turbo") }
@@ -36,16 +36,33 @@ class VeillePublicationTest < ApplicationSystemTestCase
     assert_text titre
   end
 
-  test "Valider publie la fiche, visible sur la carte via la bascule" do
+  # Depuis la fusion de la relecture dans la galerie (6cee4fe, 5114b55, 14/11), /admin/veille redirige vers
+  # /admin/galerie : on y publie d'un clic (« ✓ Publier ») ou depuis l'écran du candidat (« Valider et publier »).
+  test "✓ Publier (carte de la galerie) publie la fiche, visible sur la carte via la bascule" do
     DioramaTuiles.stub(:new, @tuiles) do
-      candidat(title: "Vide-grenier de test", commune: "Nancy", starts_on: 7.days.from_now.to_date)
+      c = candidat(title: "Vide-grenier de test", commune: "Nancy", starts_on: 7.days.from_now.to_date)
 
-      admin "/admin/veille"
-      accept_confirm { click_button "Valider" }
+      admin "/admin/galerie?statut=a_relire"
+      find("form.bouton[action$='/valider'] button", text: "✓ Publier").click # la barre d'actions groupées porte aussi un « ✓ Publier »
       assert_text "En ligne : Vide-grenier de test"
       assert_selector ".flash.notice a[target=_blank]", text: "Voir la fiche publiée"
+      assert_equal "publie", c.reload.status
 
       assert_visible_sur_la_carte_a_la_demande "Vide-grenier de test"
+    end
+  end
+
+  test "Valider et publier (écran du candidat) publie la fiche après confirmation" do
+    DioramaTuiles.stub(:new, @tuiles) do
+      c = candidat(title: "Brocante du quartier", commune: "Nancy", starts_on: 7.days.from_now.to_date)
+
+      admin admin_veille_candidate_path(c)
+      accept_confirm { click_button "Valider et publier" }
+      assert_text "En ligne : Brocante du quartier"
+      assert_selector ".flash.notice a[target=_blank]", text: "Voir la fiche publiée"
+      assert_equal "publie", c.reload.status
+
+      assert_visible_sur_la_carte_a_la_demande "Brocante du quartier"
     end
   end
 
@@ -53,11 +70,15 @@ class VeillePublicationTest < ApplicationSystemTestCase
     DioramaTuiles.stub(:new, @tuiles) do
       c = candidat(title: "Brocante sans commune")
 
-      admin "/admin/veille?a_localiser=1"
-      assert_text "à localiser"
-      assert_no_button "Valider"
-      click_link "Localiser →"
+      admin "/admin/galerie?statut=a_relire&a_localiser=1"
+      # La carte garde un « ✓ Publier » (l'ancienne vignette le masquait) : le serveur refuse sans commune.
+      find("form.bouton[action$='/valider'] button", text: "✓ Publier").click
+      assert_text "Il manque la commune"
+      assert_equal "pending", c.reload.status
+      visit current_path + "?statut=a_relire&a_localiser=1"
+      click_link "Localiser"
 
+      assert_no_button "Valider et publier"
       fill_in "Commune", with: "Nancy"
       click_button "Localiser et publier"
       assert_text "En ligne : Brocante sans commune"

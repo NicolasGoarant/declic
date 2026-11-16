@@ -62,17 +62,31 @@ class FichesTest < ApplicationSystemTestCase
     assert_no_selector ".fch-action-bouton"
   end
 
-  test "fiche passée : bandeau terminé, pas de bloc d'action, lien vers les similaires" do
-    o = Opportunity.create!(@base.merge(title: "Pitch Night", starts_on: Date.current - 10, cta_button_url: "https://exemple.org"))
-    Opportunity.create!(@base.merge(title: "Vélo-École", starts_on: Date.current + 2))
+  # Depuis la dépublication automatique (cafe088, 03/11), une fiche terminée depuis plus d'un jour n'est plus
+  # publique : seule une fiche finie la veille reste ouverte, jusqu'à 00h01 (heure de Paris). On remonte donc
+  # l'horloge à 00h00 pour la voir avec son bandeau « terminée ».
+  test "fiche passée (finie la veille, à minuit) : bandeau terminé, pas de bloc d'action, lien vers les similaires" do
+    travel_to Time.find_zone("Europe/Paris").local(2026, 11, 16, 0, 0, 30) do
+      o = Opportunity.create!(@base.merge(title: "Pitch Night", starts_on: Date.new(2026, 11, 15), cta_button_url: "https://exemple.org"))
+      Opportunity.create!(@base.merge(title: "Vélo-École", starts_on: Date.new(2026, 11, 18)))
+
+      visit opportunity_path(o)
+
+      assert_selector ".fch-terminee", text: "Cette opportunité est terminée"
+      assert_no_selector ".fch-action"
+      assert_no_text "Prêt·e à participer"
+      assert_selector ".fch-apres a[href='#fch-similaires']"
+      assert_selector "#fch-similaires .fch-vignette", text: "Vélo-École"
+    end
+  end
+
+  test "fiche terminée depuis plus d'un jour : introuvable côté public" do
+    o = Opportunity.create!(@base.merge(title: "Pitch Night", starts_on: Date.current - 10))
 
     visit opportunity_path(o)
 
-    assert_selector ".fch-terminee", text: "Cette opportunité est terminée"
-    assert_no_selector ".fch-action"
-    assert_no_text "Prêt·e à participer"
-    assert_selector ".fch-apres a[href='#fch-similaires']"
-    assert_selector "#fch-similaires .fch-vignette", text: "Vélo-École"
+    assert_no_selector ".fch-terminee"
+    assert_text "ActiveRecord::RecordNotFound" # page d'erreur de l'environnement de test (404 en production)
   end
 
   test "belle histoire : où se rendre, points forts, source, suggestions, sans bloc d'action ni horaire" do
