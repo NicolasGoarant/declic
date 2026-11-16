@@ -34,6 +34,24 @@ class AmbiancesTest < ApplicationSystemTestCase
     @scripts << page.driver.browser.execute_cdp("Page.addScriptToEvaluateOnNewDocument", source: source)["identifier"]
   end
 
+  # Fige l'horloge du navigateur (Date) avant le chargement de la page : le moment « Automatique » (soleil à
+  # Nancy) ne dépend plus de l'heure à laquelle la suite tourne (coucher du soleil, heure bleue, aube).
+  def fige_heure(iso)
+    source = <<~JS
+      (() => {
+        const Reel = Date, t0 = new Reel("#{iso}").getTime()
+        class DateFigee extends Reel {
+          constructor(...args) { args.length ? super(...args) : super(t0) }
+          static now() { return t0 }
+        }
+        window.Date = DateFigee
+      })()
+    JS
+    @scripts << page.driver.browser.execute_cdp("Page.addScriptToEvaluateOnNewDocument", source: source)["identifier"]
+  end
+
+  def moment_auto = evaluate_async_script('import("diorama/soleil").then((s) => arguments[0](s.momentAuto()))')
+
   def sur_la_carte(&bloc)
     DioramaTuiles.stub(:new, @tuiles) do
       visit root_path
@@ -129,6 +147,7 @@ class AmbiancesTest < ApplicationSystemTestCase
   end
 
   test "un choix à la main fait sous un autre ciel est échu : retour à l'automatique" do
+    fige_heure("2026-11-16T12:00:00+01:00") # plein jour : le résultat ne dépend plus du coucher du soleil
     sur_la_carte do
       # un soir d'essais : « nuit » choisie à la main, sous un ciel qui n'est plus celui de maintenant
       execute_script(<<~JS)
@@ -247,6 +266,17 @@ class AmbiancesTest < ApplicationSystemTestCase
                      "crepuscule" => "heure-bleue", "nuit" => "nuit", "juillet" => "printemps-ete", "octobre" => "automne",
                      "janvier" => "hiver", "libelle" => "nuit d'automne, pluie",
                      "codes" => %w[clair clair nuageux nuageux brouillard brouillard pluie pluie pluie neige neige] }, resultats)
+    end
+  end
+
+  # Le mode automatique, à heure fixe (16 novembre 2026, Nancy) : un cas par moment de la journée.
+  { "jour" => "12:00", "heure-doree" => "16:30", "aube" => "07:30", "heure-bleue" => "17:25", "nuit" => "22:00" }.each do |moment, heure|
+    test "Automatique à #{heure} (#{moment}) : le moment suit le soleil, sans dépendre de l'heure de la suite" do
+      fige_heure("2026-11-16T#{heure}:00+01:00")
+      sur_la_carte do
+        assert_selector "[data-controller~=diorama][data-moment]"
+        assert_equal moment, moment_auto
+      end
     end
   end
 end
