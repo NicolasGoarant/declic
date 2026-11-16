@@ -582,6 +582,20 @@ body.acc-corps {
 .acc-popup--grappe .grappe { padding: 12px 8px 8px 12px; }
 .grappe-titre { margin: 0 24px 8px 0 !important; font-size: 13px; font-weight: 800; color: var(--violet); }
 .grappe-liste { list-style: none; margin: 0; padding: 0 4px 0 0; max-height: min(200px, 32vh); overflow-y: auto; }
+/* Écran étroit : la liste devient un panneau fixe au-dessus de la barre d'onglets (voir listerGrappe). */
+.grappe-panneau {
+  position: fixed; left: 12px; right: 12px; bottom: calc(var(--tabbar-h) + 10px); z-index: 1090;
+  display: flex; flex-direction: column; max-height: 60vh; max-height: 60dvh;
+  background: var(--blanc); color: var(--encre); border-radius: 16px; box-shadow: var(--ombre);
+}
+.grappe-panneau .grappe { display: flex; flex-direction: column; min-height: 0; padding: 14px 8px 10px 14px; }
+.grappe-panneau .grappe-titre { margin-right: 44px !important; font-size: 14px; }
+.grappe-panneau .grappe-liste { max-height: none; flex: 1; min-height: 0; overscroll-behavior: contain; }
+.grappe-fermer {
+  position: absolute; top: 4px; right: 4px; z-index: 1; width: 44px; height: 44px; border: 0; border-radius: 12px;
+  background: transparent; color: var(--encre); font: inherit; font-size: 26px; line-height: 1; cursor: pointer;
+}
+.grappe-fermer:focus-visible { outline: 3px solid var(--violet); }
 .grappe-ligne {
   display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 6px; border-radius: 10px;
   color: var(--encre); text-decoration: none; border-left: 3px solid var(--c);

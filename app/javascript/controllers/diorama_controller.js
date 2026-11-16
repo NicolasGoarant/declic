@@ -160,6 +160,7 @@ export default class extends Controller {
     window.removeEventListener("declic:position", this.surPositionAuto)
     window.removeEventListener("orientationchange", this.surOrientation)
     this.ecranEtroit?.removeEventListener("change", this.surEcranEtroit)
+    this.fermerPanneauGrappe()
     this.carte?.remove()
     this.carte = null
   }
@@ -1469,8 +1470,45 @@ export default class extends Controller {
       liste.append(li)
     }
     boite.append(titre, liste)
+    // Écran étroit : un panneau ancré au bas de l'écran. La popup Leaflet est accrochée au cadre de la carte, qui
+    // défile avec la page : l'autoPan ne la garde pas à l'écran (page défilée, titre et premières lignes hors champ).
+    if (this.etroitEcran()) { this.ouvrirPanneauGrappe(boite, groupe.length); return }
+    this.fermerPanneauGrappe()
     this.popupGrappe.setLatLng(centre).setContent(boite).openOn(this.carte)
     liste.querySelector("a")?.focus({ preventScroll: true })
+  }
+
+  // Panneau fixe (position: fixed, au-dessus de la barre d'onglets) : toujours entier à l'écran, liste défilante.
+  // Se ferme par ×, Échap, un toucher en dehors, ou dès que la carte bouge.
+  ouvrirPanneauGrappe(boite, n) {
+    if (this.popupGrappe?.isOpen()) this.carte.closePopup(this.popupGrappe)
+    this.fermerPanneauGrappe()
+    const panneau = document.createElement("div")
+    panneau.className = "grappe-panneau"
+    panneau.setAttribute("role", "dialog")
+    panneau.setAttribute("aria-label", `${n} opportunités ici`)
+    const fermer = document.createElement("button")
+    fermer.type = "button"
+    fermer.className = "grappe-fermer"
+    fermer.setAttribute("aria-label", "Fermer la liste")
+    fermer.textContent = "×"
+    fermer.addEventListener("click", () => this.fermerPanneauGrappe())
+    panneau.append(fermer, boite)
+    document.body.append(panneau)
+    this.panneauGrappe = panneau
+    this.surToucherHorsGrappe = (e) => { if (!panneau.contains(e.target)) this.fermerPanneauGrappe() }
+    this.surMouvementGrappe = () => this.fermerPanneauGrappe()
+    document.addEventListener("pointerdown", this.surToucherHorsGrappe, true)
+    this.carte.on("movestart zoomstart", this.surMouvementGrappe)
+    boite.querySelector("a")?.focus({ preventScroll: true })
+  }
+
+  fermerPanneauGrappe() {
+    if (!this.panneauGrappe) return
+    this.panneauGrappe.remove()
+    this.panneauGrappe = null
+    document.removeEventListener("pointerdown", this.surToucherHorsGrappe, true)
+    this.carte?.off("movestart zoomstart", this.surMouvementGrappe)
   }
 
   // Premier zoom (depuis le zoom courant) où le point n'est plus dans un bouquet.
@@ -1571,6 +1609,7 @@ export default class extends Controller {
   fermerPopup() {
     if (this.popup?.isOpen()) this.carte.closePopup()
     if (this.popupGrappe?.isOpen()) this.carte.closePopup(this.popupGrappe)
+    this.fermerPanneauGrappe()
   }
 
   categorie(cle) {
