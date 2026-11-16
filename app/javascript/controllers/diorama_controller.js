@@ -1390,24 +1390,87 @@ export default class extends Controller {
     const pied = document.createElement("span")
     pied.className = "bouquet-pied"
     el.append(pied)
-    if (groupe.length > FLEURS_MAX) {
-      const plus = document.createElement("span")
+    // Les fleurs cachées : une vraie pastille-bouton (focalisable, libellée) qui ouvre le groupe.
+    const cachees = groupe.length - FLEURS_MAX
+    if (cachees > 0) {
+      const plus = document.createElement("button")
+      const libelle = cachees === 1 ? "Voir l'autre opportunité" : `Voir les ${cachees} autres opportunités`
+      plus.type = "button"
       plus.className = "bouquet-plus"
-      plus.textContent = `+${groupe.length - FLEURS_MAX}`
-      plus.title = "Zoomer sur ce groupe"
+      plus.textContent = `+${cachees}`
+      plus.title = libelle
+      plus.setAttribute("aria-label", libelle)
+      plus.dataset.grappe = groupe.length
+      // Le clic (souris, toucher, Entrée ou Espace au clavier) est traité ici : le marqueur ne le revoit pas.
+      plus.addEventListener("click", (e) => { e.stopPropagation(); this.ouvrirGrappe(groupe, centre) })
+      L.DomEvent.disableClickPropagation(plus)
       el.append(plus)
     }
     const icone = L.divIcon({ html: el, className: "acc-bouquet", iconSize: [0, 0], iconAnchor: [0, 0] })
     return L.marker(centre, { icon: icone, title: `${groupe.length} initiatives` }).on("click", (e) => {
       const cible = e.originalEvent?.target
-      if (cible?.closest?.(".bouquet-plus")) {
-        const { haut, bas } = this.marges()
-        this.carte.fitBounds(L.latLngBounds(groupe.map((p) => p.latlng)),
-                             { paddingTopLeft: [40, haut + 90], paddingBottomRight: [40, bas + 20] })
-        return
-      }
+      if (cible?.closest?.(".bouquet-plus")) return
       this.ouvrirPopup(cible?.closest?.("[data-id]")?.dataset.id || fleurs[0].id)
     })
+  }
+
+  // Clic sur « +n ». Si un zoom plus fort sépare au moins deux repères, la caméra cadre le groupe.
+  // Sinon (zoom maximal atteint, ou repères posés au même endroit : un même lieu, plusieurs fiches),
+  // aucun zoom ne les séparera : on liste les n fiches dans une bulle au pied du bouquet.
+  ouvrirGrappe(groupe, centre) {
+    const zMax = this.carte.getMaxZoom()
+    const auMax = groupe.map((p) => ({ ...this.carte.project(p.latlng, zMax), p }))
+    const separables = regrouper(auMax).length > 1
+    const { haut, bas } = this.marges()
+    const bornes = this.L.latLngBounds(groupe.map((p) => p.latlng))
+    const zoomCadre = Math.min(zMax, this.carte.getBoundsZoom(bornes, false, this.L.point(80, haut + bas + 110)))
+    if (separables && zoomCadre > this.carte.getZoom()) {
+      this.carte.fitBounds(bornes, { paddingTopLeft: [40, haut + 90], paddingBottomRight: [40, bas + 20] })
+      return
+    }
+    this.listerGrappe(groupe, centre)
+  }
+
+  // Bulle « n opportunités ici » : une ligne-lien par fiche du groupe, fleurs cachées comprises.
+  listerGrappe(groupe, centre) {
+    const L = this.L
+    if (!this.popupGrappe) this.popupGrappe = L.popup({ className: "acc-popup acc-popup--grappe", minWidth: 260, maxWidth: 260, autoPan: true })
+    const { haut, bas } = this.marges()
+    const { icone } = this.disposition()
+    Object.assign(this.popupGrappe.options, {
+      offset: L.point(0, -icone / 2), autoPanPaddingTopLeft: L.point(12, haut), autoPanPaddingBottomRight: L.point(12, bas)
+    })
+    const boite = document.createElement("div")
+    boite.className = "grappe"
+    boite.dataset.grappeListe = groupe.length
+    const titre = document.createElement("p")
+    titre.className = "grappe-titre"
+    titre.textContent = `${groupe.length} opportunités ici`
+    const liste = document.createElement("ul")
+    liste.className = "grappe-liste"
+    for (const p of groupe) {
+      const cat = this.categorie(p.categorie)
+      const li = document.createElement("li"), lien = document.createElement("a")
+      lien.className = "grappe-ligne"
+      lien.href = p.url
+      lien.dataset.id = p.id
+      lien.style.setProperty("--c", cat.couleur)
+      const img = document.createElement("img")
+      img.alt = ""; img.width = 28; img.height = 28
+      if (cat.icone) img.src = cat.icone; else img.hidden = true
+      const texte = document.createElement("span")
+      const t = document.createElement("strong")
+      t.textContent = p.titre
+      const detail = document.createElement("small")
+      detail.textContent = [cat.libelle, periode(p)].filter(Boolean).join(" · ")
+      texte.append(t, detail)
+      lien.append(img, texte)
+      li.append(lien)
+      liste.append(li)
+    }
+    boite.append(titre, liste)
+    this.popupGrappe.setLatLng(centre).setContent(boite).openOn(this.carte)
+    liste.querySelector("a")?.focus({ preventScroll: true })
   }
 
   // Premier zoom (depuis le zoom courant) où le point n'est plus dans un bouquet.
@@ -1507,6 +1570,7 @@ export default class extends Controller {
 
   fermerPopup() {
     if (this.popup?.isOpen()) this.carte.closePopup()
+    if (this.popupGrappe?.isOpen()) this.carte.closePopup(this.popupGrappe)
   }
 
   categorie(cle) {
