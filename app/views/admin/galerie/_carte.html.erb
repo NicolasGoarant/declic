@@ -53,6 +53,9 @@
             <summary class="btn classer-btn">Classer ▾</summary>
             <div class="menu-corps"><%= render "admin/galerie/classement", c: c %></div>
           </details>
+        <% elsif c.a_localiser? %>
+          <%# Sans commune : le serveur refuse aussi (Veille::Validation::Incomplet) ; on le dit avant le clic. %>
+          <button type="button" class="btn vert" disabled aria-disabled="true" title="Il manque la commune : ouvre « Localiser » pour la saisir.">Localiser d'abord</button>
         <% elsif statut == "non_trie" %>
           <button type="button" class="btn vert" disabled title="Pas encore trié par l'IA : relis l'élément avant de le publier.">✓ Publier</button>
         <% elsif c.histoire? %>

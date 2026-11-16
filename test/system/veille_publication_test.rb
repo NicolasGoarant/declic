@@ -71,11 +71,14 @@ class VeillePublicationTest < ApplicationSystemTestCase
       c = candidat(title: "Brocante sans commune")
 
       admin "/admin/galerie?statut=a_relire&a_localiser=1"
-      # La carte garde un « ✓ Publier » (l'ancienne vignette le masquait) : le serveur refuse sans commune.
-      find("form.bouton[action$='/valider'] button", text: "✓ Publier").click
-      assert_text "Il manque la commune"
+      # Niveau 1, l'interface : pas de « ✓ Publier » sur la carte, un bouton inactif « Localiser d'abord ».
+      assert_no_selector "form.bouton[action$='/valider']"
+      assert_button "Localiser d'abord", disabled: true
+      assert_equal "true", find_button("Localiser d'abord", disabled: true)["aria-disabled"]
+      # Niveau 2, le serveur : même sans le bouton, une publication directe est refusée.
+      evaluate_async_script("fetch('#{valider_admin_veille_candidate_path(c)}', { method: 'POST', redirect: 'manual' }).then(() => arguments[0](true))")
       assert_equal "pending", c.reload.status
-      visit current_path + "?statut=a_relire&a_localiser=1"
+      assert_equal 0, Opportunity.where(title: "Brocante sans commune").count
       click_link "Localiser"
 
       assert_no_button "Valider et publier"
